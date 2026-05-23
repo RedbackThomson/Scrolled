@@ -128,7 +128,7 @@ export default function Items() {
                   to={`/items/${item.id}`}
                   className="hover:bg-accent flex items-center gap-3 px-4 py-2 transition-colors"
                 >
-                  <ItemIcon path={item.iconPath} size={32} alt={item.name} />
+                  <ItemIcon entity="item" id={item.id} size={32} alt={item.name} />
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-medium">{item.name}</div>
                     {item.description && (

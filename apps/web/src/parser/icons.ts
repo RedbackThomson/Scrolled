@@ -24,12 +24,19 @@ const log = createLogger('icons');
  */
 export async function decodePng(node: WzObject): Promise<Uint8Array | null> {
   const canvasNode = await resolveCanvas(node);
-  if (!canvasNode) return null;
+  if (!canvasNode) {
+    log.warn('decodePng: no canvas-like node', { ctor: node?.constructor?.name });
+    return null;
+  }
   try {
     const canvas = await canvasNode.getBitmap();
-    if (!canvas) return null;
+    if (!canvas) {
+      log.warn('decodePng: getBitmap returned null', { ctor: canvasNode?.constructor?.name });
+      return null;
+    }
     const png = await canvas.getBufferAsync('image/png');
     canvas.dispose();
+    log.info('decodePng ok', { bytes: png?.byteLength ?? 0 });
     return png;
   } catch (e) {
     log.warn('decodePng failed', describeError(e));

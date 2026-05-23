@@ -219,9 +219,17 @@ function SaveItemPanel({ node }: { node: WzNodeInfo }) {
       if (!target) {
         throw new Error('No numeric item ID found in this path');
       }
-      const [nameNode, descNode] = await Promise.all([
+      // Manual saves go through Item.wz to find the icon, not String.wz —
+      // String.wz only carries names/descriptions.
+      const itemWzPath = target.itemPath.replace(/^String\.wz\/(\w+)\.img/, (_m, cat) => {
+        const dir = { Consume: 'Consume', Etc: 'Etc', Ins: 'Install', Cash: 'Cash' }[cat as string];
+        return dir ? `Item.wz/${dir}` : `String.wz/${cat}.img`;
+      });
+      const iconPath = `${itemWzPath}/info/icon`;
+      const [nameNode, descNode, iconData] = await Promise.all([
         parser.getNode(`${target.itemPath}/name`),
         parser.getNode(`${target.itemPath}/desc`),
+        parser.getIconPng(iconPath),
       ]);
       const name =
         typeof nameNode?.scalar === 'string' && nameNode.scalar
@@ -235,7 +243,8 @@ function SaveItemPanel({ node }: { node: WzNodeInfo }) {
         description,
         category,
         subcategory: null,
-        iconPath: null,
+        iconPath: iconData ? iconPath : null,
+        iconData,
         price: null,
         stackSize: null,
         requiredLevel: null,

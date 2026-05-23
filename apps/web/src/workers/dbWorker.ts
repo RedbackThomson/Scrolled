@@ -49,6 +49,10 @@ class WorkerDb {
     await this.ensureOpen();
     return this.api.listItems(opts);
   }
+  async getItemIcon(id: number) {
+    await this.ensureOpen();
+    return this.api.getItemIcon(id);
+  }
   async upsertEquip(equip: Parameters<DbApi['upsertEquip']>[0]) {
     await this.ensureOpen();
     return this.api.upsertEquip(equip);
@@ -64,6 +68,10 @@ class WorkerDb {
   async listEquips(opts?: Parameters<DbApi['listEquips']>[0]) {
     await this.ensureOpen();
     return this.api.listEquips(opts);
+  }
+  async getEquipIcon(id: number) {
+    await this.ensureOpen();
+    return this.api.getEquipIcon(id);
   }
   async listSearchEntries() {
     await this.ensureOpen();

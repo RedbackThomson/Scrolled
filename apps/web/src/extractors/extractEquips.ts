@@ -75,7 +75,10 @@ export async function extractEquips(
         accuracy: null,
         avoidability: null,
         upgradeSlots: null,
+        // Equip icons live in Character.wz which isn't loaded yet; leave both
+        // null until that extractor lands.
         iconPath: null,
+        iconData: null,
         sourcePath: entry.fullPath,
       });
     }

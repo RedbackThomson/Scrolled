@@ -1,74 +1,102 @@
 import { useEffect, useState } from 'react';
-import { getParserClient } from '@/parser';
+import { getDbClient } from '@/db';
+import { createLogger, describeError } from '@/lib/logger';
+
+const log = createLogger('icons-client');
 
 /**
- * Per-path cache of decoded icon object URLs.
+ * Identifier for an icon stored in the local database.
  *
- * The cache grows for the lifetime of the page and is never evicted. Earlier
- * versions ran a 256-entry LRU and called `URL.revokeObjectURL` on evictions,
- * but the typical extracted dataset has thousands of items, so eviction
- * revoked URLs that were still in use by `<img>` tags elsewhere on the page
- * — silently breaking icons everywhere except the most recently decoded
- * handful.
- *
- * A few thousand 32×32 PNG icons total ~10–25 MB, which is fine for a tab
- * lifetime. The browser reclaims the blobs when the page unloads.
+ * Icon bytes are persisted as a BLOB on the `items` / `equips` row at
+ * extraction time, so once a dataset is extracted the user no longer needs
+ * the original WZ files loaded to browse with icons. The parser worker's
+ * `getIconPng` is still used during extraction itself; everything else reads
+ * from SQLite.
+ */
+export interface IconRef {
+  entity: 'item' | 'equip';
+  id: number;
+}
+
+/**
+ * Per-entity cache of decoded icon object URLs. Grows for the lifetime of
+ * the page (no eviction); a few thousand small PNG icons total ~10–25 MB,
+ * which is fine for a tab lifetime. The browser reclaims the blobs on
+ * page unload.
  */
 const cache = new Map<string, string>();
 const pending = new Map<string, Promise<string | null>>();
 
-async function fetchIcon(path: string): Promise<string | null> {
-  let p = pending.get(path);
+function keyOf(ref: IconRef): string {
+  return `${ref.entity}:${ref.id}`;
+}
+
+async function fetchIcon(ref: IconRef): Promise<string | null> {
+  const key = keyOf(ref);
+  let p = pending.get(key);
   if (!p) {
     p = (async () => {
-      const cached = cache.get(path);
-      if (cached) return cached;
-      const bytes = await getParserClient().getIconPng(path);
-      if (!bytes) return null;
-      // Copy into a fresh ArrayBuffer so the Blob type matches BlobPart even
-      // when the source is a Uint8Array<SharedArrayBuffer>.
-      const buf = new ArrayBuffer(bytes.byteLength);
-      new Uint8Array(buf).set(bytes);
-      const url = URL.createObjectURL(new Blob([buf], { type: 'image/png' }));
-      cache.set(path, url);
-      return url;
+      try {
+        const cached = cache.get(key);
+        if (cached) return cached;
+        const db = getDbClient();
+        const bytes =
+          ref.entity === 'item' ? await db.getItemIcon(ref.id) : await db.getEquipIcon(ref.id);
+        if (!bytes || bytes.byteLength === 0) {
+          log.info('no icon bytes in db', { ...ref });
+          return null;
+        }
+        // Copy into a fresh ArrayBuffer so the Blob type matches BlobPart
+        // regardless of the underlying buffer kind.
+        const buf = new ArrayBuffer(bytes.byteLength);
+        new Uint8Array(buf).set(bytes);
+        const url = URL.createObjectURL(new Blob([buf], { type: 'image/png' }));
+        cache.set(key, url);
+        return url;
+      } catch (e) {
+        log.error('fetchIcon threw', { ...ref, ...describeError(e) });
+        return null;
+      }
     })().finally(() => {
-      pending.delete(path);
+      pending.delete(key);
     });
-    pending.set(path, p);
+    pending.set(key, p);
   }
   return p;
 }
 
 /**
- * Look up a WZ icon and return an object-URL suitable for use in `<img src>`.
- * Returns `null` while loading or if the icon couldn't be decoded.
- *
- * The cache survives across components, so revisiting an item page doesn't
- * re-decode.
+ * Look up the persisted icon for an entity and return an object-URL suitable
+ * for use in `<img src>`. Returns `null` while loading or when no icon is
+ * stored.
  */
-export function useIcon(path: string | null | undefined): string | null {
-  const [url, setUrl] = useState<string | null>(() => (path ? (cache.get(path) ?? null) : null));
+export function useIcon(ref: IconRef | null | undefined): string | null {
+  // Splat into primitives so the effect deps array is stable across renders
+  // where the parent passes a fresh `{ entity, id }` object each time.
+  const entity = ref?.entity ?? null;
+  const id = ref?.id ?? null;
+  const key = entity && id !== null ? `${entity}:${id}` : null;
+  const [url, setUrl] = useState<string | null>(() => (key ? (cache.get(key) ?? null) : null));
 
   useEffect(() => {
     let cancelled = false;
-    if (!path) {
+    if (!entity || id === null) {
       setUrl(null);
       return;
     }
-    const cached = cache.get(path);
+    const cached = cache.get(`${entity}:${id}`);
     if (cached) {
       setUrl(cached);
       return;
     }
     setUrl(null);
-    fetchIcon(path).then((u) => {
+    fetchIcon({ entity, id }).then((u) => {
       if (!cancelled) setUrl(u);
     });
     return () => {
       cancelled = true;
     };
-  }, [path]);
+  }, [entity, id]);
 
   return url;
 }

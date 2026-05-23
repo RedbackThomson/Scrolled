@@ -20,6 +20,7 @@ interface ItemRow extends Row {
   category: string | null;
   subcategory: string | null;
   icon_path: string | null;
+  icon_data: Uint8Array | null;
   price: number | null;
   stack_size: number | null;
   required_level: number | null;
@@ -46,6 +47,7 @@ interface EquipRow extends Row {
   avoidability: number | null;
   upgrade_slots: number | null;
   icon_path: string | null;
+  icon_data: Uint8Array | null;
   source_path: string;
 }
 
@@ -57,6 +59,7 @@ function rowToItem(r: ItemRow): ItemRecord {
     category: r.category,
     subcategory: r.subcategory,
     iconPath: r.icon_path,
+    iconData: r.icon_data,
     price: r.price,
     stackSize: r.stack_size,
     requiredLevel: r.required_level,
@@ -85,6 +88,7 @@ function rowToEquip(r: EquipRow): EquipRecord {
     avoidability: r.avoidability,
     upgradeSlots: r.upgrade_slots,
     iconPath: r.icon_path,
+    iconData: r.icon_data,
     sourcePath: r.source_path,
   };
 }
@@ -130,6 +134,14 @@ export class DbApi implements GameDatabase {
     return row ? rowToItem(row) : null;
   }
 
+  async getItemIcon(id: number): Promise<Uint8Array | null> {
+    const row = this.sql.selectObject<{ icon_data: Uint8Array | null }>(
+      'SELECT icon_data FROM items WHERE id = ?',
+      [id],
+    );
+    return row?.icon_data ?? null;
+  }
+
   async listItems(
     opts: { limit?: number; search?: string; category?: string } = {},
   ): Promise<ItemRecord[]> {
@@ -146,8 +158,16 @@ export class DbApi implements GameDatabase {
     }
     const clause = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
     params.push(limit);
+    // List queries deliberately skip `icon_data` — the BLOB lookup happens
+    // per-icon via `getItemIcon(id)` so we don't drag MBs of bytes into a
+    // list-render result.
     return this.sql
-      .selectObjects<ItemRow>(`SELECT * FROM items ${clause} ORDER BY name LIMIT ?`, params)
+      .selectObjects<ItemRow>(
+        `SELECT id, name, description, category, subcategory, icon_path, NULL AS icon_data,
+                price, stack_size, required_level, source_path
+         FROM items ${clause} ORDER BY name LIMIT ?`,
+        params,
+      )
       .map(rowToItem);
   }
 
@@ -167,6 +187,14 @@ export class DbApi implements GameDatabase {
     return row ? rowToEquip(row) : null;
   }
 
+  async getEquipIcon(id: number): Promise<Uint8Array | null> {
+    const row = this.sql.selectObject<{ icon_data: Uint8Array | null }>(
+      'SELECT icon_data FROM equips WHERE id = ?',
+      [id],
+    );
+    return row?.icon_data ?? null;
+  }
+
   async listEquips(
     opts: { limit?: number; search?: string; slot?: string } = {},
   ): Promise<EquipRecord[]> {
@@ -184,7 +212,14 @@ export class DbApi implements GameDatabase {
     const clause = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
     params.push(limit);
     return this.sql
-      .selectObjects<EquipRow>(`SELECT * FROM equips ${clause} ORDER BY name LIMIT ?`, params)
+      .selectObjects<EquipRow>(
+        `SELECT id, name, description, slot, category, required_level,
+                required_str, required_dex, required_int, required_luk, required_job,
+                attack, magic_attack, defense, magic_defense, accuracy, avoidability,
+                upgrade_slots, icon_path, NULL AS icon_data, source_path
+         FROM equips ${clause} ORDER BY name LIMIT ?`,
+        params,
+      )
       .map(rowToEquip);
   }
 
@@ -264,8 +299,8 @@ export class DbApi implements GameDatabase {
         id, name, description, slot, category, required_level,
         required_str, required_dex, required_int, required_luk, required_job,
         attack, magic_attack, defense, magic_defense, accuracy, avoidability,
-        upgrade_slots, icon_path, source_path
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        upgrade_slots, icon_path, icon_data, source_path
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         name           = excluded.name,
         description    = excluded.description,
@@ -285,6 +320,7 @@ export class DbApi implements GameDatabase {
         avoidability   = excluded.avoidability,
         upgrade_slots  = excluded.upgrade_slots,
         icon_path      = excluded.icon_path,
+        icon_data      = COALESCE(excluded.icon_data, equips.icon_data),
         source_path    = excluded.source_path`,
       [
         e.id,
@@ -306,6 +342,7 @@ export class DbApi implements GameDatabase {
         e.avoidability,
         e.upgradeSlots,
         e.iconPath,
+        e.iconData,
         e.sourcePath,
       ],
     );
@@ -314,15 +351,18 @@ export class DbApi implements GameDatabase {
   private upsertItemRow(item: ItemRecord): void {
     this.sql.exec(
       `INSERT INTO items (
-        id, name, description, category, subcategory, icon_path,
+        id, name, description, category, subcategory, icon_path, icon_data,
         price, stack_size, required_level, source_path
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         name           = excluded.name,
         description    = excluded.description,
         category       = excluded.category,
         subcategory    = excluded.subcategory,
         icon_path      = excluded.icon_path,
+        -- Preserve an existing icon if the new record didn't bring fresh
+        -- bytes (e.g. an extraction re-run without WZ files loaded).
+        icon_data      = COALESCE(excluded.icon_data, items.icon_data),
         price          = excluded.price,
         stack_size     = excluded.stack_size,
         required_level = excluded.required_level,
@@ -334,6 +374,7 @@ export class DbApi implements GameDatabase {
         item.category,
         item.subcategory,
         item.iconPath,
+        item.iconData,
         item.price,
         item.stackSize,
         item.requiredLevel,

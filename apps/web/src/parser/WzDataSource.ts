@@ -200,13 +200,24 @@ export class WzDataSource implements GameDataSource {
   }
 
   async getIconPng(path: string): Promise<Uint8Array | null> {
-    log.debug('getIconPng', { path });
+    log.info('getIconPng', { path });
     const loaded = this.loadedFor(path);
-    if (!loaded) return null;
+    if (!loaded) {
+      log.warn('getIconPng: file not loaded for path', {
+        path,
+        loadedFiles: [...this.files.keys()],
+      });
+      return null;
+    }
     return runExclusive(loaded, async () => {
       const obj = await this.resolveInLock(loaded, path);
-      if (!obj) return null;
-      return decodePng(obj);
+      if (!obj) {
+        log.warn('getIconPng: path did not resolve', { path });
+        return null;
+      }
+      const bytes = await decodePng(obj);
+      log.info('getIconPng done', { path, bytes: bytes?.byteLength ?? 0 });
+      return bytes;
     });
   }
 

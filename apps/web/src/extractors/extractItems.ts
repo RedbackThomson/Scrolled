@@ -147,13 +147,19 @@ async function readItem(
     return null;
   }
 
+  // Decode the icon to PNG bytes once, here, so it persists into SQLite and
+  // survives reloads without the WZ files being re-loaded.
+  const iconPath = info.icon ? `${itemPath}/info/icon` : null;
+  const iconData = iconPath ? await source.getIconPng(iconPath) : null;
+
   return {
     id,
     name,
     description,
     category: spec.category,
     subcategory: null,
-    iconPath: info.icon ? `${itemPath}/info/icon` : null,
+    iconPath,
+    iconData,
     price: info.price,
     stackSize: info.slotMax,
     requiredLevel: info.reqLevel,

@@ -11,6 +11,8 @@ export interface ItemRecord {
   category: string | null;
   subcategory: string | null;
   iconPath: string | null;
+  /** Decoded PNG bytes, populated by extraction; null if not yet decoded. */
+  iconData: Uint8Array | null;
   price: number | null;
   stackSize: number | null;
   requiredLevel: number | null;
@@ -37,6 +39,7 @@ export interface EquipRecord {
   avoidability: number | null;
   upgradeSlots: number | null;
   iconPath: string | null;
+  iconData: Uint8Array | null;
   sourcePath: string;
 }
 
@@ -117,11 +120,14 @@ export interface GameDatabase {
   upsertItems(items: ItemRecord[]): Promise<number>;
   getItem(id: number): Promise<ItemRecord | null>;
   listItems(opts?: { limit?: number; search?: string; category?: string }): Promise<ItemRecord[]>;
+  /** Just the persisted icon bytes for an item, or null. */
+  getItemIcon(id: number): Promise<Uint8Array | null>;
 
   upsertEquip(equip: EquipRecord): Promise<void>;
   upsertEquips(equips: EquipRecord[]): Promise<number>;
   getEquip(id: number): Promise<EquipRecord | null>;
   listEquips(opts?: { limit?: number; search?: string; slot?: string }): Promise<EquipRecord[]>;
+  getEquipIcon(id: number): Promise<Uint8Array | null>;
 
   /** Names + IDs of all entities for the in-app search index. */
   listSearchEntries(): Promise<SearchEntry[]>;

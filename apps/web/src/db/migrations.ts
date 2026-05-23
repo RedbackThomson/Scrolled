@@ -183,4 +183,12 @@ export const MIGRATIONS: readonly Migration[] = [
       );
     `,
   },
+  {
+    version: 2,
+    name: 'persist decoded icons',
+    sql: `
+      ALTER TABLE items  ADD COLUMN icon_data BLOB;
+      ALTER TABLE equips ADD COLUMN icon_data BLOB;
+    `,
+  },
 ];

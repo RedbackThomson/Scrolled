@@ -64,7 +64,7 @@ export default function ItemDetail() {
       <div className="grid gap-6 sm:grid-cols-[1fr_18rem]">
         <article className="space-y-4">
           <header className="flex items-center gap-3">
-            <ItemIcon path={item.iconPath} size={48} alt={item.name} />
+            <ItemIcon entity="item" id={item.id} size={48} alt={item.name} />
             <div>
               <h1 className="text-3xl font-semibold tracking-tight">{item.name}</h1>
               <p className="text-muted-foreground font-mono text-xs">{item.id}</p>
