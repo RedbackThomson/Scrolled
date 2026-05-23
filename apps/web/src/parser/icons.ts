@@ -2,6 +2,9 @@ import { WzCanvasProperty, WzPngProperty } from '@tybys/wz';
 import type { WzObject } from '@tybys/wz';
 import { WzImage } from '@tybys/wz';
 import { createLogger, describeError } from '@/lib/logger';
+import { ensureCanvasPatched, flushAndGetCanvas } from './canvasPatch';
+
+ensureCanvasPatched();
 
 const log = createLogger('icons');
 
@@ -29,14 +32,37 @@ export async function decodePng(node: WzObject): Promise<Uint8Array | null> {
     return null;
   }
   try {
+    const t0 = performance.now();
     const canvas = await canvasNode.getBitmap();
+    const t1 = performance.now();
     if (!canvas) {
-      log.warn('decodePng: getBitmap returned null', { ctor: canvasNode?.constructor?.name });
+      log.warn('decodePng: getBitmap returned null', {
+        ctor: canvasNode?.constructor?.name,
+        ms: Math.round(t1 - t0),
+      });
       return null;
     }
-    const png = await canvas.getBufferAsync('image/png');
+    // Bypass the library's `getBufferAsync`: it converts the canvas to a
+    // Blob, then reads it back through a FileReader to get bytes. Both of
+    // those steps hang unpredictably on OffscreenCanvas in Firefox workers.
+    // Going straight to `convertToBlob` + `blob.arrayBuffer()` is one event-
+    // loop turn each and just works.
+    const offscreen = flushAndGetCanvas(canvas);
+    if (!offscreen) {
+      log.warn('decodePng: underlying canvas is null after flush');
+      return null;
+    }
+    const blob = await offscreen.convertToBlob({ type: 'image/png' });
+    const t2 = performance.now();
+    const png = new Uint8Array(await blob.arrayBuffer());
+    const t3 = performance.now();
     canvas.dispose();
-    log.info('decodePng ok', { bytes: png?.byteLength ?? 0 });
+    log.info('decodePng ok', {
+      bytes: png.byteLength,
+      bitmapMs: Math.round(t1 - t0),
+      blobMs: Math.round(t2 - t1),
+      arrayMs: Math.round(t3 - t2),
+    });
     return png;
   } catch (e) {
     log.warn('decodePng failed', describeError(e));
