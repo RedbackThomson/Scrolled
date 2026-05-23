@@ -9,3 +9,5 @@
       information came from (any other internal metadata)
 - [ ] Create a first run experience that walks users through the process of loading
       their game files and setting up the app
+- [ ] Add support for favouriting anything
+- [ ] Add support for creating collections of things

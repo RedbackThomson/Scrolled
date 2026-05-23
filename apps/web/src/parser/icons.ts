@@ -12,6 +12,15 @@ const log = createLogger('icons');
  *
  * `node` must already be parsed (the caller is responsible for traversing to
  * it via the per-file lock).
+ *
+ * Disposing after the byte read is what the library expects and is what
+ * actually produces visible icons in practice — keeping the OffscreenCanvas
+ * alive (so it can be re-decoded later) regressed icon rendering for reasons
+ * I haven't fully pinned down on Firefox. The "second decode crashes with
+ * null toBlob" failure mode is sidestepped on the caller side: the main-
+ * thread icon URL cache (see `lib/useIcon.ts`) is unbounded and de-duplicates
+ * in-flight fetches, so the same canvas should not be decoded twice in a
+ * session.
  */
 export async function decodePng(node: WzObject): Promise<Uint8Array | null> {
   const canvasNode = await resolveCanvas(node);

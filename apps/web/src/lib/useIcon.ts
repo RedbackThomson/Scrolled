@@ -2,26 +2,20 @@ import { useEffect, useState } from 'react';
 import { getParserClient } from '@/parser';
 
 /**
- * LRU cache of decoded icon object URLs keyed by WZ path. Bounded to ~256
- * entries; oldest entries are revoked and dropped first.
+ * Per-path cache of decoded icon object URLs.
+ *
+ * The cache grows for the lifetime of the page and is never evicted. Earlier
+ * versions ran a 256-entry LRU and called `URL.revokeObjectURL` on evictions,
+ * but the typical extracted dataset has thousands of items, so eviction
+ * revoked URLs that were still in use by `<img>` tags elsewhere on the page
+ * — silently breaking icons everywhere except the most recently decoded
+ * handful.
+ *
+ * A few thousand 32×32 PNG icons total ~10–25 MB, which is fine for a tab
+ * lifetime. The browser reclaims the blobs when the page unloads.
  */
-const CACHE_LIMIT = 256;
 const cache = new Map<string, string>();
 const pending = new Map<string, Promise<string | null>>();
-
-function touch(path: string, url: string) {
-  if (cache.has(path)) {
-    cache.delete(path);
-  } else if (cache.size >= CACHE_LIMIT) {
-    const oldest = cache.keys().next().value;
-    if (oldest) {
-      const stale = cache.get(oldest);
-      if (stale) URL.revokeObjectURL(stale);
-      cache.delete(oldest);
-    }
-  }
-  cache.set(path, url);
-}
 
 async function fetchIcon(path: string): Promise<string | null> {
   let p = pending.get(path);
@@ -36,7 +30,7 @@ async function fetchIcon(path: string): Promise<string | null> {
       const buf = new ArrayBuffer(bytes.byteLength);
       new Uint8Array(buf).set(bytes);
       const url = URL.createObjectURL(new Blob([buf], { type: 'image/png' }));
-      touch(path, url);
+      cache.set(path, url);
       return url;
     })().finally(() => {
       pending.delete(path);
@@ -51,7 +45,7 @@ async function fetchIcon(path: string): Promise<string | null> {
  * Returns `null` while loading or if the icon couldn't be decoded.
  *
  * The cache survives across components, so revisiting an item page doesn't
- * re-decode. Object URLs are revoked when evicted from the cache.
+ * re-decode.
  */
 export function useIcon(path: string | null | undefined): string | null {
   const [url, setUrl] = useState<string | null>(() => (path ? (cache.get(path) ?? null) : null));
