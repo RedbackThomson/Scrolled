@@ -52,7 +52,7 @@ export interface LoadFileSpec {
  */
 export interface GameDataSource {
   init(version: WzMapleVersionName): Promise<void>;
-  load(files: LoadFileSpec[]): Promise<LoadResult>;
+  load(files: LoadFileSpec[], onProgress?: ProgressFn): Promise<LoadResult>;
   /** Get info for a single node by path. Returns null if not found. */
   getNode(path: string): Promise<WzNodeInfo | null>;
   /** List the immediate children of a node. */
@@ -76,6 +76,7 @@ export interface LoadResult {
 }
 
 import type { LogEntry } from '@/lib/logger';
+import type { ProgressFn } from '@/lib/progress';
 
 /**
  * Snapshot of the parser-side log buffer and a synchronous smoke test of the

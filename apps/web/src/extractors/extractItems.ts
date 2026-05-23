@@ -1,6 +1,7 @@
 import type { GameDataSource, WzNodeInfo } from '@/parser';
 import type { ItemRecord } from '@/db';
 import { createLogger } from '@/lib/logger';
+import type { ProgressFn } from '@/lib/progress';
 
 const log = createLogger('extract-items');
 
@@ -46,12 +47,6 @@ const CATEGORIES: readonly CategorySpec[] = [
   },
 ];
 
-export interface ExtractItemsProgress {
-  category: ItemRecord['category'];
-  group: string;
-  countSoFar: number;
-}
-
 export interface ExtractItemsResult {
   items: ItemRecord[];
   skipped: { reason: string; path: string }[];
@@ -61,13 +56,15 @@ export interface ExtractItemsResult {
  * Walk `Item.wz` (one category at a time) and produce normalized `ItemRecord`s
  * with names + descriptions resolved through `String.wz`. The caller is
  * responsible for persisting the result.
+ *
+ * Progress is indeterminate by item count (the total isn't knowable without
+ * walking everything first, which costs the same as the actual extraction)
+ * but each tick carries the current category + group so the UI can show
+ * "Items · use — Consume / 0200.img".
  */
 export async function extractItems(
   source: GameDataSource,
-  opts: {
-    /** Per-group progress callback for UI streaming. */
-    onProgress?: (p: ExtractItemsProgress) => void;
-  } = {},
+  opts: { onProgress?: ProgressFn } = {},
 ): Promise<ExtractItemsResult> {
   const items: ItemRecord[] = [];
   const skipped: { reason: string; path: string }[] = [];
@@ -82,6 +79,11 @@ export async function extractItems(
 
     for (const group of groups) {
       if (group.kind !== 'image') continue;
+      opts.onProgress?.({
+        phase: `Items · ${spec.category}`,
+        current: items.length,
+        detail: `${spec.itemDir} / ${group.name}`,
+      });
       const groupChildren = await source.listChildren(group.fullPath);
       log.debug('walking group', {
         category: spec.category,
@@ -99,9 +101,9 @@ export async function extractItems(
       }
 
       opts.onProgress?.({
-        category: spec.category,
-        group: group.name,
-        countSoFar: items.length,
+        phase: `Items · ${spec.category}`,
+        current: items.length,
+        detail: `${spec.itemDir} / ${group.name}`,
       });
     }
   }

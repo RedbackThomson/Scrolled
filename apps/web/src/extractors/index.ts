@@ -11,6 +11,6 @@ export interface Extractor<T> {
 }
 
 export { extractItems } from './extractItems';
-export type { ExtractItemsProgress, ExtractItemsResult } from './extractItems';
+export type { ExtractItemsResult } from './extractItems';
 export { extractEquips } from './extractEquips';
 export type { ExtractEquipsResult } from './extractEquips';

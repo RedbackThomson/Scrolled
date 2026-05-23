@@ -21,6 +21,7 @@ import { toNodeInfo, WzSubProperty, WzConvexProperty } from './nodeInfo';
 import { decodePng } from './icons';
 import { createLogger, describeError, getLogEntries } from '@/lib/logger';
 import { getAesSmokeTestResult } from './wzInit';
+import type { ProgressFn } from '@/lib/progress';
 
 const log = createLogger('wz-data-source');
 
@@ -67,7 +68,7 @@ export class WzDataSource implements GameDataSource {
     this.version = version;
   }
 
-  async load(files: LoadFileSpec[]): Promise<LoadResult> {
+  async load(files: LoadFileSpec[], onProgress?: ProgressFn): Promise<LoadResult> {
     const loaded: LoadResult['loaded'] = [];
     const errors: LoadResult['errors'] = [];
 
@@ -92,7 +93,15 @@ export class WzDataSource implements GameDataSource {
         // hundred MB (Item.wz is ~96 MB, String.wz ~5 MB on MapleRoyals).
         // Map.wz (~880 MB) and Character.wz (~800 MB) will need a different
         // strategy when those phases land.
-        const source = await this.toSource(spec.source, spec.name);
+        const source = await this.toSource(spec.source, spec.name, onProgress);
+        if (onProgress) {
+          onProgress({
+            phase: `Parsing ${spec.name}`,
+            current: 0,
+            total: 0,
+            detail: 'reading header',
+          });
+        }
         const file = new WzFile(source, toWzMapleVersion(this.version));
         const status = await file.parseWzFile();
         if (status !== WzFileParseStatus.SUCCESS) {
@@ -221,10 +230,43 @@ export class WzDataSource implements GameDataSource {
     this.files.clear();
   }
 
-  private async toSource(input: File | string, logName: string): Promise<File | string> {
+  private async toSource(
+    input: File | string,
+    logName: string,
+    onProgress?: ProgressFn,
+  ): Promise<File | string> {
     if (typeof input === 'string') return input;
     const started = performance.now();
-    const buf = new Uint8Array(await input.arrayBuffer());
+    const total = input.size;
+
+    let buf: Uint8Array;
+    if (typeof input.stream === 'function') {
+      // Stream the File so we can emit byte-level progress.
+      const chunks: Uint8Array[] = [];
+      let read = 0;
+      const reader = input.stream().getReader();
+      const phase = `Loading ${logName}`;
+      onProgress?.({ phase, current: 0, total });
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        if (value) {
+          chunks.push(value);
+          read += value.byteLength;
+          onProgress?.({ phase, current: read, total });
+        }
+      }
+      buf = new Uint8Array(read);
+      let offset = 0;
+      for (const c of chunks) {
+        buf.set(c, offset);
+        offset += c.byteLength;
+      }
+    } else {
+      // Fallback (no streaming): single-shot arrayBuffer.
+      buf = new Uint8Array(await input.arrayBuffer());
+    }
+
     log.info('buffered file into memory', {
       name: logName,
       bytes: buf.byteLength,

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { proxy } from 'comlink';
 import {
   ChevronDown,
   ChevronRight,
@@ -12,10 +13,12 @@ import {
 import { FilePicker } from '@/components/FilePicker';
 import { Button } from '@/components/ui/button';
 import { ExtractAllPanel } from '@/components/ExtractAllPanel';
+import { ProgressBar } from '@/components/ProgressBar';
 import { getParserClient, type WzNodeInfo, type WzMapleVersionName } from '@/parser';
 import { getDbClient } from '@/db';
 import { cn } from '@/lib/utils';
 import { buildReport } from '@/lib/diagnosticsReport';
+import type { ProgressUpdate } from '@/lib/progress';
 
 // MapleRoyals' v83-era client uses the "old GMS" encryption — listed first.
 const VERSIONS: WzMapleVersionName[] = ['GMS', 'BMS', 'EMS', 'CLASSIC'];
@@ -30,6 +33,7 @@ export default function Debug() {
   const [busy, setBusy] = useState(false);
   const [loadState, setLoadState] = useState<LoadState | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loadProgress, setLoadProgress] = useState<ProgressUpdate | null>(null);
 
   const [lookupPath, setLookupPath] = useState('');
   const [lookupResult, setLookupResult] = useState<WzNodeInfo | null | 'pending'>(null);
@@ -45,14 +49,20 @@ export default function Debug() {
       setBusy(true);
       setError(null);
       setLoadState(null);
+      setLoadProgress({ phase: 'Initializing', current: 0 });
       try {
         await client.init(version);
-        const result = await client.load(files.map((file) => ({ name: file.name, source: file })));
+        const onProgress = proxy((p: ProgressUpdate) => setLoadProgress(p));
+        const result = await client.load(
+          files.map((file) => ({ name: file.name, source: file })),
+          onProgress,
+        );
         setLoadState(result);
       } catch (e) {
         setError((e as Error).message);
       } finally {
         setBusy(false);
+        setLoadProgress(null);
       }
     },
     [client, version],
@@ -99,8 +109,15 @@ export default function Debug() {
             ))}
           </select>
           <FilePicker onFiles={handleFiles} disabled={busy} />
-          {busy && <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />}
+          {busy && !loadProgress && (
+            <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
+          )}
         </div>
+        {loadProgress && (
+          <div className="border-border bg-card text-card-foreground rounded-md border p-3">
+            <ProgressBar progress={loadProgress} />
+          </div>
+        )}
         {error && (
           <div className="border-destructive/40 bg-destructive/10 text-destructive flex items-start gap-2 rounded-md border p-3 text-sm">
             <FileWarning className="mt-0.5 h-4 w-4 shrink-0" />

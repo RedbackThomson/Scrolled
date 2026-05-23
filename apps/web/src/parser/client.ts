@@ -1,15 +1,19 @@
 import { wrap, type Remote } from 'comlink';
 import type { GameDataSource } from './types';
 import type { ExtractItemsResult, ExtractEquipsResult } from '@/extractors';
+import type { ProgressFn } from '@/lib/progress';
 
 /**
  * The full worker surface. Extends the public `GameDataSource` with
  * worker-only methods that run extractors in-process to avoid one comlink hop
  * per node read.
+ *
+ * `onProgress` callbacks must be wrapped in comlink's `proxy()` on the caller
+ * side so they survive the worker boundary.
  */
 export interface ParserWorkerApi extends GameDataSource {
-  extractItems(): Promise<ExtractItemsResult>;
-  extractEquips(): Promise<ExtractEquipsResult>;
+  extractItems(onProgress?: ProgressFn): Promise<ExtractItemsResult>;
+  extractEquips(onProgress?: ProgressFn): Promise<ExtractEquipsResult>;
 }
 
 let cached: { worker: Worker; proxy: Remote<ParserWorkerApi> } | null = null;

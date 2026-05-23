@@ -1,6 +1,7 @@
 import type { GameDataSource } from '@/parser';
 import type { EquipRecord } from '@/db';
 import { createLogger } from '@/lib/logger';
+import type { ProgressFn } from '@/lib/progress';
 
 const log = createLogger('extract-equips');
 
@@ -16,7 +17,10 @@ export interface ExtractEquipsResult {
  * ~800 MB and not yet supported by the in-memory load path. When that lands,
  * extend this extractor to populate the empty stat columns.
  */
-export async function extractEquips(source: GameDataSource): Promise<ExtractEquipsResult> {
+export async function extractEquips(
+  source: GameDataSource,
+  opts: { onProgress?: ProgressFn } = {},
+): Promise<ExtractEquipsResult> {
   const equips: EquipRecord[] = [];
   const skipped: { reason: string; path: string }[] = [];
 
@@ -27,9 +31,19 @@ export async function extractEquips(source: GameDataSource): Promise<ExtractEqui
     return { equips, skipped };
   }
 
+  let slotIdx = 0;
   for (const slot of slots) {
-    if (!slot.hasChildren) continue;
+    if (!slot.hasChildren) {
+      slotIdx++;
+      continue;
+    }
     const slotKey = slot.name.toLowerCase();
+    opts.onProgress?.({
+      phase: 'Equips',
+      current: equips.length,
+      total: 0,
+      detail: `${slot.name} (${slotIdx + 1}/${slots.length})`,
+    });
     const idEntries = await source.listChildren(slot.fullPath);
 
     for (const entry of idEntries) {
@@ -65,6 +79,7 @@ export async function extractEquips(source: GameDataSource): Promise<ExtractEqui
         sourcePath: entry.fullPath,
       });
     }
+    slotIdx++;
   }
 
   log.info('equip extraction complete', { count: equips.length, skipped: skipped.length });
