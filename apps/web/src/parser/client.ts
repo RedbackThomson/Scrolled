@@ -1,6 +1,12 @@
 import { wrap, type Remote } from 'comlink';
 import type { GameDataSource } from './types';
-import type { ExtractItemsResult, ExtractEquipsResult } from '@/extractors';
+import type {
+  ExtractItemsResult,
+  ExtractEquipsResult,
+  ExtractMobsResult,
+  ExtractNpcsResult,
+  ExtractMapsResult,
+} from '@/extractors';
 import type { ProgressFn } from '@/lib/progress';
 
 /**
@@ -14,6 +20,9 @@ import type { ProgressFn } from '@/lib/progress';
 export interface ParserWorkerApi extends GameDataSource {
   extractItems(onProgress?: ProgressFn): Promise<ExtractItemsResult>;
   extractEquips(onProgress?: ProgressFn): Promise<ExtractEquipsResult>;
+  extractMobs(onProgress?: ProgressFn): Promise<ExtractMobsResult>;
+  extractNpcs(onProgress?: ProgressFn): Promise<ExtractNpcsResult>;
+  extractMaps(onProgress?: ProgressFn): Promise<ExtractMapsResult>;
 }
 
 let cached: { worker: Worker; proxy: Remote<ParserWorkerApi> } | null = null;

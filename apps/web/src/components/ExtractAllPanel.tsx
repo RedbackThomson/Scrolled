@@ -15,14 +15,20 @@ const log = createLogger('extract-ui');
 interface ExtractStats {
   items: number;
   equips: number;
+  mobs: number;
+  npcs: number;
+  maps: number;
   skipped: number;
   ms: number;
 }
 
 /**
- * Phase 3 bulk extraction: walks Item.wz + String.wz in the parser worker and
- * mass-upserts items + equips into the local DB. Progress is streamed back
- * from the worker through a comlink-proxied callback.
+ * Bulk extraction across every entity type the app knows how to parse from
+ * the loaded WZ files. Each extractor runs sequentially (the parser
+ * worker's per-file lock would serialize them anyway), and the persisted
+ * records show up immediately on their respective routes.
+ *
+ * Progress is streamed from the worker through a comlink-proxied callback.
  */
 export function ExtractAllPanel() {
   const parser = useMemo(() => getParserClient(), []);
@@ -36,39 +42,80 @@ export function ExtractAllPanel() {
       const started = performance.now();
       setProgress({ phase: 'Starting extraction', current: 0 });
 
-      // Comlink-proxy a callback so the worker can ping us with updates.
       const onProgress = proxy((p: ProgressUpdate) => setProgress(p));
 
       const itemsResult = await parser.extractItems(onProgress);
-      const equipsResult = await parser.extractEquips(onProgress);
-
-      log.info('extract complete in worker', {
-        items: itemsResult.items.length,
-        equips: equipsResult.equips.length,
-      });
-
-      // Persistence is fast (one transaction), but it's still worth showing
-      // some feedback so the bar doesn't sit empty at the end.
       setProgress({
-        phase: 'Saving to database',
+        phase: 'Saving items to database',
         current: 0,
-        total: itemsResult.items.length + equipsResult.equips.length,
+        total: itemsResult.items.length,
       });
-      const [itemCount, equipCount] = await Promise.all([
-        itemsResult.items.length > 0 ? db.upsertItems(itemsResult.items) : Promise.resolve(0),
-        equipsResult.equips.length > 0 ? db.upsertEquips(equipsResult.equips) : Promise.resolve(0),
-      ]);
+      const itemCount = itemsResult.items.length > 0 ? await db.upsertItems(itemsResult.items) : 0;
+
+      const equipsResult = await parser.extractEquips(onProgress);
       setProgress({
-        phase: 'Saving to database',
-        current: itemCount + equipCount,
-        total: itemsResult.items.length + equipsResult.equips.length,
+        phase: 'Saving equips to database',
+        current: 0,
+        total: equipsResult.equips.length,
       });
+      const equipCount =
+        equipsResult.equips.length > 0 ? await db.upsertEquips(equipsResult.equips) : 0;
+
+      const mobsResult = await parser.extractMobs(onProgress);
+      setProgress({
+        phase: 'Saving mobs to database',
+        current: 0,
+        total: mobsResult.mobs.length,
+      });
+      const mobCount = mobsResult.mobs.length > 0 ? await db.upsertMobs(mobsResult.mobs) : 0;
+
+      const npcsResult = await parser.extractNpcs(onProgress);
+      setProgress({
+        phase: 'Saving NPCs to database',
+        current: 0,
+        total: npcsResult.npcs.length,
+      });
+      const npcCount = npcsResult.npcs.length > 0 ? await db.upsertNpcs(npcsResult.npcs) : 0;
+
+      const mapsResult = await parser.extractMaps(onProgress);
+      setProgress({
+        phase: 'Saving maps to database',
+        current: 0,
+        total: mapsResult.maps.length,
+      });
+      const mapCount = mapsResult.maps.length > 0 ? await db.upsertMaps(mapsResult.maps) : 0;
+      // Map life + portals are written as a single replace transaction.
+      if (
+        mapsResult.mapNpcs.length > 0 ||
+        mapsResult.mapMobs.length > 0 ||
+        mapsResult.mapPortals.length > 0
+      ) {
+        setProgress({
+          phase: 'Saving map life + portals',
+          current: 0,
+          total:
+            mapsResult.mapNpcs.length + mapsResult.mapMobs.length + mapsResult.mapPortals.length,
+        });
+        await db.replaceMapLife({
+          npcs: mapsResult.mapNpcs,
+          mobs: mapsResult.mapMobs,
+          portals: mapsResult.mapPortals,
+        });
+      }
 
       const ms = Math.round(performance.now() - started);
       const result: ExtractStats = {
         items: itemCount,
         equips: equipCount,
-        skipped: itemsResult.skipped.length + equipsResult.skipped.length,
+        mobs: mobCount,
+        npcs: npcCount,
+        maps: mapCount,
+        skipped:
+          itemsResult.skipped.length +
+          equipsResult.skipped.length +
+          mobsResult.skipped.length +
+          npcsResult.skipped.length +
+          mapsResult.skipped.length,
         ms,
       };
       log.info('extract+persist complete', result);
@@ -91,10 +138,9 @@ export function ExtractAllPanel() {
     <section className="space-y-3">
       <h2 className="text-lg font-semibold">Bulk extract to database</h2>
       <p className="text-muted-foreground text-sm">
-        Walks <code className="font-mono text-xs">Item.wz</code> and joins names from{' '}
-        <code className="font-mono text-xs">String.wz</code> for items, plus equipment names from{' '}
-        <code className="font-mono text-xs">String.wz/Eqp.img</code>. Records are saved to the local
-        SQLite database.
+        Walks every loaded WZ file: items + equips + mobs + NPCs + maps (with their NPC, mob, and
+        portal placements). Records are saved to the local SQLite database. Map.wz extraction is
+        memory-intensive — load it only if you want full map data.
       </p>
       <div className="flex items-center gap-3">
         <Button onClick={onRun} disabled={runM.isPending}>
@@ -103,17 +149,18 @@ export function ExtractAllPanel() {
           ) : (
             <Sparkles className="h-4 w-4" />
           )}
-          {runM.isPending ? 'Extracting…' : 'Extract items + equips'}
+          {runM.isPending ? 'Extracting…' : 'Extract everything'}
         </Button>
         {stats && !runM.isPending && (
           <div className="text-muted-foreground flex items-center gap-2 text-sm">
             <Database className="h-4 w-4" />
             <span>
-              {stats.items} items, {stats.equips} equips
+              {stats.items} items, {stats.equips} equips, {stats.mobs} mobs, {stats.npcs} NPCs,{' '}
+              {stats.maps} maps
               {stats.skipped > 0 ? `, ${stats.skipped} skipped` : ''} in {stats.ms} ms
             </span>
             <Link to="/items" className="text-primary text-xs hover:underline">
-              View items →
+              Browse →
             </Link>
           </div>
         )}

@@ -14,15 +14,15 @@ export interface SearchHit {
 }
 
 let cached: MiniSearch<SearchEntry> | null = null;
-let cacheEpoch = -1;
+let cacheEpoch = '';
 let buildPromise: Promise<MiniSearch<SearchEntry>> | null = null;
 
 /**
- * Build / refresh the in-memory MiniSearch index from the DB. `epoch` lets
- * callers invalidate (e.g. after a fresh extraction) by passing a value
- * different from the last build.
+ * Build / refresh the in-memory MiniSearch index from the DB. `epoch` is a
+ * stable fingerprint of the DB contents (e.g. concatenated entity counts) —
+ * passing a different value than the last build forces a refresh.
  */
-export function getSearchIndex(epoch: number): Promise<MiniSearch<SearchEntry>> {
+export function getSearchIndex(epoch: string): Promise<MiniSearch<SearchEntry>> {
   if (cached && cacheEpoch === epoch) return Promise.resolve(cached);
   if (buildPromise && cacheEpoch === epoch) return buildPromise;
   buildPromise = (async () => {

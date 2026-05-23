@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Loader2, Package, Search, Shield } from 'lucide-react';
+import { Loader2, Map as MapIcon, Package, Search, Shield, Skull, Users } from 'lucide-react';
+import type { EntityKind } from '@/db';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { getDbClient } from '@/db';
 import { getSearchIndex, querySearch, type SearchHit } from '@/search';
@@ -17,6 +18,36 @@ export function TopBar() {
   );
 }
 
+function routeFor(entity: EntityKind, id: number): string {
+  switch (entity) {
+    case 'item':
+      return `/items/${id}`;
+    case 'equip':
+      return `/equips/${id}`;
+    case 'mob':
+      return `/mobs/${id}`;
+    case 'npc':
+      return `/npcs/${id}`;
+    case 'map':
+      return `/maps/${id}`;
+  }
+}
+
+function iconFor(entity: EntityKind) {
+  switch (entity) {
+    case 'item':
+      return Package;
+    case 'equip':
+      return Shield;
+    case 'mob':
+      return Skull;
+    case 'npc':
+      return Users;
+    case 'map':
+      return MapIcon;
+  }
+}
+
 function GlobalSearch() {
   const navigate = useNavigate();
   const db = useMemo(() => getDbClient(), []);
@@ -30,16 +61,24 @@ function GlobalSearch() {
     queryFn: () => db.status(),
   });
 
-  // `epoch` invalidates the in-memory MiniSearch index when DB contents change.
-  // Use the sum of relevant counts as a cheap version stamp.
-  const epoch = statusQ.data
-    ? statusQ.data.counts.items + statusQ.data.counts.equips * 1_000_001
-    : 0;
+  // `epoch` is a stable fingerprint of the DB's entity counts. Any count
+  // moving forces the MiniSearch index to rebuild on the next query.
+  const counts = statusQ.data?.counts;
+  const epoch = counts
+    ? `${counts.items}.${counts.equips}.${counts.mobs}.${counts.npcs}.${counts.maps}`
+    : '';
+  const hasContent =
+    !!counts &&
+    (counts.items > 0 ||
+      counts.equips > 0 ||
+      counts.mobs > 0 ||
+      counts.npcs > 0 ||
+      counts.maps > 0);
 
   const indexQ = useQuery({
     queryKey: ['search-index', epoch],
     queryFn: () => getSearchIndex(epoch),
-    enabled: Boolean(statusQ.data && epoch > 0),
+    enabled: hasContent,
   });
 
   const results: SearchHit[] = useMemo(() => {
@@ -61,7 +100,7 @@ function GlobalSearch() {
   }, [open]);
 
   function go(hit: SearchHit) {
-    navigate(hit.entity === 'item' ? `/items/${hit.id}` : `/equips/${hit.id}`);
+    navigate(routeFor(hit.entity, hit.id));
     setOpen(false);
     setQ('');
   }
@@ -83,8 +122,10 @@ function GlobalSearch() {
     }
   }
 
-  const empty = statusQ.data?.counts.items === 0 && statusQ.data?.counts.equips === 0;
-  const placeholder = empty ? 'Database is empty — extract on /debug' : 'Search items, equips…';
+  const empty = !hasContent;
+  const placeholder = empty
+    ? 'Database is empty — extract on /debug'
+    : 'Search items, equips, mobs, NPCs, maps…';
 
   return (
     <div ref={containerRef} className="relative max-w-xl flex-1">
@@ -111,34 +152,33 @@ function GlobalSearch() {
           {results.length === 0 && (
             <div className="text-muted-foreground p-3 text-sm">No matches.</div>
           )}
-          {results.map((hit, i) => (
-            <Link
-              key={`${hit.entity}-${hit.id}`}
-              to={hit.entity === 'item' ? `/items/${hit.id}` : `/equips/${hit.id}`}
-              onClick={() => {
-                setOpen(false);
-                setQ('');
-              }}
-              className={cn(
-                'flex items-center gap-3 px-3 py-2 text-sm',
-                i === activeIdx ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50',
-              )}
-              onMouseEnter={() => setActiveIdx(i)}
-            >
-              {hit.entity === 'equip' ? (
-                <Shield className="text-muted-foreground h-4 w-4 shrink-0" />
-              ) : (
-                <Package className="text-muted-foreground h-4 w-4 shrink-0" />
-              )}
-              <span className="min-w-0 flex-1 truncate">{hit.name}</span>
-              <span className="text-muted-foreground shrink-0 font-mono text-xs">{hit.id}</span>
-              {hit.category && (
-                <span className="text-muted-foreground shrink-0 text-xs capitalize">
-                  {hit.category}
-                </span>
-              )}
-            </Link>
-          ))}
+          {results.map((hit, i) => {
+            const Icon = iconFor(hit.entity);
+            return (
+              <Link
+                key={`${hit.entity}-${hit.id}`}
+                to={routeFor(hit.entity, hit.id)}
+                onClick={() => {
+                  setOpen(false);
+                  setQ('');
+                }}
+                className={cn(
+                  'flex items-center gap-3 px-3 py-2 text-sm',
+                  i === activeIdx ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50',
+                )}
+                onMouseEnter={() => setActiveIdx(i)}
+              >
+                <Icon className="text-muted-foreground h-4 w-4 shrink-0" />
+                <span className="min-w-0 flex-1 truncate">{hit.name}</span>
+                <span className="text-muted-foreground shrink-0 font-mono text-xs">{hit.id}</span>
+                {hit.category && (
+                  <span className="text-muted-foreground shrink-0 text-xs capitalize">
+                    {hit.category}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>

@@ -23,8 +23,20 @@ export const router = createBrowserRouter([
         lazy: () => import('@/routes/EquipDetail').then((m) => ({ Component: m.default })),
       },
       { path: 'mobs', lazy: () => import('@/routes/Mobs').then((m) => ({ Component: m.default })) },
+      {
+        path: 'mobs/:id',
+        lazy: () => import('@/routes/MobDetail').then((m) => ({ Component: m.default })),
+      },
       { path: 'npcs', lazy: () => import('@/routes/Npcs').then((m) => ({ Component: m.default })) },
+      {
+        path: 'npcs/:id',
+        lazy: () => import('@/routes/NpcDetail').then((m) => ({ Component: m.default })),
+      },
       { path: 'maps', lazy: () => import('@/routes/Maps').then((m) => ({ Component: m.default })) },
+      {
+        path: 'maps/:id',
+        lazy: () => import('@/routes/MapDetail').then((m) => ({ Component: m.default })),
+      },
       {
         path: 'quests',
         lazy: () => import('@/routes/Quests').then((m) => ({ Component: m.default })),

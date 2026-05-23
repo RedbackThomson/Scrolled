@@ -6,11 +6,17 @@ import './workerEnv';
 import { expose } from 'comlink';
 import { WzDataSource } from '@/parser/WzDataSource';
 import { ensureWzInit } from '@/parser/wzInit';
-import { extractItems, extractEquips } from '@/extractors';
+import { extractItems, extractEquips, extractMobs, extractNpcs, extractMaps } from '@/extractors';
 import { createLogger, describeError } from '@/lib/logger';
 import { throttleProgress, type ProgressFn } from '@/lib/progress';
 import type { GameDataSource, LoadFileSpec, WzMapleVersionName } from '@/parser/types';
-import type { ExtractItemsResult, ExtractEquipsResult } from '@/extractors';
+import type {
+  ExtractItemsResult,
+  ExtractEquipsResult,
+  ExtractMobsResult,
+  ExtractNpcsResult,
+  ExtractMapsResult,
+} from '@/extractors';
 
 const log = createLogger('worker');
 log.info('worker started');
@@ -79,6 +85,38 @@ class WorkerGameDataSource implements GameDataSource {
     log.info('extractEquips complete', {
       equips: result.equips.length,
       skipped: result.skipped.length,
+    });
+    return result;
+  }
+
+  async extractMobs(onProgress?: ProgressFn): Promise<ExtractMobsResult> {
+    log.info('extractMobs requested');
+    const result = await extractMobs(this.inner, {
+      onProgress: onProgress ? throttleProgress(onProgress) : undefined,
+    });
+    log.info('extractMobs complete', { mobs: result.mobs.length, skipped: result.skipped.length });
+    return result;
+  }
+
+  async extractNpcs(onProgress?: ProgressFn): Promise<ExtractNpcsResult> {
+    log.info('extractNpcs requested');
+    const result = await extractNpcs(this.inner, {
+      onProgress: onProgress ? throttleProgress(onProgress) : undefined,
+    });
+    log.info('extractNpcs complete', { npcs: result.npcs.length, skipped: result.skipped.length });
+    return result;
+  }
+
+  async extractMaps(onProgress?: ProgressFn): Promise<ExtractMapsResult> {
+    log.info('extractMaps requested');
+    const result = await extractMaps(this.inner, {
+      onProgress: onProgress ? throttleProgress(onProgress) : undefined,
+    });
+    log.info('extractMaps complete', {
+      maps: result.maps.length,
+      mapNpcs: result.mapNpcs.length,
+      mapMobs: result.mapMobs.length,
+      mapPortals: result.mapPortals.length,
     });
     return result;
   }

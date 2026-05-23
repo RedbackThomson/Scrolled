@@ -74,6 +74,38 @@ export interface MapRecord {
   sourcePath: string;
 }
 
+export interface MapNpcRecord {
+  mapId: number;
+  npcId: number;
+  x: number | null;
+  y: number | null;
+}
+
+export interface MapMobRecord {
+  mapId: number;
+  mobId: number;
+  count: number | null;
+}
+
+export interface MapPortalRecord {
+  mapId: number;
+  portalName: string;
+  targetMapId: number | null;
+  targetPortal: string | null;
+  x: number | null;
+  y: number | null;
+}
+
+/** A row from `map_npcs` joined back to the NPC's name for display. */
+export interface MapNpcWithName extends MapNpcRecord {
+  name: string;
+}
+
+export interface MapMobWithName extends MapMobRecord {
+  name: string;
+  level: number | null;
+}
+
 export interface QuestRecord {
   id: number;
   name: string;
@@ -129,6 +161,32 @@ export interface GameDatabase {
   listEquips(opts?: { limit?: number; search?: string; slot?: string }): Promise<EquipRecord[]>;
   getEquipIcon(id: number): Promise<Uint8Array | null>;
 
+  upsertMobs(mobs: MobRecord[]): Promise<number>;
+  getMob(id: number): Promise<MobRecord | null>;
+  listMobs(opts?: { limit?: number; search?: string; bossOnly?: boolean }): Promise<MobRecord[]>;
+
+  upsertNpcs(npcs: NpcRecord[]): Promise<number>;
+  getNpc(id: number): Promise<NpcRecord | null>;
+  listNpcs(opts?: { limit?: number; search?: string }): Promise<NpcRecord[]>;
+  /** Maps where this NPC appears. */
+  getNpcMaps(npcId: number): Promise<MapRecord[]>;
+
+  upsertMaps(maps: MapRecord[]): Promise<number>;
+  getMap(id: number): Promise<MapRecord | null>;
+  listMaps(opts?: { limit?: number; search?: string }): Promise<MapRecord[]>;
+  /** NPCs + mobs + portals attached to a single map. */
+  getMapNpcs(mapId: number): Promise<MapNpcWithName[]>;
+  getMapMobs(mapId: number): Promise<MapMobWithName[]>;
+  getMapPortals(mapId: number): Promise<MapPortalRecord[]>;
+
+  /** Replace all rows of a join table for the given map IDs. Used by the
+   *  map extractor to keep join data consistent with re-extractions. */
+  replaceMapLife(rows: {
+    npcs: MapNpcRecord[];
+    mobs: MapMobRecord[];
+    portals: MapPortalRecord[];
+  }): Promise<void>;
+
   /** Names + IDs of all entities for the in-app search index. */
   listSearchEntries(): Promise<SearchEntry[]>;
 
@@ -143,10 +201,11 @@ export interface GameDatabase {
   clearAllData(): Promise<void>;
 }
 
+export type EntityKind = 'item' | 'equip' | 'mob' | 'npc' | 'map';
+
 export interface SearchEntry {
   id: number;
   name: string;
-  /** 'item' | 'equip' (extend as more entity types come online) */
-  entity: 'item' | 'equip';
+  entity: EntityKind;
   category: string | null;
 }

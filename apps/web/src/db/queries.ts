@@ -9,6 +9,14 @@ import type {
   DbStatus,
   EquipRecord,
   ItemRecord,
+  MapMobRecord,
+  MapMobWithName,
+  MapNpcRecord,
+  MapNpcWithName,
+  MapPortalRecord,
+  MapRecord,
+  MobRecord,
+  NpcRecord,
   GameDatabase,
   SearchEntry,
 } from './types';
@@ -63,6 +71,74 @@ function rowToItem(r: ItemRow): ItemRecord {
     price: r.price,
     stackSize: r.stack_size,
     requiredLevel: r.required_level,
+    sourcePath: r.source_path,
+  };
+}
+
+interface MobRow extends Row {
+  id: number;
+  name: string;
+  level: number | null;
+  hp: number | null;
+  mp: number | null;
+  exp: number | null;
+  is_boss: number;
+  element_attack: string | null;
+  element_defenses_json: string | null;
+  source_path: string;
+}
+
+interface NpcRow extends Row {
+  id: number;
+  name: string;
+  description: string | null;
+  source_path: string;
+}
+
+interface MapRow extends Row {
+  id: number;
+  name: string | null;
+  street_name: string | null;
+  return_map_id: number | null;
+  forced_return_map_id: number | null;
+  field_limit: number | null;
+  mob_rate: number | null;
+  source_path: string;
+}
+
+function rowToMob(r: MobRow): MobRecord {
+  return {
+    id: r.id,
+    name: r.name,
+    level: r.level,
+    hp: r.hp,
+    mp: r.mp,
+    exp: r.exp,
+    isBoss: r.is_boss === 1,
+    elementAttack: r.element_attack,
+    elementDefensesJson: r.element_defenses_json,
+    sourcePath: r.source_path,
+  };
+}
+
+function rowToNpc(r: NpcRow): NpcRecord {
+  return {
+    id: r.id,
+    name: r.name,
+    description: r.description,
+    sourcePath: r.source_path,
+  };
+}
+
+function rowToMap(r: MapRow): MapRecord {
+  return {
+    id: r.id,
+    name: r.name,
+    streetName: r.street_name,
+    returnMapId: r.return_map_id,
+    forcedReturnMapId: r.forced_return_map_id,
+    fieldLimit: r.field_limit,
+    mobRate: r.mob_rate,
     sourcePath: r.source_path,
   };
 }
@@ -223,17 +299,305 @@ export class DbApi implements GameDatabase {
       .map(rowToEquip);
   }
 
+  async upsertMobs(mobs: MobRecord[]): Promise<number> {
+    this.sql.transaction(() => {
+      for (const m of mobs) {
+        this.sql.exec(
+          `INSERT INTO mobs (
+            id, name, level, hp, mp, exp, is_boss,
+            element_attack, element_defenses_json, source_path
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET
+            name                  = excluded.name,
+            level                 = excluded.level,
+            hp                    = excluded.hp,
+            mp                    = excluded.mp,
+            exp                   = excluded.exp,
+            is_boss               = excluded.is_boss,
+            element_attack        = excluded.element_attack,
+            element_defenses_json = excluded.element_defenses_json,
+            source_path           = excluded.source_path`,
+          [
+            m.id,
+            m.name,
+            m.level,
+            m.hp,
+            m.mp,
+            m.exp,
+            m.isBoss ? 1 : 0,
+            m.elementAttack,
+            m.elementDefensesJson,
+            m.sourcePath,
+          ],
+        );
+      }
+    });
+    return mobs.length;
+  }
+
+  async getMob(id: number): Promise<MobRecord | null> {
+    const row = this.sql.selectObject<MobRow>('SELECT * FROM mobs WHERE id = ?', [id]);
+    return row ? rowToMob(row) : null;
+  }
+
+  async listMobs(
+    opts: { limit?: number; search?: string; bossOnly?: boolean } = {},
+  ): Promise<MobRecord[]> {
+    const limit = Math.min(Math.max(opts.limit ?? 200, 1), 5000);
+    const where: string[] = [];
+    const params: (string | number)[] = [];
+    if (opts.search?.trim()) {
+      where.push('name LIKE ?');
+      params.push(`%${opts.search.trim()}%`);
+    }
+    if (opts.bossOnly) {
+      where.push('is_boss = 1');
+    }
+    const clause = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
+    params.push(limit);
+    return this.sql
+      .selectObjects<MobRow>(
+        `SELECT * FROM mobs ${clause} ORDER BY level NULLS LAST, name LIMIT ?`,
+        params,
+      )
+      .map(rowToMob);
+  }
+
+  async upsertNpcs(npcs: NpcRecord[]): Promise<number> {
+    this.sql.transaction(() => {
+      for (const n of npcs) {
+        this.sql.exec(
+          `INSERT INTO npcs (id, name, description, source_path)
+           VALUES (?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             name        = excluded.name,
+             description = excluded.description,
+             source_path = excluded.source_path`,
+          [n.id, n.name, n.description, n.sourcePath],
+        );
+      }
+    });
+    return npcs.length;
+  }
+
+  async getNpc(id: number): Promise<NpcRecord | null> {
+    const row = this.sql.selectObject<NpcRow>('SELECT * FROM npcs WHERE id = ?', [id]);
+    return row ? rowToNpc(row) : null;
+  }
+
+  async listNpcs(opts: { limit?: number; search?: string } = {}): Promise<NpcRecord[]> {
+    const limit = Math.min(Math.max(opts.limit ?? 200, 1), 5000);
+    const where: string[] = [];
+    const params: (string | number)[] = [];
+    if (opts.search?.trim()) {
+      where.push('name LIKE ?');
+      params.push(`%${opts.search.trim()}%`);
+    }
+    const clause = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
+    params.push(limit);
+    return this.sql
+      .selectObjects<NpcRow>(`SELECT * FROM npcs ${clause} ORDER BY name LIMIT ?`, params)
+      .map(rowToNpc);
+  }
+
+  async getNpcMaps(npcId: number): Promise<MapRecord[]> {
+    return this.sql
+      .selectObjects<MapRow>(
+        `SELECT DISTINCT m.* FROM maps m
+         JOIN map_npcs mn ON mn.map_id = m.id
+         WHERE mn.npc_id = ?
+         ORDER BY m.name`,
+        [npcId],
+      )
+      .map(rowToMap);
+  }
+
+  async upsertMaps(maps: MapRecord[]): Promise<number> {
+    this.sql.transaction(() => {
+      for (const m of maps) {
+        this.sql.exec(
+          `INSERT INTO maps (
+            id, name, street_name, return_map_id, forced_return_map_id,
+            field_limit, mob_rate, source_path
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET
+            name                 = excluded.name,
+            street_name          = excluded.street_name,
+            return_map_id        = excluded.return_map_id,
+            forced_return_map_id = excluded.forced_return_map_id,
+            field_limit          = excluded.field_limit,
+            mob_rate             = excluded.mob_rate,
+            source_path          = excluded.source_path`,
+          [
+            m.id,
+            m.name,
+            m.streetName,
+            m.returnMapId,
+            m.forcedReturnMapId,
+            m.fieldLimit,
+            m.mobRate,
+            m.sourcePath,
+          ],
+        );
+      }
+    });
+    return maps.length;
+  }
+
+  async getMap(id: number): Promise<MapRecord | null> {
+    const row = this.sql.selectObject<MapRow>('SELECT * FROM maps WHERE id = ?', [id]);
+    return row ? rowToMap(row) : null;
+  }
+
+  async listMaps(opts: { limit?: number; search?: string } = {}): Promise<MapRecord[]> {
+    const limit = Math.min(Math.max(opts.limit ?? 200, 1), 5000);
+    const where: string[] = [];
+    const params: (string | number)[] = [];
+    if (opts.search?.trim()) {
+      where.push('(name LIKE ? OR street_name LIKE ?)');
+      const q = `%${opts.search.trim()}%`;
+      params.push(q, q);
+    }
+    const clause = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
+    params.push(limit);
+    return this.sql
+      .selectObjects<MapRow>(
+        `SELECT * FROM maps ${clause} ORDER BY street_name, name LIMIT ?`,
+        params,
+      )
+      .map(rowToMap);
+  }
+
+  async getMapNpcs(mapId: number): Promise<MapNpcWithName[]> {
+    return this.sql.selectObjects<MapNpcWithName & Row>(
+      `SELECT mn.map_id AS mapId, mn.npc_id AS npcId, mn.x, mn.y, n.name
+       FROM map_npcs mn LEFT JOIN npcs n ON n.id = mn.npc_id
+       WHERE mn.map_id = ?
+       ORDER BY n.name`,
+      [mapId],
+    );
+  }
+
+  async getMapMobs(mapId: number): Promise<MapMobWithName[]> {
+    return this.sql.selectObjects<MapMobWithName & Row>(
+      `SELECT mm.map_id AS mapId, mm.mob_id AS mobId, mm.count, m.name, m.level
+       FROM map_mobs mm LEFT JOIN mobs m ON m.id = mm.mob_id
+       WHERE mm.map_id = ?
+       ORDER BY m.level NULLS LAST, m.name`,
+      [mapId],
+    );
+  }
+
+  async getMapPortals(mapId: number): Promise<MapPortalRecord[]> {
+    return this.sql
+      .selectObjects<{
+        map_id: number;
+        portal_name: string;
+        target_map_id: number | null;
+        target_portal: string | null;
+        x: number | null;
+        y: number | null;
+      }>(
+        `SELECT map_id, portal_name, target_map_id, target_portal, x, y
+         FROM map_portals WHERE map_id = ? ORDER BY portal_name`,
+        [mapId],
+      )
+      .map((r) => ({
+        mapId: r.map_id,
+        portalName: r.portal_name,
+        targetMapId: r.target_map_id,
+        targetPortal: r.target_portal,
+        x: r.x,
+        y: r.y,
+      }));
+  }
+
+  async replaceMapLife(rows: {
+    npcs: MapNpcRecord[];
+    mobs: MapMobRecord[];
+    portals: MapPortalRecord[];
+  }): Promise<void> {
+    // Collect distinct map IDs across all three so we wipe their previous
+    // rows before reinserting. Avoids stale entries when a map is
+    // re-extracted with different NPC/mob/portal sets.
+    const mapIds = new Set<number>();
+    for (const r of rows.npcs) mapIds.add(r.mapId);
+    for (const r of rows.mobs) mapIds.add(r.mapId);
+    for (const r of rows.portals) mapIds.add(r.mapId);
+    this.sql.transaction(() => {
+      for (const id of mapIds) {
+        this.sql.exec('DELETE FROM map_npcs    WHERE map_id = ?', [id]);
+        this.sql.exec('DELETE FROM map_mobs    WHERE map_id = ?', [id]);
+        this.sql.exec('DELETE FROM map_portals WHERE map_id = ?', [id]);
+      }
+      for (const r of rows.npcs) {
+        this.sql.exec(
+          'INSERT OR REPLACE INTO map_npcs (map_id, npc_id, x, y) VALUES (?, ?, ?, ?)',
+          [r.mapId, r.npcId, r.x, r.y],
+        );
+      }
+      for (const r of rows.mobs) {
+        this.sql.exec('INSERT OR REPLACE INTO map_mobs (map_id, mob_id, count) VALUES (?, ?, ?)', [
+          r.mapId,
+          r.mobId,
+          r.count,
+        ]);
+      }
+      for (const r of rows.portals) {
+        this.sql.exec(
+          `INSERT OR REPLACE INTO map_portals (map_id, portal_name, target_map_id, target_portal, x, y)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [r.mapId, r.portalName, r.targetMapId, r.targetPortal, r.x, r.y],
+        );
+      }
+    });
+  }
+
   async listSearchEntries(): Promise<SearchEntry[]> {
-    const items = this.sql.selectObjects<{ id: number; name: string; category: string | null }>(
-      `SELECT id, name, category FROM items`,
-    );
-    const equips = this.sql.selectObjects<{ id: number; name: string; slot: string | null }>(
-      `SELECT id, name, slot FROM equips`,
-    );
     const out: SearchEntry[] = [];
-    for (const r of items)
+    for (const r of this.sql.selectObjects<{
+      id: number;
+      name: string;
+      category: string | null;
+    }>(`SELECT id, name, category FROM items`)) {
       out.push({ id: r.id, name: r.name, entity: 'item', category: r.category });
-    for (const r of equips) out.push({ id: r.id, name: r.name, entity: 'equip', category: r.slot });
+    }
+    for (const r of this.sql.selectObjects<{
+      id: number;
+      name: string;
+      slot: string | null;
+    }>(`SELECT id, name, slot FROM equips`)) {
+      out.push({ id: r.id, name: r.name, entity: 'equip', category: r.slot });
+    }
+    for (const r of this.sql.selectObjects<{
+      id: number;
+      name: string;
+      level: number | null;
+    }>(`SELECT id, name, level FROM mobs WHERE name IS NOT NULL AND name <> ''`)) {
+      out.push({
+        id: r.id,
+        name: r.name,
+        entity: 'mob',
+        category: r.level !== null ? `Lv ${r.level}` : null,
+      });
+    }
+    for (const r of this.sql.selectObjects<{ id: number; name: string }>(
+      `SELECT id, name FROM npcs WHERE name IS NOT NULL AND name <> ''`,
+    )) {
+      out.push({ id: r.id, name: r.name, entity: 'npc', category: null });
+    }
+    for (const r of this.sql.selectObjects<{
+      id: number;
+      name: string | null;
+      street_name: string | null;
+    }>(`SELECT id, name, street_name FROM maps WHERE name IS NOT NULL AND name <> ''`)) {
+      out.push({
+        id: r.id,
+        name: r.name ?? `Map ${r.id}`,
+        entity: 'map',
+        category: r.street_name,
+      });
+    }
     return out;
   }
 
@@ -288,6 +652,8 @@ export class DbApi implements GameDatabase {
         'datasets',
       ];
       for (const t of tables) this.sql.exec(`DELETE FROM ${t}`);
+      // SQLite resets AUTOINCREMENT counters via the internal sequence table.
+      this.sql.exec(`DELETE FROM sqlite_sequence WHERE name IN ('assets', 'datasets')`);
     });
   }
 

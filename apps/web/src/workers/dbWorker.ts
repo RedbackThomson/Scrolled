@@ -73,6 +73,62 @@ class WorkerDb {
     await this.ensureOpen();
     return this.api.getEquipIcon(id);
   }
+  async upsertMobs(mobs: Parameters<DbApi['upsertMobs']>[0]) {
+    await this.ensureOpen();
+    return this.api.upsertMobs(mobs);
+  }
+  async getMob(id: number) {
+    await this.ensureOpen();
+    return this.api.getMob(id);
+  }
+  async listMobs(opts?: Parameters<DbApi['listMobs']>[0]) {
+    await this.ensureOpen();
+    return this.api.listMobs(opts);
+  }
+  async upsertNpcs(npcs: Parameters<DbApi['upsertNpcs']>[0]) {
+    await this.ensureOpen();
+    return this.api.upsertNpcs(npcs);
+  }
+  async getNpc(id: number) {
+    await this.ensureOpen();
+    return this.api.getNpc(id);
+  }
+  async listNpcs(opts?: Parameters<DbApi['listNpcs']>[0]) {
+    await this.ensureOpen();
+    return this.api.listNpcs(opts);
+  }
+  async getNpcMaps(id: number) {
+    await this.ensureOpen();
+    return this.api.getNpcMaps(id);
+  }
+  async upsertMaps(maps: Parameters<DbApi['upsertMaps']>[0]) {
+    await this.ensureOpen();
+    return this.api.upsertMaps(maps);
+  }
+  async getMap(id: number) {
+    await this.ensureOpen();
+    return this.api.getMap(id);
+  }
+  async listMaps(opts?: Parameters<DbApi['listMaps']>[0]) {
+    await this.ensureOpen();
+    return this.api.listMaps(opts);
+  }
+  async getMapNpcs(mapId: number) {
+    await this.ensureOpen();
+    return this.api.getMapNpcs(mapId);
+  }
+  async getMapMobs(mapId: number) {
+    await this.ensureOpen();
+    return this.api.getMapMobs(mapId);
+  }
+  async getMapPortals(mapId: number) {
+    await this.ensureOpen();
+    return this.api.getMapPortals(mapId);
+  }
+  async replaceMapLife(rows: Parameters<DbApi['replaceMapLife']>[0]) {
+    await this.ensureOpen();
+    return this.api.replaceMapLife(rows);
+  }
   async listSearchEntries() {
     await this.ensureOpen();
     return this.api.listSearchEntries();
