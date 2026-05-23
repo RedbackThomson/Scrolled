@@ -116,13 +116,20 @@ export interface QuestRecord {
   sourcePath: string;
 }
 
+export interface DatasetFileRef {
+  name: string;
+  size: number | null;
+  /** Lowercase SHA-256 hex digest of the file's contents. */
+  hash: string | null;
+}
+
 export interface DatasetRecord {
   id: number;
   label: string;
   loadedAt: number;
   wzVersion: string;
   notes: string | null;
-  files: { name: string; size: number | null }[];
+  files: DatasetFileRef[];
 }
 
 export interface DbStatus {
@@ -193,10 +200,14 @@ export interface GameDatabase {
   recordDataset(input: {
     label: string;
     wzVersion: string;
-    files: { name: string; size: number | null }[];
+    files: DatasetFileRef[];
     notes?: string;
   }): Promise<DatasetRecord>;
   listDatasets(): Promise<DatasetRecord[]>;
+  /** Distinct file names ever loaded, across every dataset. */
+  listLoadedFileNames(): Promise<string[]>;
+  /** Find the most recent dataset_files row whose hash matches, or null. */
+  findFileByHash(hash: string): Promise<DatasetFileRef | null>;
 
   clearAllData(): Promise<void>;
 }

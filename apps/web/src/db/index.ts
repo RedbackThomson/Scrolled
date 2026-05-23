@@ -4,6 +4,7 @@
 // worker. The worker owns the SQLite-WASM engine and OPFS persistence.
 
 export type {
+  DatasetFileRef,
   DatasetRecord,
   DbStatus,
   EntityKind,

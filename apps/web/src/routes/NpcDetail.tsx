@@ -3,11 +3,13 @@ import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Loader2, Map as MapIcon, Users } from 'lucide-react';
 import { getDbClient } from '@/db';
+import { useFeatures } from '@/lib/useFeatures';
 
 export default function NpcDetail() {
   const params = useParams<{ id: string }>();
   const id = Number(params.id);
   const client = useMemo(() => getDbClient(), []);
+  const features = useFeatures();
 
   const npcQ = useQuery({
     queryKey: ['db', 'npc', id],
@@ -17,7 +19,7 @@ export default function NpcDetail() {
   const mapsQ = useQuery({
     queryKey: ['db', 'npc', id, 'maps'],
     queryFn: () => client.getNpcMaps(id),
-    enabled: Number.isFinite(id),
+    enabled: Number.isFinite(id) && features.hasMaps,
   });
 
   if (npcQ.isLoading) {
@@ -67,36 +69,38 @@ export default function NpcDetail() {
             <p className="text-muted-foreground text-sm italic">No description.</p>
           )}
 
-          <section>
-            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide">Appears on</h2>
-            {mapsQ.isLoading && <p className="text-muted-foreground text-xs">Loading maps…</p>}
-            {mapsQ.data && mapsQ.data.length === 0 && (
-              <p className="text-muted-foreground text-xs italic">No map placements found.</p>
-            )}
-            {mapsQ.data && mapsQ.data.length > 0 && (
-              <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
-                {mapsQ.data.map((m) => (
-                  <li key={m.id}>
-                    <Link
-                      to={`/maps/${m.id}`}
-                      className="hover:bg-accent flex items-center gap-2 px-3 py-2 text-sm"
-                    >
-                      <MapIcon className="text-muted-foreground h-4 w-4 shrink-0" />
-                      <span className="min-w-0 flex-1 truncate">
-                        {m.name ?? `Map ${m.id}`}
-                        {m.streetName && (
-                          <span className="text-muted-foreground"> · {m.streetName}</span>
-                        )}
-                      </span>
-                      <span className="text-muted-foreground shrink-0 font-mono text-xs">
-                        {m.id}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+          {features.hasMaps && (
+            <section>
+              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide">Appears on</h2>
+              {mapsQ.isLoading && <p className="text-muted-foreground text-xs">Loading maps…</p>}
+              {mapsQ.data && mapsQ.data.length === 0 && (
+                <p className="text-muted-foreground text-xs italic">No map placements found.</p>
+              )}
+              {mapsQ.data && mapsQ.data.length > 0 && (
+                <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
+                  {mapsQ.data.map((m) => (
+                    <li key={m.id}>
+                      <Link
+                        to={`/maps/${m.id}`}
+                        className="hover:bg-accent flex items-center gap-2 px-3 py-2 text-sm"
+                      >
+                        <MapIcon className="text-muted-foreground h-4 w-4 shrink-0" />
+                        <span className="min-w-0 flex-1 truncate">
+                          {m.name ?? `Map ${m.id}`}
+                          {m.streetName && (
+                            <span className="text-muted-foreground"> · {m.streetName}</span>
+                          )}
+                        </span>
+                        <span className="text-muted-foreground shrink-0 font-mono text-xs">
+                          {m.id}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
         </article>
 
         <aside className="border-border bg-card text-card-foreground rounded-md border p-4 text-sm">

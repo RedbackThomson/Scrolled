@@ -5,6 +5,7 @@
 
 import type { Sqlite, Row } from './sqlite';
 import type {
+  DatasetFileRef,
   DatasetRecord,
   DbStatus,
   EquipRecord,
@@ -604,7 +605,7 @@ export class DbApi implements GameDatabase {
   async recordDataset(input: {
     label: string;
     wzVersion: string;
-    files: { name: string; size: number | null }[];
+    files: DatasetFileRef[];
     notes?: string;
   }): Promise<DatasetRecord> {
     return this.sql.transaction(() => {
@@ -614,11 +615,10 @@ export class DbApi implements GameDatabase {
       );
       const id = Number(this.sql.selectValue('SELECT last_insert_rowid()'));
       for (const f of input.files) {
-        this.sql.exec('INSERT INTO dataset_files (dataset_id, name, size) VALUES (?, ?, ?)', [
-          id,
-          f.name,
-          f.size ?? null,
-        ]);
+        this.sql.exec(
+          'INSERT INTO dataset_files (dataset_id, name, size, hash) VALUES (?, ?, ?, ?)',
+          [id, f.name, f.size ?? null, f.hash ?? null],
+        );
       }
       return this.readDataset(id)!;
     });
@@ -629,6 +629,30 @@ export class DbApi implements GameDatabase {
       .selectObjects<{ id: number }>('SELECT id FROM datasets ORDER BY loaded_at DESC')
       .map((r) => r.id);
     return ids.map((id) => this.readDataset(id)!).filter(Boolean);
+  }
+
+  async listLoadedFileNames(): Promise<string[]> {
+    return this.sql
+      .selectObjects<{ name: string }>('SELECT DISTINCT name FROM dataset_files ORDER BY name')
+      .map((r) => r.name);
+  }
+
+  async findFileByHash(hash: string): Promise<DatasetFileRef | null> {
+    if (!hash) return null;
+    const row = this.sql.selectObject<{
+      name: string;
+      size: number | null;
+      hash: string | null;
+    }>(
+      `SELECT df.name, df.size, df.hash
+       FROM dataset_files df
+       JOIN datasets d ON d.id = df.dataset_id
+       WHERE df.hash = ?
+       ORDER BY d.loaded_at DESC
+       LIMIT 1`,
+      [hash],
+    );
+    return row ? { name: row.name, size: row.size, hash: row.hash } : null;
   }
 
   async clearAllData(): Promise<void> {
@@ -762,17 +786,18 @@ export class DbApi implements GameDatabase {
       notes: string | null;
     }>('SELECT * FROM datasets WHERE id = ?', [id]);
     if (!ds) return null;
-    const files = this.sql.selectObjects<{ name: string; size: number | null }>(
-      'SELECT name, size FROM dataset_files WHERE dataset_id = ? ORDER BY name',
-      [id],
-    );
+    const files = this.sql.selectObjects<{
+      name: string;
+      size: number | null;
+      hash: string | null;
+    }>('SELECT name, size, hash FROM dataset_files WHERE dataset_id = ? ORDER BY name', [id]);
     return {
       id: ds.id,
       label: ds.label,
       loadedAt: ds.loaded_at,
       wzVersion: ds.wz_version,
       notes: ds.notes,
-      files,
+      files: files.map((f) => ({ name: f.name, size: f.size, hash: f.hash })),
     };
   }
 }

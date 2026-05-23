@@ -433,6 +433,7 @@ function TreeNode({ node, depth }: { node: WzNodeInfo; depth: number }) {
 
 function DiagnosticsPanel() {
   const client = useMemo(() => getParserClient(), []);
+  const db = useMemo(() => getDbClient(), []);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -441,8 +442,8 @@ function DiagnosticsPanel() {
     setBusy(true);
     setStatus(null);
     try {
-      const diag = await client.diagnose();
-      const report = buildReport(diag);
+      const [diag, datasets] = await Promise.all([client.diagnose(), db.listDatasets()]);
+      const report = buildReport({ workerDiagnostics: diag, datasets });
       setPreview(report);
       try {
         await navigator.clipboard.writeText(report);
@@ -455,7 +456,7 @@ function DiagnosticsPanel() {
     } finally {
       setBusy(false);
     }
-  }, [client]);
+  }, [client, db]);
 
   return (
     <section className="space-y-3">

@@ -112,11 +112,11 @@ export default function Items() {
         {itemsQ.data && itemsQ.data.length === 0 && (
           <div className="border-border bg-muted/40 rounded-md border p-6 text-center text-sm">
             <p className="text-muted-foreground">
-              {search || category !== 'all' ? 'No items match.' : 'No items yet.'} Try{' '}
-              <Link to="/debug" className="text-primary hover:underline">
-                /debug
-              </Link>{' '}
-              → Extract items + equips.
+              {search || category !== 'all' ? 'No items match.' : 'No items yet.'} Start by{' '}
+              <Link to="/setup" className="text-primary hover:underline">
+                loading your WZ files
+              </Link>
+              .
             </p>
           </div>
         )}

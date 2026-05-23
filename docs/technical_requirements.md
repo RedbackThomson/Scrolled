@@ -150,7 +150,8 @@ This is the portability seam: a future Tauri or local-server backend replaces `p
 
 - One **parser worker** owns `@tybys/wz` and the extraction pipeline.
 - One **db worker** owns sqlite-wasm and OPFS.
-- Both are addressed via `comlink` proxies. Cross-worker traffic uses transferable byte buffers where size warrants it.
+- One **hash worker** owns `crypto.subtle.digest` for WZ-file fingerprinting in the first-run wizard. Reads each File once via `arrayBuffer()` (no JS-side chunk coalescing) and queues calls so concurrent drops run sequentially.
+- All workers are addressed via `comlink` proxies. Cross-worker traffic uses transferable byte buffers where size warrants it.
 
 ## 5. Repository layout
 

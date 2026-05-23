@@ -39,11 +39,12 @@ export default function Npcs() {
         {npcsQ.data && npcsQ.data.length === 0 && (
           <div className="border-border bg-muted/40 rounded-md border p-6 text-center text-sm">
             <p className="text-muted-foreground">
-              {search ? 'No NPCs match.' : 'No NPCs yet.'} Run{' '}
-              <Link to="/debug" className="text-primary hover:underline">
-                Extract everything
+              {search ? 'No NPCs match.' : 'No NPCs yet.'} Load{' '}
+              <code className="font-mono">Npc.wz</code> via{' '}
+              <Link to="/setup" className="text-primary hover:underline">
+                setup
               </Link>{' '}
-              after loading <code className="font-mono">Npc.wz</code>.
+              to populate this list.
             </p>
           </div>
         )}

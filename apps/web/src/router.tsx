@@ -2,6 +2,12 @@ import { createBrowserRouter } from 'react-router-dom';
 import { AppShell } from '@/components/AppShell';
 
 export const router = createBrowserRouter([
+  // The wizard is a sibling of AppShell so it can use its own full-page
+  // layout — no sidebar, no top bar.
+  {
+    path: 'setup',
+    lazy: () => import('@/routes/Setup').then((m) => ({ Component: m.default })),
+  },
   {
     element: <AppShell />,
     children: [
@@ -40,6 +46,10 @@ export const router = createBrowserRouter([
       {
         path: 'quests',
         lazy: () => import('@/routes/Quests').then((m) => ({ Component: m.default })),
+      },
+      {
+        path: 'settings',
+        lazy: () => import('@/routes/Settings').then((m) => ({ Component: m.default })),
       },
       {
         path: 'debug',

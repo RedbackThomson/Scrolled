@@ -52,11 +52,12 @@ export default function Mobs() {
         {mobsQ.data && mobsQ.data.length === 0 && (
           <div className="border-border bg-muted/40 rounded-md border p-6 text-center text-sm">
             <p className="text-muted-foreground">
-              {search || bossOnly ? 'No mobs match.' : 'No mobs yet.'} Run{' '}
-              <Link to="/debug" className="text-primary hover:underline">
-                Extract everything
+              {search || bossOnly ? 'No mobs match.' : 'No mobs yet.'} Load{' '}
+              <code className="font-mono">Mob.wz</code> via{' '}
+              <Link to="/setup" className="text-primary hover:underline">
+                setup
               </Link>{' '}
-              after loading <code className="font-mono">Mob.wz</code>.
+              to populate this list.
             </p>
           </div>
         )}

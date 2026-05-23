@@ -141,6 +141,14 @@ class WorkerDb {
     await this.ensureOpen();
     return this.api.listDatasets();
   }
+  async listLoadedFileNames() {
+    await this.ensureOpen();
+    return this.api.listLoadedFileNames();
+  }
+  async findFileByHash(hash: string) {
+    await this.ensureOpen();
+    return this.api.findFileByHash(hash);
+  }
   async clearAllData() {
     await this.ensureOpen();
     return this.api.clearAllData();

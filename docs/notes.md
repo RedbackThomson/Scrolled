@@ -13,3 +13,5 @@
 - [ ] Add support for creating collections of things
 - [ ] On the NPC page, link to each of the map pages that the NPC is located in
       (or embed the map images with where the NPC is on them)
+- [ ] Support seeing entire quest chains, where each of the relevant NPCs all on
+      one page

@@ -191,4 +191,12 @@ export const MIGRATIONS: readonly Migration[] = [
       ALTER TABLE equips ADD COLUMN icon_data BLOB;
     `,
   },
+  {
+    version: 3,
+    name: 'fingerprint loaded WZ files',
+    sql: `
+      ALTER TABLE dataset_files ADD COLUMN hash TEXT;
+      CREATE INDEX IF NOT EXISTS dataset_files_hash_idx ON dataset_files (hash);
+    `,
+  },
 ];

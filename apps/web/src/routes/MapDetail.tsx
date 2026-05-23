@@ -3,11 +3,13 @@ import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, DoorOpen, Loader2, Map as MapIcon, Skull, Users } from 'lucide-react';
 import { getDbClient } from '@/db';
+import { useFeatures } from '@/lib/useFeatures';
 
 export default function MapDetail() {
   const params = useParams<{ id: string }>();
   const id = Number(params.id);
   const client = useMemo(() => getDbClient(), []);
+  const features = useFeatures();
 
   const mapQ = useQuery({
     queryKey: ['db', 'map', id],
@@ -17,12 +19,12 @@ export default function MapDetail() {
   const npcsQ = useQuery({
     queryKey: ['db', 'map', id, 'npcs'],
     queryFn: () => client.getMapNpcs(id),
-    enabled: Number.isFinite(id),
+    enabled: Number.isFinite(id) && features.hasNpcs,
   });
   const mobsQ = useQuery({
     queryKey: ['db', 'map', id, 'mobs'],
     queryFn: () => client.getMapMobs(id),
-    enabled: Number.isFinite(id),
+    enabled: Number.isFinite(id) && features.hasMobs,
   });
   const portalsQ = useQuery({
     queryKey: ['db', 'map', id, 'portals'],
@@ -72,82 +74,90 @@ export default function MapDetail() {
             </div>
           </header>
 
-          <section>
-            <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
-              <Users className="h-4 w-4" /> NPCs
-              {npcsQ.data && (
-                <span className="text-muted-foreground text-xs normal-case">
-                  ({npcsQ.data.length})
-                </span>
+          {features.hasNpcs && (
+            <section>
+              <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
+                <Users className="h-4 w-4" /> NPCs
+                {npcsQ.data && (
+                  <span className="text-muted-foreground text-xs normal-case">
+                    ({npcsQ.data.length})
+                  </span>
+                )}
+              </h2>
+              {npcsQ.data && npcsQ.data.length === 0 && (
+                <p className="text-muted-foreground text-xs italic">None.</p>
               )}
-            </h2>
-            {npcsQ.data && npcsQ.data.length === 0 && (
-              <p className="text-muted-foreground text-xs italic">None.</p>
-            )}
-            {npcsQ.data && npcsQ.data.length > 0 && (
-              <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
-                {npcsQ.data.map((n) => (
-                  <li key={`${n.npcId}-${n.x}-${n.y}`}>
-                    <Link
-                      to={`/npcs/${n.npcId}`}
-                      className="hover:bg-accent flex items-center gap-3 px-3 py-1.5 text-sm"
-                    >
-                      <span className="min-w-0 flex-1 truncate">{n.name ?? `NPC ${n.npcId}`}</span>
-                      <span className="text-muted-foreground shrink-0 font-mono text-xs">
-                        {n.npcId}
-                      </span>
-                      {(n.x !== null || n.y !== null) && (
+              {npcsQ.data && npcsQ.data.length > 0 && (
+                <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
+                  {npcsQ.data.map((n) => (
+                    <li key={`${n.npcId}-${n.x}-${n.y}`}>
+                      <Link
+                        to={`/npcs/${n.npcId}`}
+                        className="hover:bg-accent flex items-center gap-3 px-3 py-1.5 text-sm"
+                      >
+                        <span className="min-w-0 flex-1 truncate">
+                          {n.name ?? `NPC ${n.npcId}`}
+                        </span>
                         <span className="text-muted-foreground shrink-0 font-mono text-xs">
-                          ({n.x ?? '?'}, {n.y ?? '?'})
+                          {n.npcId}
                         </span>
-                      )}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          <section>
-            <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
-              <Skull className="h-4 w-4" /> Mobs
-              {mobsQ.data && (
-                <span className="text-muted-foreground text-xs normal-case">
-                  ({mobsQ.data.length})
-                </span>
+                        {(n.x !== null || n.y !== null) && (
+                          <span className="text-muted-foreground shrink-0 font-mono text-xs">
+                            ({n.x ?? '?'}, {n.y ?? '?'})
+                          </span>
+                        )}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
               )}
-            </h2>
-            {mobsQ.data && mobsQ.data.length === 0 && (
-              <p className="text-muted-foreground text-xs italic">None.</p>
-            )}
-            {mobsQ.data && mobsQ.data.length > 0 && (
-              <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
-                {mobsQ.data.map((mob) => (
-                  <li key={mob.mobId}>
-                    <Link
-                      to={`/mobs/${mob.mobId}`}
-                      className="hover:bg-accent flex items-center gap-3 px-3 py-1.5 text-sm"
-                    >
-                      <span className="min-w-0 flex-1 truncate">
-                        {mob.name ?? `Mob ${mob.mobId}`}
-                      </span>
-                      {mob.level !== null && (
-                        <span className="text-muted-foreground shrink-0 text-xs">
-                          Lv {mob.level}
+            </section>
+          )}
+
+          {features.hasMobs && (
+            <section>
+              <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
+                <Skull className="h-4 w-4" /> Mobs
+                {mobsQ.data && (
+                  <span className="text-muted-foreground text-xs normal-case">
+                    ({mobsQ.data.length})
+                  </span>
+                )}
+              </h2>
+              {mobsQ.data && mobsQ.data.length === 0 && (
+                <p className="text-muted-foreground text-xs italic">None.</p>
+              )}
+              {mobsQ.data && mobsQ.data.length > 0 && (
+                <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
+                  {mobsQ.data.map((mob) => (
+                    <li key={mob.mobId}>
+                      <Link
+                        to={`/mobs/${mob.mobId}`}
+                        className="hover:bg-accent flex items-center gap-3 px-3 py-1.5 text-sm"
+                      >
+                        <span className="min-w-0 flex-1 truncate">
+                          {mob.name ?? `Mob ${mob.mobId}`}
                         </span>
-                      )}
-                      {mob.count !== null && mob.count > 1 && (
-                        <span className="text-muted-foreground shrink-0 text-xs">×{mob.count}</span>
-                      )}
-                      <span className="text-muted-foreground shrink-0 font-mono text-xs">
-                        {mob.mobId}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+                        {mob.level !== null && (
+                          <span className="text-muted-foreground shrink-0 text-xs">
+                            Lv {mob.level}
+                          </span>
+                        )}
+                        {mob.count !== null && mob.count > 1 && (
+                          <span className="text-muted-foreground shrink-0 text-xs">
+                            ×{mob.count}
+                          </span>
+                        )}
+                        <span className="text-muted-foreground shrink-0 font-mono text-xs">
+                          {mob.mobId}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
 
           <section>
             <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
