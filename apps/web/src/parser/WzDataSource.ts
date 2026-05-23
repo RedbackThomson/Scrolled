@@ -200,7 +200,7 @@ export class WzDataSource implements GameDataSource {
   }
 
   async getIconPng(path: string): Promise<Uint8Array | null> {
-    log.info('getIconPng', { path });
+    log.debug('getIconPng', { path });
     const loaded = this.loadedFor(path);
     if (!loaded) {
       log.warn('getIconPng: file not loaded for path', {
@@ -215,9 +215,7 @@ export class WzDataSource implements GameDataSource {
         log.warn('getIconPng: path did not resolve', { path });
         return null;
       }
-      const bytes = await decodePng(obj);
-      log.info('getIconPng done', { path, bytes: bytes?.byteLength ?? 0 });
-      return bytes;
+      return decodePng(obj);
     });
   }
 
@@ -323,15 +321,6 @@ async function tryParseImage(
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   if (img.parsed) return { ok: true };
   drainLibraryErrors();
-
-  // Diagnostic: read 16 raw bytes at img.offset before parsing, so we can see
-  // whether the library is seeing the expected `0x73` ('s', WzImage header
-  // without offset) or `0x01` (Lua image) byte at the documented position.
-  // Garbage here means either img.offset is wrong or the File-backed reader
-  // is returning wrong bytes. Real header byte is unencrypted — no AES needed
-  // to spot a mismatch.
-  await captureImageHeaderBytes(img, contextPath);
-
   try {
     const ok = await img.parseImage();
     const libErrors = drainLibraryErrors();
@@ -360,44 +349,6 @@ async function tryParseImage(
       libraryErrors: drainLibraryErrors(),
     });
     return { ok: false, error: (err as Error).message };
-  }
-}
-
-async function captureImageHeaderBytes(img: WzImage, contextPath: string): Promise<void> {
-  try {
-    const reader = (
-      img as unknown as { reader: { pos: number; read(len?: number): Promise<Uint8Array> } }
-    ).reader;
-    const savedPos = reader.pos;
-    reader.pos = img.offset;
-    const head = await reader.read(16);
-    reader.pos = savedPos;
-    const bytes = Array.from(head)
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join(' ');
-    const headerByte = head[0];
-    const interpretation =
-      headerByte === 0x73
-        ? 'WzImageHeaderByte_WithoutOffset (Property image)'
-        : headerByte === 0x01
-          ? 'Lua image header'
-          : headerByte === 0x1b
-            ? 'WzImageHeaderByte_WithOffset (offset image)'
-            : 'UNKNOWN — expected 0x73 / 0x01 / 0x1B';
-    log.info('image header bytes', {
-      path: contextPath,
-      image: img.name,
-      offset: img.offset,
-      headerByte: headerByte !== undefined ? `0x${headerByte.toString(16).padStart(2, '0')}` : null,
-      interpretation,
-      first16: bytes,
-    });
-  } catch (e) {
-    log.warn('failed to capture image header bytes', {
-      path: contextPath,
-      image: img.name,
-      ...describeError(e),
-    });
   }
 }
 

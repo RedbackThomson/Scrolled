@@ -43,7 +43,7 @@ async function fetchIcon(ref: IconRef): Promise<string | null> {
         const bytes =
           ref.entity === 'item' ? await db.getItemIcon(ref.id) : await db.getEquipIcon(ref.id);
         if (!bytes || bytes.byteLength === 0) {
-          log.info('no icon bytes in db', { ...ref });
+          log.debug('no icon bytes in db', { ...ref });
           return null;
         }
         // Copy into a fresh ArrayBuffer so the Blob type matches BlobPart

@@ -108,41 +108,9 @@ function patchCryptoPolyfill(aesCreate: AesCreate): void {
     if (algo !== 'aes-256-ecb') {
       throw new Error(`[mge] unsupported cipher ${algo}`);
     }
-    const cipherCount = ++cipherCounter;
-    log.debug('createCipheriv', { count: cipherCount, keyHex: bytesToHex(key.slice(0, 4)) + '…' });
-    const cipher = aesCreate(key);
-    let updateCount = 0;
-    // Wrap a few sites so we can spot a mismatch in the diagnostics log
-    // without breaking the cipher contract.
-    const wrapped: AesLike = {
-      setAutoPadding(pad) {
-        return cipher.setAutoPadding(pad);
-      },
-      update(buf) {
-        const out = cipher.update(buf);
-        if (cipherCount === 1 && updateCount < 2) {
-          log.debug('cipher.update', {
-            cipher: cipherCount,
-            call: updateCount,
-            inHex: bytesToHex(buf.slice(0, 16)),
-            outHex: out ? bytesToHex(out.slice(0, 16)) : null,
-          });
-        }
-        updateCount += 1;
-        return out;
-      },
-      final() {
-        return cipher.final();
-      },
-      destroy() {
-        return cipher.destroy();
-      },
-    };
-    return wrapped;
+    return aesCreate(key);
   };
 }
-
-let cipherCounter = 0;
 
 /**
  * AES-256-ECB known-answer test from FIPS 197 Appendix C.3.

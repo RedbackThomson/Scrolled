@@ -9,21 +9,15 @@ ensureCanvasPatched();
 const log = createLogger('icons');
 
 /**
- * Decode a WZ canvas/PNG node into PNG bytes. The Worker side already shims
- * `window.document.createElement('canvas')` to return an OffscreenCanvas (see
- * workerEnv.ts), so the library's Canvas.getBufferAsync works.
+ * Decode a WZ canvas/PNG node into PNG bytes.
  *
- * `node` must already be parsed (the caller is responsible for traversing to
- * it via the per-file lock).
+ * The library would normally drive this via `Canvas.getBufferAsync` (toBlob +
+ * FileReader), but that path hangs on OffscreenCanvas in Firefox workers. We
+ * go straight to `OffscreenCanvas.convertToBlob` + `blob.arrayBuffer()`
+ * instead, after asking `canvasPatch` to flush our buffered pixel writes.
  *
- * Disposing after the byte read is what the library expects and is what
- * actually produces visible icons in practice — keeping the OffscreenCanvas
- * alive (so it can be re-decoded later) regressed icon rendering for reasons
- * I haven't fully pinned down on Firefox. The "second decode crashes with
- * null toBlob" failure mode is sidestepped on the caller side: the main-
- * thread icon URL cache (see `lib/useIcon.ts`) is unbounded and de-duplicates
- * in-flight fetches, so the same canvas should not be decoded twice in a
- * session.
+ * `node` must already be parsed by the caller — the per-file lock in
+ * `WzDataSource` is responsible for ensuring its parent image is parsed.
  */
 export async function decodePng(node: WzObject): Promise<Uint8Array | null> {
   const canvasNode = await resolveCanvas(node);
@@ -57,7 +51,7 @@ export async function decodePng(node: WzObject): Promise<Uint8Array | null> {
     const png = new Uint8Array(await blob.arrayBuffer());
     const t3 = performance.now();
     canvas.dispose();
-    log.info('decodePng ok', {
+    log.debug('decodePng ok', {
       bytes: png.byteLength,
       bitmapMs: Math.round(t1 - t0),
       blobMs: Math.round(t2 - t1),
