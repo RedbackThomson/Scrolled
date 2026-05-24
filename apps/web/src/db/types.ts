@@ -253,6 +253,48 @@ export interface DbStatus {
  * SQLite-WASM instance (browser) or a hand-driver wrapping better-sqlite3 in
  * Node tests later.
  */
+export type SortDir = 'asc' | 'desc';
+
+/** Single page of a list query plus the total row count under the same filters. */
+export interface PageResult<T> {
+  rows: T[];
+  total: number;
+}
+
+/**
+ * Per-column filter value sent from the UI.
+ *
+ * - `string`: case-insensitive match on the column. `mode` selects how
+ *   the value joins the column — `contains` is the default; `prefix` /
+ *   `suffix` / `equals` switch the implicit `%` placement (none for
+ *   equals).
+ * - `range`: number bounds. Either side may be omitted; `min === max`
+ *   collapses to an exact equality.
+ */
+export type StringFilterMode = 'contains' | 'prefix' | 'suffix' | 'equals';
+
+export type ColumnFilter =
+  | { kind: 'string'; mode: StringFilterMode; value: string }
+  | { kind: 'range'; min?: number; max?: number };
+
+/**
+ * Common opts shared by the paginated list APIs. `orderBy` is a public
+ * column id (e.g. `'level'`, `'requiredLevel'`) validated by the
+ * implementation against a per-entity allowlist — unknown ids fall back
+ * to that entity's default sort. `filters` is keyed by the same public
+ * column ids; unknown keys are silently ignored.
+ */
+export interface ListOptsBase {
+  /** Page size. Default 50; clamped to 1..500. */
+  limit?: number;
+  /** Page offset in rows. Default 0; clamped >= 0. */
+  offset?: number;
+  search?: string;
+  orderBy?: string;
+  dir?: SortDir;
+  filters?: Record<string, ColumnFilter>;
+}
+
 export interface GameDatabase {
   open(): Promise<DbStatus>;
   status(): Promise<DbStatus>;
@@ -260,27 +302,29 @@ export interface GameDatabase {
   upsertItem(item: ItemRecord): Promise<void>;
   upsertItems(items: ItemRecord[]): Promise<number>;
   getItem(id: number): Promise<ItemRecord | null>;
-  listItems(opts?: { limit?: number; search?: string; category?: string }): Promise<ItemRecord[]>;
+  listItems(opts?: ListOptsBase & { category?: string }): Promise<PageResult<ItemRecord>>;
+  /** Distinct non-null `category` values for filter UIs / sidebar nav. */
+  listItemCategories(): Promise<string[]>;
   /** Just the persisted icon bytes for an item, or null. */
   getItemIcon(id: number): Promise<Uint8Array | null>;
 
   upsertEquip(equip: EquipRecord): Promise<void>;
   upsertEquips(equips: EquipRecord[]): Promise<number>;
   getEquip(id: number): Promise<EquipRecord | null>;
-  listEquips(opts?: { limit?: number; search?: string; slot?: string }): Promise<EquipRecord[]>;
+  listEquips(opts?: ListOptsBase & { slot?: string }): Promise<PageResult<EquipRecord>>;
   /** Distinct non-null `slot` values for filter UIs / sidebar nav. */
   listEquipSlots(): Promise<string[]>;
   getEquipIcon(id: number): Promise<Uint8Array | null>;
 
   upsertMobs(mobs: MobRecord[]): Promise<number>;
   getMob(id: number): Promise<MobRecord | null>;
-  listMobs(opts?: { limit?: number; search?: string; bossOnly?: boolean }): Promise<MobRecord[]>;
+  listMobs(opts?: ListOptsBase & { bossOnly?: boolean }): Promise<PageResult<MobRecord>>;
   /** Decoded PNG bytes for the mob's stand sprite, or null. */
   getMobIcon(id: number): Promise<Uint8Array | null>;
 
   upsertNpcs(npcs: NpcRecord[]): Promise<number>;
   getNpc(id: number): Promise<NpcRecord | null>;
-  listNpcs(opts?: { limit?: number; search?: string }): Promise<NpcRecord[]>;
+  listNpcs(opts?: ListOptsBase): Promise<PageResult<NpcRecord>>;
   /** Maps where this NPC appears. */
   getNpcMaps(npcId: number): Promise<MapRecord[]>;
   /** Decoded PNG bytes for the NPC's stand sprite, or null. */
@@ -288,7 +332,7 @@ export interface GameDatabase {
 
   upsertMaps(maps: MapRecord[]): Promise<number>;
   getMap(id: number): Promise<MapRecord | null>;
-  listMaps(opts?: { limit?: number; search?: string }): Promise<MapRecord[]>;
+  listMaps(opts?: ListOptsBase): Promise<PageResult<MapRecord>>;
   /** Decoded PNG bytes for the map minimap, or null. */
   getMapMinimap(id: number): Promise<Uint8Array | null>;
   /** NPCs + mobs + portals attached to a single map. */
@@ -298,11 +342,7 @@ export interface GameDatabase {
 
   upsertQuests(quests: QuestRecord[]): Promise<number>;
   getQuest(id: number): Promise<QuestRecord | null>;
-  listQuests(opts?: {
-    limit?: number;
-    search?: string;
-    parent?: string;
-  }): Promise<QuestRecord[]>;
+  listQuests(opts?: ListOptsBase & { parent?: string }): Promise<PageResult<QuestRecord>>;
   /** Distinct quest `parent` values for filter UIs. */
   listQuestParents(): Promise<string[]>;
   /** Requirements / rewards joined to the target's display name. */

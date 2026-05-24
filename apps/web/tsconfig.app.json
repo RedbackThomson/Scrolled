@@ -26,7 +26,7 @@
       "@/*": ["./src/*"]
     },
 
-    "types": ["vite/client", "node"]
+    "types": ["vite/client", "node", "@testing-library/jest-dom"]
   },
-  "include": ["src", "test"]
+  "include": ["src", "test", "vitest.setup.ts"]
 }

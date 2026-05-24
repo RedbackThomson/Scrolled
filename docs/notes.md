@@ -3,7 +3,7 @@
 - [ ] Use `/` as the global hotkey for command palette
 - [ ] Allow setting the background color for all icons (black, white, grid-like
       pattern, green)
-- [ ] Add the database connection status in the sidebar
+- [x] Add the database connection status in the sidebar
 - [ ] Add a page for debugging the database directly
 - [ ] Add a debug panel on every page to show information about where the
       information came from (any other internal metadata)
@@ -16,7 +16,7 @@
 - [ ] Support seeing entire quest chains, where each of the relevant NPCs all on
       one page
 - [ ] On mob pages, link to maps with highest spawn rates/density
-- [ ] Fork the parser to support better parallelism, error handling and API
+- [x] Fork the parser to support better parallelism, error handling and API
   stability
 - [ ] Detect version automatically
 - [ ] Clean up wizard copy
@@ -24,3 +24,6 @@
 - [ ] Any hyperlinks should have a tooltip showing a summary of the target page
 - [ ] Add equipment set page with minimum requirements and gained stats
 - [ ] Clicking on an image should open a full-screen modal with the image
+- [x] Remove the DB stats from the items page and move it to settings
+- [ ] Clean up the text on each of the pages to remove specificity
+- [ ] On the item page, show who the item is sold by

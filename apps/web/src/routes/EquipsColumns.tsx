@@ -1,0 +1,109 @@
+import type { ColumnDef } from '@tanstack/react-table';
+import { ItemIcon } from '@/components/ItemIcon';
+import type { EquipRecord } from '@/db';
+
+const num = (v: number | null) => (v === null ? '—' : v.toLocaleString());
+
+export const columns: ColumnDef<EquipRecord>[] = [
+  {
+    id: 'icon',
+    header: '',
+    enableSorting: false,
+    enableHiding: false,
+    cell: ({ row }) => (
+      <ItemIcon entity="equip" id={row.original.id} size={28} alt={row.original.name} />
+    ),
+  },
+  {
+    id: 'name',
+    accessorFn: (e) => e.name,
+    header: 'Name',
+    meta: { filter: 'string' },
+    cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
+  },
+  {
+    id: 'slot',
+    accessorFn: (e) => e.slot,
+    header: 'Slot',
+    meta: { filter: 'enum' },
+    cell: ({ row }) => <span className="capitalize">{row.original.slot ?? '—'}</span>,
+  },
+  {
+    id: 'requiredLevel',
+    accessorFn: (e) => e.requiredLevel,
+    header: 'Req Lv',
+    meta: { filter: 'number' },
+    cell: ({ row }) => row.original.requiredLevel ?? '—',
+  },
+  {
+    id: 'attack',
+    accessorFn: (e) => e.attack,
+    header: 'Atk',
+    meta: { filter: 'number' },
+    cell: ({ row }) => num(row.original.attack),
+  },
+  {
+    id: 'magicAttack',
+    accessorFn: (e) => e.magicAttack,
+    header: 'M.Atk',
+    meta: { filter: 'number' },
+    cell: ({ row }) => num(row.original.magicAttack),
+  },
+  {
+    id: 'defense',
+    accessorFn: (e) => e.defense,
+    header: 'Def',
+    meta: { filter: 'number' },
+    cell: ({ row }) => num(row.original.defense),
+  },
+  {
+    id: 'magicDefense',
+    accessorFn: (e) => e.magicDefense,
+    header: 'M.Def',
+    meta: { filter: 'number' },
+    cell: ({ row }) => num(row.original.magicDefense),
+  },
+  {
+    id: 'accuracy',
+    accessorFn: (e) => e.accuracy,
+    header: 'Acc',
+    meta: { filter: 'number' },
+    cell: ({ row }) => num(row.original.accuracy),
+  },
+  {
+    id: 'avoidability',
+    accessorFn: (e) => e.avoidability,
+    header: 'Avoid',
+    meta: { filter: 'number' },
+    cell: ({ row }) => num(row.original.avoidability),
+  },
+  {
+    id: 'upgradeSlots',
+    accessorFn: (e) => e.upgradeSlots,
+    header: 'Slots',
+    meta: { filter: 'number' },
+    cell: ({ row }) => row.original.upgradeSlots ?? '—',
+  },
+  {
+    id: 'id',
+    accessorFn: (e) => e.id,
+    header: 'ID',
+    meta: { filter: 'number' },
+    cell: ({ row }) => <span className="font-mono text-xs">{row.original.id}</span>,
+  },
+];
+
+export const defaultVisible = [
+  'icon',
+  'name',
+  'slot',
+  'requiredLevel',
+  'attack',
+  'magicAttack',
+  'upgradeSlots',
+] as const;
+export const pinnedColumns = ['icon'] as const;
+export const defaultSort = { id: 'name', dir: 'asc' } as const satisfies {
+  id: string;
+  dir: 'asc' | 'desc';
+};

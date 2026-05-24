@@ -1,15 +1,20 @@
-import { useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Search } from 'lucide-react';
-import { ItemIcon } from '@/components/ItemIcon';
+import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { DataTable, useColumnFilters, useTableUrlState } from '@/components/data-table';
 import { getDbClient } from '@/db';
+import { columns, defaultSort, defaultVisible, pinnedColumns } from './EquipsColumns';
+
+const DEFAULT_PAGE_SIZE = 50;
 
 export default function Equips() {
   const client = useMemo(() => getDbClient(), []);
-  const [search, setSearch] = useState('');
-  const [searchParams, setSearchParams] = useSearchParams();
-  const slot = searchParams.get('slot') ?? 'all';
+  const { state, setState, visibleColumns } = useTableUrlState({
+    defaultSort,
+    defaultSize: DEFAULT_PAGE_SIZE,
+    defaultVisible,
+  });
+  const { filters, setFilter, active: filtersActive } = useColumnFilters(columns);
 
   const slotsQ = useQuery({
     queryKey: ['db', 'equip-slots'],
@@ -17,29 +22,36 @@ export default function Equips() {
   });
 
   const equipsQ = useQuery({
-    queryKey: ['db', 'equips', { search, slot }],
+    queryKey: [
+      'db',
+      'equips',
+      {
+        q: state.q,
+        sort: state.sort,
+        dir: state.dir,
+        page: state.page,
+        size: state.size,
+        filters,
+      },
+    ],
     queryFn: () =>
       client.listEquips({
-        search: search || undefined,
-        slot: slot === 'all' ? undefined : slot,
-        limit: 5000,
+        search: state.q || undefined,
+        orderBy: state.sort,
+        dir: state.dir,
+        limit: state.size,
+        offset: (state.page - 1) * state.size,
+        filters,
       }),
+    placeholderData: keepPreviousData,
   });
 
-  const setSlot = (next: string) => {
-    setSearchParams(
-      (prev) => {
-        const params = new URLSearchParams(prev);
-        if (next === 'all') params.delete('slot');
-        else params.set('slot', next);
-        return params;
-      },
-      { replace: true },
-    );
-  };
+  // "No data at all" path — only show the load-WZ prompt when there are
+  // genuinely zero rows AND the user hasn't narrowed the result themselves.
+  const isEmpty = equipsQ.data?.total === 0 && !state.q && !filtersActive;
 
   return (
-    <div className="max-w-5xl space-y-6">
+    <div className="max-w-6xl space-y-6">
       <header>
         <h1 className="text-3xl font-semibold tracking-tight">Equips</h1>
         <p className="text-muted-foreground mt-2 text-sm">
@@ -50,70 +62,42 @@ export default function Equips() {
       </header>
 
       <section className="space-y-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative min-w-[16rem] flex-1">
-            <Search className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
-            <input
-              type="search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search equips by name"
-              className="border-input bg-background focus-visible:ring-ring h-9 w-full rounded-md border pl-9 pr-3 text-sm focus-visible:outline-none focus-visible:ring-2"
-            />
-          </div>
-          {slotsQ.data && slotsQ.data.length > 0 && (
-            <select
-              value={slot}
-              onChange={(e) => setSlot(e.target.value)}
-              className="border-input bg-background h-9 rounded-md border px-2 text-sm"
-            >
-              <option value="all">All slots</option>
-              {slotsQ.data.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
-
-        {equipsQ.isLoading && <p className="text-muted-foreground text-sm">Loading…</p>}
-        {equipsQ.data && equipsQ.data.length === 0 && (
+        {isEmpty ? (
           <div className="border-border bg-muted/40 rounded-md border p-6 text-center text-sm">
             <p className="text-muted-foreground">
-              {search || slot !== 'all' ? 'No equips match.' : 'No equips yet.'} Start by{' '}
+              No equips yet. Load <code className="font-mono">Character.wz</code> via{' '}
               <Link to="/setup" className="text-primary hover:underline">
-                loading your WZ files
-              </Link>
-              .
+                setup
+              </Link>{' '}
+              to populate this list.
             </p>
           </div>
-        )}
-        {equipsQ.data && equipsQ.data.length > 0 && (
-          <ul className="divide-border border-border bg-card text-card-foreground divide-y rounded-md border">
-            {equipsQ.data.map((e) => (
-              <li key={e.id}>
-                <Link
-                  to={`/equips/${e.id}`}
-                  className="hover:bg-accent flex items-center gap-3 px-4 py-2 transition-colors"
-                >
-                  <ItemIcon entity="equip" id={e.id} size={32} alt={e.name} />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium">{e.name}</div>
-                    {e.description && (
-                      <div className="text-muted-foreground line-clamp-1 text-xs">
-                        {e.description}
-                      </div>
-                    )}
-                  </div>
-                  <div className="text-muted-foreground shrink-0 text-right text-xs">
-                    <div className="font-mono">{e.id}</div>
-                    {e.slot && <div className="capitalize">{e.slot}</div>}
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
+        ) : (
+          <DataTable
+            data={equipsQ.data?.rows ?? []}
+            total={equipsQ.data?.total ?? 0}
+            columns={columns}
+            state={state}
+            setState={setState}
+            defaultSort={defaultSort}
+            visibleColumns={visibleColumns}
+            defaultVisible={defaultVisible}
+            pinnedColumns={pinnedColumns}
+            rowLinkTo={(e) => `/equips/${e.id}`}
+            getRowId={(e) => String(e.id)}
+            emptyMessage="No equips found."
+            loading={equipsQ.isLoading}
+            fetching={equipsQ.isFetching && !equipsQ.isLoading}
+            columnFilters={filters}
+            onColumnFilterChange={(id, v) => {
+              setFilter(id, v);
+              setState({ page: 1 });
+            }}
+            enumOptions={{ slot: slotsQ.data ?? [] }}
+            searchValue={state.q}
+            onSearchChange={(v) => setState({ q: v, page: 1 })}
+            searchPlaceholder="Search equips by name"
+          />
         )}
       </section>
     </div>

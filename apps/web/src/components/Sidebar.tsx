@@ -34,10 +34,10 @@ interface SidebarSection {
 }
 
 const ITEM_CATEGORY_CHILDREN = [
-  { label: 'Use', to: '/items?category=use' },
-  { label: 'Setup', to: '/items?category=setup' },
-  { label: 'Etc', to: '/items?category=etc' },
-  { label: 'Cash', to: '/items?category=cash' },
+  { label: 'Use', to: '/items?f_category=use' },
+  { label: 'Setup', to: '/items?f_category=setup' },
+  { label: 'Etc', to: '/items?f_category=etc' },
+  { label: 'Cash', to: '/items?f_category=cash' },
 ];
 
 function titleCaseSlot(slot: string): string {
@@ -66,7 +66,7 @@ export function Sidebar() {
     if (!slotsQ.data || slotsQ.data.length === 0) return undefined;
     return slotsQ.data.map((s) => ({
       label: titleCaseSlot(s),
-      to: `/equips?slot=${encodeURIComponent(s)}`,
+      to: `/equips?f_slot=${encodeURIComponent(s)}`,
     }));
   }, [slotsQ.data]);
 
@@ -288,7 +288,7 @@ function NavItem({
 }
 
 /**
- * Subnav links carry a query string (`?slot=cap`), so `NavLink`'s default
+ * Subnav links carry a query string (`?f_slot=cap`), so `NavLink`'s default
  * pathname-only matching can't distinguish them. We compare the full
  * pathname+search against the current location instead.
  */

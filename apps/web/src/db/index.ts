@@ -4,6 +4,8 @@
 // worker. The worker owns the SQLite-WASM engine and OPFS persistence.
 
 export type {
+  ColumnFilter,
+  StringFilterMode,
   DatasetFileRef,
   DatasetRecord,
   DbStatus,
@@ -12,6 +14,7 @@ export type {
   EquipRecord,
   GameDatabase,
   ItemRecord,
+  ListOptsBase,
   MapMobRecord,
   MapMobWithName,
   MapNpcRecord,
@@ -20,6 +23,7 @@ export type {
   MapRecord,
   MobRecord,
   NpcRecord,
+  PageResult,
   QuestRecord,
   QuestRequirementRecord,
   QuestRequirementWithName,
@@ -27,5 +31,6 @@ export type {
   QuestRewardWithName,
   QuestSummary,
   SearchEntry,
+  SortDir,
 } from './types';
 export { getDbClient, terminateDbClient } from './client';

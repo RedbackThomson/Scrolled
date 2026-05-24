@@ -1,0 +1,215 @@
+// Dynamic per-column filter URL state.
+//
+// Each filterable column gets its own URL keys:
+//   - string columns: `f_<col>=foo`, optional `f_<col>_mode=prefix|suffix|equals`
+//                     (`contains` is the default and clears from the URL)
+//                                                → { kind: 'string', mode, value }
+//   - enum columns:   `f_<col>=value` (server treats as equals)
+//                                                → { kind: 'string', mode: 'equals', value }
+//   - number columns: `f_<col>_min=10`, `f_<col>_max=50`
+//                                                → { kind: 'range', min, max }
+//
+// The hook builds a nuqs `useQueryStates` parser map at first render from the
+// column defs' `meta.filter` so the URL keys derive automatically from the
+// table's schema — no per-route boilerplate.
+
+import { useCallback, useMemo } from 'react';
+import {
+  parseAsFloat,
+  parseAsString,
+  parseAsStringLiteral,
+  useQueryStates,
+  type ParserBuilder,
+  type UseQueryStatesKeysMap,
+} from 'nuqs';
+import type { ColumnDef } from '@tanstack/react-table';
+import type { ColumnFilter, StringFilterMode } from '@/db';
+import type { FilterType } from './types';
+
+const STRING_MODES = ['contains', 'prefix', 'suffix', 'equals'] as const;
+const DEFAULT_STRING_MODE: StringFilterMode = 'contains';
+
+export interface ColumnFilterableSpec {
+  id: string;
+  type: FilterType;
+}
+
+export interface UseColumnFiltersResult {
+  /** Public column id → filter value, keyed for sending to the DB API. */
+  filters: Record<string, ColumnFilter>;
+  /** True when at least one column has an active filter value. */
+  active: boolean;
+  /** Set or clear a single column's filter. Passing `null` clears the column. */
+  setFilter: (columnId: string, value: ColumnFilter | null) => void;
+  /** Clear every column filter at once. */
+  clearAll: () => void;
+  /** Convenience: per-column lookup the popover uses to seed its inputs. */
+  getFilter: (columnId: string) => ColumnFilter | undefined;
+}
+
+function collectFilterable<TData>(columns: readonly ColumnDef<TData>[]): ColumnFilterableSpec[] {
+  const out: ColumnFilterableSpec[] = [];
+  for (const col of columns) {
+    const id = col.id;
+    const ftype = col.meta?.filter;
+    if (id && ftype) out.push({ id, type: ftype });
+  }
+  return out;
+}
+
+/**
+ * Build the `useQueryStates` parser map from the filterable column list.
+ * Numbers use parseAsFloat so REAL columns (e.g. `mob_rate`) round-trip.
+ * All keys clear on default so an empty filter doesn't pollute the URL.
+ */
+function buildParsers(
+  filterable: ColumnFilterableSpec[],
+): Record<string, ParserBuilder<string> | ParserBuilder<number> | ParserBuilder<StringFilterMode>> {
+  const map: Record<
+    string,
+    ParserBuilder<string> | ParserBuilder<number> | ParserBuilder<StringFilterMode>
+  > = {};
+  for (const { id, type } of filterable) {
+    if (type === 'string') {
+      map[`f_${id}`] = parseAsString
+        .withDefault('')
+        .withOptions({ throttleMs: 300, clearOnDefault: true });
+      map[`f_${id}_mode`] = parseAsStringLiteral(STRING_MODES)
+        .withDefault(DEFAULT_STRING_MODE)
+        .withOptions({ clearOnDefault: true });
+    } else if (type === 'enum') {
+      // Enum has no mode picker — the user is choosing from a known set
+      // and the server treats it as equality.
+      map[`f_${id}`] = parseAsString
+        .withDefault('')
+        .withOptions({ clearOnDefault: true });
+    } else {
+      // parseAsFloat has no default — absent means "no bound". The
+      // discriminated-union return on the hook treats null as omitted.
+      map[`f_${id}_min`] = parseAsFloat.withOptions({ clearOnDefault: true });
+      map[`f_${id}_max`] = parseAsFloat.withOptions({ clearOnDefault: true });
+    }
+  }
+  return map;
+}
+
+export function useColumnFilters<TData>(
+  columns: readonly ColumnDef<TData>[],
+): UseColumnFiltersResult {
+  const filterable = useMemo(() => collectFilterable(columns), [columns]);
+  const parsers = useMemo(() => buildParsers(filterable), [filterable]);
+
+  const [state, setState] = useQueryStates(
+    // The cast is safe: parsers are typed per-id and useQueryStates returns
+    // a record matching the parser map.
+    parsers as unknown as UseQueryStatesKeysMap,
+    { history: 'replace' },
+  );
+
+  const filters = useMemo(() => {
+    const out: Record<string, ColumnFilter> = {};
+    for (const { id, type } of filterable) {
+      if (type === 'string') {
+        const v = (state[`f_${id}`] as string | null | undefined) ?? '';
+        const m =
+          (state[`f_${id}_mode`] as StringFilterMode | null | undefined) ??
+          DEFAULT_STRING_MODE;
+        // Surface an entry whenever EITHER the value is non-empty OR the
+        // user has explicitly picked a non-default mode (so the popover's
+        // mode selector reflects the URL even before typing).
+        if (v.length > 0 || m !== DEFAULT_STRING_MODE) {
+          out[id] = { kind: 'string', mode: m, value: v };
+        }
+      } else if (type === 'enum') {
+        const v = (state[`f_${id}`] as string | null | undefined) ?? '';
+        if (v.length > 0) {
+          out[id] = { kind: 'string', mode: 'equals', value: v };
+        }
+      } else {
+        const min = state[`f_${id}_min`] as number | null | undefined;
+        const max = state[`f_${id}_max`] as number | null | undefined;
+        if ((min !== null && min !== undefined) || (max !== null && max !== undefined)) {
+          out[id] = {
+            kind: 'range',
+            min: min ?? undefined,
+            max: max ?? undefined,
+          };
+        }
+      }
+    }
+    return out;
+  }, [filterable, state]);
+
+  // `active` counts only filters with real effect — an empty value with a
+  // non-default mode picked is "remembered" but not narrowing.
+  const active = useMemo(
+    () =>
+      Object.values(filters).some((f) =>
+        f.kind === 'string'
+          ? f.value.length > 0
+          : f.min !== undefined || f.max !== undefined,
+      ),
+    [filters],
+  );
+
+  const setFilter = useCallback(
+    (columnId: string, value: ColumnFilter | null) => {
+      const spec = filterable.find((s) => s.id === columnId);
+      if (!spec) return;
+      if (spec.type === 'string') {
+        const isStringPatch = value !== null && value.kind === 'string';
+        const nextValue = isStringPatch ? value.value : '';
+        // Mode persists even when the value is empty so the picker remembers
+        // the user's choice between keystrokes. Passing `null` clears both.
+        const nextMode =
+          value === null
+            ? DEFAULT_STRING_MODE
+            : isStringPatch
+              ? value.mode
+              : DEFAULT_STRING_MODE;
+        void setState({
+          [`f_${columnId}`]: nextValue,
+          [`f_${columnId}_mode`]: nextMode,
+        });
+      } else if (spec.type === 'enum') {
+        const next =
+          value !== null && value.kind === 'string' ? value.value : '';
+        void setState({ [`f_${columnId}`]: next });
+      } else {
+        const min = value && value.kind === 'range' ? value.min ?? null : null;
+        const max = value && value.kind === 'range' ? value.max ?? null : null;
+        void setState({
+          [`f_${columnId}_min`]: min,
+          [`f_${columnId}_max`]: max,
+        });
+      }
+    },
+    [filterable, setState],
+  );
+
+  const clearAll = useCallback(() => {
+    const patch: Record<string, string | number | null | StringFilterMode> = {};
+    for (const { id, type } of filterable) {
+      if (type === 'string') {
+        patch[`f_${id}`] = '';
+        patch[`f_${id}_mode`] = DEFAULT_STRING_MODE;
+      } else if (type === 'enum') {
+        patch[`f_${id}`] = '';
+      } else {
+        patch[`f_${id}_min`] = null;
+        patch[`f_${id}_max`] = null;
+      }
+    }
+    void setState(patch);
+  }, [filterable, setState]);
+
+  const getFilter = useCallback((columnId: string) => filters[columnId], [filters]);
+
+  return {
+    filters,
+    active,
+    setFilter,
+    clearAll,
+    getFilter,
+  };
+}

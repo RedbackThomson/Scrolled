@@ -27,6 +27,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: false,
+    setupFiles: ['./vitest.setup.ts'],
     include: ['src/**/*.test.{ts,tsx}', 'test/**/*.test.{ts,tsx}'],
     // Default to a generous timeout — WZ parsing of real files can take a while.
     testTimeout: 30_000,

@@ -76,24 +76,44 @@ export class Sqlite {
 
   /** Execute a one-shot statement (DDL or write). */
   exec(sql: string, bind?: BindingSpec): void {
-    this.require().exec({ sql, bind });
+    try {
+      this.require().exec({ sql, bind });
+    } catch (e) {
+      logSqlFailure('exec', sql, bind, e);
+      throw e;
+    }
   }
 
   /** Run a query and return all rows as plain objects. */
   selectObjects<T extends Row = Row>(sql: string, bind?: BindingSpec): T[] {
-    return this.require().selectObjects(sql, bind) as T[];
+    try {
+      return this.require().selectObjects(sql, bind) as T[];
+    } catch (e) {
+      logSqlFailure('selectObjects', sql, bind, e);
+      throw e;
+    }
   }
 
   /** Run a query expected to return at most one row. */
   selectObject<T extends Row = Row>(sql: string, bind?: BindingSpec): T | null {
-    const row = this.require().selectObject(sql, bind) as T | undefined;
-    return row ?? null;
+    try {
+      const row = this.require().selectObject(sql, bind) as T | undefined;
+      return row ?? null;
+    } catch (e) {
+      logSqlFailure('selectObject', sql, bind, e);
+      throw e;
+    }
   }
 
   /** Run a query expected to return a single scalar. */
   selectValue<T extends SqlValue = SqlValue>(sql: string, bind?: BindingSpec): T | null {
-    const value = this.require().selectValue(sql, bind);
-    return (value ?? null) as T | null;
+    try {
+      const value = this.require().selectValue(sql, bind);
+      return (value ?? null) as T | null;
+    } catch (e) {
+      logSqlFailure('selectValue', sql, bind, e);
+      throw e;
+    }
   }
 
   /** Wrap `fn` in a transaction. Throws if anything inside throws. */
@@ -253,6 +273,38 @@ export class Sqlite {
     if (!this.db) throw new Error('[mge] sqlite database not open');
     return this.db;
   }
+}
+
+/**
+ * Mirror SQL failures to the console (and the ring-buffer log that backs bug
+ * reports) so callers don't have to wrap every query in try/catch. We never
+ * swallow — the original error is rethrown by the caller.
+ */
+function logSqlFailure(op: string, sql: string, bind: BindingSpec | undefined, e: unknown): void {
+  // Condense whitespace so multi-line SQL stays readable in console logs.
+  const condensed = sql.replace(/\s+/g, ' ').trim();
+  log.error(`${op} failed`, {
+    sql: condensed,
+    bind: describeBind(bind),
+    ...describeError(e),
+  });
+}
+
+/** Truncate large BLOB params so the log entry stays small. */
+function describeBind(bind: BindingSpec | undefined): unknown {
+  if (bind === undefined || bind === null) return bind;
+  if (Array.isArray(bind)) return bind.map(describeBindValue);
+  if (typeof bind === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(bind)) out[k] = describeBindValue(v);
+    return out;
+  }
+  return describeBindValue(bind);
+}
+
+function describeBindValue(v: unknown): unknown {
+  if (v instanceof Uint8Array) return `<Uint8Array ${v.byteLength} bytes>`;
+  return v;
 }
 
 interface OpfsCapabilities {

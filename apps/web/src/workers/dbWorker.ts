@@ -49,6 +49,10 @@ class WorkerDb {
     await this.ensureOpen();
     return this.api.listItems(opts);
   }
+  async listItemCategories() {
+    await this.ensureOpen();
+    return this.api.listItemCategories();
+  }
   async getItemIcon(id: number) {
     await this.ensureOpen();
     return this.api.getItemIcon(id);

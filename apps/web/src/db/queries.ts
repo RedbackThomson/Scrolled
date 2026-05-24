@@ -5,12 +5,14 @@
 
 import type { Sqlite, Row } from './sqlite';
 import type {
+  ColumnFilter,
   DatasetFileRef,
   DatasetRecord,
   DbStatus,
   ExtractorResultRecord,
   EquipRecord,
   ItemRecord,
+  ListOptsBase,
   MapMobRecord,
   MapMobWithName,
   MapNpcRecord,
@@ -20,6 +22,7 @@ import type {
   MobRecord,
   NpcRecord,
   GameDatabase,
+  PageResult,
   QuestRecord,
   QuestRequirementRecord,
   QuestRequirementWithName,
@@ -27,7 +30,208 @@ import type {
   QuestRewardWithName,
   QuestSummary,
   SearchEntry,
+  SortDir,
 } from './types';
+
+/**
+ * Per-entity allowlist mapping public column ids → SQL column names plus
+ * each column's default sort direction. The mapping is the security
+ * boundary: `orderBy` strings come straight from URL query params, but
+ * we never interpolate them into SQL — we look them up here and emit a
+ * literal column name. Unknown keys fall back to the entity's default.
+ */
+interface OrderSpec {
+  col: string;
+  defaultDir: SortDir;
+}
+
+const ITEM_ORDER: Record<string, OrderSpec> = {
+  name:          { col: 'name',           defaultDir: 'asc'  },
+  category:      { col: 'category',       defaultDir: 'asc'  },
+  subcategory:   { col: 'subcategory',    defaultDir: 'asc'  },
+  requiredLevel: { col: 'required_level', defaultDir: 'asc'  },
+  price:         { col: 'price',          defaultDir: 'desc' },
+  id:            { col: 'id',             defaultDir: 'asc'  },
+};
+const ITEM_ORDER_DEFAULT = 'name';
+
+const EQUIP_ORDER: Record<string, OrderSpec> = {
+  name:          { col: 'name',           defaultDir: 'asc'  },
+  slot:          { col: 'slot',           defaultDir: 'asc'  },
+  requiredLevel: { col: 'required_level', defaultDir: 'asc'  },
+  attack:        { col: 'attack',         defaultDir: 'desc' },
+  magicAttack:   { col: 'magic_attack',   defaultDir: 'desc' },
+  defense:       { col: 'defense',        defaultDir: 'desc' },
+  magicDefense:  { col: 'magic_defense',  defaultDir: 'desc' },
+  accuracy:      { col: 'accuracy',       defaultDir: 'desc' },
+  avoidability:  { col: 'avoidability',   defaultDir: 'desc' },
+  upgradeSlots:  { col: 'upgrade_slots',  defaultDir: 'desc' },
+  id:            { col: 'id',             defaultDir: 'asc'  },
+};
+const EQUIP_ORDER_DEFAULT = 'name';
+
+const MOB_ORDER: Record<string, OrderSpec> = {
+  name:    { col: 'name',           defaultDir: 'asc'  },
+  level:   { col: 'level',          defaultDir: 'asc'  },
+  hp:      { col: 'hp',             defaultDir: 'asc'  },
+  mp:      { col: 'mp',             defaultDir: 'asc'  },
+  exp:     { col: 'exp',            defaultDir: 'desc' },
+  element: { col: 'element_attack', defaultDir: 'asc'  },
+  id:      { col: 'id',             defaultDir: 'asc'  },
+};
+const MOB_ORDER_DEFAULT = 'level';
+
+const NPC_ORDER: Record<string, OrderSpec> = {
+  name: { col: 'name', defaultDir: 'asc' },
+  id:   { col: 'id',   defaultDir: 'asc' },
+};
+const NPC_ORDER_DEFAULT = 'name';
+
+const MAP_ORDER: Record<string, OrderSpec> = {
+  name:        { col: 'name',          defaultDir: 'asc' },
+  streetName:  { col: 'street_name',   defaultDir: 'asc' },
+  mobRate:     { col: 'mob_rate',      defaultDir: 'asc' },
+  returnMapId: { col: 'return_map_id', defaultDir: 'asc' },
+  id:          { col: 'id',            defaultDir: 'asc' },
+};
+const MAP_ORDER_DEFAULT = 'name';
+
+const QUEST_ORDER: Record<string, OrderSpec> = {
+  name:          { col: 'name',           defaultDir: 'asc' },
+  parent:        { col: 'parent',         defaultDir: 'asc' },
+  requiredLevel: { col: 'required_level', defaultDir: 'asc' },
+  id:            { col: 'id',             defaultDir: 'asc' },
+};
+const QUEST_ORDER_DEFAULT = 'name';
+
+function resolveOrder(
+  allow: Record<string, OrderSpec>,
+  fallbackKey: string,
+  orderBy: string | undefined,
+  dir: SortDir | undefined,
+): { col: string; dir: SortDir } {
+  const spec = (orderBy && allow[orderBy]) || allow[fallbackKey];
+  return { col: spec.col, dir: dir === 'desc' || dir === 'asc' ? dir : spec.defaultDir };
+}
+
+function clampLimit(limit: number | undefined): number {
+  return Math.min(Math.max(limit ?? 50, 1), 500);
+}
+
+function clampOffset(offset: number | undefined): number {
+  return Math.max(offset ?? 0, 0);
+}
+
+/**
+ * Per-entity column-filter allowlist. Mirrors the ORDER BY allowlists:
+ * public column ids (the same ones the UI sends from URL state) map to
+ * the SQL column they back, plus the filter type. Unknown filter keys
+ * are silently dropped — same defence-in-depth as ORDER BY.
+ */
+interface FilterSpec {
+  col: string;
+  type: 'string' | 'number';
+}
+
+const ITEM_FILTER: Record<string, FilterSpec> = {
+  name:          { col: 'name',           type: 'string' },
+  category:      { col: 'category',       type: 'string' },
+  subcategory:   { col: 'subcategory',    type: 'string' },
+  requiredLevel: { col: 'required_level', type: 'number' },
+  price:         { col: 'price',          type: 'number' },
+  id:            { col: 'id',             type: 'number' },
+};
+
+const EQUIP_FILTER: Record<string, FilterSpec> = {
+  name:          { col: 'name',           type: 'string' },
+  slot:          { col: 'slot',           type: 'string' },
+  requiredLevel: { col: 'required_level', type: 'number' },
+  attack:        { col: 'attack',         type: 'number' },
+  magicAttack:   { col: 'magic_attack',   type: 'number' },
+  defense:       { col: 'defense',        type: 'number' },
+  magicDefense:  { col: 'magic_defense',  type: 'number' },
+  accuracy:      { col: 'accuracy',       type: 'number' },
+  avoidability:  { col: 'avoidability',   type: 'number' },
+  upgradeSlots:  { col: 'upgrade_slots',  type: 'number' },
+  id:            { col: 'id',             type: 'number' },
+};
+
+const MOB_FILTER: Record<string, FilterSpec> = {
+  name:    { col: 'name',           type: 'string' },
+  level:   { col: 'level',          type: 'number' },
+  hp:      { col: 'hp',             type: 'number' },
+  mp:      { col: 'mp',             type: 'number' },
+  exp:     { col: 'exp',            type: 'number' },
+  element: { col: 'element_attack', type: 'string' },
+  id:      { col: 'id',             type: 'number' },
+};
+
+const NPC_FILTER: Record<string, FilterSpec> = {
+  name: { col: 'name', type: 'string' },
+  id:   { col: 'id',   type: 'number' },
+};
+
+const MAP_FILTER: Record<string, FilterSpec> = {
+  name:        { col: 'name',          type: 'string' },
+  streetName:  { col: 'street_name',   type: 'string' },
+  mobRate:     { col: 'mob_rate',      type: 'number' },
+  returnMapId: { col: 'return_map_id', type: 'number' },
+  id:          { col: 'id',            type: 'number' },
+};
+
+const QUEST_FILTER: Record<string, FilterSpec> = {
+  name:          { col: 'name',           type: 'string' },
+  parent:        { col: 'parent',         type: 'string' },
+  requiredLevel: { col: 'required_level', type: 'number' },
+  id:            { col: 'id',             type: 'number' },
+};
+
+/**
+ * Append WHERE fragments + bind params for each known filter. Unknown
+ * filter keys, blank-string values, and ranges with neither bound set
+ * are skipped. String matches use LIKE … ESCAPE '\' with the LIKE
+ * metacharacters (`%`, `_`, `\`) escaped in the user-supplied value, so
+ * a user typing "50%" matches the literal three characters regardless
+ * of `mode`. SQLite's LIKE is case-insensitive over ASCII by default.
+ */
+function applyFilters(
+  allow: Record<string, FilterSpec>,
+  filters: Record<string, ColumnFilter> | undefined,
+  where: string[],
+  params: (string | number)[],
+): void {
+  if (!filters) return;
+  for (const [key, filter] of Object.entries(filters)) {
+    const spec = allow[key];
+    if (!spec) continue;
+    if (spec.type === 'string' && filter.kind === 'string' && filter.value) {
+      const esc = escapeLikeLiteral(filter.value);
+      const pattern =
+        filter.mode === 'prefix'
+          ? `${esc}%`
+          : filter.mode === 'suffix'
+            ? `%${esc}`
+            : filter.mode === 'equals'
+              ? esc
+              : `%${esc}%`;
+      where.push(`${spec.col} LIKE ? ESCAPE '\\'`);
+      params.push(pattern);
+    } else if (spec.type === 'number' && filter.kind === 'range') {
+      if (filter.min !== undefined && Number.isFinite(filter.min)) {
+        where.push(`${spec.col} >= ?`);
+        params.push(filter.min);
+      }
+      if (filter.max !== undefined && Number.isFinite(filter.max)) {
+        where.push(`${spec.col} <= ?`);
+        params.push(filter.max);
+      }
+    }
+  }
+}
+
+function escapeLikeLiteral(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
+}
 
 interface ItemRow extends Row {
   id: number;
@@ -265,12 +469,14 @@ export class DbApi implements GameDatabase {
   }
 
   async listItems(
-    opts: { limit?: number; search?: string; category?: string } = {},
-  ): Promise<ItemRecord[]> {
-    const limit = Math.min(Math.max(opts.limit ?? 200, 1), 5000);
+    opts: ListOptsBase & { category?: string } = {},
+  ): Promise<PageResult<ItemRecord>> {
+    const limit = clampLimit(opts.limit);
+    const offset = clampOffset(opts.offset);
+    const order = resolveOrder(ITEM_ORDER, ITEM_ORDER_DEFAULT, opts.orderBy, opts.dir);
     const where: string[] = [];
     const params: (string | number)[] = [];
-    if (opts.search && opts.search.trim()) {
+    if (opts.search?.trim()) {
       where.push('name LIKE ?');
       params.push(`%${opts.search.trim()}%`);
     }
@@ -278,19 +484,30 @@ export class DbApi implements GameDatabase {
       where.push('category = ?');
       params.push(opts.category);
     }
+    applyFilters(ITEM_FILTER, opts.filters, where, params);
     const clause = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
-    params.push(limit);
     // List queries deliberately skip `icon_data` — the BLOB lookup happens
     // per-icon via `getItemIcon(id)` so we don't drag MBs of bytes into a
     // list-render result.
-    return this.sql
-      .selectObjects<ItemRow>(
-        `SELECT id, name, description, category, subcategory, icon_path, NULL AS icon_data,
-                price, stack_size, required_level, source_path
-         FROM items ${clause} ORDER BY name LIMIT ?`,
-        params,
-      )
-      .map(rowToItem);
+    return this.sql.transaction(() => {
+      const total = Number(
+        this.sql.selectValue(
+          `SELECT COUNT(*) FROM items ${clause}`,
+          params.length > 0 ? params : undefined,
+        ) ?? 0,
+      );
+      const rows = this.sql
+        .selectObjects<ItemRow>(
+          `SELECT id, name, description, category, subcategory, icon_path, NULL AS icon_data,
+                  price, stack_size, required_level, source_path
+           FROM items ${clause}
+           ORDER BY ${order.col} ${order.dir === 'desc' ? 'DESC' : 'ASC'} NULLS LAST, id ASC
+           LIMIT ? OFFSET ?`,
+          [...params, limit, offset],
+        )
+        .map(rowToItem);
+      return { rows, total };
+    });
   }
 
   async upsertEquip(equip: EquipRecord): Promise<void> {
@@ -318,12 +535,14 @@ export class DbApi implements GameDatabase {
   }
 
   async listEquips(
-    opts: { limit?: number; search?: string; slot?: string } = {},
-  ): Promise<EquipRecord[]> {
-    const limit = Math.min(Math.max(opts.limit ?? 200, 1), 5000);
+    opts: ListOptsBase & { slot?: string } = {},
+  ): Promise<PageResult<EquipRecord>> {
+    const limit = clampLimit(opts.limit);
+    const offset = clampOffset(opts.offset);
+    const order = resolveOrder(EQUIP_ORDER, EQUIP_ORDER_DEFAULT, opts.orderBy, opts.dir);
     const where: string[] = [];
     const params: (string | number)[] = [];
-    if (opts.search && opts.search.trim()) {
+    if (opts.search?.trim()) {
       where.push('name LIKE ?');
       params.push(`%${opts.search.trim()}%`);
     }
@@ -331,18 +550,29 @@ export class DbApi implements GameDatabase {
       where.push('slot = ?');
       params.push(opts.slot);
     }
+    applyFilters(EQUIP_FILTER, opts.filters, where, params);
     const clause = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
-    params.push(limit);
-    return this.sql
-      .selectObjects<EquipRow>(
-        `SELECT id, name, description, slot, category, required_level,
-                required_str, required_dex, required_int, required_luk, required_job,
-                attack, magic_attack, defense, magic_defense, accuracy, avoidability,
-                upgrade_slots, icon_path, NULL AS icon_data, source_path
-         FROM equips ${clause} ORDER BY name LIMIT ?`,
-        params,
-      )
-      .map(rowToEquip);
+    return this.sql.transaction(() => {
+      const total = Number(
+        this.sql.selectValue(
+          `SELECT COUNT(*) FROM equips ${clause}`,
+          params.length > 0 ? params : undefined,
+        ) ?? 0,
+      );
+      const rows = this.sql
+        .selectObjects<EquipRow>(
+          `SELECT id, name, description, slot, category, required_level,
+                  required_str, required_dex, required_int, required_luk, required_job,
+                  attack, magic_attack, defense, magic_defense, accuracy, avoidability,
+                  upgrade_slots, icon_path, NULL AS icon_data, source_path
+           FROM equips ${clause}
+           ORDER BY ${order.col} ${order.dir === 'desc' ? 'DESC' : 'ASC'} NULLS LAST, id ASC
+           LIMIT ? OFFSET ?`,
+          [...params, limit, offset],
+        )
+        .map(rowToEquip);
+      return { rows, total };
+    });
   }
 
   async listEquipSlots(): Promise<string[]> {
@@ -352,6 +582,15 @@ export class DbApi implements GameDatabase {
       )
       .map((r) => r.slot!)
       .filter((s): s is string => !!s);
+  }
+
+  async listItemCategories(): Promise<string[]> {
+    return this.sql
+      .selectObjects<{ category: string | null }>(
+        `SELECT DISTINCT category FROM items WHERE category IS NOT NULL AND category <> '' ORDER BY category`,
+      )
+      .map((r) => r.category!)
+      .filter((c): c is string => !!c);
   }
 
   async upsertMobs(mobs: MobRecord[]): Promise<number> {
@@ -410,9 +649,11 @@ export class DbApi implements GameDatabase {
   }
 
   async listMobs(
-    opts: { limit?: number; search?: string; bossOnly?: boolean } = {},
-  ): Promise<MobRecord[]> {
-    const limit = Math.min(Math.max(opts.limit ?? 200, 1), 5000);
+    opts: ListOptsBase & { bossOnly?: boolean } = {},
+  ): Promise<PageResult<MobRecord>> {
+    const limit = clampLimit(opts.limit);
+    const offset = clampOffset(opts.offset);
+    const order = resolveOrder(MOB_ORDER, MOB_ORDER_DEFAULT, opts.orderBy, opts.dir);
     const where: string[] = [];
     const params: (string | number)[] = [];
     if (opts.search?.trim()) {
@@ -422,18 +663,29 @@ export class DbApi implements GameDatabase {
     if (opts.bossOnly) {
       where.push('is_boss = 1');
     }
+    applyFilters(MOB_FILTER, opts.filters, where, params);
     const clause = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
-    params.push(limit);
     // Skip icon_data — fetched separately via getMobIcon for the rows
     // the UI ends up rendering, so we don't drag MBs into every list call.
-    return this.sql
-      .selectObjects<MobRow>(
-        `SELECT id, name, level, hp, mp, exp, is_boss, element_attack,
-                element_defenses_json, icon_path, NULL AS icon_data, source_path
-         FROM mobs ${clause} ORDER BY level NULLS LAST, name LIMIT ?`,
-        params,
-      )
-      .map(rowToMob);
+    return this.sql.transaction(() => {
+      const total = Number(
+        this.sql.selectValue(
+          `SELECT COUNT(*) FROM mobs ${clause}`,
+          params.length > 0 ? params : undefined,
+        ) ?? 0,
+      );
+      const rows = this.sql
+        .selectObjects<MobRow>(
+          `SELECT id, name, level, hp, mp, exp, is_boss, element_attack,
+                  element_defenses_json, icon_path, NULL AS icon_data, source_path
+           FROM mobs ${clause}
+           ORDER BY ${order.col} ${order.dir === 'desc' ? 'DESC' : 'ASC'} NULLS LAST, id ASC
+           LIMIT ? OFFSET ?`,
+          [...params, limit, offset],
+        )
+        .map(rowToMob);
+      return { rows, total };
+    });
   }
 
   async upsertNpcs(npcs: NpcRecord[]): Promise<number> {
@@ -468,23 +720,36 @@ export class DbApi implements GameDatabase {
     return row?.icon_data ?? null;
   }
 
-  async listNpcs(opts: { limit?: number; search?: string } = {}): Promise<NpcRecord[]> {
-    const limit = Math.min(Math.max(opts.limit ?? 200, 1), 5000);
+  async listNpcs(opts: ListOptsBase = {}): Promise<PageResult<NpcRecord>> {
+    const limit = clampLimit(opts.limit);
+    const offset = clampOffset(opts.offset);
+    const order = resolveOrder(NPC_ORDER, NPC_ORDER_DEFAULT, opts.orderBy, opts.dir);
     const where: string[] = [];
     const params: (string | number)[] = [];
     if (opts.search?.trim()) {
       where.push('name LIKE ?');
       params.push(`%${opts.search.trim()}%`);
     }
+    applyFilters(NPC_FILTER, opts.filters, where, params);
     const clause = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
-    params.push(limit);
-    return this.sql
-      .selectObjects<NpcRow>(
-        `SELECT id, name, description, icon_path, NULL AS icon_data, source_path
-         FROM npcs ${clause} ORDER BY name LIMIT ?`,
-        params,
-      )
-      .map(rowToNpc);
+    return this.sql.transaction(() => {
+      const total = Number(
+        this.sql.selectValue(
+          `SELECT COUNT(*) FROM npcs ${clause}`,
+          params.length > 0 ? params : undefined,
+        ) ?? 0,
+      );
+      const rows = this.sql
+        .selectObjects<NpcRow>(
+          `SELECT id, name, description, icon_path, NULL AS icon_data, source_path
+           FROM npcs ${clause}
+           ORDER BY ${order.col} ${order.dir === 'desc' ? 'DESC' : 'ASC'} NULLS LAST, id ASC
+           LIMIT ? OFFSET ?`,
+          [...params, limit, offset],
+        )
+        .map(rowToNpc);
+      return { rows, total };
+    });
   }
 
   async getNpcMaps(npcId: number): Promise<MapRecord[]> {
@@ -550,8 +815,10 @@ export class DbApi implements GameDatabase {
     return row?.minimap_data ?? null;
   }
 
-  async listMaps(opts: { limit?: number; search?: string } = {}): Promise<MapRecord[]> {
-    const limit = Math.min(Math.max(opts.limit ?? 200, 1), 5000);
+  async listMaps(opts: ListOptsBase = {}): Promise<PageResult<MapRecord>> {
+    const limit = clampLimit(opts.limit);
+    const offset = clampOffset(opts.offset);
+    const order = resolveOrder(MAP_ORDER, MAP_ORDER_DEFAULT, opts.orderBy, opts.dir);
     const where: string[] = [];
     const params: (string | number)[] = [];
     if (opts.search?.trim()) {
@@ -559,16 +826,27 @@ export class DbApi implements GameDatabase {
       const q = `%${opts.search.trim()}%`;
       params.push(q, q);
     }
+    applyFilters(MAP_FILTER, opts.filters, where, params);
     const clause = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
-    params.push(limit);
-    return this.sql
-      .selectObjects<MapRow>(
-        `SELECT id, name, street_name, return_map_id, forced_return_map_id,
-                field_limit, mob_rate, minimap_path, NULL AS minimap_data, source_path
-         FROM maps ${clause} ORDER BY street_name, name LIMIT ?`,
-        params,
-      )
-      .map(rowToMap);
+    return this.sql.transaction(() => {
+      const total = Number(
+        this.sql.selectValue(
+          `SELECT COUNT(*) FROM maps ${clause}`,
+          params.length > 0 ? params : undefined,
+        ) ?? 0,
+      );
+      const rows = this.sql
+        .selectObjects<MapRow>(
+          `SELECT id, name, street_name, return_map_id, forced_return_map_id,
+                  field_limit, mob_rate, minimap_path, NULL AS minimap_data, source_path
+           FROM maps ${clause}
+           ORDER BY ${order.col} ${order.dir === 'desc' ? 'DESC' : 'ASC'} NULLS LAST, id ASC
+           LIMIT ? OFFSET ?`,
+          [...params, limit, offset],
+        )
+        .map(rowToMap);
+      return { rows, total };
+    });
   }
 
   async getMapNpcs(mapId: number): Promise<MapNpcWithName[]> {
@@ -696,9 +974,11 @@ export class DbApi implements GameDatabase {
   }
 
   async listQuests(
-    opts: { limit?: number; search?: string; parent?: string } = {},
-  ): Promise<QuestRecord[]> {
-    const limit = Math.min(Math.max(opts.limit ?? 200, 1), 5000);
+    opts: ListOptsBase & { parent?: string } = {},
+  ): Promise<PageResult<QuestRecord>> {
+    const limit = clampLimit(opts.limit);
+    const offset = clampOffset(opts.offset);
+    const order = resolveOrder(QUEST_ORDER, QUEST_ORDER_DEFAULT, opts.orderBy, opts.dir);
     const where: string[] = [];
     const params: (string | number)[] = [];
     if (opts.search?.trim()) {
@@ -709,14 +989,25 @@ export class DbApi implements GameDatabase {
       where.push('parent = ?');
       params.push(opts.parent);
     }
+    applyFilters(QUEST_FILTER, opts.filters, where, params);
     const clause = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
-    params.push(limit);
-    return this.sql
-      .selectObjects<QuestRow>(
-        `SELECT * FROM quests ${clause} ORDER BY parent NULLS LAST, name LIMIT ?`,
-        params,
-      )
-      .map(rowToQuest);
+    return this.sql.transaction(() => {
+      const total = Number(
+        this.sql.selectValue(
+          `SELECT COUNT(*) FROM quests ${clause}`,
+          params.length > 0 ? params : undefined,
+        ) ?? 0,
+      );
+      const rows = this.sql
+        .selectObjects<QuestRow>(
+          `SELECT * FROM quests ${clause}
+           ORDER BY ${order.col} ${order.dir === 'desc' ? 'DESC' : 'ASC'} NULLS LAST, id ASC
+           LIMIT ? OFFSET ?`,
+          [...params, limit, offset],
+        )
+        .map(rowToQuest);
+      return { rows, total };
+    });
   }
 
   async listQuestParents(): Promise<string[]> {

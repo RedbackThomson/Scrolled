@@ -257,4 +257,18 @@ export const MIGRATIONS: readonly Migration[] = [
       ALTER TABLE maps ADD COLUMN minimap_data BLOB;
     `,
   },
+  {
+    version: 7,
+    name: 'indexes for browse-table sort columns',
+    sql: `
+      CREATE INDEX IF NOT EXISTS mobs_level_idx            ON mobs (level);
+      CREATE INDEX IF NOT EXISTS mobs_hp_idx               ON mobs (hp);
+      CREATE INDEX IF NOT EXISTS mobs_exp_idx              ON mobs (exp);
+      CREATE INDEX IF NOT EXISTS equips_required_level_idx ON equips (required_level);
+      CREATE INDEX IF NOT EXISTS equips_attack_idx         ON equips (attack);
+      CREATE INDEX IF NOT EXISTS items_required_level_idx  ON items (required_level);
+      CREATE INDEX IF NOT EXISTS maps_street_name_idx      ON maps (street_name);
+      CREATE INDEX IF NOT EXISTS quests_required_level_idx ON quests (required_level);
+    `,
+  },
 ];
