@@ -5,7 +5,7 @@ import { ItemIcon } from '@/components/ItemIcon';
 import { HoverPopover } from '@/components/HoverPopover';
 import { HoverCardSaveFooter } from '@/components/collections';
 import { getDbClient } from '@/db';
-import { labelForEquipType } from '@/lib/equipTypes';
+import { labelForEquipSlot, labelForEquipType } from '@/lib/equipTypes';
 
 interface EquipLinkProps {
   id: number;
@@ -61,7 +61,7 @@ function EquipHoverCard({ id }: { id: number }) {
               {e.equipType ? (
                 <span>{labelForEquipType(e.equipType)}</span>
               ) : (
-                e.slot && <span className="capitalize">{e.slot}</span>
+                e.slot && <span>{labelForEquipSlot(e.slot)}</span>
               )}
               {(e.equipType || e.slot) && e.requiredLevel !== null && ' · '}
               {e.requiredLevel !== null && <>Req Lv {e.requiredLevel}</>}

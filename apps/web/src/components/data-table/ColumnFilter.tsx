@@ -33,6 +33,9 @@ interface ColumnFilterPopoverProps {
   onChange: (columnId: string, value: ColumnFilter | null) => void;
   /** Available choices for `type === 'enum'` columns. Ignored otherwise. */
   enumOptions?: readonly string[];
+  /** Optional display formatter for `type === 'enum'` values. URL/filter
+   *  value stays the raw key; only the dropdown label changes. */
+  enumLabel?: (value: string) => string;
   /** Required when `type === 'boolean'` — labels for the two choices. */
   booleanLabels?: BooleanFilterLabels;
 }
@@ -44,6 +47,7 @@ export function ColumnFilterPopover({
   value,
   onChange,
   enumOptions,
+  enumLabel,
   booleanLabels,
 }: ColumnFilterPopoverProps) {
   const active = isActive(value);
@@ -141,6 +145,7 @@ export function ColumnFilterPopover({
               <EnumFilterSelect
                 columnId={columnId}
                 options={enumOptions ?? []}
+                label={enumLabel}
                 value={value?.kind === 'string' ? value.value : ''}
                 onChange={onChange}
               />
@@ -320,11 +325,12 @@ function parseBound(s: string): number | undefined {
 interface EnumInputProps {
   columnId: string;
   options: readonly string[];
+  label?: (value: string) => string;
   value: string;
   onChange: (columnId: string, value: ColumnFilter | null) => void;
 }
 
-function EnumFilterSelect({ columnId, options, value, onChange }: EnumInputProps) {
+function EnumFilterSelect({ columnId, options, label, value, onChange }: EnumInputProps) {
   return (
     <select
       autoFocus
@@ -341,7 +347,7 @@ function EnumFilterSelect({ columnId, options, value, onChange }: EnumInputProps
       <option value="">Any</option>
       {options.map((o) => (
         <option key={o} value={o}>
-          {o}
+          {label ? label(o) : o}
         </option>
       ))}
     </select>

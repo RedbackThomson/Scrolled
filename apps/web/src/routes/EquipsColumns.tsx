@@ -2,6 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { ItemIcon } from '@/components/ItemIcon';
 import { EquipLink } from '@/components/entity-links';
 import type { EquipRecord } from '@/db';
+import { labelForEquipSlot } from '@/lib/equipTypes';
 
 const num = (v: number | null) => (v === null ? '—' : v.toLocaleString());
 
@@ -31,7 +32,7 @@ export const columns: ColumnDef<EquipRecord>[] = [
     accessorFn: (e) => e.slot,
     header: 'Slot',
     meta: { filter: 'enum' },
-    cell: ({ row }) => <span className="capitalize">{row.original.slot ?? '—'}</span>,
+    cell: ({ row }) => <span>{row.original.slot ? labelForEquipSlot(row.original.slot) : '—'}</span>,
   },
   {
     id: 'cash',

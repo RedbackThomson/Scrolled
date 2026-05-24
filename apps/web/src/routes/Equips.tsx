@@ -4,6 +4,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { DataTable, useColumnFilters, useTableUrlState } from '@/components/data-table';
 import { CollectionsBulkAddMenu } from '@/components/collections';
 import { getDbClient } from '@/db';
+import { labelForEquipSlot } from '@/lib/equipTypes';
 import { columns, defaultSort, defaultVisible, pinnedColumns } from './EquipsColumns';
 
 const DEFAULT_PAGE_SIZE = 50;
@@ -102,6 +103,7 @@ export default function Equips() {
               setState({ page: 1 });
             }}
             enumOptions={{ slot: (slotsQ.data ?? []).filter((s) => s !== 'weapon') }}
+            enumLabels={{ slot: labelForEquipSlot }}
             searchValue={state.q}
             onSearchChange={(v) => setState({ q: v, page: 1 })}
             searchPlaceholder="Search equips by name"

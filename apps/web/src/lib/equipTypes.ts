@@ -67,3 +67,23 @@ export function resolveEquipType(id: number): string | null {
   const bucket = Math.floor(id / 10000);
   return EQUIP_TYPE_LOOKUP[bucket] ?? null;
 }
+
+/**
+ * Slot keys are stored lowercased (e.g. "cap", "longcoat", "petequip"), but
+ * the WZ file names disagree with what the game shows in-tab. Map the few
+ * that differ; everything else falls back to title-casing the key.
+ */
+const SLOT_DISPLAY_LABELS: Readonly<Record<string, string>> = {
+  cap: 'Hat',
+  coat: 'Top',
+  pants: 'Bottom',
+  longcoat: 'Overall',
+  petequip: 'Pet Equip',
+};
+
+export function labelForEquipSlot(slot: string): string {
+  const override = SLOT_DISPLAY_LABELS[slot];
+  if (override) return override;
+  const spaced = slot.replace(/([a-z])([A-Z])/g, '$1 $2');
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}

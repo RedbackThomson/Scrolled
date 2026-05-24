@@ -55,6 +55,9 @@ export interface DataTableProps<TData> {
   onColumnFilterChange?: (columnId: string, value: ColumnFilter | null) => void;
   /** Options for `meta.filter === 'enum'` columns, keyed by column id. */
   enumOptions?: Record<string, readonly string[]>;
+  /** Optional per-column label formatter for `enum` filter dropdowns. The
+   *  raw value still drives the URL/filter; only the option text changes. */
+  enumLabels?: Record<string, (value: string) => string>;
   /** Bound to the table's search input. Omit to hide the input. */
   searchValue?: string;
   onSearchChange?: (next: string) => void;
@@ -89,6 +92,7 @@ export function DataTable<TData>({
   columnFilters,
   onColumnFilterChange,
   enumOptions,
+  enumLabels,
   searchValue,
   onSearchChange,
   searchPlaceholder = 'Search',
@@ -317,6 +321,7 @@ export function DataTable<TData>({
                           value={columnFilters?.[header.column.id]}
                           onChange={onColumnFilterChange}
                           enumOptions={enumOptions?.[header.column.id]}
+                          enumLabel={enumLabels?.[header.column.id]}
                           booleanLabels={header.column.columnDef.meta?.booleanLabels}
                         />
                       )}

@@ -8,7 +8,7 @@ import { MobLink } from '@/components/entity-links';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/lib/useFeatures';
-import { labelForEquipType } from '@/lib/equipTypes';
+import { labelForEquipSlot, labelForEquipType } from '@/lib/equipTypes';
 
 export default function EquipDetail() {
   const params = useParams<{ id: string }>();
@@ -156,7 +156,7 @@ export default function EquipDetail() {
             <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Info</h2>
             <dl className="divide-border divide-y">
               <Row label="ID" value={String(e.id)} mono />
-              <Row label="Slot" value={e.slot ?? '—'} capitalize />
+              <Row label="Slot" value={e.slot ? labelForEquipSlot(e.slot) : '—'} />
               {e.equipType && <Row label="Type" value={labelForEquipType(e.equipType)} />}
               <Row label="Source" value={e.cash ? 'Cash shop' : 'In-game'} />
             </dl>

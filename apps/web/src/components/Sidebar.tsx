@@ -20,7 +20,7 @@ import {
   Wrench,
   type LucideIcon,
 } from 'lucide-react';
-import { WEAPON_TYPE_ORDER, labelForEquipType } from '@/lib/equipTypes';
+import { WEAPON_TYPE_ORDER, labelForEquipSlot, labelForEquipType } from '@/lib/equipTypes';
 import { useFeatures } from '@/lib/useFeatures';
 import { useSidebarSections } from '@/lib/sidebarState';
 import { getDbClient } from '@/db';
@@ -57,15 +57,6 @@ const ITEM_CATEGORY_CHILDREN = [
   { label: 'Cash', to: '/items?f_category=cash' },
 ];
 
-function titleCaseSlot(slot: string): string {
-  // Slot keys come from String.wz/Eqp.img/Eqp child names lowercased.
-  // "petequip" → "Pet Equip", "weapon" → "Weapon", "longcoat" → "Longcoat".
-  const spaced = slot
-    .replace(/([a-z])([A-Z])/g, '$1 $2')
-    .replace(/(pet)(equip)/i, '$1 $2');
-  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
-}
-
 export function Sidebar() {
   const features = useFeatures();
   const db = useMemo(() => getDbClient(), []);
@@ -87,7 +78,7 @@ export function Sidebar() {
     return slotsQ.data
       .filter((s) => s !== 'weapon')
       .map((s) => ({
-        label: titleCaseSlot(s),
+        label: labelForEquipSlot(s),
         to: `/equips?f_slot=${encodeURIComponent(s)}`,
       }));
   }, [slotsQ.data]);

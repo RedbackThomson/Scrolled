@@ -14,6 +14,7 @@ import {
 import type { EntityKind } from '@/db';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { getDbClient } from '@/db';
+import { labelForEquipSlot } from '@/lib/equipTypes';
 import { getSearchIndex, querySearch, type SearchHit } from '@/search';
 import { cn } from '@/lib/utils';
 
@@ -186,8 +187,13 @@ function GlobalSearch() {
                 <span className="min-w-0 flex-1 truncate">{hit.name}</span>
                 <span className="text-muted-foreground shrink-0 font-mono text-xs">{hit.id}</span>
                 {hit.category && (
-                  <span className="text-muted-foreground shrink-0 text-xs capitalize">
-                    {hit.category}
+                  <span
+                    className={cn(
+                      'text-muted-foreground shrink-0 text-xs',
+                      hit.entity !== 'equip' && 'capitalize',
+                    )}
+                  >
+                    {hit.entity === 'equip' ? labelForEquipSlot(hit.category) : hit.category}
                   </span>
                 )}
               </Link>
