@@ -1,15 +1,18 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Bookmark, Download, Loader2, Plus, Upload } from 'lucide-react';
+import { Download, Loader2, Plus, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   CollectionFormDialog,
   CollectionsImportDialog,
   downloadJson,
+  resolveCollectionColor,
+  resolveCollectionIcon,
   todayStamp,
 } from '@/components/collections';
 import { useCollectionsList, useExportAllJson } from '@/lib/useCollections';
 import type { CollectionRecord } from '@/db/user';
+import { cn } from '@/lib/utils';
 
 export default function Collections() {
   const collectionsQ = useCollectionsList();
@@ -106,13 +109,24 @@ export default function Collections() {
 }
 
 function CollectionTile({ collection }: { collection: CollectionRecord }) {
+  const { Icon } = resolveCollectionIcon(collection.icon);
+  const color = resolveCollectionColor(collection.color);
   return (
     <li>
       <Link
         to={`/collections/${collection.id}`}
         className="border-border bg-card text-card-foreground hover:border-foreground/30 group flex items-start gap-3 rounded-md border p-4 transition-colors"
       >
-        <Bookmark className="text-muted-foreground group-hover:text-foreground mt-0.5 h-5 w-5 shrink-0 transition-colors" />
+        <span
+          className={cn(
+            'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md',
+            color.iconBg,
+            color.iconColor,
+          )}
+          aria-hidden
+        >
+          <Icon className="h-5 w-5" />
+        </span>
         <div className="min-w-0 flex-1 space-y-1">
           <div className="truncate text-sm font-semibold">{collection.name}</div>
           <div className="text-muted-foreground font-mono text-xs">

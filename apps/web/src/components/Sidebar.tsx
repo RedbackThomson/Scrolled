@@ -23,13 +23,26 @@ import { useFeatures } from '@/lib/useFeatures';
 import { useSidebarSections } from '@/lib/sidebarState';
 import { getDbClient } from '@/db';
 import { getUserDbClient } from '@/db/user';
+import {
+  resolveCollectionColor,
+  resolveCollectionIcon,
+} from '@/components/collections';
 import { cn } from '@/lib/utils';
+
+interface SidebarChild {
+  label: string;
+  to: string;
+  /** Optional per-child icon (used by Collections children). */
+  icon?: LucideIcon;
+  /** Optional foreground color class for the icon. */
+  iconClass?: string;
+}
 
 interface SidebarSection {
   label: string;
   to: string;
   icon: LucideIcon;
-  children?: { label: string; to: string }[];
+  children?: SidebarChild[];
   /** Which feature flag must be true for this entry to render. Always-visible
    *  entries (Home, Settings, Debug) omit this. */
   feature?: 'hasItems' | 'hasEquips' | 'hasMobs' | 'hasNpcs' | 'hasMaps' | 'hasQuests';
@@ -80,10 +93,16 @@ export function Sidebar() {
 
   const collectionChildren = useMemo(() => {
     if (!collectionsQ.data || collectionsQ.data.length === 0) return undefined;
-    return collectionsQ.data.map((c) => ({
-      label: c.name,
-      to: `/collections/${c.id}`,
-    }));
+    return collectionsQ.data.map<SidebarChild>((c) => {
+      const { Icon } = resolveCollectionIcon(c.icon);
+      const color = resolveCollectionColor(c.color);
+      return {
+        label: c.name,
+        to: `/collections/${c.id}`,
+        icon: Icon,
+        iconClass: color.iconColor,
+      };
+    });
   }, [collectionsQ.data]);
 
   const allSections: SidebarSection[] = [
@@ -178,7 +197,13 @@ export function Sidebar() {
                     className="border-border ml-6 mt-1 space-y-0.5 border-l pl-3"
                   >
                     {section.children!.map((child) => (
-                      <SubNavItem key={child.to} to={child.to} label={child.label} />
+                      <SubNavItem
+                        key={child.to}
+                        to={child.to}
+                        label={child.label}
+                        icon={child.icon}
+                        iconClass={child.iconClass}
+                      />
                     ))}
                   </ul>
                 )}
@@ -315,7 +340,17 @@ function NavItem({
  * pathname-only matching can't distinguish them. We compare the full
  * pathname+search against the current location instead.
  */
-function SubNavItem({ to, label }: { to: string; label: string }) {
+function SubNavItem({
+  to,
+  label,
+  icon: Icon,
+  iconClass,
+}: {
+  to: string;
+  label: string;
+  icon?: LucideIcon;
+  iconClass?: string;
+}) {
   const location = useLocation();
   const current = `${location.pathname}${location.search}`;
   const active = current === to;
@@ -324,11 +359,12 @@ function SubNavItem({ to, label }: { to: string; label: string }) {
       <NavLink
         to={to}
         className={cn(
-          'block rounded px-2 py-1 text-xs transition-colors',
+          'flex items-center gap-1.5 rounded px-2 py-1 text-xs transition-colors',
           active ? 'text-foreground font-medium' : 'text-sidebar-muted hover:text-foreground',
         )}
       >
-        {label}
+        {Icon && <Icon className={cn('h-3 w-3 shrink-0', iconClass)} aria-hidden />}
+        <span className="truncate">{label}</span>
       </NavLink>
     </li>
   );

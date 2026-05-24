@@ -5,12 +5,14 @@
 // going on).
 
 import { Link } from 'react-router-dom';
-import { Bookmark, BookmarkPlus } from 'lucide-react';
+import { BookmarkPlus } from 'lucide-react';
 import { HoverPopover } from '@/components/HoverPopover';
 import { useMembership } from '@/lib/useCollections';
 import type { CollectionEntityType, MembershipBadge } from '@/db/user';
 import { cn } from '@/lib/utils';
 import { CollectionPicker } from './CollectionPicker';
+import { resolveCollectionIcon } from './iconRegistry';
+import { resolveCollectionColor } from './colorRegistry';
 
 interface CollectionBadgeStripProps {
   entityType: CollectionEntityType;
@@ -56,12 +58,17 @@ export function CollectionBadgeStrip({
 }
 
 function BadgeChip({ membership }: { membership: MembershipBadge }) {
+  const { Icon } = resolveCollectionIcon(membership.icon);
+  const color = resolveCollectionColor(membership.color);
   const chip = (
     <Link
       to={`/collections/${membership.collectionId}`}
-      className="border-border bg-muted/40 hover:bg-accent hover:text-foreground inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium transition-colors"
+      className={cn(
+        'border-border hover:bg-accent hover:text-foreground inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium transition-colors',
+        color.chip,
+      )}
     >
-      <Bookmark className="h-3 w-3" aria-hidden />
+      <Icon className="h-3 w-3" aria-hidden />
       <span className="truncate">{membership.name}</span>
     </Link>
   );

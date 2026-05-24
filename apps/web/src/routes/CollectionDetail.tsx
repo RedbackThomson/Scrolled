@@ -8,7 +8,6 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
-  Bookmark,
   Check,
   Download,
   Loader2,
@@ -20,6 +19,8 @@ import { Button } from '@/components/ui/button';
 import {
   CollectionFormDialog,
   downloadJson,
+  resolveCollectionColor,
+  resolveCollectionIcon,
   slugify,
   todayStamp,
 } from '@/components/collections';
@@ -171,8 +172,17 @@ export default function CollectionDetail() {
       <header className="space-y-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-start gap-3">
-            <span className="bg-muted text-muted-foreground inline-flex h-12 w-12 items-center justify-center rounded-md">
-              <Bookmark className="h-6 w-6" />
+            <span
+              className={cn(
+                'inline-flex h-12 w-12 items-center justify-center rounded-md',
+                resolveCollectionColor(collection.color).iconBg,
+                resolveCollectionColor(collection.color).iconColor,
+              )}
+            >
+              {(() => {
+                const { Icon } = resolveCollectionIcon(collection.icon);
+                return <Icon className="h-6 w-6" />;
+              })()}
             </span>
             <div>
               <h1 className="text-3xl font-semibold tracking-tight">{collection.name}</h1>
