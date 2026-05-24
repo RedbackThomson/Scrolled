@@ -85,7 +85,7 @@ export default function EquipDetail() {
       </Link>
 
       <div className="grid gap-6 sm:grid-cols-[1fr_18rem]">
-        <article className="space-y-4">
+        <article className="space-y-6">
           <header className="flex items-center gap-3">
             <ItemIcon entity="equip" id={e.id} size={48} alt={e.name} />
             <div>
@@ -114,39 +114,49 @@ export default function EquipDetail() {
             <p className="text-muted-foreground text-sm italic">No description available.</p>
           )}
 
-          {features.hasMobs && droppedByQ.data && droppedByQ.data.length > 0 && (
+          {features.hasMobs && (
             <section>
               <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
                 <Skull className="h-4 w-4" /> Dropped by
-                <span className="text-muted-foreground text-xs normal-case">
-                  ({droppedByQ.data.length})
-                </span>
+                {droppedByQ.data && (
+                  <span className="text-muted-foreground text-xs normal-case">
+                    ({droppedByQ.data.length})
+                  </span>
+                )}
               </h2>
-              <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
-                {droppedByQ.data.map((m) => (
-                  <li key={m.mobId}>
-                    <MobLink
-                      id={m.mobId}
-                      className="hover:bg-accent flex items-center gap-3 px-3 py-1.5 text-sm"
-                    >
-                      <EntityIcon
-                        entity="mob"
+              {droppedByQ.isLoading && (
+                <p className="text-muted-foreground text-xs">Loading mobs…</p>
+              )}
+              {droppedByQ.data && droppedByQ.data.length === 0 && (
+                <p className="text-muted-foreground text-xs italic">None.</p>
+              )}
+              {droppedByQ.data && droppedByQ.data.length > 0 && (
+                <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
+                  {droppedByQ.data.map((m) => (
+                    <li key={m.mobId}>
+                      <MobLink
                         id={m.mobId}
-                        size={24}
-                        placeholder={Skull}
-                        alt={m.name}
-                      />
-                      <span className="min-w-0 flex-1 truncate">{m.name}</span>
-                      {m.level !== null && (
-                        <span className="text-muted-foreground shrink-0 text-xs">Lv {m.level}</span>
-                      )}
-                      <span className="text-muted-foreground shrink-0 font-mono text-xs">
-                        {m.mobId}
-                      </span>
-                    </MobLink>
-                  </li>
-                ))}
-              </ul>
+                        className="hover:bg-accent flex items-center gap-3 px-3 py-1.5 text-sm"
+                      >
+                        <EntityIcon
+                          entity="mob"
+                          id={m.mobId}
+                          size={24}
+                          placeholder={Skull}
+                          alt={m.name}
+                        />
+                        <span className="min-w-0 flex-1 truncate">{m.name}</span>
+                        {m.level !== null && (
+                          <span className="text-muted-foreground shrink-0 text-xs">Lv {m.level}</span>
+                        )}
+                        <span className="text-muted-foreground shrink-0 font-mono text-xs">
+                          {m.mobId}
+                        </span>
+                      </MobLink>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </section>
           )}
         </article>

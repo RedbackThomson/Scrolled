@@ -339,17 +339,42 @@ export default function MapDetail() {
           onSelectionChange={setViewerSelection}
         />
 
-        <aside className="border-border bg-card text-card-foreground self-start rounded-md border p-4 text-sm">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide">Info</h2>
-          <dl className="divide-border divide-y">
-            <Row label="ID" value={String(m.id)} mono />
-            <Row label="Street" value={m.streetName ?? '—'} />
-            <RowLink label="Return map" value={m.returnMapId} />
-            <RowLink label="Forced return" value={m.forcedReturnMapId} />
-            <Row label="Field limit" value={m.fieldLimit !== null ? String(m.fieldLimit) : '—'} />
-            <Row label="Mob rate" value={m.mobRate !== null ? m.mobRate.toFixed(2) : '—'} />
-          </dl>
-          <div className="text-muted-foreground mt-4 text-xs">
+        <aside className="border-border bg-card text-card-foreground self-start space-y-4 rounded-md border p-4 text-sm">
+          <section>
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Info</h2>
+            <dl className="divide-border divide-y">
+              <Row label="ID" value={String(m.id)} mono />
+              <Row label="Street" value={m.streetName ?? '—'} />
+            </dl>
+          </section>
+
+          {(m.returnMapId !== null || m.forcedReturnMapId !== null) && (
+            <section>
+              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Connections</h2>
+              <dl className="divide-border divide-y">
+                {m.returnMapId !== null && m.returnMapId !== 999999999 && (
+                  <RowLink label="Return map" value={m.returnMapId} />
+                )}
+                {m.forcedReturnMapId !== null && m.forcedReturnMapId !== 999999999 && (
+                  <RowLink label="Forced return" value={m.forcedReturnMapId} />
+                )}
+              </dl>
+            </section>
+          )}
+
+          {(m.fieldLimit !== null || m.mobRate !== null) && (
+            <section>
+              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Stats</h2>
+              <dl className="divide-border divide-y">
+                {m.fieldLimit !== null && (
+                  <Row label="Field limit" value={String(m.fieldLimit)} />
+                )}
+                {m.mobRate !== null && <Row label="Mob rate" value={m.mobRate.toFixed(2)} />}
+              </dl>
+            </section>
+          )}
+
+          <div className="text-muted-foreground text-xs">
             <div className="uppercase tracking-wide">WZ path</div>
             <code className="break-all font-mono">{m.sourcePath}</code>
           </div>

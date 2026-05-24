@@ -6,12 +6,15 @@ import {
   Award,
   Coins,
   Loader2,
+  Package,
   ScrollText,
+  Skull,
   Sparkles,
-  Sword,
   Target,
   Users,
 } from 'lucide-react';
+import { EntityIcon } from '@/components/EntityIcon';
+import { ItemIcon } from '@/components/ItemIcon';
 import { getDbClient } from '@/db';
 import type { QuestRequirementWithName, QuestRewardWithName } from '@/db';
 import { ItemLink, MobLink, NpcLink, QuestLink } from '@/components/entity-links';
@@ -136,18 +139,24 @@ export default function QuestDetail() {
             </section>
           )}
 
-          {(itemReqs.length > 0 || mobReqs.length > 0 || questPreReqs.length > 0) && (
-            <section>
-              <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
-                <Target className="h-4 w-4" /> Requirements
-              </h2>
+          <section>
+            <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
+              <Target className="h-4 w-4" /> Requirements
+              {requirements.length > 0 && (
+                <span className="text-muted-foreground text-xs normal-case">
+                  ({requirements.length})
+                </span>
+              )}
+            </h2>
+            {requirements.length === 0 ? (
+              <p className="text-muted-foreground text-xs italic">None.</p>
+            ) : (
               <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
                 {itemReqs.map((r) => (
                   <RequirementRow
                     key={`item-${r.targetId}`}
                     r={r}
                     entity="item"
-                    icon={Sparkles}
                     linkable={features.hasItems}
                   />
                 ))}
@@ -156,7 +165,6 @@ export default function QuestDetail() {
                     key={`mob-${r.targetId}`}
                     r={r}
                     entity="mob"
-                    icon={Sword}
                     linkable={features.hasMobs}
                   />
                 ))}
@@ -165,23 +173,29 @@ export default function QuestDetail() {
                     key={`questPre-${r.targetId}`}
                     r={r}
                     entity="quest"
-                    icon={ScrollText}
                     linkable
                   />
                 ))}
               </ul>
-            </section>
-          )}
+            )}
+          </section>
 
-          {(itemRewards.length > 0 || expReward || mesoReward) && (
-            <section>
-              <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
-                <Award className="h-4 w-4" /> Rewards
-              </h2>
+          <section>
+            <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
+              <Award className="h-4 w-4" /> Rewards
+              {rewards.length > 0 && (
+                <span className="text-muted-foreground text-xs normal-case">
+                  ({rewards.length})
+                </span>
+              )}
+            </h2>
+            {rewards.length === 0 ? (
+              <p className="text-muted-foreground text-xs italic">None.</p>
+            ) : (
               <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
                 {expReward && (
                   <li className="flex items-center gap-3 px-3 py-2 text-sm">
-                    <Sparkles className="text-muted-foreground h-4 w-4 shrink-0" />
+                    <Sparkles className="text-muted-foreground h-6 w-6 shrink-0" />
                     <span className="flex-1">Experience</span>
                     <span className="font-mono text-xs">
                       {(expReward.amount ?? 0).toLocaleString()}
@@ -190,7 +204,7 @@ export default function QuestDetail() {
                 )}
                 {mesoReward && (
                   <li className="flex items-center gap-3 px-3 py-2 text-sm">
-                    <Coins className="text-muted-foreground h-4 w-4 shrink-0" />
+                    <Coins className="text-muted-foreground h-6 w-6 shrink-0" />
                     <span className="flex-1">Mesos</span>
                     <span className="font-mono text-xs">
                       {(mesoReward.amount ?? 0).toLocaleString()}
@@ -201,25 +215,34 @@ export default function QuestDetail() {
                   <RewardRow key={`item-${r.targetId}`} r={r} linkable={features.hasItems} />
                 ))}
               </ul>
-            </section>
-          )}
+            )}
+          </section>
         </article>
 
-        <aside className="border-border bg-card text-card-foreground self-start rounded-md border p-4 text-sm">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide">Info</h2>
-          <dl className="divide-border divide-y">
-            <Row label="ID" value={String(q.id)} mono />
-            <Row label="Area" value={q.parent ?? '—'} />
-            <Row
-              label="Req. level"
-              value={q.requiredLevel !== null ? String(q.requiredLevel) : '—'}
-            />
-            <Row
-              label="Req. job"
-              value={q.requiredJob !== null ? `bitfield ${q.requiredJob}` : '—'}
-            />
-          </dl>
-          <div className="text-muted-foreground mt-4 text-xs">
+        <aside className="border-border bg-card text-card-foreground self-start space-y-4 rounded-md border p-4 text-sm">
+          <section>
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Info</h2>
+            <dl className="divide-border divide-y">
+              <Row label="ID" value={String(q.id)} mono />
+              <Row label="Area" value={q.parent ?? '—'} />
+            </dl>
+          </section>
+
+          {(q.requiredLevel !== null || q.requiredJob !== null) && (
+            <section>
+              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Requirements</h2>
+              <dl className="divide-border divide-y">
+                {q.requiredLevel !== null && (
+                  <Row label="Req. level" value={String(q.requiredLevel)} />
+                )}
+                {q.requiredJob !== null && (
+                  <Row label="Req. job" value={`bitfield ${q.requiredJob}`} />
+                )}
+              </dl>
+            </section>
+          )}
+
+          <div className="text-muted-foreground text-xs">
             <div className="uppercase tracking-wide">WZ path</div>
             <code className="break-all font-mono">{q.sourcePath}</code>
           </div>
@@ -241,20 +264,28 @@ function NpcRow({
   linkable: boolean;
 }) {
   const display = name ?? `NPC ${id}`;
-  return (
-    <li className="flex items-center gap-3 px-3 py-2 text-sm">
-      <Users className="text-muted-foreground h-4 w-4 shrink-0" />
+  const rowContent = (
+    <>
+      <EntityIcon entity="npc" id={id} size={24} placeholder={Users} alt={display} />
       <span className="text-muted-foreground w-12 shrink-0 text-xs uppercase tracking-wide">
         {label}
       </span>
+      <span className="min-w-0 flex-1 truncate">{display}</span>
+      <span className="text-muted-foreground shrink-0 font-mono text-xs">{id}</span>
+    </>
+  );
+  return (
+    <li>
       {linkable ? (
-        <NpcLink id={id} className="text-primary min-w-0 flex-1 truncate hover:underline">
-          {display}
+        <NpcLink
+          id={id}
+          className="hover:bg-accent flex items-center gap-3 px-3 py-1.5 text-sm"
+        >
+          {rowContent}
         </NpcLink>
       ) : (
-        <span className="min-w-0 flex-1 truncate">{display}</span>
+        <div className="flex items-center gap-3 px-3 py-1.5 text-sm">{rowContent}</div>
       )}
-      <span className="text-muted-foreground shrink-0 font-mono text-xs">{id}</span>
     </li>
   );
 }
@@ -280,56 +311,89 @@ function RequirementLink({
 function RequirementRow({
   r,
   entity,
-  icon: Icon,
   linkable,
 }: {
   r: QuestRequirementWithName;
   entity: RequirementEntity;
-  icon: React.ComponentType<{ className?: string }>;
   linkable: boolean;
 }) {
   const display = r.targetName ?? `#${r.targetId}`;
+  const rowContent = (
+    <>
+      <RequirementIcon entity={entity} id={r.targetId} name={display} />
+      <span className="min-w-0 flex-1 truncate">{display}</span>
+      {r.amount !== null && r.amount > 1 && (
+        <span className="text-muted-foreground shrink-0 font-mono text-xs">×{r.amount}</span>
+      )}
+      <span className="text-muted-foreground shrink-0 font-mono text-xs">{r.targetId}</span>
+    </>
+  );
   return (
-    <li className="flex items-center gap-3 px-3 py-2 text-sm">
-      <Icon className="text-muted-foreground h-4 w-4 shrink-0" />
+    <li>
       {linkable && r.targetId !== null ? (
         <RequirementLink
           entity={entity}
           id={r.targetId}
-          className="text-primary min-w-0 flex-1 truncate hover:underline"
+          className="hover:bg-accent flex items-center gap-3 px-3 py-1.5 text-sm"
         >
-          {display}
+          {rowContent}
         </RequirementLink>
       ) : (
-        <span className="min-w-0 flex-1 truncate">{display}</span>
+        <div className="flex items-center gap-3 px-3 py-1.5 text-sm">{rowContent}</div>
       )}
-      {r.amount !== null && r.amount > 1 && (
-        <span className="text-muted-foreground shrink-0 font-mono text-xs">×{r.amount}</span>
-      )}
-      <span className="text-muted-foreground shrink-0 font-mono text-xs">{r.targetId}</span>
     </li>
   );
 }
 
+function RequirementIcon({
+  entity,
+  id,
+  name,
+}: {
+  entity: RequirementEntity;
+  id: number | null;
+  name: string;
+}) {
+  if (id === null) {
+    return <ScrollText className="text-muted-foreground h-6 w-6 shrink-0" />;
+  }
+  if (entity === 'item') {
+    return <ItemIcon entity="item" id={id} size={24} alt={name} />;
+  }
+  if (entity === 'mob') {
+    return <EntityIcon entity="mob" id={id} size={24} placeholder={Skull} alt={name} />;
+  }
+  return <ScrollText className="text-muted-foreground h-6 w-6 shrink-0" />;
+}
+
 function RewardRow({ r, linkable }: { r: QuestRewardWithName; linkable: boolean }) {
   const display = r.targetName ?? `Item #${r.targetId}`;
-  return (
-    <li className="flex items-center gap-3 px-3 py-2 text-sm">
-      <Sparkles className="text-muted-foreground h-4 w-4 shrink-0" />
-      {linkable && r.targetId !== null ? (
-        <ItemLink
-          id={r.targetId}
-          className="text-primary min-w-0 flex-1 truncate hover:underline"
-        >
-          {display}
-        </ItemLink>
+  const rowContent = (
+    <>
+      {r.targetId !== null ? (
+        <ItemIcon entity="item" id={r.targetId} size={24} alt={display} />
       ) : (
-        <span className="min-w-0 flex-1 truncate">{display}</span>
+        <Package className="text-muted-foreground h-6 w-6 shrink-0" />
       )}
+      <span className="min-w-0 flex-1 truncate">{display}</span>
       {r.amount !== null && r.amount > 1 && (
         <span className="text-muted-foreground shrink-0 font-mono text-xs">×{r.amount}</span>
       )}
       <span className="text-muted-foreground shrink-0 font-mono text-xs">{r.targetId}</span>
+    </>
+  );
+  return (
+    <li>
+      {linkable && r.targetId !== null ? (
+        <ItemLink
+          id={r.targetId}
+          className="hover:bg-accent flex items-center gap-3 px-3 py-1.5 text-sm"
+        >
+          {rowContent}
+        </ItemLink>
+      ) : (
+        <div className="flex items-center gap-3 px-3 py-1.5 text-sm">{rowContent}</div>
+      )}
     </li>
   );
 }

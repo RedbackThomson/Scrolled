@@ -85,7 +85,7 @@ export default function MobDetail() {
       </Link>
 
       <div className="grid gap-6 sm:grid-cols-[1fr_18rem]">
-        <article className="space-y-4">
+        <article className="space-y-6">
           <header className="flex items-center gap-3">
             <EntityIcon
               entity="mob"
@@ -109,20 +109,20 @@ export default function MobDetail() {
 
           <CollectionBadgeStrip entityType="mob" entityId={m.id} />
 
-          <p className="text-muted-foreground text-xs">
-            Drop possibilities come from <code className="font-mono">MonsterBook.img</code> in{' '}
-            <code className="font-mono">String.wz</code>; rates, quantities, animations, and
-            elemental modifiers are server data and aren't in the WZ files.
-          </p>
-
-          {dropsQ.data && dropsQ.data.length > 0 && (
-            <section>
-              <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
-                <Package className="h-4 w-4" /> Drops
+          <section>
+            <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
+              <Package className="h-4 w-4" /> Drops
+              {dropsQ.data && (
                 <span className="text-muted-foreground text-xs normal-case">
                   ({dropsQ.data.length})
                 </span>
-              </h2>
+              )}
+            </h2>
+            {dropsQ.isLoading && <p className="text-muted-foreground text-xs">Loading drops…</p>}
+            {dropsQ.data && dropsQ.data.length === 0 && (
+              <p className="text-muted-foreground text-xs italic">None.</p>
+            )}
+            {dropsQ.data && dropsQ.data.length > 0 && (
               <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
                 {dropsQ.data.map((d) => {
                   const label = d.itemName ?? `Item ${d.itemId}`;
@@ -158,8 +158,8 @@ export default function MobDetail() {
                   );
                 })}
               </ul>
-            </section>
-          )}
+            )}
+          </section>
 
           {features.hasMaps && (
             <section>
@@ -173,7 +173,7 @@ export default function MobDetail() {
               </h2>
               {mapsQ.isLoading && <p className="text-muted-foreground text-xs">Loading maps…</p>}
               {mapsQ.data && mapsQ.data.length === 0 && (
-                <p className="text-muted-foreground text-xs italic">No map placements found.</p>
+                <p className="text-muted-foreground text-xs italic">None.</p>
               )}
               {mapsQ.data && mapsQ.data.length > 0 && (
                 <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
@@ -214,55 +214,73 @@ export default function MobDetail() {
             </section>
           )}
 
-          {features.hasQuests && questsQ.data && questsQ.data.length > 0 && (
+          {features.hasQuests && (
             <section>
               <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
                 <ScrollText className="h-4 w-4" /> Required by quests
-                <span className="text-muted-foreground text-xs normal-case">
-                  ({questsQ.data.length})
-                </span>
+                {questsQ.data && (
+                  <span className="text-muted-foreground text-xs normal-case">
+                    ({questsQ.data.length})
+                  </span>
+                )}
               </h2>
-              <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
-                {questsQ.data.map((q) => (
-                  <li key={q.id}>
-                    <QuestLink
-                      id={q.id}
-                      className="hover:bg-accent flex items-center gap-2 px-3 py-1.5 text-sm"
-                    >
-                      <span className="min-w-0 flex-1 truncate">
-                        {q.name}
-                        {q.parent && <span className="text-muted-foreground"> · {q.parent}</span>}
-                      </span>
-                      <span className="text-muted-foreground shrink-0 font-mono text-xs">
-                        {q.id}
-                      </span>
-                    </QuestLink>
-                  </li>
-                ))}
-              </ul>
+              {questsQ.isLoading && (
+                <p className="text-muted-foreground text-xs">Loading quests…</p>
+              )}
+              {questsQ.data && questsQ.data.length === 0 && (
+                <p className="text-muted-foreground text-xs italic">None.</p>
+              )}
+              {questsQ.data && questsQ.data.length > 0 && (
+                <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
+                  {questsQ.data.map((q) => (
+                    <li key={q.id}>
+                      <QuestLink
+                        id={q.id}
+                        className="hover:bg-accent flex items-center gap-3 px-3 py-1.5 text-sm"
+                      >
+                        <ScrollText className="text-muted-foreground h-6 w-6 shrink-0" />
+                        <span className="min-w-0 flex-1 truncate">
+                          {q.name}
+                          {q.parent && <span className="text-muted-foreground"> · {q.parent}</span>}
+                        </span>
+                        <span className="text-muted-foreground shrink-0 font-mono text-xs">
+                          {q.id}
+                        </span>
+                      </QuestLink>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </section>
           )}
         </article>
 
-        <div className="space-y-4 self-start">
-          <aside className="border-border bg-card text-card-foreground rounded-md border p-4 text-sm">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide">Stats</h2>
+        <aside className="border-border bg-card text-card-foreground self-start space-y-4 rounded-md border p-4 text-sm">
+          <section>
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Info</h2>
             <dl className="divide-border divide-y">
               <Row label="ID" value={String(m.id)} mono />
+              {m.isBoss && <Row label="Boss" value="Yes" />}
+            </dl>
+          </section>
+
+          <section>
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Stats</h2>
+            <dl className="divide-border divide-y">
               <Row label="Level" value={m.level !== null ? String(m.level) : '—'} />
               <Row label="HP" value={m.hp !== null ? m.hp.toLocaleString() : '—'} />
               <Row label="MP" value={m.mp !== null ? m.mp.toLocaleString() : '—'} />
               <Row label="EXP" value={m.exp !== null ? m.exp.toLocaleString() : '—'} />
-              <Row label="Boss" value={m.isBoss ? 'Yes' : 'No'} />
             </dl>
-            <div className="text-muted-foreground mt-4 text-xs">
-              <div className="uppercase tracking-wide">WZ path</div>
-              <code className="break-all font-mono">{m.sourcePath}</code>
-            </div>
-          </aside>
+          </section>
 
-          <ElementsAside element={m.elementAttack} />
-        </div>
+          <ElementsSection element={m.elementAttack} />
+
+          <div className="text-muted-foreground text-xs">
+            <div className="uppercase tracking-wide">WZ path</div>
+            <code className="break-all font-mono">{m.sourcePath}</code>
+          </div>
+        </aside>
       </div>
     </div>
   );
@@ -282,11 +300,11 @@ const STATUS_CLASS: Record<ElementStatus, string> = {
   weak: 'text-rose-700 dark:text-rose-300',
 };
 
-function ElementsAside({ element }: { element: string | null }) {
+function ElementsSection({ element }: { element: string | null }) {
   const statuses = parseMobElements(element);
   return (
-    <aside className="border-border bg-card text-card-foreground rounded-md border p-4 text-sm">
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide">Elements</h2>
+    <section>
+      <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Elements</h2>
       <dl className="divide-border divide-y">
         {ELEMENT_ORDER.map((name) => {
           const status = statuses[name];
@@ -298,7 +316,7 @@ function ElementsAside({ element }: { element: string | null }) {
           );
         })}
       </dl>
-    </aside>
+    </section>
   );
 }
 

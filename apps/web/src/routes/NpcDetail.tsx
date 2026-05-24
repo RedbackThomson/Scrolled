@@ -104,8 +104,9 @@ export default function NpcDetail() {
                     <li key={q.id}>
                       <QuestLink
                         id={q.id}
-                        className="hover:bg-accent flex items-center gap-2 px-3 py-1.5 text-sm"
+                        className="hover:bg-accent flex items-center gap-3 px-3 py-1.5 text-sm"
                       >
+                        <ScrollText className="text-muted-foreground h-6 w-6 shrink-0" />
                         <span className="min-w-0 flex-1 truncate">
                           {q.name}
                           {q.parent && (
@@ -125,10 +126,17 @@ export default function NpcDetail() {
 
           {features.hasMaps && (
             <section>
-              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide">Appears on</h2>
+              <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
+                <MapIcon className="h-4 w-4" /> Appears on
+                {mapsQ.data && (
+                  <span className="text-muted-foreground text-xs normal-case">
+                    ({mapsQ.data.length})
+                  </span>
+                )}
+              </h2>
               {mapsQ.isLoading && <p className="text-muted-foreground text-xs">Loading maps…</p>}
               {mapsQ.data && mapsQ.data.length === 0 && (
-                <p className="text-muted-foreground text-xs italic">No map placements found.</p>
+                <p className="text-muted-foreground text-xs italic">None.</p>
               )}
               {mapsQ.data && mapsQ.data.length > 0 && (
                 <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
@@ -167,15 +175,17 @@ export default function NpcDetail() {
           )}
         </article>
 
-        <aside className="border-border bg-card text-card-foreground self-start rounded-md border p-4 text-sm">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide">Info</h2>
-          <dl className="divide-border divide-y">
-            <div className="flex items-baseline justify-between gap-3 py-1.5">
-              <dt className="text-muted-foreground text-xs uppercase tracking-wide">ID</dt>
-              <dd className="font-mono text-sm">{n.id}</dd>
-            </div>
-          </dl>
-          <div className="text-muted-foreground mt-4 text-xs">
+        <aside className="border-border bg-card text-card-foreground self-start space-y-4 rounded-md border p-4 text-sm">
+          <section>
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Info</h2>
+            <dl className="divide-border divide-y">
+              <div className="flex items-baseline justify-between gap-3 py-1.5">
+                <dt className="text-muted-foreground text-xs uppercase tracking-wide">ID</dt>
+                <dd className="font-mono text-sm">{n.id}</dd>
+              </div>
+            </dl>
+          </section>
+          <div className="text-muted-foreground text-xs">
             <div className="uppercase tracking-wide">WZ path</div>
             <code className="break-all font-mono">{n.sourcePath}</code>
           </div>
