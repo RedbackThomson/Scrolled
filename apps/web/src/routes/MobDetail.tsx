@@ -238,7 +238,7 @@ export default function MobDetail() {
           )}
         </article>
 
-        <aside className="border-border bg-card text-card-foreground rounded-md border p-4 text-sm">
+        <aside className="border-border bg-card text-card-foreground self-start rounded-md border p-4 text-sm">
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide">Stats</h2>
           <dl className="divide-border divide-y">
             <Row label="ID" value={String(m.id)} mono />
