@@ -1,4 +1,4 @@
-import type { GameDataSource, WzNodeInfo } from '@/parser';
+import type { GameDataSource, WzNodeInfo, WzNodeTree } from '@/parser';
 import type { MapMobRecord, MapNpcRecord, MapPortalRecord, MapRecord } from '@/db';
 import { createLogger } from '@/lib/logger';
 import type { ProgressFn } from '@/lib/progress';
@@ -27,6 +27,12 @@ export interface ExtractMapsResult {
  *     portal), `x`, `y`.
  *
  * Backgrounds, footholds, and per-tile geometry are deliberately ignored.
+ *
+ * Each map fetches its entire `info`/`life`/`portal` subtree in a single
+ * `readImageTree` call. That keeps the per-file mutex held for one
+ * acquisition per map instead of ~135 (one per leaf property + listChildren
+ * for life/portal). On a 60 k-map MapleRoyals dump that's the difference
+ * between a few minutes and many tens of minutes.
  */
 export async function extractMaps(
   source: GameDataSource,
@@ -42,8 +48,6 @@ export async function extractMaps(
   // `Map.wz/Map/Map0/`, `Map.wz/Map/Map1/`, … one bucket per ID prefix.
   const mapRoot = await source.listChildren('Map.wz/Map');
   if (mapRoot.length === 0) {
-    // Walk the top of Map.wz so we can tell whether the file is missing,
-    // mis-pathed, or simply has a different layout than v83 GMS.
     const top = await source.listChildren('Map.wz');
     log.warn('Map.wz/Map absent or empty', {
       mapWzTopLevel: top.map((n) => `${n.name} (${n.kind})`),
@@ -80,10 +84,6 @@ export async function extractMaps(
   const total = imgs.length;
   log.info('discovery complete', { totalMaps: total });
 
-  // Precompute String.wz map name candidates: String.wz/Map.img/<region>/<id>
-  // — `region` is one of `henesys`, `magatia`, etc. There are dozens of
-  // regions; rather than guessing per-id, walk String.wz once and build a
-  // lookup keyed by id.
   const nameLookup = await buildMapNameLookup(source);
 
   let processed = 0;
@@ -95,71 +95,69 @@ export async function extractMaps(
       detail: `${bucket} · ${id}`,
     });
 
-    const infoPath = `${node.fullPath}/info`;
-    const [returnMapN, forcedReturnN, fieldLimitN, mobRateN] = await Promise.all([
-      scalarNumber(source, `${infoPath}/returnMap`),
-      scalarNumber(source, `${infoPath}/forcedReturn`),
-      scalarNumber(source, `${infoPath}/fieldLimit`),
-      scalarNumber(source, `${infoPath}/mobRate`),
-    ]);
+    // One mutex acquisition + one parseImage + one in-memory tree walk.
+    // The maxDepth=3 is `image -> info/life/portal -> entries -> scalars`.
+    const tree = await source.readImageTree(node.fullPath, {
+      subtrees: ['info', 'life', 'portal'],
+      maxDepth: 3,
+    });
+    if (!tree) {
+      skipped.push({ reason: 'image parse failed', path: node.fullPath });
+      processed += 1;
+      continue;
+    }
 
+    const subs = indexByName(tree.children);
+
+    const infoTree = subs.get('info');
     const strs = nameLookup.get(id);
     maps.push({
       id,
       name: strs?.mapName ?? null,
       streetName: strs?.streetName ?? null,
-      returnMapId: returnMapN,
-      forcedReturnMapId: forcedReturnN,
-      fieldLimit: fieldLimitN,
-      mobRate: mobRateN,
+      returnMapId: numberOf(infoTree, 'returnMap'),
+      forcedReturnMapId: numberOf(infoTree, 'forcedReturn'),
+      fieldLimit: numberOf(infoTree, 'fieldLimit'),
+      mobRate: numberOf(infoTree, 'mobRate'),
       sourcePath: node.fullPath,
     });
 
     // Life: NPCs and mob spawns at known positions.
-    const lifeChildren = await source.listChildren(`${node.fullPath}/life`);
-    const mobCounts = new Map<number, number>();
-    for (const life of lifeChildren) {
-      const [typeNode, idNode, xNode, yNode] = await Promise.all([
-        source.getNode(`${life.fullPath}/type`),
-        source.getNode(`${life.fullPath}/id`),
-        source.getNode(`${life.fullPath}/x`),
-        source.getNode(`${life.fullPath}/y`),
-      ]);
-      const type = typeof typeNode?.scalar === 'string' ? typeNode.scalar : null;
-      const entityId = scalarToNumber(idNode?.scalar);
-      if (entityId === null) continue;
-      const x = scalarToNumber(xNode?.scalar);
-      const y = scalarToNumber(yNode?.scalar);
-      if (type === 'n') {
-        mapNpcs.push({ mapId: id, npcId: entityId, x, y });
-      } else if (type === 'm') {
-        mobCounts.set(entityId, (mobCounts.get(entityId) ?? 0) + 1);
+    const lifeTree = subs.get('life');
+    if (lifeTree) {
+      const mobCounts = new Map<number, number>();
+      for (const life of lifeTree.children) {
+        const type = stringOf(life, 'type');
+        const entityId = numberOf(life, 'id');
+        if (entityId === null) continue;
+        const x = numberOf(life, 'x');
+        const y = numberOf(life, 'y');
+        if (type === 'n') {
+          mapNpcs.push({ mapId: id, npcId: entityId, x, y });
+        } else if (type === 'm') {
+          mobCounts.set(entityId, (mobCounts.get(entityId) ?? 0) + 1);
+        }
       }
-    }
-    for (const [mobId, count] of mobCounts) {
-      mapMobs.push({ mapId: id, mobId, count });
+      for (const [mobId, count] of mobCounts) {
+        mapMobs.push({ mapId: id, mobId, count });
+      }
     }
 
     // Portals.
-    const portalChildren = await source.listChildren(`${node.fullPath}/portal`);
-    for (const portal of portalChildren) {
-      const [pnNode, tmNode, tnNode, xNode, yNode] = await Promise.all([
-        source.getNode(`${portal.fullPath}/pn`),
-        source.getNode(`${portal.fullPath}/tm`),
-        source.getNode(`${portal.fullPath}/tn`),
-        source.getNode(`${portal.fullPath}/x`),
-        source.getNode(`${portal.fullPath}/y`),
-      ]);
-      const portalName = typeof pnNode?.scalar === 'string' ? pnNode.scalar : portal.name;
-      if (!portalName) continue;
-      mapPortals.push({
-        mapId: id,
-        portalName,
-        targetMapId: scalarToNumber(tmNode?.scalar),
-        targetPortal: typeof tnNode?.scalar === 'string' ? tnNode.scalar : null,
-        x: scalarToNumber(xNode?.scalar),
-        y: scalarToNumber(yNode?.scalar),
-      });
+    const portalTree = subs.get('portal');
+    if (portalTree) {
+      for (const portal of portalTree.children) {
+        const portalName = stringOf(portal, 'pn') ?? portal.name;
+        if (!portalName) continue;
+        mapPortals.push({
+          mapId: id,
+          portalName,
+          targetMapId: numberOf(portal, 'tm'),
+          targetPortal: stringOf(portal, 'tn'),
+          x: numberOf(portal, 'x'),
+          y: numberOf(portal, 'y'),
+        });
+      }
     }
 
     processed += 1;
@@ -184,39 +182,55 @@ interface MapStrings {
 /**
  * Walk `String.wz/Map.img` once and build an id → { mapName, streetName }
  * lookup. The structure is `String.wz/Map.img/<region>/<id>/{mapName,
- * streetName}` — region buckets vary by client version.
+ * streetName}` — region buckets vary by client version. Pulled in one
+ * `readImageTree` call (~50 regions × ~100 ids × a few props each is
+ * ~20 k nodes, still small) so we avoid thousands of per-leaf
+ * `getNode` round-trips.
  */
 async function buildMapNameLookup(source: GameDataSource): Promise<Map<number, MapStrings>> {
   const lookup = new Map<number, MapStrings>();
-  const regions = await source.listChildren('String.wz/Map.img');
-  for (const region of regions) {
-    const entries = await source.listChildren(region.fullPath);
-    for (const entry of entries) {
+  const tree = await source.readImageTree('String.wz/Map.img', { maxDepth: 3 });
+  if (!tree) {
+    log.warn('String.wz/Map.img not found — map names will be empty');
+    return lookup;
+  }
+  for (const region of tree.children) {
+    for (const entry of region.children) {
       const m = entry.name.match(/^(\d+)$/);
       if (!m) continue;
-      const id = Number(m[1]);
-      const [nameNode, streetNode] = await Promise.all([
-        source.getNode(`${entry.fullPath}/mapName`),
-        source.getNode(`${entry.fullPath}/streetName`),
-      ]);
-      lookup.set(id, {
-        mapName: typeof nameNode?.scalar === 'string' ? nameNode.scalar : null,
-        streetName: typeof streetNode?.scalar === 'string' ? streetNode.scalar : null,
+      lookup.set(Number(m[1]), {
+        mapName: stringOf(entry, 'mapName'),
+        streetName: stringOf(entry, 'streetName'),
       });
     }
   }
   return lookup;
 }
 
-async function scalarNumber(source: GameDataSource, path: string): Promise<number | null> {
-  const node = await source.getNode(path);
-  return scalarToNumber(node?.scalar);
+function indexByName(nodes: WzNodeTree[]): Map<string, WzNodeTree> {
+  const out = new Map<string, WzNodeTree>();
+  for (const n of nodes) out.set(n.name, n);
+  return out;
 }
 
-function scalarToNumber(scalar: string | number | null | undefined): number | null {
-  if (typeof scalar === 'number') return scalar;
-  if (typeof scalar === 'string') {
-    const n = Number(scalar);
+function scalarOf(parent: WzNodeTree | undefined, name: string): unknown {
+  if (!parent) return undefined;
+  for (const child of parent.children) {
+    if (child.name === name) return child.scalar;
+  }
+  return undefined;
+}
+
+function stringOf(parent: WzNodeTree | undefined, name: string): string | null {
+  const v = scalarOf(parent, name);
+  return typeof v === 'string' ? v : null;
+}
+
+function numberOf(parent: WzNodeTree | undefined, name: string): number | null {
+  const v = scalarOf(parent, name);
+  if (typeof v === 'number') return v;
+  if (typeof v === 'string') {
+    const n = Number(v);
     return Number.isFinite(n) ? n : null;
   }
   return null;

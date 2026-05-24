@@ -6,6 +6,7 @@ export type {
   WzMapleVersionName,
   WzNodeInfo,
   WzNodeKind,
+  WzNodeTree,
   WzPropertyKind,
 } from './types';
 export { WzDataSource } from './WzDataSource';

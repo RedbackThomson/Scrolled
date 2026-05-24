@@ -15,6 +15,7 @@ import type {
   LoadResult,
   WzMapleVersionName,
   WzNodeInfo,
+  WzNodeTree,
 } from './types';
 import { toWzMapleVersion } from './wzVersion';
 import { toNodeInfo, WzSubProperty, WzConvexProperty } from './nodeInfo';
@@ -201,6 +202,34 @@ export class WzDataSource implements GameDataSource {
     });
   }
 
+  async readImageTree(
+    path: string,
+    opts: { subtrees?: string[]; maxDepth?: number } = {},
+  ): Promise<WzNodeTree | null> {
+    log.debug('readImageTree', { path });
+    const loaded = this.loadedFor(path);
+    if (!loaded) return null;
+    return runExclusive(loaded, async () => {
+      const obj = await this.resolveInLock(loaded, path);
+      if (!obj) {
+        log.debug('readImageTree miss', { path });
+        return null;
+      }
+      if (!(obj instanceof WzImage)) {
+        log.warn('readImageTree called on non-image path', {
+          path,
+          objectType: (obj as { objectType?: unknown }).objectType,
+        });
+        return null;
+      }
+      const result = await tryParseImage(obj, path);
+      if (!result.ok) return null;
+      const maxDepth = opts.maxDepth ?? 4;
+      const topSubtrees = opts.subtrees ? new Set(opts.subtrees) : null;
+      return buildSubtree(obj, path, 0, maxDepth, topSubtrees);
+    });
+  }
+
   async getIconPng(path: string): Promise<Uint8Array | null> {
     log.debug('getIconPng', { path });
     const loaded = this.loadedFor(path);
@@ -338,6 +367,43 @@ export class WzDataSource implements GameDataSource {
  * children sets are still empty to avoid quadratic re-parsing on
  * subsequent traversals.
  */
+/**
+ * Recursively materialise a `WzImage`'s property tree into plain
+ * `WzNodeTree` objects. Walks the in-memory representation only — no path
+ * resolution, no lock juggling, no further `parseImage` calls. The caller
+ * must hold the file lock for the duration of the walk.
+ */
+function buildSubtree(
+  obj: WzObject,
+  fullPath: string,
+  depth: number,
+  maxDepth: number,
+  topSubtrees: Set<string> | null,
+): WzNodeTree {
+  const node: WzNodeTree = { ...toNodeInfo(obj, fullPath), children: [] };
+  if (depth >= maxDepth) return node;
+  const childProps = getPropertyChildren(obj);
+  for (const child of childProps) {
+    const childName = (child as { name: string }).name;
+    if (depth === 0 && topSubtrees && !topSubtrees.has(childName)) continue;
+    node.children.push(
+      buildSubtree(child, `${fullPath}/${childName}`, depth + 1, maxDepth, topSubtrees),
+    );
+  }
+  return node;
+}
+
+function getPropertyChildren(obj: WzObject): WzObject[] {
+  if (obj instanceof WzImage) {
+    return [...obj.wzProperties] as WzObject[];
+  }
+  if (obj instanceof WzSubProperty || obj instanceof WzConvexProperty) {
+    const set = (obj as unknown as { wzProperties: Set<WzObject> }).wzProperties;
+    return [...set];
+  }
+  return [];
+}
+
 const parsedDirectories = new WeakSet<WzDirectory>();
 
 async function ensureDirParsed(dir: WzDirectory, contextPath: string): Promise<void> {

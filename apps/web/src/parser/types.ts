@@ -37,6 +37,17 @@ export interface WzNodeInfo {
   scalar?: string | number | null;
 }
 
+/**
+ * A `WzNodeInfo` plus its recursive children, returned from
+ * `readImageTree`. Always structured-cloneable.
+ *
+ * `children` is always an array — empty when the node is a leaf, has no
+ * children at all, or was reached at `maxDepth` and not walked further.
+ */
+export interface WzNodeTree extends WzNodeInfo {
+  children: WzNodeTree[];
+}
+
 export type WzMapleVersionName = 'BMS' | 'GMS' | 'EMS' | 'CLASSIC';
 
 export interface LoadFileSpec {
@@ -57,6 +68,31 @@ export interface GameDataSource {
   getNode(path: string): Promise<WzNodeInfo | null>;
   /** List the immediate children of a node. */
   listChildren(path: string): Promise<WzNodeInfo[]>;
+  /**
+   * Fetch a `WzImage`'s parsed property tree in one mutex acquisition.
+   *
+   * Use this when an extractor needs to read many properties from a
+   * single image — e.g. a map's `info`/`life`/`portal` subtrees. After
+   * `parseImage` runs, the property tree is fully in memory; walking it
+   * via `getNode(...)` per leaf re-acquires the per-file lock and
+   * re-resolves the path on every call. `readImageTree` walks it once
+   * inside the lock and returns a structured tree the caller can iterate
+   * with no further awaits.
+   *
+   * @param path must point at a `WzImage` (e.g. `Map.wz/Map/Map0/100000000.img`).
+   *             Returns `null` if the path doesn't resolve, doesn't point
+   *             at an image, or the image fails to parse.
+   * @param opts.subtrees restricts the depth-1 children expanded — useful
+   *             for maps where we want `info`/`life`/`portal` but not
+   *             `back`/`foothold`/`ladderRope`.
+   * @param opts.maxDepth caps recursion depth from the image (default 4).
+   *             Depth 0 is the image, depth 1 is its top-level subtrees,
+   *             depth 2 is their children, etc.
+   */
+  readImageTree(
+    path: string,
+    opts?: { subtrees?: string[]; maxDepth?: number },
+  ): Promise<WzNodeTree | null>;
   /** List the loaded top-level files. */
   listFiles(): Promise<WzNodeInfo[]>;
   /**

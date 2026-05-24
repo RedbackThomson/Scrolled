@@ -51,6 +51,9 @@ class WorkerGameDataSource implements GameDataSource {
   listChildren(path: string) {
     return this.inner.listChildren(path);
   }
+  readImageTree(path: string, opts?: { subtrees?: string[]; maxDepth?: number }) {
+    return this.inner.readImageTree(path, opts);
+  }
   listFiles() {
     return this.inner.listFiles();
   }

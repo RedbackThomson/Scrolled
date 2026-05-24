@@ -15,3 +15,4 @@
       (or embed the map images with where the NPC is on them)
 - [ ] Support seeing entire quest chains, where each of the relevant NPCs all on
       one page
+- [ ] On mob pages, link to maps with highest spawn rates/density
