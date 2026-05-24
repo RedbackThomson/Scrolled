@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  Activity,
   AlertTriangle,
   CheckCircle2,
   ChevronRight,
@@ -115,6 +116,83 @@ export default function Settings() {
         </p>
       </header>
 
+      {/* --- Database health ----------------------------------------------- */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Activity className="h-4 w-4" />
+          <h2 className="text-lg font-semibold">Database health</h2>
+        </div>
+
+        <div className="border-border bg-card text-card-foreground rounded-md border p-4">
+          {statusQ.isLoading ? (
+            <p className="text-muted-foreground text-sm">
+              <Loader2 className="text-muted-foreground inline h-4 w-4 animate-spin" /> Connecting
+              to local database…
+            </p>
+          ) : statusQ.error ? (
+            <p className="text-destructive text-sm">{(statusQ.error as Error).message}</p>
+          ) : statusQ.data ? (
+            <>
+              <div className="flex items-center gap-2 text-sm font-semibold">
+                <Database className="h-4 w-4" />
+                Local database
+                <span
+                  className={cn(
+                    'text-foreground/80 ml-2 rounded px-2 py-0.5 text-xs font-medium',
+                    statusQ.data.backend === 'opfs'
+                      ? 'bg-green-500/15'
+                      : 'bg-amber-500/15',
+                  )}
+                >
+                  {statusQ.data.backend === 'opfs' ? 'OPFS (persistent)' : 'memory (not persistent)'}
+                </span>
+                <span className="text-muted-foreground ml-auto text-xs">
+                  schema v{statusQ.data.schemaVersion}
+                </span>
+              </div>
+              <dl className="text-muted-foreground mt-3 grid grid-cols-3 gap-2 text-xs sm:grid-cols-7">
+                {(
+                  [
+                    ['items', statusQ.data.counts.items],
+                    ['equips', statusQ.data.counts.equips],
+                    ['mobs', statusQ.data.counts.mobs],
+                    ['npcs', statusQ.data.counts.npcs],
+                    ['maps', statusQ.data.counts.maps],
+                    ['quests', statusQ.data.counts.quests],
+                    ['datasets', statusQ.data.counts.datasets],
+                  ] as const
+                ).map(([label, count]) => (
+                  <div key={label}>
+                    <dt className="uppercase tracking-wide">{label}</dt>
+                    <dd className="text-foreground font-mono text-sm">{count}</dd>
+                  </div>
+                ))}
+              </dl>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={onClear}
+                  disabled={clearM.isPending || statusQ.data.counts.datasets === 0}
+                >
+                  {clearM.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                  Clear database
+                </Button>
+                <p className="text-muted-foreground text-xs">
+                  Wipes every loaded item, equip, mob, NPC, map, quest, and dataset record. Your
+                  WZ files on disk are untouched.
+                </p>
+              </div>
+            </>
+          ) : null}
+        </div>
+      </section>
+
       {/* --- Data ----------------------------------------------------------- */}
       <section className="space-y-3">
         <div className="flex items-center gap-2">
@@ -151,7 +229,7 @@ export default function Settings() {
               )}
             </ul>
           )}
-          <div className="mt-4 flex flex-wrap items-center gap-3">
+          <div className="mt-4">
             <Link
               to="/setup"
               className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm font-medium"
@@ -159,24 +237,9 @@ export default function Settings() {
               <Upload className="h-4 w-4" />
               Manage WZ files
             </Link>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={onClear}
-              disabled={clearM.isPending || (statusQ.data && statusQ.data.counts.datasets === 0)}
-            >
-              {clearM.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Trash2 className="h-4 w-4" />
-              )}
-              Clear database
-            </Button>
           </div>
           <p className="text-muted-foreground mt-2 text-xs">
-            Re-running setup is additive — existing data stays, new files extend it. Clearing wipes
-            everything and requires running setup again.
+            Re-running setup is additive — existing data stays, new files extend it.
           </p>
         </div>
 
