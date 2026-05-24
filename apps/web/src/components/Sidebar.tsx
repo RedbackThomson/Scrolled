@@ -5,6 +5,7 @@ import {
   AlertCircle,
   AlertTriangle,
   CheckCircle2,
+  ChevronRight,
   Loader2,
   Package,
   Shield,
@@ -18,6 +19,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useFeatures } from '@/lib/useFeatures';
+import { useSidebarSections } from '@/lib/sidebarState';
 import { getDbClient } from '@/db';
 import { cn } from '@/lib/utils';
 
@@ -51,6 +53,8 @@ export function Sidebar() {
   const features = useFeatures();
   const db = useMemo(() => getDbClient(), []);
   const location = useLocation();
+  const expanded = useSidebarSections((s) => s.expanded);
+  const toggleSection = useSidebarSections((s) => s.toggle);
 
   const slotsQ = useQuery({
     queryKey: ['db', 'equip-slots'],
@@ -105,24 +109,52 @@ export function Sidebar() {
             // ourselves via pathname so it stays highlighted while a child
             // is selected.
             const sectionActive = location.pathname === section.to;
+            const hasChildren = !!section.children && section.children.length > 0;
+            const isExpanded = !!expanded[section.to];
+            const childListId = `sidebar-children-${section.to.replace(/[^a-z0-9]/gi, '-')}`;
             return (
               <li key={section.to}>
-                <NavLink
-                  to={section.to}
-                  end
+                <div
                   className={cn(
-                    'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                    'flex items-center gap-1 rounded-md transition-colors',
                     sectionActive
                       ? 'bg-accent text-accent-foreground'
                       : 'text-sidebar-muted hover:bg-accent hover:text-accent-foreground',
                   )}
                 >
-                  <section.icon className="h-4 w-4" />
-                  {section.label}
-                </NavLink>
-                {section.children && section.children.length > 0 && (
-                  <ul className="border-border ml-6 mt-1 space-y-0.5 border-l pl-3">
-                    {section.children.map((child) => (
+                  <NavLink
+                    to={section.to}
+                    end
+                    className="flex flex-1 items-center gap-2 rounded-md px-3 py-2 text-sm font-medium"
+                  >
+                    <section.icon className="h-4 w-4" />
+                    {section.label}
+                  </NavLink>
+                  {hasChildren && (
+                    <button
+                      type="button"
+                      onClick={() => toggleSection(section.to)}
+                      aria-expanded={isExpanded}
+                      aria-controls={childListId}
+                      aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${section.label}`}
+                      className="hover:bg-background/40 mr-1 flex h-6 w-6 shrink-0 items-center justify-center rounded"
+                    >
+                      <ChevronRight
+                        className={cn(
+                          'h-3.5 w-3.5 transition-transform',
+                          isExpanded && 'rotate-90',
+                        )}
+                        aria-hidden
+                      />
+                    </button>
+                  )}
+                </div>
+                {hasChildren && isExpanded && (
+                  <ul
+                    id={childListId}
+                    className="border-border ml-6 mt-1 space-y-0.5 border-l pl-3"
+                  >
+                    {section.children!.map((child) => (
                       <SubNavItem key={child.to} to={child.to} label={child.label} />
                     ))}
                   </ul>
