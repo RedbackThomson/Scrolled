@@ -1293,9 +1293,13 @@ export class DbApi implements GameDatabase {
         ],
       );
       const id = Number(this.sql.selectValue('SELECT last_insert_rowid()'));
+      // INSERT OR REPLACE so we self-heal from any orphaned rows whose
+       // dataset_id was recycled by AUTOINCREMENT after a `clearAllData`
+       // that pre-dated the fix to also clear these child tables.
       for (const f of input.files) {
         this.sql.exec(
-          `INSERT INTO dataset_files (dataset_id, name, size, hash, load_status, load_error)
+          `INSERT OR REPLACE INTO dataset_files
+             (dataset_id, name, size, hash, load_status, load_error)
            VALUES (?, ?, ?, ?, ?, ?)`,
           [
             id,
@@ -1309,7 +1313,7 @@ export class DbApi implements GameDatabase {
       }
       for (const e of input.extractors ?? []) {
         this.sql.exec(
-          `INSERT INTO extraction_extractors
+          `INSERT OR REPLACE INTO extraction_extractors
              (dataset_id, extractor, status, rows, skipped_rows, placeholder_names, error)
            VALUES (?, ?, ?, ?, ?, ?, ?)`,
           [
@@ -1383,6 +1387,7 @@ export class DbApi implements GameDatabase {
       const tables = [
         'quest_rewards',
         'quest_requirements',
+        'mob_drops',
         'map_portals',
         'map_mobs',
         'map_npcs',
@@ -1393,6 +1398,7 @@ export class DbApi implements GameDatabase {
         'equips',
         'items',
         'assets',
+        'extraction_extractors',
         'dataset_files',
         'datasets',
       ];
