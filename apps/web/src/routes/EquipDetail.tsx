@@ -151,7 +151,7 @@ export default function EquipDetail() {
           )}
         </article>
 
-        <aside className="border-border bg-card text-card-foreground space-y-4 rounded-md border p-4 text-sm">
+        <aside className="border-border bg-card text-card-foreground self-start space-y-4 rounded-md border p-4 text-sm">
           <section>
             <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Info</h2>
             <dl className="divide-border divide-y">
