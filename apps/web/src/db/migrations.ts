@@ -345,4 +345,65 @@ export const MIGRATIONS: readonly Migration[] = [
       CREATE INDEX map_mob_spawns_mob_idx ON map_mob_spawns (mob_id);
     `,
   },
+  {
+    version: 10,
+    name: 'equip cash flag and equip-type slug',
+    sql: `
+      -- info/cash boolean from the WZ tree, surfaced so the UI can
+      -- distinguish cosmetic cash-shop equips from regular in-game ones.
+      -- Default 0 so pre-extraction rows aren't treated as cash items
+      -- until the next run overwrites them.
+      ALTER TABLE equips ADD COLUMN cash INTEGER NOT NULL DEFAULT 0;
+
+      -- Resolved equip-type slug computed at extraction time from
+      -- Math.floor(id / 10000) against a fixed lookup. NULL for buckets
+      -- not in the lookup (today: every non-weapon), which is also the
+      -- "is this a weapon?" predicate the Weapons routes filter on.
+      ALTER TABLE equips ADD COLUMN equip_type TEXT;
+
+      CREATE INDEX IF NOT EXISTS equips_cash_idx       ON equips (cash);
+      CREATE INDEX IF NOT EXISTS equips_equip_type_idx ON equips (equip_type);
+
+      -- Backfill equip_type from id for rows already in the DB so the
+      -- /weapons split works without forcing a re-extraction. SQLite's
+      -- '/' on integers is floor division, so id / 10000 mirrors the
+      -- Math.floor(id / 10000) the extractor computes for new rows.
+      -- cash can't be backfilled — it isn't derivable from id alone —
+      -- and stays 0 until the next extraction pass overwrites it.
+      UPDATE equips SET equip_type = CASE id / 10000
+        WHEN 130 THEN 'one-handed-sword'
+        WHEN 131 THEN 'one-handed-axe'
+        WHEN 132 THEN 'one-handed-mace'
+        WHEN 133 THEN 'dagger'
+        WHEN 137 THEN 'wand'
+        WHEN 138 THEN 'staff'
+        WHEN 140 THEN 'two-handed-sword'
+        WHEN 141 THEN 'two-handed-axe'
+        WHEN 142 THEN 'two-handed-mace'
+        WHEN 143 THEN 'spear'
+        WHEN 144 THEN 'polearm'
+        WHEN 145 THEN 'bow'
+        WHEN 146 THEN 'crossbow'
+        WHEN 147 THEN 'claw'
+        WHEN 148 THEN 'knuckle'
+        WHEN 149 THEN 'gun'
+        ELSE NULL
+      END;
+    `,
+  },
+  {
+    version: 11,
+    name: 'backfill cash-weapon equip-type bucket',
+    sql: `
+      -- Bucket 170 (cash-shop weapon overlays like the Australia Cheer
+      -- Towel) wasn't in the original equip_type lookup, so migration 10
+      -- left these rows with equip_type NULL — which dropped them into
+      -- /equips instead of /weapons where they belong. Backfill only the
+      -- rows that haven't been classified yet so we don't clobber any
+      -- types the extractor has since written.
+      UPDATE equips
+        SET equip_type = 'cash-weapon'
+        WHERE equip_type IS NULL AND id / 10000 = 170;
+    `,
+  },
 ];

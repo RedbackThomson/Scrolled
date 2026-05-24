@@ -11,6 +11,7 @@ import {
   Package,
   Shield,
   Skull,
+  Swords,
   Users,
   Map as MapIcon,
   ScrollText,
@@ -19,6 +20,7 @@ import {
   Wrench,
   type LucideIcon,
 } from 'lucide-react';
+import { WEAPON_TYPE_ORDER, labelForEquipType } from '@/lib/equipTypes';
 import { useFeatures } from '@/lib/useFeatures';
 import { useSidebarSections } from '@/lib/sidebarState';
 import { getDbClient } from '@/db';
@@ -78,13 +80,36 @@ export function Sidebar() {
     enabled: features.hasEquips,
   });
 
+  // Weapons get their own top-level section now, so the Equips slot nav
+  // hides the `weapon` slot — its rows aren't on /equips anymore.
   const equipChildren = useMemo(() => {
     if (!slotsQ.data || slotsQ.data.length === 0) return undefined;
-    return slotsQ.data.map((s) => ({
-      label: titleCaseSlot(s),
-      to: `/equips?f_slot=${encodeURIComponent(s)}`,
-    }));
+    return slotsQ.data
+      .filter((s) => s !== 'weapon')
+      .map((s) => ({
+        label: titleCaseSlot(s),
+        to: `/equips?f_slot=${encodeURIComponent(s)}`,
+      }));
   }, [slotsQ.data]);
+
+  const equipTypesQ = useQuery({
+    queryKey: ['db', 'equip-types'],
+    queryFn: () => db.listEquipTypes(),
+    enabled: features.hasEquips,
+  });
+
+  // Order the sidebar entries by the canonical weapon-type list (so the
+  // nav reads sword → axe → ... rather than alphabetical). Filter to
+  // values actually present so we don't surface empty subpages.
+  const weaponChildren = useMemo(() => {
+    const present = new Set(equipTypesQ.data ?? []);
+    if (present.size === 0) return undefined;
+    return WEAPON_TYPE_ORDER.filter((t) => present.has(t)).map((t) => ({
+      label: labelForEquipType(t),
+      to: `/weapons?f_equipType=${encodeURIComponent(t)}`,
+    }));
+  }, [equipTypesQ.data]);
+  const hasWeapons = (equipTypesQ.data?.length ?? 0) > 0;
 
   const collectionsQ = useQuery({
     queryKey: ['user', 'collections', 'sidebar'],
@@ -120,6 +145,17 @@ export function Sidebar() {
       feature: 'hasEquips',
       children: equipChildren,
     },
+    ...(hasWeapons
+      ? ([
+          {
+            label: 'Weapons',
+            to: '/weapons',
+            icon: Swords,
+            feature: 'hasEquips',
+            children: weaponChildren,
+          },
+        ] as const)
+      : []),
     { label: 'Mobs', to: '/mobs', icon: Skull, feature: 'hasMobs' },
     { label: 'NPCs', to: '/npcs', icon: Users, feature: 'hasNpcs' },
     { label: 'Maps', to: '/maps', icon: MapIcon, feature: 'hasMaps' },

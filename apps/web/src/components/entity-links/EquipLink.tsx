@@ -5,6 +5,7 @@ import { ItemIcon } from '@/components/ItemIcon';
 import { HoverPopover } from '@/components/HoverPopover';
 import { HoverCardSaveFooter } from '@/components/collections';
 import { getDbClient } from '@/db';
+import { labelForEquipType } from '@/lib/equipTypes';
 
 interface EquipLinkProps {
   id: number;
@@ -55,11 +56,20 @@ function EquipHoverCard({ id }: { id: number }) {
             <div className="truncate text-sm font-semibold">{e.name}</div>
             <div className="text-muted-foreground font-mono text-[10px]">Equip #{id}</div>
           </div>
-          {(e.slot || e.requiredLevel !== null) && (
+          {(e.equipType || e.slot || e.requiredLevel !== null) && (
             <div className="text-muted-foreground text-[11px]">
-              {e.slot && <span className="capitalize">{e.slot}</span>}
-              {e.slot && e.requiredLevel !== null && ' · '}
+              {e.equipType ? (
+                <span>{labelForEquipType(e.equipType)}</span>
+              ) : (
+                e.slot && <span className="capitalize">{e.slot}</span>
+              )}
+              {(e.equipType || e.slot) && e.requiredLevel !== null && ' · '}
               {e.requiredLevel !== null && <>Req Lv {e.requiredLevel}</>}
+              {e.cash && (
+                <span className="ml-1 inline-flex items-center rounded bg-pink-500/15 px-1 py-0.5 text-[9px] font-medium text-pink-700 dark:text-pink-300">
+                  Cash
+                </span>
+              )}
             </div>
           )}
           {e.description && (

@@ -8,6 +8,7 @@ import { MobLink } from '@/components/entity-links';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/lib/useFeatures';
+import { labelForEquipType } from '@/lib/equipTypes';
 
 export default function EquipDetail() {
   const params = useParams<{ id: string }>();
@@ -53,6 +54,11 @@ export default function EquipDetail() {
   }
 
   const e = equipQ.data;
+  // Route the breadcrumb back to whichever listing this row came from, so
+  // a user landing here from /weapons doesn't get bounced to /equips.
+  const isWeapon = e.equipType !== null;
+  const backTo = isWeapon ? '/weapons' : '/equips';
+  const backLabel = isWeapon ? 'Back to weapons' : 'Back to equips';
   const hasAnyRequirement =
     e.requiredLevel !== null ||
     e.requiredStr !== null ||
@@ -72,10 +78,10 @@ export default function EquipDetail() {
   return (
     <div className="max-w-4xl space-y-6">
       <Link
-        to="/equips"
+        to={backTo}
         className="text-primary inline-flex items-center gap-1 text-sm hover:underline"
       >
-        <ArrowLeft className="h-4 w-4" /> Back to equips
+        <ArrowLeft className="h-4 w-4" /> {backLabel}
       </Link>
 
       <div className="grid gap-6 sm:grid-cols-[1fr_18rem]">
@@ -84,7 +90,19 @@ export default function EquipDetail() {
             <ItemIcon entity="equip" id={e.id} size={48} alt={e.name} />
             <div>
               <h1 className="text-3xl font-semibold tracking-tight">{e.name}</h1>
-              <p className="text-muted-foreground font-mono text-xs">{e.id}</p>
+              <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-1.5 text-xs">
+                <span className="font-mono">{e.id}</span>
+                {e.cash && (
+                  <span className="inline-flex items-center rounded bg-pink-500/15 px-1.5 py-0.5 text-[10px] font-medium text-pink-700 dark:text-pink-300">
+                    Cash Shop (cosmetic)
+                  </span>
+                )}
+                {e.equipType && (
+                  <span className="inline-flex items-center rounded bg-slate-500/15 px-1.5 py-0.5 text-[10px] font-medium text-slate-700 dark:text-slate-300">
+                    {labelForEquipType(e.equipType)}
+                  </span>
+                )}
+              </div>
             </div>
           </header>
 
@@ -111,12 +129,16 @@ export default function EquipDetail() {
                       id={m.mobId}
                       className="hover:bg-accent flex items-center gap-3 px-3 py-1.5 text-sm"
                     >
-                      <EntityIcon entity="mob" id={m.mobId} size={24} placeholder={Skull} alt={m.name} />
+                      <EntityIcon
+                        entity="mob"
+                        id={m.mobId}
+                        size={24}
+                        placeholder={Skull}
+                        alt={m.name}
+                      />
                       <span className="min-w-0 flex-1 truncate">{m.name}</span>
                       {m.level !== null && (
-                        <span className="text-muted-foreground shrink-0 text-xs">
-                          Lv {m.level}
-                        </span>
+                        <span className="text-muted-foreground shrink-0 text-xs">Lv {m.level}</span>
                       )}
                       <span className="text-muted-foreground shrink-0 font-mono text-xs">
                         {m.mobId}
@@ -135,6 +157,8 @@ export default function EquipDetail() {
             <dl className="divide-border divide-y">
               <Row label="ID" value={String(e.id)} mono />
               <Row label="Slot" value={e.slot ?? '—'} capitalize />
+              {e.equipType && <Row label="Type" value={labelForEquipType(e.equipType)} />}
+              <Row label="Source" value={e.cash ? 'Cash shop' : 'In-game'} />
             </dl>
           </section>
 
@@ -191,9 +215,7 @@ function Row({
   return (
     <div className="flex items-baseline justify-between gap-3 py-1.5">
       <dt className="text-muted-foreground text-xs uppercase tracking-wide">{label}</dt>
-      <dd
-        className={`${mono ? 'font-mono text-sm' : 'text-sm'} ${capitalize ? 'capitalize' : ''}`}
-      >
+      <dd className={`${mono ? 'font-mono text-sm' : 'text-sm'} ${capitalize ? 'capitalize' : ''}`}>
         {value}
       </dd>
     </div>

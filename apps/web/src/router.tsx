@@ -28,6 +28,10 @@ export const router = createBrowserRouter([
         path: 'equips/:id',
         lazy: () => import('@/routes/EquipDetail').then((m) => ({ Component: m.default })),
       },
+      {
+        path: 'weapons',
+        lazy: () => import('@/routes/Weapons').then((m) => ({ Component: m.default })),
+      },
       { path: 'mobs', lazy: () => import('@/routes/Mobs').then((m) => ({ Component: m.default })) },
       {
         path: 'mobs/:id',

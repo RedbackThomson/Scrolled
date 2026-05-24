@@ -16,7 +16,7 @@ import { createPortal } from 'react-dom';
 import { Filter } from 'lucide-react';
 import type { ColumnFilter, StringFilterMode } from '@/db';
 import { cn } from '@/lib/utils';
-import type { FilterType } from './types';
+import type { BooleanFilterLabels, FilterType } from './types';
 
 const STRING_MODES: { value: StringFilterMode; label: string }[] = [
   { value: 'contains', label: 'Contains' },
@@ -33,6 +33,8 @@ interface ColumnFilterPopoverProps {
   onChange: (columnId: string, value: ColumnFilter | null) => void;
   /** Available choices for `type === 'enum'` columns. Ignored otherwise. */
   enumOptions?: readonly string[];
+  /** Required when `type === 'boolean'` — labels for the two choices. */
+  booleanLabels?: BooleanFilterLabels;
 }
 
 export function ColumnFilterPopover({
@@ -42,6 +44,7 @@ export function ColumnFilterPopover({
   value,
   onChange,
   enumOptions,
+  booleanLabels,
 }: ColumnFilterPopoverProps) {
   const active = isActive(value);
   const [open, setOpen] = useState(false);
@@ -139,6 +142,19 @@ export function ColumnFilterPopover({
                 columnId={columnId}
                 options={enumOptions ?? []}
                 value={value?.kind === 'string' ? value.value : ''}
+                onChange={onChange}
+              />
+            ) : type === 'boolean' ? (
+              <BooleanFilterSelect
+                columnId={columnId}
+                labels={booleanLabels ?? { trueLabel: 'Yes', falseLabel: 'No' }}
+                value={
+                  value?.kind === 'range' &&
+                  (value.min === 1 || value.min === 0) &&
+                  value.min === value.max
+                    ? (value.min as 0 | 1)
+                    : null
+                }
                 onChange={onChange}
               />
             ) : (
@@ -328,6 +344,33 @@ function EnumFilterSelect({ columnId, options, value, onChange }: EnumInputProps
           {o}
         </option>
       ))}
+    </select>
+  );
+}
+
+interface BooleanInputProps {
+  columnId: string;
+  labels: BooleanFilterLabels;
+  value: 0 | 1 | null;
+  onChange: (columnId: string, value: ColumnFilter | null) => void;
+}
+
+function BooleanFilterSelect({ columnId, labels, value, onChange }: BooleanInputProps) {
+  return (
+    <select
+      autoFocus
+      value={value === null ? '' : String(value)}
+      onChange={(e) => {
+        const raw = e.target.value;
+        if (raw === '') return onChange(columnId, null);
+        const n = raw === '1' ? 1 : 0;
+        onChange(columnId, { kind: 'range', min: n, max: n });
+      }}
+      className="border-input bg-background focus-visible:ring-ring h-8 w-full rounded-md border px-2 text-sm focus-visible:outline-none focus-visible:ring-2"
+    >
+      <option value="">Any</option>
+      <option value="1">{labels.trueLabel}</option>
+      <option value="0">{labels.falseLabel}</option>
     </select>
   );
 }

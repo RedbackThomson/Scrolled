@@ -38,6 +38,19 @@ export interface EquipRecord {
   accuracy: number | null;
   avoidability: number | null;
   upgradeSlots: number | null;
+  /**
+   * `info/cash` from the WZ tree. True means the equip is a cash-shop
+   * cosmetic that provides no stats; false is a regular in-game equip.
+   */
+  cash: boolean;
+  /**
+   * Resolved equip type from `Math.floor(id / 10000)` looked up against a
+   * fixed table. Stored as a string slug (e.g. `wand`, `one-handed-sword`)
+   * so the UI can treat it as an enum without re-running the lookup. Null
+   * when the bucket isn't in the table — today that means "not a weapon",
+   * so non-null is the canonical "is this a weapon?" check.
+   */
+  equipType: string | null;
   iconPath: string | null;
   iconData: Uint8Array | null;
   sourcePath: string;
@@ -375,9 +388,20 @@ export interface GameDatabase {
   upsertEquip(equip: EquipRecord): Promise<void>;
   upsertEquips(equips: EquipRecord[]): Promise<number>;
   getEquip(id: number): Promise<EquipRecord | null>;
-  listEquips(opts?: ListOptsBase & { slot?: string }): Promise<PageResult<EquipRecord>>;
+  listEquips(
+    opts?: ListOptsBase & {
+      slot?: string;
+      /**
+       * Restrict to weapons (`equip_type IS NOT NULL`) or non-weapon
+       * equips (`equip_type IS NULL`). Default unset returns every row.
+       */
+      kind?: 'equip' | 'weapon';
+    },
+  ): Promise<PageResult<EquipRecord>>;
   /** Distinct non-null `slot` values for filter UIs / sidebar nav. */
   listEquipSlots(): Promise<string[]>;
+  /** Distinct non-null `equip_type` values, for the Weapons sidebar nav. */
+  listEquipTypes(): Promise<string[]>;
   getEquipIcon(id: number): Promise<Uint8Array | null>;
 
   upsertMobs(mobs: MobRecord[]): Promise<number>;

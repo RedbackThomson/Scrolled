@@ -74,6 +74,8 @@ const ITEM_ORDER_DEFAULT = 'name';
 const EQUIP_ORDER: Record<string, OrderSpec> = {
   name:          { col: 'name',           defaultDir: 'asc'  },
   slot:          { col: 'slot',           defaultDir: 'asc'  },
+  equipType:     { col: 'equip_type',     defaultDir: 'asc'  },
+  cash:          { col: 'cash',           defaultDir: 'asc'  },
   requiredLevel: { col: 'required_level', defaultDir: 'asc'  },
   attack:        { col: 'attack',         defaultDir: 'desc' },
   magicAttack:   { col: 'magic_attack',   defaultDir: 'desc' },
@@ -161,6 +163,11 @@ const ITEM_FILTER: Record<string, FilterSpec> = {
 const EQUIP_FILTER: Record<string, FilterSpec> = {
   name:          { col: 'name',           type: 'string' },
   slot:          { col: 'slot',           type: 'string' },
+  equipType:     { col: 'equip_type',     type: 'string' },
+  // cash is stored as INTEGER 0/1; range filters compare numerically, and
+  // {min:1,max:1} or {min:0,max:0} from the UI's boolean filter type maps
+  // cleanly to col = ?.
+  cash:          { col: 'cash',           type: 'number' },
   requiredLevel: { col: 'required_level', type: 'number' },
   attack:        { col: 'attack',         type: 'number' },
   magicAttack:   { col: 'magic_attack',   type: 'number' },
@@ -282,6 +289,8 @@ interface EquipRow extends Row {
   accuracy: number | null;
   avoidability: number | null;
   upgrade_slots: number | null;
+  cash: number;
+  equip_type: string | null;
   icon_path: string | null;
   icon_data: Uint8Array | null;
   source_path: string;
@@ -439,6 +448,8 @@ function rowToEquip(r: EquipRow): EquipRecord {
     accuracy: r.accuracy,
     avoidability: r.avoidability,
     upgradeSlots: r.upgrade_slots,
+    cash: r.cash === 1,
+    equipType: r.equip_type,
     iconPath: r.icon_path,
     iconData: r.icon_data,
     sourcePath: r.source_path,
@@ -561,7 +572,7 @@ export class DbApi implements GameDatabase {
   }
 
   async listEquips(
-    opts: ListOptsBase & { slot?: string } = {},
+    opts: ListOptsBase & { slot?: string; kind?: 'equip' | 'weapon' } = {},
   ): Promise<PageResult<EquipRecord>> {
     const limit = clampLimit(opts.limit);
     const offset = clampOffset(opts.offset);
@@ -575,6 +586,11 @@ export class DbApi implements GameDatabase {
     if (opts.slot) {
       where.push('slot = ?');
       params.push(opts.slot);
+    }
+    if (opts.kind === 'weapon') {
+      where.push('equip_type IS NOT NULL');
+    } else if (opts.kind === 'equip') {
+      where.push('equip_type IS NULL');
     }
     applyFilters(EQUIP_FILTER, opts.filters, where, params);
     const clause = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
@@ -590,7 +606,7 @@ export class DbApi implements GameDatabase {
           `SELECT id, name, description, slot, category, required_level,
                   required_str, required_dex, required_int, required_luk, required_job,
                   attack, magic_attack, defense, magic_defense, accuracy, avoidability,
-                  upgrade_slots, icon_path, NULL AS icon_data, source_path
+                  upgrade_slots, cash, equip_type, icon_path, NULL AS icon_data, source_path
            FROM equips ${clause}
            ORDER BY ${order.col} ${order.dir === 'desc' ? 'DESC' : 'ASC'} NULLS LAST, id ASC
            LIMIT ? OFFSET ?`,
@@ -607,6 +623,17 @@ export class DbApi implements GameDatabase {
         `SELECT DISTINCT slot FROM equips WHERE slot IS NOT NULL ORDER BY slot`,
       )
       .map((r) => r.slot!)
+      .filter((s): s is string => !!s);
+  }
+
+  async listEquipTypes(): Promise<string[]> {
+    return this.sql
+      .selectObjects<{ equip_type: string | null }>(
+        `SELECT DISTINCT equip_type FROM equips
+         WHERE equip_type IS NOT NULL AND equip_type <> ''
+         ORDER BY equip_type`,
+      )
+      .map((r) => r.equip_type!)
       .filter((s): s is string => !!s);
   }
 
@@ -1517,8 +1544,8 @@ export class DbApi implements GameDatabase {
         id, name, description, slot, category, required_level,
         required_str, required_dex, required_int, required_luk, required_job,
         attack, magic_attack, defense, magic_defense, accuracy, avoidability,
-        upgrade_slots, icon_path, icon_data, source_path
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        upgrade_slots, cash, equip_type, icon_path, icon_data, source_path
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         name           = excluded.name,
         description    = excluded.description,
@@ -1537,6 +1564,8 @@ export class DbApi implements GameDatabase {
         accuracy       = excluded.accuracy,
         avoidability   = excluded.avoidability,
         upgrade_slots  = excluded.upgrade_slots,
+        cash           = excluded.cash,
+        equip_type     = excluded.equip_type,
         icon_path      = excluded.icon_path,
         icon_data      = COALESCE(excluded.icon_data, equips.icon_data),
         source_path    = excluded.source_path`,
@@ -1559,6 +1588,8 @@ export class DbApi implements GameDatabase {
         e.accuracy,
         e.avoidability,
         e.upgradeSlots,
+        e.cash ? 1 : 0,
+        e.equipType,
         e.iconPath,
         e.iconData,
         e.sourcePath,

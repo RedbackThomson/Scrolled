@@ -62,12 +62,23 @@ function collectFilterable<TData>(columns: readonly ColumnDef<TData>[]): ColumnF
  * Numbers use parseAsFloat so REAL columns (e.g. `mob_rate`) round-trip.
  * All keys clear on default so an empty filter doesn't pollute the URL.
  */
+const BOOLEAN_VALUES = ['1', '0'] as const;
+
 function buildParsers(
   filterable: ColumnFilterableSpec[],
-): Record<string, ParserBuilder<string> | ParserBuilder<number> | ParserBuilder<StringFilterMode>> {
+): Record<
+  string,
+  | ParserBuilder<string>
+  | ParserBuilder<number>
+  | ParserBuilder<StringFilterMode>
+  | ParserBuilder<(typeof BOOLEAN_VALUES)[number]>
+> {
   const map: Record<
     string,
-    ParserBuilder<string> | ParserBuilder<number> | ParserBuilder<StringFilterMode>
+    | ParserBuilder<string>
+    | ParserBuilder<number>
+    | ParserBuilder<StringFilterMode>
+    | ParserBuilder<(typeof BOOLEAN_VALUES)[number]>
   > = {};
   for (const { id, type } of filterable) {
     if (type === 'string') {
@@ -83,6 +94,13 @@ function buildParsers(
       map[`f_${id}`] = parseAsString
         .withDefault('')
         .withOptions({ clearOnDefault: true });
+    } else if (type === 'boolean') {
+      // Boolean filters are tristate (any / true / false) and surface as
+      // a range filter with min=max=1 or 0, so the server's number-column
+      // path turns them into `col = ?` without new branches.
+      map[`f_${id}`] = parseAsStringLiteral(BOOLEAN_VALUES).withOptions({
+        clearOnDefault: true,
+      });
     } else {
       // parseAsFloat has no default — absent means "no bound". The
       // discriminated-union return on the hook treats null as omitted.
@@ -124,6 +142,12 @@ export function useColumnFilters<TData>(
         const v = (state[`f_${id}`] as string | null | undefined) ?? '';
         if (v.length > 0) {
           out[id] = { kind: 'string', mode: 'equals', value: v };
+        }
+      } else if (type === 'boolean') {
+        const v = state[`f_${id}`] as '1' | '0' | null | undefined;
+        if (v === '1' || v === '0') {
+          const n = v === '1' ? 1 : 0;
+          out[id] = { kind: 'range', min: n, max: n };
         }
       } else {
         const min = state[`f_${id}_min`] as number | null | undefined;
@@ -175,6 +199,10 @@ export function useColumnFilters<TData>(
         const next =
           value !== null && value.kind === 'string' ? value.value : '';
         void setState({ [`f_${columnId}`]: next });
+      } else if (spec.type === 'boolean') {
+        const n = value && value.kind === 'range' ? value.min ?? value.max : null;
+        const next = n === 1 ? '1' : n === 0 ? '0' : null;
+        void setState({ [`f_${columnId}`]: next });
       } else {
         const min = value && value.kind === 'range' ? value.min ?? null : null;
         const max = value && value.kind === 'range' ? value.max ?? null : null;
@@ -195,6 +223,8 @@ export function useColumnFilters<TData>(
         patch[`f_${id}_mode`] = DEFAULT_STRING_MODE;
       } else if (type === 'enum') {
         patch[`f_${id}`] = '';
+      } else if (type === 'boolean') {
+        patch[`f_${id}`] = null;
       } else {
         patch[`f_${id}_min`] = null;
         patch[`f_${id}_max`] = null;

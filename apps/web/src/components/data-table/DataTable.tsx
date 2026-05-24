@@ -317,6 +317,7 @@ export function DataTable<TData>({
                           value={columnFilters?.[header.column.id]}
                           onChange={onColumnFilterChange}
                           enumOptions={enumOptions?.[header.column.id]}
+                          booleanLabels={header.column.columnDef.meta?.booleanLabels}
                         />
                       )}
                     </div>

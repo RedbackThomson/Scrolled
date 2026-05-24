@@ -3,6 +3,7 @@ import type { EquipRecord } from '@/db';
 import { createLogger } from '@/lib/logger';
 import type { ProgressFn } from '@/lib/progress';
 import { unescapeWzString } from './wzText';
+import { resolveEquipType } from '@/lib/equipTypes';
 
 const log = createLogger('extract-equips');
 
@@ -150,6 +151,8 @@ export async function extractEquips(
       accuracy: info.incACC,
       avoidability: info.incEVA,
       upgradeSlots: info.tuc,
+      cash: info.cash === 1,
+      equipType: resolveEquipType(w.id),
       iconPath,
       iconData,
       sourcePath: w.imagePath,
@@ -177,6 +180,8 @@ interface EquipInfo {
   incACC: number | null;
   incEVA: number | null;
   tuc: number | null;
+  /** 1 = cash-shop cosmetic, 0 / absent = regular in-game equip. */
+  cash: number | null;
 }
 
 const EMPTY_INFO: EquipInfo = {
@@ -194,6 +199,7 @@ const EMPTY_INFO: EquipInfo = {
   incACC: null,
   incEVA: null,
   tuc: null,
+  cash: null,
 };
 
 async function readInfo(source: GameDataSource, imagePath: string): Promise<EquipInfo> {
@@ -220,6 +226,7 @@ async function readInfo(source: GameDataSource, imagePath: string): Promise<Equi
     incACC: scalarInt(map.get('incACC')),
     incEVA: scalarInt(map.get('incEVA')),
     tuc: scalarInt(map.get('tuc')),
+    cash: scalarInt(map.get('cash')),
   };
 }
 

@@ -4,30 +4,43 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { DataTable, useColumnFilters, useTableUrlState } from '@/components/data-table';
 import { CollectionsBulkAddMenu } from '@/components/collections';
 import { getDbClient } from '@/db';
-import { columns, defaultSort, defaultVisible, pinnedColumns } from './EquipsColumns';
+import { labelForEquipType } from '@/lib/equipTypes';
+import { columns, defaultSort, defaultVisibleForType, pinnedColumns } from './WeaponsColumns';
 
 const DEFAULT_PAGE_SIZE = 50;
 
-export default function Equips() {
+export default function Weapons() {
   const client = useMemo(() => getDbClient(), []);
+  const { filters, setFilter, active: filtersActive } = useColumnFilters(columns);
+
+  // When the user has pinned exactly one weapon type via the filter, the
+  // visible-column set shifts so stat-relevant columns surface (M.Atk for
+  // wands/staves, Atk for everything else). Falling back to the physical
+  // default when zero or multiple types are active.
+  const pinnedType = useMemo(() => {
+    const f = filters.equipType;
+    if (f && f.kind === 'string' && f.mode === 'equals' && f.value) return f.value;
+    return null;
+  }, [filters.equipType]);
+  const defaultVisible = useMemo(() => defaultVisibleForType(pinnedType), [pinnedType]);
+
   const { state, setState, visibleColumns } = useTableUrlState({
     defaultSort,
     defaultSize: DEFAULT_PAGE_SIZE,
     defaultVisible,
   });
-  const { filters, setFilter, active: filtersActive } = useColumnFilters(columns);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const slotsQ = useQuery({
-    queryKey: ['db', 'equip-slots'],
-    queryFn: () => client.listEquipSlots(),
+  const typesQ = useQuery({
+    queryKey: ['db', 'equip-types'],
+    queryFn: () => client.listEquipTypes(),
   });
 
-  const equipsQ = useQuery({
+  const weaponsQ = useQuery({
     queryKey: [
       'db',
       'equips',
-      'non-weapon',
+      'weapon',
       {
         q: state.q,
         sort: state.sort,
@@ -39,7 +52,7 @@ export default function Equips() {
     ],
     queryFn: () =>
       client.listEquips({
-        kind: 'equip',
+        kind: 'weapon',
         search: state.q || undefined,
         orderBy: state.sort,
         dir: state.dir,
@@ -50,22 +63,19 @@ export default function Equips() {
     placeholderData: keepPreviousData,
   });
 
-  // "No data at all" path — only show the load-WZ prompt when there are
-  // genuinely zero rows AND the user hasn't narrowed the result themselves.
-  const isEmpty = equipsQ.data?.total === 0 && !state.q && !filtersActive;
+  const isEmpty = weaponsQ.data?.total === 0 && !state.q && !filtersActive;
+
+  const headerTitle = pinnedType
+    ? `Weapons · ${labelForEquipType(pinnedType)}`
+    : 'Weapons';
 
   return (
     <div className="max-w-6xl space-y-6">
       <header>
-        <h1 className="text-3xl font-semibold tracking-tight">Equips</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{headerTitle}</h1>
         <p className="text-muted-foreground mt-2 text-sm">
-          Non-weapon equipment stats and icons from{' '}
-          <code className="font-mono text-xs">Character.wz</code>, joined with localized names from{' '}
-          <code className="font-mono text-xs">String.wz/Eqp.img</code>. Weapons live under{' '}
-          <Link to="/weapons" className="text-primary hover:underline">
-            Weapons
-          </Link>
-          .
+          Weapons extracted from <code className="font-mono text-xs">Character.wz</code>,
+          classified by <code className="font-mono text-xs">Math.floor(id / 10000)</code>.
         </p>
       </header>
 
@@ -73,7 +83,7 @@ export default function Equips() {
         {isEmpty ? (
           <div className="border-border bg-muted/40 rounded-md border p-6 text-center text-sm">
             <p className="text-muted-foreground">
-              No equips yet. Load <code className="font-mono">Character.wz</code> via{' '}
+              No weapons yet. Load <code className="font-mono">Character.wz</code> via{' '}
               <Link to="/setup" className="text-primary hover:underline">
                 setup
               </Link>{' '}
@@ -82,8 +92,8 @@ export default function Equips() {
           </div>
         ) : (
           <DataTable
-            data={equipsQ.data?.rows ?? []}
-            total={equipsQ.data?.total ?? 0}
+            data={weaponsQ.data?.rows ?? []}
+            total={weaponsQ.data?.total ?? 0}
             columns={columns}
             state={state}
             setState={setState}
@@ -93,18 +103,18 @@ export default function Equips() {
             pinnedColumns={pinnedColumns}
             rowLinkTo={(e) => `/equips/${e.id}`}
             getRowId={(e) => String(e.id)}
-            emptyMessage="No equips found."
-            loading={equipsQ.isLoading}
-            fetching={equipsQ.isFetching && !equipsQ.isLoading}
+            emptyMessage="No weapons found."
+            loading={weaponsQ.isLoading}
+            fetching={weaponsQ.isFetching && !weaponsQ.isLoading}
             columnFilters={filters}
             onColumnFilterChange={(id, v) => {
               setFilter(id, v);
               setState({ page: 1 });
             }}
-            enumOptions={{ slot: (slotsQ.data ?? []).filter((s) => s !== 'weapon') }}
+            enumOptions={{ equipType: typesQ.data ?? [] }}
             searchValue={state.q}
             onSearchChange={(v) => setState({ q: v, page: 1 })}
-            searchPlaceholder="Search equips by name"
+            searchPlaceholder="Search weapons by name"
             selectable
             selectedIds={selectedIds}
             onSelectionChange={setSelectedIds}

@@ -2,6 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { ItemIcon } from '@/components/ItemIcon';
 import { EquipLink } from '@/components/entity-links';
 import type { EquipRecord } from '@/db';
+import { labelForEquipType } from '@/lib/equipTypes';
 
 const num = (v: number | null) => (v === null ? '—' : v.toLocaleString());
 
@@ -27,11 +28,12 @@ export const columns: ColumnDef<EquipRecord>[] = [
     ),
   },
   {
-    id: 'slot',
-    accessorFn: (e) => e.slot,
-    header: 'Slot',
+    id: 'equipType',
+    accessorFn: (e) => e.equipType,
+    header: 'Type',
     meta: { filter: 'enum' },
-    cell: ({ row }) => <span className="capitalize">{row.original.slot ?? '—'}</span>,
+    cell: ({ row }) =>
+      row.original.equipType ? labelForEquipType(row.original.equipType) : '—',
   },
   {
     id: 'cash',
@@ -69,20 +71,6 @@ export const columns: ColumnDef<EquipRecord>[] = [
     cell: ({ row }) => num(row.original.magicAttack),
   },
   {
-    id: 'defense',
-    accessorFn: (e) => e.defense,
-    header: 'Def',
-    meta: { filter: 'number' },
-    cell: ({ row }) => num(row.original.defense),
-  },
-  {
-    id: 'magicDefense',
-    accessorFn: (e) => e.magicDefense,
-    header: 'M.Def',
-    meta: { filter: 'number' },
-    cell: ({ row }) => num(row.original.magicDefense),
-  },
-  {
     id: 'accuracy',
     accessorFn: (e) => e.accuracy,
     header: 'Acc',
@@ -112,18 +100,52 @@ export const columns: ColumnDef<EquipRecord>[] = [
   },
 ];
 
-export const defaultVisible = [
-  'icon',
-  'name',
-  'slot',
-  'cash',
-  'requiredLevel',
-  'defense',
-  'magicDefense',
-  'upgradeSlots',
-] as const;
 export const pinnedColumns = ['icon'] as const;
-export const defaultSort = { id: 'name', dir: 'asc' } as const satisfies {
+export const defaultSort = { id: 'requiredLevel', dir: 'asc' } as const satisfies {
   id: string;
   dir: 'asc' | 'desc';
 };
+
+/**
+ * Magic-attack weapons used by INT classes — defaults should surface
+ * `magicAttack` instead of `attack`. Listed by equip-type slug so the
+ * route can pick the column set without case-by-case branches.
+ */
+const MAGIC_WEAPON_TYPES = new Set(['wand', 'staff']);
+
+const PHYSICAL_DEFAULT = [
+  'icon',
+  'name',
+  'equipType',
+  'cash',
+  'requiredLevel',
+  'attack',
+  'accuracy',
+  'upgradeSlots',
+] as const;
+
+const MAGIC_DEFAULT = [
+  'icon',
+  'name',
+  'equipType',
+  'cash',
+  'requiredLevel',
+  'magicAttack',
+  'attack',
+  'upgradeSlots',
+] as const;
+
+// Cash-shop weapons are cosmetic overlays with no stats, so the default
+// columns drop attack/accuracy/slots and just surface the cash badge.
+const CASH_DEFAULT = ['icon', 'name', 'equipType', 'cash'] as const;
+
+/**
+ * Pick the default visible-column set based on the active weapon-type
+ * filter. When no single type is pinned (or it's an unknown slug), the
+ * physical default is fine — it still surfaces M.Atk via column toggle.
+ */
+export function defaultVisibleForType(type: string | null): readonly string[] {
+  if (type === 'cash-weapon') return CASH_DEFAULT;
+  if (type && MAGIC_WEAPON_TYPES.has(type)) return MAGIC_DEFAULT;
+  return PHYSICAL_DEFAULT;
+}
