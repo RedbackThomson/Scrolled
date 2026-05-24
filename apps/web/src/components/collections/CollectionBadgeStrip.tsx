@@ -33,7 +33,7 @@ export function CollectionBadgeStrip({
       {memberships.length > 0 ? (
         memberships.map((m) => <BadgeChip key={m.collectionId} membership={m} />)
       ) : (
-        <span className="text-muted-foreground text-xs">Not in any collection</span>
+        <></>
       )}
       <CollectionPicker entityType={entityType} entityId={entityId}>
         {({ toggle, open }) => (
