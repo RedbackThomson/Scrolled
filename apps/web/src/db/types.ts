@@ -397,6 +397,17 @@ export interface GameDatabase {
   /** Names + IDs of all entities for the in-app search index. */
   listSearchEntries(): Promise<SearchEntry[]>;
 
+  /**
+   * Batched (id, name) lookup for a single entity table. Ids that aren't
+   * present in the table are simply omitted from the result — callers
+   * use this gap to render "tombstone" rows for collection members whose
+   * underlying entity hasn't been loaded into the game DB.
+   */
+  getEntitySummariesByIds(
+    entityType: EntityKind,
+    ids: readonly number[],
+  ): Promise<EntitySummary[]>;
+
   recordDataset(input: {
     label: string;
     wzVersion: string;
@@ -439,4 +450,15 @@ export interface SearchEntry {
   name: string;
   entity: EntityKind;
   category: string | null;
+}
+
+/**
+ * Minimal (id, name) tuple used by cross-DB joins — e.g. enriching a
+ * collection's polymorphic members with display names. Kept narrow so the
+ * call doesn't pay icon-blob transfer cost when the consumer only needs a
+ * label.
+ */
+export interface EntitySummary {
+  id: number;
+  name: string;
 }

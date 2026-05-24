@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { DataTable, useColumnFilters, useTableUrlState } from '@/components/data-table';
+import { CollectionsBulkAddMenu } from '@/components/collections';
 import { getDbClient } from '@/db';
 import { columns, defaultSort, defaultVisible, pinnedColumns } from './EquipsColumns';
 
@@ -15,6 +16,7 @@ export default function Equips() {
     defaultVisible,
   });
   const { filters, setFilter, active: filtersActive } = useColumnFilters(columns);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const slotsQ = useQuery({
     queryKey: ['db', 'equip-slots'],
@@ -97,6 +99,18 @@ export default function Equips() {
             searchValue={state.q}
             onSearchChange={(v) => setState({ q: v, page: 1 })}
             searchPlaceholder="Search equips by name"
+            selectable
+            selectedIds={selectedIds}
+            onSelectionChange={setSelectedIds}
+            toolbarExtra={
+              selectedIds.size > 0 ? (
+                <CollectionsBulkAddMenu
+                  entityType="equip"
+                  selectedIds={selectedIds}
+                  onClear={() => setSelectedIds(new Set())}
+                />
+              ) : undefined
+            }
           />
         )}
       </section>

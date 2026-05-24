@@ -15,6 +15,7 @@ import {
 import { getDbClient } from '@/db';
 import type { QuestRequirementWithName, QuestRewardWithName } from '@/db';
 import { ItemLink, MobLink, NpcLink, QuestLink } from '@/components/entity-links';
+import { CollectionBadgeStrip } from '@/components/collections';
 import { useFeatures } from '@/lib/useFeatures';
 
 export default function QuestDetail() {
@@ -102,6 +103,8 @@ export default function QuestDetail() {
               <p className="text-muted-foreground font-mono text-xs">{q.id}</p>
             </div>
           </header>
+
+          <CollectionBadgeStrip entityType="quest" entityId={q.id} />
 
           {q.description && (
             <p className="whitespace-pre-line text-sm leading-relaxed">{q.description}</p>

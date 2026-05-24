@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   AlertCircle,
   AlertTriangle,
+  Bookmark,
   CheckCircle2,
   ChevronRight,
   Loader2,
@@ -21,6 +22,7 @@ import {
 import { useFeatures } from '@/lib/useFeatures';
 import { useSidebarSections } from '@/lib/sidebarState';
 import { getDbClient } from '@/db';
+import { getUserDbClient } from '@/db/user';
 import { cn } from '@/lib/utils';
 
 interface SidebarSection {
@@ -52,6 +54,7 @@ function titleCaseSlot(slot: string): string {
 export function Sidebar() {
   const features = useFeatures();
   const db = useMemo(() => getDbClient(), []);
+  const userDb = useMemo(() => getUserDbClient(), []);
   const location = useLocation();
   const expanded = useSidebarSections((s) => s.expanded);
   const toggleSection = useSidebarSections((s) => s.toggle);
@@ -69,6 +72,19 @@ export function Sidebar() {
       to: `/equips?f_slot=${encodeURIComponent(s)}`,
     }));
   }, [slotsQ.data]);
+
+  const collectionsQ = useQuery({
+    queryKey: ['user', 'collections', 'sidebar'],
+    queryFn: () => userDb.listCollections(),
+  });
+
+  const collectionChildren = useMemo(() => {
+    if (!collectionsQ.data || collectionsQ.data.length === 0) return undefined;
+    return collectionsQ.data.map((c) => ({
+      label: c.name,
+      to: `/collections/${c.id}`,
+    }));
+  }, [collectionsQ.data]);
 
   const allSections: SidebarSection[] = [
     {
@@ -91,6 +107,13 @@ export function Sidebar() {
     { label: 'Quests', to: '/quests', icon: ScrollText, feature: 'hasQuests' },
   ];
   const entitySections = allSections.filter((s) => !s.feature || features[s.feature]);
+  const collectionsSection: SidebarSection = {
+    label: 'Collections',
+    to: '/collections',
+    icon: Bookmark,
+    children: collectionChildren,
+  };
+  const sectionsToRender = [...entitySections, collectionsSection];
 
   return (
     <aside className="bg-sidebar text-sidebar-foreground border-border hidden w-60 shrink-0 border-r md:flex md:flex-col">
@@ -103,7 +126,7 @@ export function Sidebar() {
       <nav className="flex-1 overflow-y-auto p-2">
         <ul className="space-y-1">
           <NavItem to="/" icon={Home} label="Home" end />
-          {entitySections.map((section) => {
+          {sectionsToRender.map((section) => {
             // Section's own link uses `end` so query-string children don't
             // also light up the parent — we drive parent active state
             // ourselves via pathname so it stays highlighted while a child

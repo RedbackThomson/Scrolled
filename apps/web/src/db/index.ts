@@ -11,6 +11,7 @@ export type {
   DbStatus,
   ExtractorResultRecord,
   EntityKind,
+  EntitySummary,
   EquipRecord,
   GameDatabase,
   ItemRecord,

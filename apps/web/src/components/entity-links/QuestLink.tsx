@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ScrollText } from 'lucide-react';
 import { HoverPopover } from '@/components/HoverPopover';
+import { HoverCardSaveFooter } from '@/components/collections';
 import { getDbClient } from '@/db';
 
 interface QuestLinkProps {
@@ -39,26 +40,29 @@ function QuestHoverCard({ id }: { id: number }) {
   const q = questQ.data;
 
   return (
-    <div className="flex w-72 gap-3">
-      <span className="bg-muted text-muted-foreground inline-flex h-16 w-16 shrink-0 items-center justify-center rounded">
-        <ScrollText className="h-7 w-7" />
-      </span>
-      <div className="min-w-0 flex-1 space-y-1.5">
-        <div>
-          <div className="truncate text-sm font-semibold">{q.name}</div>
-          <div className="text-muted-foreground font-mono text-[10px]">Quest #{id}</div>
-        </div>
-        {(q.parent || q.requiredLevel !== null) && (
-          <div className="text-muted-foreground text-[11px]">
-            {q.parent && <>{q.parent}</>}
-            {q.parent && q.requiredLevel !== null && ' · '}
-            {q.requiredLevel !== null && <>Lv {q.requiredLevel}+</>}
+    <div className="w-72 space-y-1.5">
+      <div className="flex gap-3">
+        <span className="bg-muted text-muted-foreground inline-flex h-16 w-16 shrink-0 items-center justify-center rounded">
+          <ScrollText className="h-7 w-7" />
+        </span>
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <div>
+            <div className="truncate text-sm font-semibold">{q.name}</div>
+            <div className="text-muted-foreground font-mono text-[10px]">Quest #{id}</div>
           </div>
-        )}
-        {q.description && (
-          <p className="text-muted-foreground line-clamp-3 text-xs">{q.description}</p>
-        )}
+          {(q.parent || q.requiredLevel !== null) && (
+            <div className="text-muted-foreground text-[11px]">
+              {q.parent && <>{q.parent}</>}
+              {q.parent && q.requiredLevel !== null && ' · '}
+              {q.requiredLevel !== null && <>Lv {q.requiredLevel}+</>}
+            </div>
+          )}
+          {q.description && (
+            <p className="text-muted-foreground line-clamp-3 text-xs">{q.description}</p>
+          )}
+        </div>
       </div>
+      <HoverCardSaveFooter entityType="quest" entityId={id} />
     </div>
   );
 }

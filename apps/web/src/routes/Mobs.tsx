@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { parseAsBoolean, useQueryState } from 'nuqs';
 import { DataTable, useColumnFilters, useTableUrlState } from '@/components/data-table';
+import { CollectionsBulkAddMenu } from '@/components/collections';
 import { getDbClient } from '@/db';
 import { columns, defaultSort, defaultVisible, pinnedColumns } from './MobsColumns';
 
@@ -20,6 +21,7 @@ export default function Mobs() {
     'boss',
     parseAsBoolean.withDefault(false).withOptions({ clearOnDefault: true }),
   );
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const mobsQ = useQuery({
     queryKey: [
@@ -96,19 +98,31 @@ export default function Mobs() {
             searchValue={state.q}
             onSearchChange={(v) => setState({ q: v, page: 1 })}
             searchPlaceholder="Search mobs by name"
+            selectable
+            selectedIds={selectedIds}
+            onSelectionChange={setSelectedIds}
             toolbarExtra={
-              <label className="text-muted-foreground flex items-center gap-1.5 text-xs">
-                <input
-                  type="checkbox"
-                  checked={bossOnly}
-                  onChange={(e) => {
-                    void setBossOnly(e.target.checked);
-                    setState({ page: 1 });
-                  }}
-                  className="accent-primary h-3.5 w-3.5"
-                />
-                Bosses only
-              </label>
+              <>
+                <label className="text-muted-foreground flex items-center gap-1.5 text-xs">
+                  <input
+                    type="checkbox"
+                    checked={bossOnly}
+                    onChange={(e) => {
+                      void setBossOnly(e.target.checked);
+                      setState({ page: 1 });
+                    }}
+                    className="accent-primary h-3.5 w-3.5"
+                  />
+                  Bosses only
+                </label>
+                {selectedIds.size > 0 && (
+                  <CollectionsBulkAddMenu
+                    entityType="mob"
+                    selectedIds={selectedIds}
+                    onClear={() => setSelectedIds(new Set())}
+                  />
+                )}
+              </>
             }
           />
         )}

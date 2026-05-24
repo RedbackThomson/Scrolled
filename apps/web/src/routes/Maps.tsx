@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { DataTable, useColumnFilters, useTableUrlState } from '@/components/data-table';
+import { CollectionsBulkAddMenu } from '@/components/collections';
 import { getDbClient } from '@/db';
 import { columns, defaultSort, defaultVisible, pinnedColumns } from './MapsColumns';
 
@@ -15,6 +16,7 @@ export default function Maps() {
     defaultVisible,
   });
   const { filters, setFilter, active: filtersActive } = useColumnFilters(columns);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const mapsQ = useQuery({
     queryKey: [
@@ -81,6 +83,18 @@ export default function Maps() {
             searchValue={state.q}
             onSearchChange={(v) => setState({ q: v, page: 1 })}
             searchPlaceholder="Search maps by name or street"
+            selectable
+            selectedIds={selectedIds}
+            onSelectionChange={setSelectedIds}
+            toolbarExtra={
+              selectedIds.size > 0 ? (
+                <CollectionsBulkAddMenu
+                  entityType="map"
+                  selectedIds={selectedIds}
+                  onClear={() => setSelectedIds(new Set())}
+                />
+              ) : undefined
+            }
           />
         )}
       </section>

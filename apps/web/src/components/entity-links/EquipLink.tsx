@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ItemIcon } from '@/components/ItemIcon';
 import { HoverPopover } from '@/components/HoverPopover';
+import { HoverCardSaveFooter } from '@/components/collections';
 import { getDbClient } from '@/db';
 
 interface EquipLinkProps {
@@ -46,34 +47,37 @@ function EquipHoverCard({ id }: { id: number }) {
   ].filter((s) => s.value !== null && s.value !== 0) as { label: string; value: number }[];
 
   return (
-    <div className="flex w-72 gap-3">
-      <ItemIcon entity="equip" id={id} size={64} alt={e.name} />
-      <div className="min-w-0 flex-1 space-y-1.5">
-        <div>
-          <div className="truncate text-sm font-semibold">{e.name}</div>
-          <div className="text-muted-foreground font-mono text-[10px]">Equip #{id}</div>
-        </div>
-        {(e.slot || e.requiredLevel !== null) && (
-          <div className="text-muted-foreground text-[11px]">
-            {e.slot && <span className="capitalize">{e.slot}</span>}
-            {e.slot && e.requiredLevel !== null && ' · '}
-            {e.requiredLevel !== null && <>Req Lv {e.requiredLevel}</>}
+    <div className="w-72 space-y-1.5">
+      <div className="flex gap-3">
+        <ItemIcon entity="equip" id={id} size={64} alt={e.name} />
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <div>
+            <div className="truncate text-sm font-semibold">{e.name}</div>
+            <div className="text-muted-foreground font-mono text-[10px]">Equip #{id}</div>
           </div>
-        )}
-        {e.description && (
-          <p className="text-muted-foreground line-clamp-2 text-xs">{e.description}</p>
-        )}
-        {stats.length > 0 && (
-          <dl className="text-muted-foreground grid grid-cols-4 gap-1 text-[11px]">
-            {stats.map((s) => (
-              <div key={s.label}>
-                <dt className="uppercase tracking-wide">{s.label}</dt>
-                <dd className="text-foreground font-mono">{s.value}</dd>
-              </div>
-            ))}
-          </dl>
-        )}
+          {(e.slot || e.requiredLevel !== null) && (
+            <div className="text-muted-foreground text-[11px]">
+              {e.slot && <span className="capitalize">{e.slot}</span>}
+              {e.slot && e.requiredLevel !== null && ' · '}
+              {e.requiredLevel !== null && <>Req Lv {e.requiredLevel}</>}
+            </div>
+          )}
+          {e.description && (
+            <p className="text-muted-foreground line-clamp-2 text-xs">{e.description}</p>
+          )}
+          {stats.length > 0 && (
+            <dl className="text-muted-foreground grid grid-cols-4 gap-1 text-[11px]">
+              {stats.map((s) => (
+                <div key={s.label}>
+                  <dt className="uppercase tracking-wide">{s.label}</dt>
+                  <dd className="text-foreground font-mono">{s.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+        </div>
       </div>
+      <HoverCardSaveFooter entityType="equip" entityId={id} />
     </div>
   );
 }

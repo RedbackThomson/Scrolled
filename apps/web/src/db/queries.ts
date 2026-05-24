@@ -9,6 +9,8 @@ import type {
   DatasetFileRef,
   DatasetRecord,
   DbStatus,
+  EntityKind,
+  EntitySummary,
   ExtractorResultRecord,
   EquipRecord,
   ItemRecord,
@@ -34,6 +36,15 @@ import type {
   SearchEntry,
   SortDir,
 } from './types';
+
+const ENTITY_TABLES: Record<EntityKind, string> = {
+  item: 'items',
+  equip: 'equips',
+  mob: 'mobs',
+  npc: 'npcs',
+  map: 'maps',
+  quest: 'quests',
+};
 
 /**
  * Per-entity allowlist mapping public column ids → SQL column names plus
@@ -1370,6 +1381,26 @@ export class DbApi implements GameDatabase {
           loadError: row.load_error,
         }
       : null;
+  }
+
+  async getEntitySummariesByIds(
+    entityType: EntityKind,
+    ids: readonly number[],
+  ): Promise<EntitySummary[]> {
+    if (ids.length === 0) return [];
+    const table = ENTITY_TABLES[entityType];
+    if (!table) return [];
+    const placeholders = ids.map(() => '?').join(',');
+    const rows = this.sql.selectObjects<{
+      id: number;
+      name: string | null;
+    }>(
+      `SELECT id, name FROM ${table} WHERE id IN (${placeholders})`,
+      ids as (string | number)[],
+    );
+    return rows
+      .filter((r) => r.name !== null && r.name !== '')
+      .map((r) => ({ id: r.id, name: r.name as string }));
   }
 
   async exportBytes(): Promise<Uint8Array> {

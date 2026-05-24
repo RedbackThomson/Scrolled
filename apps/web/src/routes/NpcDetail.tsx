@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Loader2, Map as MapIcon, ScrollText, Users } from 'lucide-react';
 import { EntityIcon } from '@/components/EntityIcon';
 import { MapLink, QuestLink } from '@/components/entity-links';
+import { CollectionBadgeStrip } from '@/components/collections';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/lib/useFeatures';
 
@@ -75,6 +76,8 @@ export default function NpcDetail() {
               <p className="text-muted-foreground font-mono text-xs">{n.id}</p>
             </div>
           </header>
+
+          <CollectionBadgeStrip entityType="npc" entityId={n.id} />
 
           {n.description ? (
             <p className="whitespace-pre-line text-sm leading-relaxed">{n.description}</p>

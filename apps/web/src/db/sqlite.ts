@@ -10,7 +10,7 @@ import sqlite3InitModule, {
   type Sqlite3Static,
 } from '@sqlite.org/sqlite-wasm';
 
-import { MIGRATIONS } from './migrations';
+import { MIGRATIONS, type Migration } from './migrations';
 import { createLogger, describeError } from '@/lib/logger';
 
 const log = createLogger('db-sqlite');
@@ -18,11 +18,26 @@ const log = createLogger('db-sqlite');
 export type Row = Record<string, SqlValue>;
 export type Backend = 'opfs' | 'memory';
 
-const OPFS_FILENAME = '/mge.sqlite3';
+const DEFAULT_OPFS_FILENAME = '/mge.sqlite3';
+const DEFAULT_POOL_NAME = 'mge-db-pool';
 
 export interface OpenResult {
   backend: Backend;
   schemaVersion: number;
+}
+
+export interface SqliteOptions {
+  /** OPFS path for the DB file. Must be unique across `Sqlite` instances or
+   *  the pool will hand them the same file. */
+  opfsFilename?: string;
+  /** SAH-pool VFS name. Two `Sqlite` instances using the same pool name will
+   *  race for sync-access handles and one open will throw — give each DB its
+   *  own pool name. */
+  poolName?: string;
+  /** Ordered list of migrations to apply. Defaults to the game-data set. */
+  migrations?: readonly Migration[];
+  /** Tag used in log lines so two DBs are distinguishable in the console. */
+  logTag?: string;
 }
 
 export class Sqlite {
@@ -30,6 +45,17 @@ export class Sqlite {
   private db: Database | null = null;
   private _backend: Backend = 'memory';
   private pool: SAHPoolUtil | null = null;
+  private readonly opfsFilename: string;
+  private readonly poolName: string;
+  private readonly migrations: readonly Migration[];
+  private readonly logTag: string;
+
+  constructor(options: SqliteOptions = {}) {
+    this.opfsFilename = options.opfsFilename ?? DEFAULT_OPFS_FILENAME;
+    this.poolName = options.poolName ?? DEFAULT_POOL_NAME;
+    this.migrations = options.migrations ?? MIGRATIONS;
+    this.logTag = options.logTag ?? this.opfsFilename;
+  }
 
   get backend(): Backend {
     return this._backend;
@@ -40,25 +66,28 @@ export class Sqlite {
       return { backend: this._backend, schemaVersion: this.currentSchemaVersion() };
     }
 
-    log.info('initializing sqlite3 module');
+    log.info('initializing sqlite3 module', { db: this.logTag });
     this.sqlite3 = await sqlite3InitModule();
-    log.info('sqlite3 ready', { version: this.sqlite3.version.libVersion });
+    log.info('sqlite3 ready', { db: this.logTag, version: this.sqlite3.version.libVersion });
 
     const opfsCapabilities = await probeOpfsCapabilities();
-    log.info('opfs capability probe', opfsCapabilities);
+    log.info('opfs capability probe', { db: this.logTag, ...opfsCapabilities });
 
     try {
-      const pool = await this.sqlite3.installOpfsSAHPoolVfs({ name: 'mge-db-pool' });
-      this.db = new pool.OpfsSAHPoolDb(OPFS_FILENAME);
+      const pool = await this.sqlite3.installOpfsSAHPoolVfs({ name: this.poolName });
+      this.db = new pool.OpfsSAHPoolDb(this.opfsFilename);
       this.pool = pool;
       this._backend = 'opfs';
       log.info('opened OPFS-backed database', {
-        path: OPFS_FILENAME,
+        db: this.logTag,
+        path: this.opfsFilename,
+        pool: this.poolName,
         capacity: pool.getCapacity(),
         fileCount: pool.getFileCount(),
       });
     } catch (err) {
       log.warn('OPFS unavailable; using in-memory database (will not persist)', {
+        db: this.logTag,
         ...describeError(err),
         capabilities: opfsCapabilities,
       });
@@ -70,7 +99,11 @@ export class Sqlite {
     this.runMigrations();
 
     const version = this.currentSchemaVersion();
-    log.info('database open', { backend: this._backend, schemaVersion: version });
+    log.info('database open', {
+      db: this.logTag,
+      backend: this._backend,
+      schemaVersion: version,
+    });
     return { backend: this._backend, schemaVersion: version };
   }
 
@@ -183,8 +216,8 @@ export class Sqlite {
     this.db = null;
 
     if (previousBackend === 'opfs' && this.pool) {
-      await this.pool.importDb(OPFS_FILENAME, bytes);
-      this.db = new this.pool.OpfsSAHPoolDb(OPFS_FILENAME);
+      await this.pool.importDb(this.opfsFilename, bytes);
+      this.db = new this.pool.OpfsSAHPoolDb(this.opfsFilename);
       this._backend = 'opfs';
     } else {
       // Memory fallback: deserialize directly into a fresh DB. The bytes
@@ -256,9 +289,9 @@ export class Sqlite {
       db.selectObjects('SELECT version FROM _migrations').map((r) => Number(r.version)),
     );
 
-    for (const m of MIGRATIONS) {
+    for (const m of this.migrations) {
       if (applied.has(m.version)) continue;
-      log.info('applying migration', { version: m.version, name: m.name });
+      log.info('applying migration', { db: this.logTag, version: m.version, name: m.name });
       this.transaction(() => {
         db.exec(m.sql);
         db.exec({

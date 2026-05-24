@@ -165,6 +165,13 @@ class WorkerDb {
     await this.ensureOpen();
     return this.api.listSearchEntries();
   }
+  async getEntitySummariesByIds(
+    entityType: Parameters<DbApi['getEntitySummariesByIds']>[0],
+    ids: Parameters<DbApi['getEntitySummariesByIds']>[1],
+  ) {
+    await this.ensureOpen();
+    return this.api.getEntitySummariesByIds(entityType, ids);
+  }
   async upsertQuests(quests: Parameters<DbApi['upsertQuests']>[0]) {
     await this.ensureOpen();
     return this.api.upsertQuests(quests);

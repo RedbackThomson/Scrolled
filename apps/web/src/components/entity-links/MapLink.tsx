@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Map as MapIcon } from 'lucide-react';
 import { EntityIcon } from '@/components/EntityIcon';
 import { HoverPopover } from '@/components/HoverPopover';
+import { HoverCardSaveFooter } from '@/components/collections';
 import { getDbClient } from '@/db';
 
 interface MapLinkProps {
@@ -41,28 +42,31 @@ function MapHoverCard({ id }: { id: number }) {
   const display = m.name ?? `Map ${id}`;
 
   return (
-    <div className="flex w-72 gap-3">
-      <EntityIcon
-        entity="map-mini"
-        id={id}
-        placeholder={MapIcon}
-        fit={{ maxWidth: 72, maxHeight: 64 }}
-        alt={display}
-      />
-      <div className="min-w-0 flex-1 space-y-1.5">
-        <div>
-          <div className="truncate text-sm font-semibold">{display}</div>
-          <div className="text-muted-foreground font-mono text-[10px]">Map #{id}</div>
-        </div>
-        {m.streetName && (
-          <div className="text-muted-foreground truncate text-[11px]">{m.streetName}</div>
-        )}
-        {m.mobRate !== null && (
-          <div className="text-muted-foreground text-[11px]">
-            Mob rate: <span className="text-foreground font-mono">{m.mobRate.toFixed(2)}</span>
+    <div className="w-72 space-y-1.5">
+      <div className="flex gap-3">
+        <EntityIcon
+          entity="map-mini"
+          id={id}
+          placeholder={MapIcon}
+          fit={{ maxWidth: 72, maxHeight: 64 }}
+          alt={display}
+        />
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <div>
+            <div className="truncate text-sm font-semibold">{display}</div>
+            <div className="text-muted-foreground font-mono text-[10px]">Map #{id}</div>
           </div>
-        )}
+          {m.streetName && (
+            <div className="text-muted-foreground truncate text-[11px]">{m.streetName}</div>
+          )}
+          {m.mobRate !== null && (
+            <div className="text-muted-foreground text-[11px]">
+              Mob rate: <span className="text-foreground font-mono">{m.mobRate.toFixed(2)}</span>
+            </div>
+          )}
+        </div>
       </div>
+      <HoverCardSaveFooter entityType="map" entityId={id} />
     </div>
   );
 }

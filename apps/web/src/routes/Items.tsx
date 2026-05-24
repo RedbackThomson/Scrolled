@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { DataTable, useColumnFilters, useTableUrlState } from '@/components/data-table';
+import { CollectionsBulkAddMenu } from '@/components/collections';
 import { getDbClient } from '@/db';
 import { columns, defaultSort, defaultVisible, pinnedColumns } from './ItemsColumns';
 
@@ -15,6 +16,7 @@ export default function Items() {
     defaultVisible,
   });
   const { filters, setFilter, active: filtersActive } = useColumnFilters(columns);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const categoriesQ = useQuery({
     queryKey: ['db', 'item-categories'],
@@ -94,6 +96,18 @@ export default function Items() {
             searchValue={state.q}
             onSearchChange={(v) => setState({ q: v, page: 1 })}
             searchPlaceholder="Search items by name"
+            selectable
+            selectedIds={selectedIds}
+            onSelectionChange={setSelectedIds}
+            toolbarExtra={
+              selectedIds.size > 0 ? (
+                <CollectionsBulkAddMenu
+                  entityType="item"
+                  selectedIds={selectedIds}
+                  onClear={() => setSelectedIds(new Set())}
+                />
+              ) : undefined
+            }
           />
         )}
       </section>

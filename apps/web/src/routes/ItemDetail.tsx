@@ -5,6 +5,7 @@ import { ArrowLeft, Loader2, ScrollText, Skull } from 'lucide-react';
 import { EntityIcon } from '@/components/EntityIcon';
 import { ItemIcon } from '@/components/ItemIcon';
 import { MobLink, QuestLink } from '@/components/entity-links';
+import { CollectionBadgeStrip } from '@/components/collections';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/lib/useFeatures';
 
@@ -84,6 +85,8 @@ export default function ItemDetail() {
               <p className="text-muted-foreground font-mono text-xs">{item.id}</p>
             </div>
           </header>
+
+          <CollectionBadgeStrip entityType="item" entityId={item.id} />
 
           {item.description ? (
             <p className="whitespace-pre-line text-sm leading-relaxed">{item.description}</p>

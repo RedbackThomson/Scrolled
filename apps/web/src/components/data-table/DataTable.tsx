@@ -1,6 +1,6 @@
 // Sort, filter, paginate all happen in SQL — `data` is one server-rendered page;
 // `total` is the count under the same WHERE clause. The table just renders.
-import { useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import {
   flexRender,
@@ -61,6 +61,13 @@ export interface DataTableProps<TData> {
   searchPlaceholder?: string;
   /** Extra controls rendered in the toolbar between search and Columns. */
   toolbarExtra?: ReactNode;
+  /** Render a sticky checkbox column for bulk selection. Selection is
+   *  scoped to the current page — paging / sorting / resizing clears it
+   *  via the effect below. */
+  selectable?: boolean;
+  /** Controlled set of selected row ids (as returned by `getRowId`). */
+  selectedIds?: ReadonlySet<string>;
+  onSelectionChange?: (next: Set<string>) => void;
 }
 
 export function DataTable<TData>({
@@ -86,6 +93,9 @@ export function DataTable<TData>({
   onSearchChange,
   searchPlaceholder = 'Search',
   toolbarExtra,
+  selectable = false,
+  selectedIds,
+  onSelectionChange,
 }: DataTableProps<TData>) {
   const pinned = useMemo(() => new Set(pinnedColumns ?? []), [pinnedColumns]);
   const defaultVisibleKey = useMemo(
@@ -173,7 +183,54 @@ export function DataTable<TData>({
   const rangeStart = total === 0 ? 0 : pageIndex * state.size + 1;
   const rangeEnd = Math.min(rangeStart + data.length - 1, total);
 
-  const columnCount = table.getVisibleLeafColumns().length;
+  // Clear selection whenever the visible page changes underneath the user
+  // (paging, sort, size, search). Without this, a "5 selected" indicator
+  // would persist across rows the user can no longer see.
+  useEffect(() => {
+    if (!selectable || !onSelectionChange) return;
+    if (selectedIds && selectedIds.size === 0) return;
+    onSelectionChange(new Set());
+    // Intentionally exclude `selectedIds` / `onSelectionChange` from deps —
+    // we only want to fire when the visible window itself changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.page, state.size, state.sort, state.dir, state.q, selectable]);
+
+  const pageRowIds = useMemo(
+    () => (selectable ? data.map((row) => getRowId(row)) : []),
+    [selectable, data, getRowId],
+  );
+
+  const selectedOnPageCount = useMemo(() => {
+    if (!selectable || !selectedIds) return 0;
+    let n = 0;
+    for (const id of pageRowIds) if (selectedIds.has(id)) n++;
+    return n;
+  }, [selectable, selectedIds, pageRowIds]);
+
+  const allOnPageSelected =
+    selectable && pageRowIds.length > 0 && selectedOnPageCount === pageRowIds.length;
+  const someOnPageSelected = selectable && selectedOnPageCount > 0 && !allOnPageSelected;
+
+  const toggleAllOnPage = () => {
+    if (!onSelectionChange) return;
+    const next = new Set(selectedIds ?? []);
+    if (allOnPageSelected) {
+      for (const id of pageRowIds) next.delete(id);
+    } else {
+      for (const id of pageRowIds) next.add(id);
+    }
+    onSelectionChange(next);
+  };
+
+  const toggleRow = (id: string) => {
+    if (!onSelectionChange) return;
+    const next = new Set(selectedIds ?? []);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    onSelectionChange(next);
+  };
+
+  const columnCount = table.getVisibleLeafColumns().length + (selectable ? 1 : 0);
 
   return (
     <div className="space-y-3">
@@ -200,6 +257,22 @@ export function DataTable<TData>({
         <TableHeader>
           {table.getHeaderGroups().map((group) => (
             <TableRow key={group.id} className="hover:bg-transparent">
+              {selectable && (
+                <TableHead className="w-9 pr-0">
+                  <input
+                    type="checkbox"
+                    checked={allOnPageSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = someOnPageSelected;
+                    }}
+                    onChange={toggleAllOnPage}
+                    aria-label={
+                      allOnPageSelected ? 'Deselect all on page' : 'Select all on page'
+                    }
+                    className="border-input h-3.5 w-3.5 cursor-pointer rounded-sm"
+                  />
+                </TableHead>
+              )}
               {group.headers.map((header) => {
                 if (header.isPlaceholder) return <TableHead key={header.id} />;
                 const canSort = header.column.getCanSort();
@@ -270,8 +343,27 @@ export function DataTable<TData>({
           ) : (
             table.getRowModel().rows.map((row) => {
               const href = rowLinkTo(row.original);
+              const rowId = row.id;
+              const isSelected = selectable && (selectedIds?.has(rowId) ?? false);
               return (
-                <TableRow key={row.id} className="relative">
+                <TableRow
+                  key={row.id}
+                  className={isSelected ? 'bg-accent/40 relative' : 'relative'}
+                >
+                  {selectable && (
+                    <TableCell className="w-9 pr-0">
+                      <span className="relative z-10 inline-flex">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleRow(rowId)}
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label={isSelected ? 'Deselect row' : 'Select row'}
+                          className="border-input h-3.5 w-3.5 cursor-pointer rounded-sm"
+                        />
+                      </span>
+                    </TableCell>
+                  )}
                   {row.getVisibleCells().map((cell, idx) => (
                     <TableCell key={cell.id}>
                       {idx === 0 && (

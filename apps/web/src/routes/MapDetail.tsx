@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, DoorOpen, Loader2, Map as MapIcon, Skull, Users } from 'lucide-react';
 import { EntityIcon } from '@/components/EntityIcon';
 import { MapLink, MobLink, NpcLink } from '@/components/entity-links';
+import { CollectionBadgeStrip } from '@/components/collections';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/lib/useFeatures';
 
@@ -75,6 +76,8 @@ export default function MapDetail() {
               <p className="text-muted-foreground font-mono text-xs">{m.id}</p>
             </div>
           </header>
+
+          <CollectionBadgeStrip entityType="map" entityId={m.id} />
 
           {m.minimapPath && (
             <section>

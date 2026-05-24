@@ -28,3 +28,4 @@
 - [ ] Clean up the text on each of the pages to remove specificity
 - [ ] On the item page, show who the item is sold by
 - [ ] Have a minimap explorer with a sidebar that lets you enable/disable layers
+- [ ] Mobs should have a "calculated" section that shows things like XP per HP

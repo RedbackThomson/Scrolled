@@ -4,6 +4,7 @@ import { EquipLink, ItemLink, QuestLink } from '@/components/entity-links';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Crown, Loader2, Package, ScrollText, Skull } from 'lucide-react';
 import { EntityIcon } from '@/components/EntityIcon';
+import { CollectionBadgeStrip } from '@/components/collections';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/lib/useFeatures';
 
@@ -85,6 +86,8 @@ export default function MobDetail() {
               <p className="text-muted-foreground font-mono text-xs">{m.id}</p>
             </div>
           </header>
+
+          <CollectionBadgeStrip entityType="mob" entityId={m.id} />
 
           <p className="text-muted-foreground text-xs">
             Drop possibilities come from <code className="font-mono">MonsterBook.img</code> in{' '}
