@@ -7,7 +7,7 @@ import type {
   MapNpcWithName,
   MapPortalRecord,
 } from '@/db';
-import { MapHoverCard } from '@/components/entity-links';
+import { MapHoverCard, MobHoverCard, NpcHoverCard } from '@/components/entity-links';
 import { HoverPopover } from '@/components/HoverPopover';
 import { classifyPortal, type PortalGraph, type PortalLayer } from '@/lib/portal-types';
 import { cn } from '@/lib/utils';
@@ -259,6 +259,7 @@ export function MapViewerSidebar({
                 onHoverEnter={() => onHover({ kind: 'npc', key: String(r.id) })}
                 onHoverLeave={() => onHover(null)}
                 meta={`#${r.id}`}
+                hoverCard={<NpcHoverCard id={r.id} />}
               />
             ))
           ))}
@@ -277,6 +278,7 @@ export function MapViewerSidebar({
                 onHoverEnter={() => onHover({ kind: 'mob', key: String(r.id) })}
                 onHoverLeave={() => onHover(null)}
                 meta={r.level !== null ? `Lv ${r.level}` : `#${r.id}`}
+                hoverCard={<MobHoverCard id={r.id} />}
               />
             ))
           ))}
@@ -322,6 +324,7 @@ function SidebarRow({
   onHoverLeave,
   meta,
   mono,
+  hoverCard,
 }: {
   label: ReactNode;
   count?: number;
@@ -331,7 +334,16 @@ function SidebarRow({
   onHoverLeave?: () => void;
   meta?: string;
   mono?: boolean;
+  hoverCard?: ReactNode;
 }) {
+  const labelClass = cn('min-w-0 flex-1 truncate', mono && 'font-mono');
+  const wrappedLabel = hoverCard ? (
+    <HoverPopover content={hoverCard} triggerClassName={labelClass}>
+      {label}
+    </HoverPopover>
+  ) : (
+    <span className={labelClass}>{label}</span>
+  );
   return (
     <li>
       <button
@@ -347,7 +359,7 @@ function SidebarRow({
         )}
         aria-pressed={selected}
       >
-        <span className={cn('min-w-0 flex-1 truncate', mono && 'font-mono')}>{label}</span>
+        {wrappedLabel}
         {count !== undefined && count > 1 && (
           <span className="text-muted-foreground shrink-0 text-[10px]">×{count}</span>
         )}

@@ -55,7 +55,12 @@ export function NpcHoverCard({ id }: { id: number }) {
         <EntityIcon entity="npc" id={id} size={64} placeholder={Users} alt={npc.name} />
         <div className="min-w-0 flex-1 space-y-1.5">
           <div>
-            <div className="truncate text-sm font-semibold">{npc.name}</div>
+            <Link
+              to={`/npcs/${id}`}
+              className="hover:text-primary block truncate text-sm font-semibold hover:underline"
+            >
+              {npc.name}
+            </Link>
             <div className="text-muted-foreground font-mono text-[10px]">NPC #{id}</div>
           </div>
           {npc.description && (

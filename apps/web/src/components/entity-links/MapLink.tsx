@@ -53,7 +53,12 @@ export function MapHoverCard({ id }: { id: number }) {
         />
         <div className="min-w-0 flex-1 space-y-1.5">
           <div>
-            <div className="truncate text-sm font-semibold">{display}</div>
+            <Link
+              to={`/maps/${id}`}
+              className="hover:text-primary block truncate text-sm font-semibold hover:underline"
+            >
+              {display}
+            </Link>
             <div className="text-muted-foreground font-mono text-[10px]">Map #{id}</div>
           </div>
           {m.streetName && (

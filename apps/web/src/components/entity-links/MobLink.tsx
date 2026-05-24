@@ -46,7 +46,12 @@ export function MobHoverCard({ id }: { id: number }) {
         <EntityIcon entity="mob" id={id} size={64} placeholder={Skull} alt={m.name} />
         <div className="min-w-0 flex-1 space-y-1.5">
           <div className="flex items-center gap-2">
-            <span className="truncate text-sm font-semibold">{m.name}</span>
+            <Link
+              to={`/mobs/${id}`}
+              className="hover:text-primary truncate text-sm font-semibold hover:underline"
+            >
+              {m.name}
+            </Link>
             {m.isBoss && (
               <span className="inline-flex items-center gap-0.5 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
                 <Crown className="h-3 w-3" />
