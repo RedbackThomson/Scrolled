@@ -2,6 +2,7 @@ import type { GameDataSource, WzNodeInfo } from '@/parser';
 import type { ItemRecord } from '@/db';
 import { createLogger } from '@/lib/logger';
 import type { ProgressFn } from '@/lib/progress';
+import { unescapeWzString } from './wzText';
 
 const log = createLogger('extract-items');
 
@@ -154,7 +155,7 @@ async function readItem(
     if (typeof nameNode?.scalar === 'string' && nameNode.scalar) {
       name = nameNode.scalar;
       const descNode = await source.getNode(`${root}/${id}/desc`);
-      if (typeof descNode?.scalar === 'string') description = descNode.scalar;
+      if (typeof descNode?.scalar === 'string') description = unescapeWzString(descNode.scalar);
       break;
     }
   }

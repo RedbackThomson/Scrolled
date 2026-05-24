@@ -3,6 +3,7 @@ import type { NpcRecord } from '@/db';
 import { createLogger } from '@/lib/logger';
 import type { ProgressFn } from '@/lib/progress';
 import { pickSprite } from './sprites';
+import { unescapeWzString } from './wzText';
 
 const log = createLogger('extract-npcs');
 
@@ -71,7 +72,8 @@ export async function extractNpcs(
     npcs.push({
       id,
       name,
-      description: typeof funcNode?.scalar === 'string' ? funcNode.scalar : null,
+      description:
+        typeof funcNode?.scalar === 'string' ? unescapeWzString(funcNode.scalar) : null,
       iconPath,
       iconData,
       sourcePath: img.fullPath,

@@ -6,6 +6,7 @@ import type {
 } from '@/db';
 import { createLogger } from '@/lib/logger';
 import type { ProgressFn } from '@/lib/progress';
+import { unescapeWzString } from './wzText';
 
 const log = createLogger('extract-quests');
 
@@ -133,7 +134,7 @@ export async function extractQuests(
         namesFromStringWz += 1;
       }
       if (typeof parentNode?.scalar === 'string') parent = parentNode.scalar;
-      if (typeof descNode?.scalar === 'string') description = descNode.scalar;
+      if (typeof descNode?.scalar === 'string') description = unescapeWzString(descNode.scalar);
     }
 
     if (!nameFound && hasQuestInfoNames) {
@@ -150,7 +151,7 @@ export async function extractQuests(
       }
       if (!parent && typeof parentNode?.scalar === 'string') parent = parentNode.scalar;
       if (!description && typeof summaryNode?.scalar === 'string')
-        description = summaryNode.scalar;
+        description = unescapeWzString(summaryNode.scalar);
     }
 
     if (!nameFound) placeholderNames += 1;

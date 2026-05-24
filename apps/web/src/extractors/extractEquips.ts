@@ -2,6 +2,7 @@ import type { GameDataSource, WzNodeTree } from '@/parser';
 import type { EquipRecord } from '@/db';
 import { createLogger } from '@/lib/logger';
 import type { ProgressFn } from '@/lib/progress';
+import { unescapeWzString } from './wzText';
 
 const log = createLogger('extract-equips');
 
@@ -119,9 +120,11 @@ export async function extractEquips(
       processed += 1;
       continue;
     }
-    const description = await readScalarString(
-      source,
-      `String.wz/Eqp.img/Eqp/${w.stringSlot}/${w.id}/desc`,
+    const description = unescapeWzString(
+      await readScalarString(
+        source,
+        `String.wz/Eqp.img/Eqp/${w.stringSlot}/${w.id}/desc`,
+      ),
     );
     const info = await readInfo(source, w.imagePath);
     const slotKey = w.stringSlot.toLowerCase();
