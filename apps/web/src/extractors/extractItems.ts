@@ -11,8 +11,8 @@ const log = createLogger('extract-items');
  * and the `items.category` value we write into the database.
  *
  * Equipment (Item.wz/Eqp) and pets (Item.wz/Pet) are intentionally absent —
- * their full stat blocks live in Character.wz / String.wz/Eqp.img and are
- * handled by separate extractors.
+ * equips are driven from Character.wz by `extractEquips`, and pets aren't
+ * extracted yet.
  */
 interface CategorySpec {
   /** Subdirectory under `Item.wz`. */

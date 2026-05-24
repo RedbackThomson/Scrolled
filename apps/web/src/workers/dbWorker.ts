@@ -69,6 +69,10 @@ class WorkerDb {
     await this.ensureOpen();
     return this.api.listEquips(opts);
   }
+  async listEquipSlots() {
+    await this.ensureOpen();
+    return this.api.listEquipSlots();
+  }
   async getEquipIcon(id: number) {
     await this.ensureOpen();
     return this.api.getEquipIcon(id);

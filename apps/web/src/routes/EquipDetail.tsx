@@ -43,6 +43,21 @@ export default function EquipDetail() {
   }
 
   const e = equipQ.data;
+  const hasAnyRequirement =
+    e.requiredLevel !== null ||
+    e.requiredStr !== null ||
+    e.requiredDex !== null ||
+    e.requiredInt !== null ||
+    e.requiredLuk !== null ||
+    e.requiredJob !== null;
+  const hasAnyStat =
+    e.attack !== null ||
+    e.magicAttack !== null ||
+    e.defense !== null ||
+    e.magicDefense !== null ||
+    e.accuracy !== null ||
+    e.avoidability !== null ||
+    e.upgradeSlots !== null;
 
   return (
     <div className="max-w-4xl space-y-6">
@@ -68,33 +83,47 @@ export default function EquipDetail() {
           ) : (
             <p className="text-muted-foreground text-sm italic">No description available.</p>
           )}
-
-          <p className="text-muted-foreground text-xs">
-            Stat block (attack, defense, requirements) comes from{' '}
-            <code className="font-mono">Character.wz</code>, which isn't yet wired up — those fields
-            show "—" until a later phase adds it.
-          </p>
         </article>
 
-        <aside className="border-border bg-card text-card-foreground rounded-md border p-4 text-sm">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide">Info</h2>
-          <dl className="divide-border divide-y">
-            <Row label="ID" value={String(e.id)} mono />
-            <Row label="Slot" value={e.slot ?? '—'} />
-            <Row
-              label="Req. level"
-              value={e.requiredLevel !== null ? String(e.requiredLevel) : '—'}
-            />
-            <Row label="Req. job" value={e.requiredJob !== null ? String(e.requiredJob) : '—'} />
-            <Row label="Attack" value={e.attack !== null ? String(e.attack) : '—'} />
-            <Row label="Magic atk" value={e.magicAttack !== null ? String(e.magicAttack) : '—'} />
-            <Row label="Defense" value={e.defense !== null ? String(e.defense) : '—'} />
-            <Row
-              label="Upgrade slots"
-              value={e.upgradeSlots !== null ? String(e.upgradeSlots) : '—'}
-            />
-          </dl>
-          <div className="text-muted-foreground mt-4 text-xs">
+        <aside className="border-border bg-card text-card-foreground space-y-4 rounded-md border p-4 text-sm">
+          <section>
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Info</h2>
+            <dl className="divide-border divide-y">
+              <Row label="ID" value={String(e.id)} mono />
+              <Row label="Slot" value={e.slot ?? '—'} capitalize />
+            </dl>
+          </section>
+
+          {hasAnyRequirement && (
+            <section>
+              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Requirements</h2>
+              <dl className="divide-border divide-y">
+                <StatRow label="Level" value={e.requiredLevel} />
+                <StatRow label="STR" value={e.requiredStr} />
+                <StatRow label="DEX" value={e.requiredDex} />
+                <StatRow label="INT" value={e.requiredInt} />
+                <StatRow label="LUK" value={e.requiredLuk} />
+                {e.requiredJob !== null && <Row label="Job" value={describeJob(e.requiredJob)} />}
+              </dl>
+            </section>
+          )}
+
+          {hasAnyStat && (
+            <section>
+              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Stats</h2>
+              <dl className="divide-border divide-y">
+                <StatRow label="Attack" value={e.attack} />
+                <StatRow label="Magic atk" value={e.magicAttack} />
+                <StatRow label="Defense" value={e.defense} />
+                <StatRow label="Magic def" value={e.magicDefense} />
+                <StatRow label="Accuracy" value={e.accuracy} />
+                <StatRow label="Avoidability" value={e.avoidability} />
+                <StatRow label="Upgrade slots" value={e.upgradeSlots} />
+              </dl>
+            </section>
+          )}
+
+          <div className="text-muted-foreground text-xs">
             <div className="uppercase tracking-wide">WZ path</div>
             <code className="break-all font-mono">{e.sourcePath}</code>
           </div>
@@ -104,11 +133,50 @@ export default function EquipDetail() {
   );
 }
 
-function Row({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
+function Row({
+  label,
+  value,
+  mono = false,
+  capitalize = false,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+  capitalize?: boolean;
+}) {
   return (
     <div className="flex items-baseline justify-between gap-3 py-1.5">
       <dt className="text-muted-foreground text-xs uppercase tracking-wide">{label}</dt>
-      <dd className={mono ? 'font-mono text-sm' : 'text-sm'}>{value}</dd>
+      <dd
+        className={`${mono ? 'font-mono text-sm' : 'text-sm'} ${capitalize ? 'capitalize' : ''}`}
+      >
+        {value}
+      </dd>
     </div>
   );
+}
+
+function StatRow({ label, value }: { label: string; value: number | null }) {
+  if (value === null || value === 0) return null;
+  return <Row label={label} value={String(value)} />;
+}
+
+/**
+ * Decode a MapleStory job-requirement bitfield. The exact bits vary by
+ * version; in the GMS-style data we target, low nibble flags whether each
+ * class line is eligible. We surface the raw bits alongside a friendly
+ * summary so it's still useful for unknown values.
+ */
+function describeJob(bitfield: number): string {
+  const known: { bit: number; label: string }[] = [
+    { bit: 1, label: 'Warrior' },
+    { bit: 2, label: 'Magician' },
+    { bit: 4, label: 'Archer' },
+    { bit: 8, label: 'Thief' },
+    { bit: 16, label: 'Pirate' },
+  ];
+  if (bitfield === 0) return 'Any';
+  const matched = known.filter((j) => (bitfield & j.bit) !== 0).map((j) => j.label);
+  if (matched.length === 0) return `0x${bitfield.toString(16)}`;
+  return matched.join(', ');
 }

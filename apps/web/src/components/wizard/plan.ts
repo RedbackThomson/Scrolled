@@ -19,11 +19,15 @@ import type { WizardFile } from './StepFiles';
  *     from (overwhelmingly `String.wz` for localized names). Without them
  *     the extractor still runs but produces empty/nameless rows.
  *
- * Heavy stat blocks for equips live in `Character.wz`, which isn't yet
- * wired through `extractEquips`; add it to `item.needs` when that lands.
+ * `item` and `equip` share `Item.wz` as the primary: dropping it triggers
+ * both, and they're processed sequentially inside the items pool worker.
+ * Equip stat blocks live in `Character.wz` (the per-equip `info` images);
+ * without it the equip extractor can't populate attack/defense/requirements,
+ * so it's a hard dep, not a "produces nameless rows" soft one.
  */
 export const EXTRACTOR_DEPS = {
-  item: { label: 'Items + Equips', primary: 'Item.wz', needs: ['String.wz'] },
+  item: { label: 'Items', primary: 'Item.wz', needs: ['String.wz'] },
+  equip: { label: 'Equips', primary: 'Item.wz', needs: ['String.wz', 'Character.wz'] },
   mob: { label: 'Mobs', primary: 'Mob.wz', needs: ['String.wz'] },
   npc: { label: 'NPCs', primary: 'Npc.wz', needs: ['String.wz'] },
   map: { label: 'Maps', primary: 'Map.wz', needs: ['String.wz'] },
@@ -31,7 +35,14 @@ export const EXTRACTOR_DEPS = {
 } as const;
 
 export type ExtractorKey = keyof typeof EXTRACTOR_DEPS;
-export const ALL_EXTRACTOR_KEYS: ExtractorKey[] = ['item', 'mob', 'npc', 'map', 'quest'];
+export const ALL_EXTRACTOR_KEYS: ExtractorKey[] = [
+  'item',
+  'equip',
+  'mob',
+  'npc',
+  'map',
+  'quest',
+];
 
 export interface PlannedExtractor {
   key: ExtractorKey;
@@ -96,14 +107,27 @@ export function buildPlan(files: WizardFile[]): WizardPlan {
     });
   }
 
-  const missingDeps: MissingDep[] = [];
+  // Collect missing deps per primary file. Two extractor keys can share a
+  // primary (item + equip both run off Item.wz); we union their missing
+  // sets so the wizard surfaces one row per file rather than two with the
+  // same heading.
+  const missingByPrimary = new Map<string, Set<string>>();
   for (const run of willRun) {
     const needs = EXTRACTOR_DEPS[run.key].needs;
-    const missing = needs.filter((d) => !byName.has(d));
-    if (missing.length > 0) {
-      missingDeps.push({ extractor: run.primary, missing });
+    for (const d of needs) {
+      if (byName.has(d)) continue;
+      let set = missingByPrimary.get(run.primary);
+      if (!set) {
+        set = new Set();
+        missingByPrimary.set(run.primary, set);
+      }
+      set.add(d);
     }
   }
+  const missingDeps: MissingDep[] = [...missingByPrimary.entries()].map(([extractor, missing]) => ({
+    extractor,
+    missing: [...missing],
+  }));
 
   // skipWz starts with every key and we delete the ones we'll run. That
   // way an extractor whose primary file wasn't even dropped is correctly

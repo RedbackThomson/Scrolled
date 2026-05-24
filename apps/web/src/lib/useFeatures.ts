@@ -3,18 +3,18 @@ import { useQuery } from '@tanstack/react-query';
 import { getDbClient, type DbStatus } from '@/db';
 
 /**
- * Per-WZ-file -> entity-type mapping used to decide which feature is gated
- * on which dropped file. The user "loaded" Mob.wz means we should expose
- * Mobs in the sidebar, etc.
+ * Per-WZ-file -> entity-type(s) mapping used to decide which feature is
+ * gated on which dropped file. A single file can light up multiple
+ * features (Item.wz drives both items and equips in the current pipeline,
+ * since the equip extractor piggybacks on the items pool worker).
  */
-const WZ_FILE_FEATURE: Record<string, keyof FeatureFlags> = {
-  'String.wz': 'hasItems', // String.wz alone enables items category names
-  'Item.wz': 'hasItems',
-  'Eqp.wz': 'hasEquips', // legacy fallback; equip strings live in String.wz today
-  'Mob.wz': 'hasMobs',
-  'Npc.wz': 'hasNpcs',
-  'Map.wz': 'hasMaps',
-  'Quest.wz': 'hasQuests',
+const WZ_FILE_FEATURE: Record<string, (keyof FeatureFlags)[]> = {
+  'String.wz': ['hasItems'], // String.wz alone enables items category names
+  'Item.wz': ['hasItems', 'hasEquips'],
+  'Mob.wz': ['hasMobs'],
+  'Npc.wz': ['hasNpcs'],
+  'Map.wz': ['hasMaps'],
+  'Quest.wz': ['hasQuests'],
 };
 
 export interface FeatureFlags {
@@ -82,8 +82,8 @@ export function useFeatures(): Features {
       hasQuests: false,
     };
     for (const file of loadedFiles) {
-      const key = WZ_FILE_FEATURE[file];
-      if (key) fileFlags[key] = true;
+      const keys = WZ_FILE_FEATURE[file];
+      if (keys) for (const k of keys) fileFlags[k] = true;
     }
     return {
       hasItems: fileFlags.hasItems && (counts?.items ?? 0) > 0,

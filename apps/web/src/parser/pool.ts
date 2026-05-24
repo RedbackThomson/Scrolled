@@ -37,7 +37,11 @@ export const POOL_WORKER_NAMES: readonly PoolWorkerName[] = [
  * localized names).
  */
 export const POOL_WORKER_FILES: Record<PoolWorkerName, readonly string[]> = {
-  items: ['Item.wz', 'String.wz'],
+  // `Character.wz` is loaded into the items worker so `extractEquips` can
+  // pull stat blocks (info/incPAD, info/reqLevel, …) from its per-equip
+  // `<Slot>/<id>.img` images. Item.wz remains the primary — without it the
+  // worker doesn't spawn at all.
+  items: ['Item.wz', 'String.wz', 'Character.wz'],
   mobs: ['Mob.wz', 'String.wz'],
   npcs: ['Npc.wz', 'String.wz'],
   maps: ['Map.wz', 'String.wz'],

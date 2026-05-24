@@ -22,3 +22,5 @@
 - [ ] Clean up wizard copy
 - [ ] Think about support for smooth version upgrades
 - [ ] Any hyperlinks should have a tooltip showing a summary of the target page
+- [ ] Add equipment set page with minimum requirements and gained stats
+- [ ] Clicking on an image should open a full-screen modal with the image

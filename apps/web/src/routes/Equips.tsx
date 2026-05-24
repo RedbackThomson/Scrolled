@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Search } from 'lucide-react';
 import { ItemIcon } from '@/components/ItemIcon';
@@ -8,16 +8,12 @@ import { getDbClient } from '@/db';
 export default function Equips() {
   const client = useMemo(() => getDbClient(), []);
   const [search, setSearch] = useState('');
-  const [slot, setSlot] = useState<string | 'all'>('all');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const slot = searchParams.get('slot') ?? 'all';
 
   const slotsQ = useQuery({
     queryKey: ['db', 'equip-slots'],
-    queryFn: async () => {
-      const equips = await client.listEquips({ limit: 5000 });
-      const slots = new Set<string>();
-      for (const e of equips) if (e.slot) slots.add(e.slot);
-      return [...slots].sort();
-    },
+    queryFn: () => client.listEquipSlots(),
   });
 
   const equipsQ = useQuery({
@@ -30,15 +26,26 @@ export default function Equips() {
       }),
   });
 
+  const setSlot = (next: string) => {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next === 'all') params.delete('slot');
+        else params.set('slot', next);
+        return params;
+      },
+      { replace: true },
+    );
+  };
+
   return (
     <div className="max-w-5xl space-y-6">
       <header>
         <h1 className="text-3xl font-semibold tracking-tight">Equips</h1>
         <p className="text-muted-foreground mt-2 text-sm">
-          Equipment names and slots extracted from{' '}
-          <code className="font-mono text-xs">String.wz/Eqp.img</code>. Full stat blocks (attack,
-          defense, requirements) need <code className="font-mono text-xs">Character.wz</code> and
-          will be populated in a later phase.
+          Equipment stats and icons from{' '}
+          <code className="font-mono text-xs">Character.wz</code>, joined with localized names from{' '}
+          <code className="font-mono text-xs">String.wz/Eqp.img</code>.
         </p>
       </header>
 

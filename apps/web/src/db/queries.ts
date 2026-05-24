@@ -345,6 +345,15 @@ export class DbApi implements GameDatabase {
       .map(rowToEquip);
   }
 
+  async listEquipSlots(): Promise<string[]> {
+    return this.sql
+      .selectObjects<{ slot: string | null }>(
+        `SELECT DISTINCT slot FROM equips WHERE slot IS NOT NULL ORDER BY slot`,
+      )
+      .map((r) => r.slot!)
+      .filter((s): s is string => !!s);
+  }
+
   async upsertMobs(mobs: MobRecord[]): Promise<number> {
     this.sql.transaction(() => {
       for (const m of mobs) {

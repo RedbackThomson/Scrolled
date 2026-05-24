@@ -268,6 +268,8 @@ export interface GameDatabase {
   upsertEquips(equips: EquipRecord[]): Promise<number>;
   getEquip(id: number): Promise<EquipRecord | null>;
   listEquips(opts?: { limit?: number; search?: string; slot?: string }): Promise<EquipRecord[]>;
+  /** Distinct non-null `slot` values for filter UIs / sidebar nav. */
+  listEquipSlots(): Promise<string[]>;
   getEquipIcon(id: number): Promise<Uint8Array | null>;
 
   upsertMobs(mobs: MobRecord[]): Promise<number>;
