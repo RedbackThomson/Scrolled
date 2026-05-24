@@ -902,6 +902,14 @@ export class DbApi implements GameDatabase {
     return row ? { name: row.name, size: row.size, hash: row.hash } : null;
   }
 
+  async exportBytes(): Promise<Uint8Array> {
+    return this.sql.exportBytes();
+  }
+
+  async importBytes(bytes: Uint8Array): Promise<{ backend: 'opfs' | 'memory'; schemaVersion: number }> {
+    return this.sql.importBytes(bytes);
+  }
+
   async clearAllData(): Promise<void> {
     this.sql.transaction(() => {
       // Order respects FK direction. No foreign keys are declared yet, but

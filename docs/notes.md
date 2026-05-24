@@ -20,3 +20,4 @@
   stability
 - [ ] Detect version automatically
 - [ ] Clean up wizard copy
+- [ ] Think about support for smooth version upgrades

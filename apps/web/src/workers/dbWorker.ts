@@ -193,6 +193,14 @@ class WorkerDb {
     await this.ensureOpen();
     return this.api.clearAllData();
   }
+  async exportBytes() {
+    await this.ensureOpen();
+    return this.api.exportBytes();
+  }
+  async importBytes(bytes: Uint8Array) {
+    await this.ensureOpen();
+    return this.api.importBytes(bytes);
+  }
 }
 
 expose(new WorkerDb());

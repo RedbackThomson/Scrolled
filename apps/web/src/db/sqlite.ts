@@ -6,6 +6,7 @@ import sqlite3InitModule, {
   type Database,
   type SqlValue,
   type BindingSpec,
+  type SAHPoolUtil,
   type Sqlite3Static,
 } from '@sqlite.org/sqlite-wasm';
 
@@ -17,6 +18,8 @@ const log = createLogger('db-sqlite');
 export type Row = Record<string, SqlValue>;
 export type Backend = 'opfs' | 'memory';
 
+const OPFS_FILENAME = '/mge.sqlite3';
+
 export interface OpenResult {
   backend: Backend;
   schemaVersion: number;
@@ -26,6 +29,7 @@ export class Sqlite {
   private sqlite3: Sqlite3Static | null = null;
   private db: Database | null = null;
   private _backend: Backend = 'memory';
+  private pool: SAHPoolUtil | null = null;
 
   get backend(): Backend {
     return this._backend;
@@ -45,10 +49,11 @@ export class Sqlite {
 
     try {
       const pool = await this.sqlite3.installOpfsSAHPoolVfs({ name: 'mge-db-pool' });
-      this.db = new pool.OpfsSAHPoolDb('/mge.sqlite3');
+      this.db = new pool.OpfsSAHPoolDb(OPFS_FILENAME);
+      this.pool = pool;
       this._backend = 'opfs';
       log.info('opened OPFS-backed database', {
-        path: '/mge.sqlite3',
+        path: OPFS_FILENAME,
         capacity: pool.getCapacity(),
         fileCount: pool.getFileCount(),
       });
@@ -107,6 +112,91 @@ export class Sqlite {
       }
       throw e;
     }
+  }
+
+  /**
+   * Serialize the entire database to a Uint8Array. The result is a valid
+   * SQLite file the user can save and re-import later. Works on both OPFS
+   * and in-memory backends — sqlite3's `sqlite3_js_db_export` wraps the
+   * underlying `sqlite3_serialize` C API.
+   *
+   * Roughly twice the database size in peak memory while the byte array is
+   * being built; for the MapleRoyals dataset this is ~150-300 MB.
+   */
+  exportBytes(): Uint8Array {
+    const sqlite3 = this.sqlite3;
+    const db = this.require();
+    if (!sqlite3) throw new Error('[mge] sqlite3 not initialized');
+    return sqlite3.capi.sqlite3_js_db_export(db);
+  }
+
+  /**
+   * Replace the database with the contents of the given byte array. Used
+   * by the import-database feature in Settings. Steps:
+   *
+   *   1. Close the live connection.
+   *   2. Either write into the OPFS SAH pool (preferred — survives reload)
+   *      or deserialize into a fresh in-memory database.
+   *   3. Reopen the connection on the same path/handle.
+   *   4. Run any migrations the imported DB is behind on.
+   *
+   * Throws if the bytes don't look like a SQLite file. Memory-backend
+   * imports work for the current session but won't persist after reload.
+   */
+  async importBytes(bytes: Uint8Array): Promise<OpenResult> {
+    const sqlite3 = this.sqlite3;
+    if (!sqlite3) throw new Error('[mge] sqlite3 not initialized — call open() first');
+    if (!looksLikeSqlite(bytes)) {
+      throw new Error('Input does not look like a SQLite database (header magic missing)');
+    }
+
+    const previousBackend = this._backend;
+    log.info('importBytes', { bytes: bytes.byteLength, backend: previousBackend });
+
+    // Close so the pool / memory DB doesn't have a dangling handle on the
+    // file we're about to replace.
+    try {
+      this.db?.close();
+    } catch (e) {
+      log.warn('close before import threw', describeError(e));
+    }
+    this.db = null;
+
+    if (previousBackend === 'opfs' && this.pool) {
+      await this.pool.importDb(OPFS_FILENAME, bytes);
+      this.db = new this.pool.OpfsSAHPoolDb(OPFS_FILENAME);
+      this._backend = 'opfs';
+    } else {
+      // Memory fallback: deserialize directly into a fresh DB. The bytes
+      // need to be copied into WASM-owned memory so the engine retains
+      // ownership across calls.
+      const db = new sqlite3.oo1.DB(':memory:', 'ct');
+      const wasm = sqlite3.wasm;
+      const ptr = wasm.allocFromTypedArray(bytes);
+      const flags =
+        sqlite3.capi.SQLITE_DESERIALIZE_FREEONCLOSE | sqlite3.capi.SQLITE_DESERIALIZE_RESIZEABLE;
+      const rc = sqlite3.capi.sqlite3_deserialize(
+        db,
+        'main',
+        ptr,
+        bytes.byteLength,
+        bytes.byteLength,
+        flags,
+      );
+      if (rc !== sqlite3.capi.SQLITE_OK) {
+        wasm.dealloc(ptr);
+        db.close();
+        throw new Error(`sqlite3_deserialize failed: rc=${rc}`);
+      }
+      this.db = db;
+      this._backend = 'memory';
+    }
+
+    this.db.exec('PRAGMA foreign_keys = ON;');
+    this.runMigrations();
+    const version = this.currentSchemaVersion();
+    log.info('importBytes complete', { backend: this._backend, schemaVersion: version });
+    return { backend: this._backend, schemaVersion: version };
   }
 
   close(): void {
@@ -178,6 +268,16 @@ interface OpfsCapabilities {
  * Best-effort detection of why OPFS might be unavailable. Surfaced via the
  * diagnostics log alongside the actual install error.
  */
+/** SQLite files start with the ASCII magic string `SQLite format 3\0`. */
+function looksLikeSqlite(bytes: Uint8Array): boolean {
+  if (bytes.byteLength < 16) return false;
+  const MAGIC = 'SQLite format 3\0';
+  for (let i = 0; i < MAGIC.length; i++) {
+    if (bytes[i] !== MAGIC.charCodeAt(i)) return false;
+  }
+  return true;
+}
+
 async function probeOpfsCapabilities(): Promise<OpfsCapabilities> {
   const g = globalThis as {
     navigator?: { storage?: { getDirectory?: () => Promise<unknown> } };

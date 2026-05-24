@@ -289,6 +289,20 @@ export interface GameDatabase {
   findFileByHash(hash: string): Promise<DatasetFileRef | null>;
 
   clearAllData(): Promise<void>;
+
+  /**
+   * Serialize the live database to a Uint8Array. Returned bytes are a
+   * valid SQLite file the user can save and re-import later.
+   */
+  exportBytes(): Promise<Uint8Array>;
+
+  /**
+   * Replace the database with the given bytes. The bytes must look like a
+   * SQLite file (header magic check) or this rejects without touching the
+   * live DB. After import, migrations run so an older schema gets brought
+   * up to current. Resolves to the new schema version + backend.
+   */
+  importBytes(bytes: Uint8Array): Promise<{ backend: 'opfs' | 'memory'; schemaVersion: number }>;
 }
 
 export type EntityKind = 'item' | 'equip' | 'mob' | 'npc' | 'map' | 'quest';
