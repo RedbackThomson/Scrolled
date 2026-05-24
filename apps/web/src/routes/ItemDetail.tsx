@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Loader2, ScrollText } from 'lucide-react';
+import { ArrowLeft, Loader2, ScrollText, Skull } from 'lucide-react';
+import { EntityIcon } from '@/components/EntityIcon';
 import { ItemIcon } from '@/components/ItemIcon';
-import { QuestLink } from '@/components/entity-links';
+import { MobLink, QuestLink } from '@/components/entity-links';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/lib/useFeatures';
 
@@ -22,6 +23,11 @@ export default function ItemDetail() {
     queryKey: ['db', 'item', id, 'quests'],
     queryFn: () => client.getItemQuests(id),
     enabled: Number.isFinite(id) && features.hasQuests,
+  });
+  const droppedByQ = useQuery({
+    queryKey: ['db', 'item', id, 'dropped-by'],
+    queryFn: () => client.getItemDroppedBy(id),
+    enabled: Number.isFinite(id) && features.hasMobs,
   });
 
   if (itemQ.isLoading) {
@@ -108,6 +114,38 @@ export default function ItemDetail() {
                         {q.id}
                       </span>
                     </QuestLink>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {features.hasMobs && droppedByQ.data && droppedByQ.data.length > 0 && (
+            <section>
+              <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
+                <Skull className="h-4 w-4" /> Dropped by
+                <span className="text-muted-foreground text-xs normal-case">
+                  ({droppedByQ.data.length})
+                </span>
+              </h2>
+              <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
+                {droppedByQ.data.map((m) => (
+                  <li key={m.mobId}>
+                    <MobLink
+                      id={m.mobId}
+                      className="hover:bg-accent flex items-center gap-3 px-3 py-1.5 text-sm"
+                    >
+                      <EntityIcon entity="mob" id={m.mobId} size={24} placeholder={Skull} alt={m.name} />
+                      <span className="min-w-0 flex-1 truncate">{m.name}</span>
+                      {m.level !== null && (
+                        <span className="text-muted-foreground shrink-0 text-xs">
+                          Lv {m.level}
+                        </span>
+                      )}
+                      <span className="text-muted-foreground shrink-0 font-mono text-xs">
+                        {m.mobId}
+                      </span>
+                    </MobLink>
                   </li>
                 ))}
               </ul>

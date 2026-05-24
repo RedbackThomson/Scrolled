@@ -271,4 +271,23 @@ export const MIGRATIONS: readonly Migration[] = [
       CREATE INDEX IF NOT EXISTS quests_required_level_idx ON quests (required_level);
     `,
   },
+  {
+    version: 8,
+    name: 'mob drops from MonsterBook.img',
+    sql: `
+      -- Possible drops per mob, sourced from
+      -- String.wz/MonsterBook.img/<mobId>/reward/<index>. The WZ data only
+      -- records *which* items a mob can drop; rates/quantities are server-
+      -- side. item_id can reference either items.id or equips.id; we don't
+      -- FK-constrain it because the two tables share a numeric ID space
+      -- and either side may not be loaded yet.
+      CREATE TABLE mob_drops (
+        mob_id  INTEGER NOT NULL,
+        item_id INTEGER NOT NULL,
+        PRIMARY KEY (mob_id, item_id)
+      );
+
+      CREATE INDEX IF NOT EXISTS mob_drops_item_idx ON mob_drops (item_id);
+    `,
+  },
 ];

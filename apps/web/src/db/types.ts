@@ -116,6 +116,25 @@ export interface MapMobWithName extends MapMobRecord {
   level: number | null;
 }
 
+/**
+ * One item this mob can drop, taken from
+ * `String.wz/MonsterBook.img/<mobId>/reward/<index>`. Rates and quantities
+ * aren't in the WZ data — they're server-side — so this is the *possibility*
+ * of a drop, not its odds.
+ */
+export interface MobDropRecord {
+  mobId: number;
+  itemId: number;
+}
+
+/** A row from `mob_drops` joined to the item / equip's display name. */
+export interface MobDropWithName extends MobDropRecord {
+  itemName: string | null;
+  /** `'item'` or `'equip'` — which detail page to link to. `null` if neither
+   *  table has a matching id (e.g. the item entry hasn't been extracted). */
+  entity: 'item' | 'equip' | null;
+}
+
 export interface QuestRecord {
   id: number;
   name: string;
@@ -321,6 +340,12 @@ export interface GameDatabase {
   listMobs(opts?: ListOptsBase & { bossOnly?: boolean }): Promise<PageResult<MobRecord>>;
   /** Decoded PNG bytes for the mob's stand sprite, or null. */
   getMobIcon(id: number): Promise<Uint8Array | null>;
+  /** Items this mob can drop (from MonsterBook.img), joined to the target's name. */
+  getMobDrops(mobId: number): Promise<MobDropWithName[]>;
+  /** Mobs that drop the given item, joined to mob name + level. */
+  getItemDroppedBy(itemId: number): Promise<{ mobId: number; name: string; level: number | null }[]>;
+  /** Replace `mob_drops` rows for the affected mob IDs in one transaction. */
+  replaceMobDrops(drops: MobDropRecord[]): Promise<void>;
 
   upsertNpcs(npcs: NpcRecord[]): Promise<number>;
   getNpc(id: number): Promise<NpcRecord | null>;

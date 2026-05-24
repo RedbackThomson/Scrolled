@@ -19,6 +19,8 @@ import type {
   MapNpcWithName,
   MapPortalRecord,
   MapRecord,
+  MobDropRecord,
+  MobDropWithName,
   MobRecord,
   NpcRecord,
   GameDatabase,
@@ -685,6 +687,64 @@ export class DbApi implements GameDatabase {
         )
         .map(rowToMob);
       return { rows, total };
+    });
+  }
+
+  async getMobDrops(mobId: number): Promise<MobDropWithName[]> {
+    // item_id can match either items.id or equips.id; coalesce a single
+    // name + entity kind so the UI can route the link to the right page.
+    return this.sql
+      .selectObjects<{
+        mob_id: number;
+        item_id: number;
+        item_name: string | null;
+        equip_name: string | null;
+      }>(
+        `SELECT d.mob_id, d.item_id, i.name AS item_name, e.name AS equip_name
+         FROM mob_drops d
+         LEFT JOIN items  i ON i.id = d.item_id
+         LEFT JOIN equips e ON e.id = d.item_id
+         WHERE d.mob_id = ?
+         ORDER BY COALESCE(i.name, e.name) NULLS LAST, d.item_id`,
+        [mobId],
+      )
+      .map((r) => ({
+        mobId: r.mob_id,
+        itemId: r.item_id,
+        itemName: r.item_name ?? r.equip_name,
+        entity: r.item_name ? 'item' : r.equip_name ? 'equip' : null,
+      }));
+  }
+
+  async getItemDroppedBy(
+    itemId: number,
+  ): Promise<{ mobId: number; name: string; level: number | null }[]> {
+    return this.sql
+      .selectObjects<{ mob_id: number; name: string; level: number | null }>(
+        `SELECT d.mob_id, m.name, m.level
+         FROM mob_drops d INNER JOIN mobs m ON m.id = d.mob_id
+         WHERE d.item_id = ?
+         ORDER BY m.level NULLS LAST, m.name`,
+        [itemId],
+      )
+      .map((r) => ({ mobId: r.mob_id, name: r.name, level: r.level }));
+  }
+
+  async replaceMobDrops(drops: MobDropRecord[]): Promise<void> {
+    // Collect distinct mob IDs so we delete their prior drop rows before
+    // reinserting; mirrors `replaceMapLife`'s approach.
+    const mobIds = new Set<number>();
+    for (const d of drops) mobIds.add(d.mobId);
+    this.sql.transaction(() => {
+      for (const id of mobIds) {
+        this.sql.exec('DELETE FROM mob_drops WHERE mob_id = ?', [id]);
+      }
+      for (const d of drops) {
+        this.sql.exec('INSERT OR REPLACE INTO mob_drops (mob_id, item_id) VALUES (?, ?)', [
+          d.mobId,
+          d.itemId,
+        ]);
+      }
     });
   }
 

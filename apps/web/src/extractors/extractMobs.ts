@@ -1,5 +1,5 @@
 import type { GameDataSource } from '@/parser';
-import type { MobRecord } from '@/db';
+import type { MobDropRecord, MobRecord } from '@/db';
 import { createLogger } from '@/lib/logger';
 import type { ProgressFn } from '@/lib/progress';
 import { pickSprite } from './sprites';
@@ -15,6 +15,8 @@ const MOB_SPRITE_CANDIDATES = ['stand/0', 'move/0', 'fly/0', 'regen/0', 'jump/0'
 
 export interface ExtractMobsResult {
   mobs: MobRecord[];
+  /** Possible drops per mob from `String.wz/MonsterBook.img/<id>/reward`. */
+  drops: MobDropRecord[];
   skipped: { reason: string; path: string }[];
 }
 
@@ -31,12 +33,13 @@ export async function extractMobs(
   opts: { onProgress?: ProgressFn } = {},
 ): Promise<ExtractMobsResult> {
   const mobs: MobRecord[] = [];
+  const drops: MobDropRecord[] = [];
   const skipped: { reason: string; path: string }[] = [];
 
   const root = await source.listChildren('Mob.wz');
   if (root.length === 0) {
     log.debug('Mob.wz absent or empty');
-    return { mobs, skipped };
+    return { mobs, drops, skipped };
   }
 
   // Discovery — each child of Mob.wz is a `<id>.img`.
@@ -91,12 +94,31 @@ export async function extractMobs(
       iconData,
       sourcePath: img.fullPath,
     });
+
+    // Drop possibilities live in String.wz/MonsterBook.img/<id>/reward. Each
+    // reward child is an integer leaf containing an item or equip ID. The
+    // node may be absent for mobs that have no Monster Book entry — that's
+    // expected and not an error.
+    const rewardChildren = await source.listChildren(
+      `String.wz/MonsterBook.img/${id}/reward`,
+    );
+    for (const r of rewardChildren) {
+      const itemId = typeof r.scalar === 'number' ? r.scalar : Number(r.scalar);
+      if (Number.isFinite(itemId) && itemId > 0) {
+        drops.push({ mobId: id, itemId });
+      }
+    }
+
     processed += 1;
   }
 
   opts.onProgress?.({ phase: 'Extracting mobs', current: processed, total });
-  log.info('extraction complete', { count: mobs.length, skipped: skipped.length });
-  return { mobs, skipped };
+  log.info('extraction complete', {
+    count: mobs.length,
+    drops: drops.length,
+    skipped: skipped.length,
+  });
+  return { mobs, drops, skipped };
 }
 
 async function scalarNumber(source: GameDataSource, path: string): Promise<number | null> {

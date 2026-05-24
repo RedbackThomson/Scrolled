@@ -21,6 +21,8 @@ export type {
   MapNpcWithName,
   MapPortalRecord,
   MapRecord,
+  MobDropRecord,
+  MobDropWithName,
   MobRecord,
   NpcRecord,
   PageResult,

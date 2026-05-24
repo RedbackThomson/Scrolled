@@ -97,6 +97,18 @@ class WorkerDb {
     await this.ensureOpen();
     return this.api.listMobs(opts);
   }
+  async getMobDrops(mobId: number) {
+    await this.ensureOpen();
+    return this.api.getMobDrops(mobId);
+  }
+  async getItemDroppedBy(itemId: number) {
+    await this.ensureOpen();
+    return this.api.getItemDroppedBy(itemId);
+  }
+  async replaceMobDrops(drops: Parameters<DbApi['replaceMobDrops']>[0]) {
+    await this.ensureOpen();
+    return this.api.replaceMobDrops(drops);
+  }
   async upsertNpcs(npcs: Parameters<DbApi['upsertNpcs']>[0]) {
     await this.ensureOpen();
     return this.api.upsertNpcs(npcs);

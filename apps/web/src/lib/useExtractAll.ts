@@ -116,6 +116,14 @@ export function useExtractAll(opts: UseExtractAllOptions = {}) {
           const r = await parser.extractMobs(onProgress);
           setProgress({ phase: 'Saving mobs to database', current: 0, total: r.mobs.length });
           const mobCount = r.mobs.length > 0 ? await db.upsertMobs(r.mobs) : 0;
+          if (r.drops.length > 0) {
+            setProgress({
+              phase: 'Saving mob drops',
+              current: 0,
+              total: r.drops.length,
+            });
+            await db.replaceMobDrops(r.drops);
+          }
           tracker.ran('mob', mobCount, r.skipped.length);
           skippedTotal += r.skipped.length;
         } catch (err) {

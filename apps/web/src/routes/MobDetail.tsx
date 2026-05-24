@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { QuestLink } from '@/components/entity-links';
+import { EquipLink, ItemLink, QuestLink } from '@/components/entity-links';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Crown, Loader2, ScrollText, Skull } from 'lucide-react';
+import { ArrowLeft, Crown, Loader2, Package, ScrollText, Skull } from 'lucide-react';
 import { EntityIcon } from '@/components/EntityIcon';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/lib/useFeatures';
@@ -22,6 +22,11 @@ export default function MobDetail() {
     queryKey: ['db', 'mob', id, 'quests'],
     queryFn: () => client.getMobQuests(id),
     enabled: Number.isFinite(id) && features.hasQuests,
+  });
+  const dropsQ = useQuery({
+    queryKey: ['db', 'mob', id, 'drops'],
+    queryFn: () => client.getMobDrops(id),
+    enabled: Number.isFinite(id),
   });
 
   if (mobQ.isLoading) {
@@ -82,9 +87,56 @@ export default function MobDetail() {
           </header>
 
           <p className="text-muted-foreground text-xs">
-            Drops, animations, and elemental modifiers come from server data; we only have the base
-            stats from <code className="font-mono">Mob.wz</code>.
+            Drop possibilities come from <code className="font-mono">MonsterBook.img</code> in{' '}
+            <code className="font-mono">String.wz</code>; rates, quantities, animations, and
+            elemental modifiers are server data and aren't in the WZ files.
           </p>
+
+          {dropsQ.data && dropsQ.data.length > 0 && (
+            <section>
+              <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
+                <Package className="h-4 w-4" /> Drops
+                <span className="text-muted-foreground text-xs normal-case">
+                  ({dropsQ.data.length})
+                </span>
+              </h2>
+              <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
+                {dropsQ.data.map((d) => {
+                  const label = d.itemName ?? `Item ${d.itemId}`;
+                  const row = (
+                    <div className="hover:bg-accent flex items-center gap-3 px-3 py-1.5 text-sm">
+                      <EntityIcon
+                        entity={d.entity ?? 'item'}
+                        id={d.itemId}
+                        size={24}
+                        placeholder={Package}
+                        alt={label}
+                      />
+                      <span className="min-w-0 flex-1 truncate">{label}</span>
+                      <span className="text-muted-foreground shrink-0 font-mono text-xs">
+                        {d.itemId}
+                      </span>
+                    </div>
+                  );
+                  return (
+                    <li key={d.itemId}>
+                      {d.entity === 'equip' ? (
+                        <EquipLink id={d.itemId} className="block">
+                          {row}
+                        </EquipLink>
+                      ) : d.entity === 'item' ? (
+                        <ItemLink id={d.itemId} className="block">
+                          {row}
+                        </ItemLink>
+                      ) : (
+                        row
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          )}
 
           {features.hasQuests && questsQ.data && questsQ.data.length > 0 && (
             <section>

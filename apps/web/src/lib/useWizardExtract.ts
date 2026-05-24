@@ -320,6 +320,9 @@ async function runWorkerExtractors(
   if (name === 'mobs' && willRun.has('mob')) {
     const r = await worker.extractMobs(onProgress);
     const rows = r.mobs.length > 0 ? await db.upsertMobs(r.mobs) : 0;
+    if (r.drops.length > 0) {
+      await db.replaceMobDrops(r.drops);
+    }
     out.push({
       extractor: 'mob',
       status: 'ran',
