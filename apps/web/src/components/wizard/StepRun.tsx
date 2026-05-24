@@ -6,10 +6,10 @@ import { ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
 import { ProgressBar } from '@/components/ProgressBar';
 import { getParserClient } from '@/parser';
 import type { WzMapleVersionName } from '@/parser';
-import type { DatasetFileRef } from '@/db';
 import type { ProgressUpdate } from '@/lib/progress';
-import { useExtractAll, wzKey } from '@/lib/useExtractAll';
+import { useExtractAll } from '@/lib/useExtractAll';
 import { createLogger, describeError } from '@/lib/logger';
+import { buildPlan } from './plan';
 import type { WizardFile } from './StepFiles';
 
 const log = createLogger('wizard-run');
@@ -24,12 +24,15 @@ interface Props {
  * Runs the wizard's extraction:
  *
  *   1. Initialize the parser worker with the chosen WZ version.
- *   2. Load the user-included WZ files into the parser worker. Files whose
- *      hashes already match a previously-recorded dataset entry are skipped
- *      (no need to re-buffer hundreds of megabytes).
- *   3. Trigger the extract → persist pipeline via `useExtractAll`. Skipped
- *      WZ files also short-circuit their extractors so we don't waste work
- *      reading data we've already persisted.
+ *   2. Load **every** dropped WZ file into the parser worker — including
+ *      hash-matched ones. Cross-referencing extractors (e.g. quests
+ *      reading names from String.wz) need their companion files in worker
+ *      memory even when we're not re-extracting them. Hash-skipping is
+ *      enforced at the extractor layer, not at load time.
+ *   3. Trigger the extract → persist pipeline via `useExtractAll`. The
+ *      plan's `skipWz` short-circuits extractors whose primary file
+ *      either wasn't dropped or was dropped hash-matched without
+ *      force-reprocess.
  *   4. Record the run as a new `datasets` row with each file's hash.
  */
 export function StepRun({ version, files, onComplete }: Props) {
@@ -38,42 +41,25 @@ export function StepRun({ version, files, onComplete }: Props) {
   const [loadDone, setLoadDone] = useState(false);
   const [loadErrors, setLoadErrors] = useState<{ name: string; message: string }[]>([]);
 
-  const includedFiles = useMemo(() => files.filter((f) => f.include), [files]);
-  const filesToActuallyLoad = useMemo(
-    () => includedFiles.filter((f) => !f.matchedExisting || f.forceReprocess),
-    [includedFiles],
-  );
-  const skipWz = useMemo(
-    () =>
-      new Set(
-        includedFiles
-          .filter((f) => f.matchedExisting && !f.forceReprocess)
-          .map((f) => wzKey(f.file.name)),
-      ),
-    [includedFiles],
-  );
-  const recordFiles = useMemo<DatasetFileRef[]>(
-    () =>
-      includedFiles.map((f) => ({
-        name: f.file.name,
-        size: f.file.size,
-        hash: f.hash,
-      })),
-    [includedFiles],
-  );
+  const plan = useMemo(() => buildPlan(files), [files]);
+  const { filesToLoad, skipWz, recordFiles } = plan;
 
   // -- Step 1+2: init + load WZ files --
   const loadM = useMutation({
     mutationFn: async () => {
       setLoadProgress({ phase: 'Initializing parser', current: 0 });
       await parser.init(version);
-      if (filesToActuallyLoad.length === 0) {
-        log.info('no files to load — all hashes matched existing dataset rows');
+      if (filesToLoad.length === 0) {
+        log.info('no files to load');
         return;
       }
       const onLoadProgress = proxy((p: ProgressUpdate) => setLoadProgress(p));
+      // Load every dropped file — including hash-matched ones — so the
+      // parser worker has the data extractors will cross-reference (e.g.
+      // String.wz for quest names). Skipping happens at the extractor
+      // layer via `skipWz`, not at load time.
       const result = await parser.load(
-        filesToActuallyLoad.map((f) => ({ name: f.file.name, source: f.file })),
+        filesToLoad.map((f) => ({ name: f.file.name, source: f.file })),
         onLoadProgress,
       );
       if (result.errors.length > 0) {

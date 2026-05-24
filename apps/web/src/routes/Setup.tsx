@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { WizardLayout, type WizardStep } from '@/components/wizard/WizardLayout';
@@ -6,6 +6,7 @@ import { StepVersion } from '@/components/wizard/StepVersion';
 import { StepFiles, type WizardFile } from '@/components/wizard/StepFiles';
 import { StepReview } from '@/components/wizard/StepReview';
 import { StepRun } from '@/components/wizard/StepRun';
+import { buildPlan } from '@/components/wizard/plan';
 import type { WzMapleVersionName } from '@/parser';
 
 const STEPS: WizardStep[] = [
@@ -23,6 +24,9 @@ export default function Setup() {
   const filesReady = files.length > 0 && files.every((f) => f.hashPhase === 'done');
   const someIncluded = files.some((f) => f.include);
   const canProceedFromFiles = filesReady && someIncluded;
+
+  const plan = useMemo(() => buildPlan(files), [files]);
+  const planIsRunnable = plan.willRun.length > 0 && plan.missingDeps.length === 0;
 
   function goPrev() {
     const idx = STEPS.findIndex((s) => s.id === stepId);
@@ -61,12 +65,19 @@ export default function Setup() {
                   : 'Include at least one file'}
             </span>
           )}
+          {stepId === 'review' && !planIsRunnable && (
+            <span className="text-muted-foreground text-xs">
+              {plan.missingDeps.length > 0
+                ? 'Add the missing required files'
+                : 'Nothing to extract'}
+            </span>
+          )}
           <Button
             size="sm"
             onClick={goNext}
             disabled={
               (stepId === 'files' && !canProceedFromFiles) ||
-              (stepId === 'review' && files.filter((f) => f.include).length === 0)
+              (stepId === 'review' && !planIsRunnable)
             }
           >
             {stepId === 'review' ? 'Start' : 'Continue'}
