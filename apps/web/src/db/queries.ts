@@ -781,6 +781,22 @@ export class DbApi implements GameDatabase {
       .map((r) => ({ mobId: r.mob_id, name: r.name, level: r.level }));
   }
 
+  async getMobMaps(mobId: number): Promise<MapRecord[]> {
+    return this.sql
+      .selectObjects<MapRow>(
+        `SELECT DISTINCT m.id, m.name, m.street_name, m.return_map_id, m.forced_return_map_id,
+                m.field_limit, m.mob_rate, m.minimap_path, NULL AS minimap_data,
+                m.minimap_center_x, m.minimap_center_y, m.minimap_width, m.minimap_height,
+                m.minimap_mag, m.source_path
+         FROM maps m
+         JOIN map_mobs mm ON mm.map_id = m.id
+         WHERE mm.mob_id = ?
+         ORDER BY m.name`,
+        [mobId],
+      )
+      .map(rowToMap);
+  }
+
   async replaceMobDrops(drops: MobDropRecord[]): Promise<void> {
     // Collect distinct mob IDs so we delete their prior drop rows before
     // reinserting; mirrors `replaceMapLife`'s approach.

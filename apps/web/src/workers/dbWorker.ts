@@ -105,6 +105,10 @@ class WorkerDb {
     await this.ensureOpen();
     return this.api.getMobDrops(mobId);
   }
+  async getMobMaps(mobId: number) {
+    await this.ensureOpen();
+    return this.api.getMobMaps(mobId);
+  }
   async getItemDroppedBy(itemId: number) {
     await this.ensureOpen();
     return this.api.getItemDroppedBy(itemId);

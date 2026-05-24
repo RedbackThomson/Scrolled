@@ -411,6 +411,8 @@ export interface GameDatabase {
   getMobIcon(id: number): Promise<Uint8Array | null>;
   /** Items this mob can drop (from MonsterBook.img), joined to the target's name. */
   getMobDrops(mobId: number): Promise<MobDropWithName[]>;
+  /** Maps where this mob spawns. */
+  getMobMaps(mobId: number): Promise<MapRecord[]>;
   /** Mobs that drop the given item, joined to mob name + level. */
   getItemDroppedBy(itemId: number): Promise<{ mobId: number; name: string; level: number | null }[]>;
   /** Replace `mob_drops` rows for the affected mob IDs in one transaction. */

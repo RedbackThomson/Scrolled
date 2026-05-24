@@ -1,8 +1,17 @@
 import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { EquipLink, ItemLink, QuestLink } from '@/components/entity-links';
+import { EquipLink, ItemLink, MapLink, QuestLink } from '@/components/entity-links';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Crown, Loader2, Package, ScrollText, Skull } from 'lucide-react';
+import {
+  ArrowLeft,
+  Crown,
+  Loader2,
+  Map as MapIcon,
+  MapPin,
+  Package,
+  ScrollText,
+  Skull,
+} from 'lucide-react';
 import { EntityIcon } from '@/components/EntityIcon';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { getDbClient } from '@/db';
@@ -28,6 +37,11 @@ export default function MobDetail() {
     queryKey: ['db', 'mob', id, 'drops'],
     queryFn: () => client.getMobDrops(id),
     enabled: Number.isFinite(id),
+  });
+  const mapsQ = useQuery({
+    queryKey: ['db', 'mob', id, 'maps'],
+    queryFn: () => client.getMobMaps(id),
+    enabled: Number.isFinite(id) && features.hasMaps,
   });
 
   if (mobQ.isLoading) {
@@ -138,6 +152,59 @@ export default function MobDetail() {
                   );
                 })}
               </ul>
+            </section>
+          )}
+
+          {features.hasMaps && (
+            <section>
+              <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
+                <MapIcon className="h-4 w-4" /> Appears on
+                {mapsQ.data && (
+                  <span className="text-muted-foreground text-xs normal-case">
+                    ({mapsQ.data.length})
+                  </span>
+                )}
+              </h2>
+              {mapsQ.isLoading && <p className="text-muted-foreground text-xs">Loading maps…</p>}
+              {mapsQ.data && mapsQ.data.length === 0 && (
+                <p className="text-muted-foreground text-xs italic">No map placements found.</p>
+              )}
+              {mapsQ.data && mapsQ.data.length > 0 && (
+                <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
+                  {mapsQ.data.map((mp) => (
+                    <li
+                      key={mp.id}
+                      className="hover:bg-accent group flex items-center gap-1 px-1"
+                    >
+                      <MapLink
+                        id={mp.id}
+                        className="flex flex-1 items-center gap-2 px-2 py-2 text-sm"
+                      >
+                        <MapIcon className="text-muted-foreground h-4 w-4 shrink-0" />
+                        <span className="min-w-0 flex-1 truncate">
+                          {mp.name ?? `Map ${mp.id}`}
+                          {mp.streetName && (
+                            <span className="text-muted-foreground"> · {mp.streetName}</span>
+                          )}
+                        </span>
+                        <span className="text-muted-foreground shrink-0 font-mono text-xs">
+                          {mp.id}
+                        </span>
+                      </MapLink>
+                      {mp.minimapPath && (
+                        <Link
+                          to={`/maps/${mp.id}?viewer=mob:${m.id}`}
+                          aria-label={`Show ${m.name} on ${mp.name ?? `Map ${mp.id}`}`}
+                          title="Show on map"
+                          className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                        >
+                          <MapPin className="h-4 w-4" />
+                        </Link>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </section>
           )}
 
