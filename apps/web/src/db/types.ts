@@ -175,6 +175,35 @@ export interface DatasetFileRef {
   size: number | null;
   /** Lowercase SHA-256 hex digest of the file's contents. */
   hash: string | null;
+  /**
+   * Result of `parser.load` for this file in the run that produced this
+   * record. `null` for rows recorded before extraction outcomes were
+   * tracked (migration v5).
+   */
+  loadStatus: 'loaded' | 'load_failed' | null;
+  /** Error message when `loadStatus === 'load_failed'`. */
+  loadError: string | null;
+}
+
+/**
+ * Outcome of one extractor on one wizard run.
+ *
+ *   - `status: 'ran'`  — the extractor's primary WZ file was loaded and
+ *     re-processed. `rows` is the number of records produced.
+ *   - `status: 'skipped'` — the extractor's primary file was either
+ *     missing from this run or hash-matched without force-reprocess.
+ *
+ *   - `placeholderNames` is nonzero only for the `quest` extractor today;
+ *     it counts records that fell back to `Quest <id>` because no name
+ *     source was available.
+ */
+export interface ExtractorResultRecord {
+  extractor: string;
+  status: 'ran' | 'skipped';
+  rows: number;
+  skippedRows: number;
+  placeholderNames: number;
+  error: string | null;
 }
 
 export interface DatasetRecord {
@@ -183,7 +212,16 @@ export interface DatasetRecord {
   loadedAt: number;
   wzVersion: string;
   notes: string | null;
+  /** Per-run wall-clock for the extraction phase (ms). `null` pre-v5. */
+  totalMs: number | null;
+  /**
+   * True if the run finished cleanly. False on any caught error. `null`
+   * on rows recorded before this column existed.
+   */
+  ok: boolean | null;
   files: DatasetFileRef[];
+  /** Per-extractor outcomes recorded for this run. Empty for pre-v5 rows. */
+  extractors: ExtractorResultRecord[];
 }
 
 export interface DbStatus {
@@ -281,6 +319,12 @@ export interface GameDatabase {
     wzVersion: string;
     files: DatasetFileRef[];
     notes?: string;
+    /** Wall-clock duration of the extraction phase in ms. */
+    totalMs?: number;
+    /** True if no extractor errored. */
+    ok?: boolean;
+    /** Per-extractor outcomes from the run. */
+    extractors?: ExtractorResultRecord[];
   }): Promise<DatasetRecord>;
   listDatasets(): Promise<DatasetRecord[]>;
   /** Distinct file names ever loaded, across every dataset. */

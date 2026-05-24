@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { proxy } from 'comlink';
 import { getParserClient } from '@/parser';
-import { getDbClient, type DatasetFileRef } from '@/db';
+import { getDbClient, type DatasetFileRef, type ExtractorResultRecord } from '@/db';
 import { createLogger, describeError } from '@/lib/logger';
 import type { ProgressUpdate } from '@/lib/progress';
 
@@ -17,6 +17,8 @@ export interface ExtractStats {
   quests: number;
   skipped: number;
   ms: number;
+  /** Per-extractor outcome rows persisted into `extraction_extractors`. */
+  perExtractor: ExtractorResultRecord[];
 }
 
 export interface UseExtractAllOptions {
@@ -36,6 +38,12 @@ export interface UseExtractAllOptions {
   wzVersion?: string;
   /** Optional human-readable label for the dataset record. */
   label?: string;
+  /**
+   * Per-file errors from `parser.load`. Merged into each `recordFiles`
+   * entry as `loadStatus` / `loadError` before the dataset is persisted, so
+   * the Settings → extraction-reports panel can show what failed.
+   */
+  loadErrors?: { name: string; message: string }[];
 }
 
 function shouldSkip(skipWz: Set<string> | undefined, wz: string): boolean {
@@ -52,9 +60,10 @@ export function wzKey(fileName: string): string {
 
 /**
  * Drives the full extract → persist pipeline. Used both by `ExtractAllPanel`
- * (on the parser debug page) and the first-run wizard. Skipping per-WZ-file
- * lets the wizard short-circuit extractors when an uploaded file's hash
- * matches a previously-recorded one.
+ * (on the parser debug page) and the first-run wizard. The mutation
+ * records a `datasets` row at the end with per-file load outcomes (from
+ * `loadErrors`) and a per-extractor breakdown so the Settings panel can
+ * show a full report after the run.
  */
 export function useExtractAll(opts: UseExtractAllOptions = {}) {
   const parser = useMemo(() => getParserClient(), []);
@@ -69,115 +78,158 @@ export function useExtractAll(opts: UseExtractAllOptions = {}) {
       setProgress({ phase: 'Starting extraction', current: 0 });
       const onProgress = proxy((p: ProgressUpdate) => setProgress(p));
 
-      let itemCount = 0;
-      let equipCount = 0;
-      let mobCount = 0;
-      let npcCount = 0;
-      let mapCount = 0;
-      let questCount = 0;
+      const tracker = new ExtractorTracker(opts.skipWz);
       let skippedTotal = 0;
 
       if (!shouldSkip(opts.skipWz, 'item')) {
-        const r = await parser.extractItems(onProgress);
-        setProgress({
-          phase: 'Saving items to database',
-          current: 0,
-          total: r.items.length,
-        });
-        itemCount = r.items.length > 0 ? await db.upsertItems(r.items) : 0;
-        skippedTotal += r.skipped.length;
+        try {
+          const r = await parser.extractItems(onProgress);
+          setProgress({
+            phase: 'Saving items to database',
+            current: 0,
+            total: r.items.length,
+          });
+          const itemCount = r.items.length > 0 ? await db.upsertItems(r.items) : 0;
+          tracker.ran('item', itemCount, r.skipped.length);
+          skippedTotal += r.skipped.length;
 
-        const e = await parser.extractEquips(onProgress);
-        setProgress({
-          phase: 'Saving equips to database',
-          current: 0,
-          total: e.equips.length,
-        });
-        equipCount = e.equips.length > 0 ? await db.upsertEquips(e.equips) : 0;
-        skippedTotal += e.skipped.length;
+          const e = await parser.extractEquips(onProgress);
+          setProgress({
+            phase: 'Saving equips to database',
+            current: 0,
+            total: e.equips.length,
+          });
+          const equipCount = e.equips.length > 0 ? await db.upsertEquips(e.equips) : 0;
+          tracker.ran('equip', equipCount, e.skipped.length);
+          skippedTotal += e.skipped.length;
+        } catch (err) {
+          tracker.failed('item', err);
+          tracker.failed('equip', err);
+          throw err;
+        }
       } else {
         log.info('skipping items+equips (Item.wz hash unchanged)');
       }
 
       if (!shouldSkip(opts.skipWz, 'mob')) {
-        const r = await parser.extractMobs(onProgress);
-        setProgress({ phase: 'Saving mobs to database', current: 0, total: r.mobs.length });
-        mobCount = r.mobs.length > 0 ? await db.upsertMobs(r.mobs) : 0;
-        skippedTotal += r.skipped.length;
+        try {
+          const r = await parser.extractMobs(onProgress);
+          setProgress({ phase: 'Saving mobs to database', current: 0, total: r.mobs.length });
+          const mobCount = r.mobs.length > 0 ? await db.upsertMobs(r.mobs) : 0;
+          tracker.ran('mob', mobCount, r.skipped.length);
+          skippedTotal += r.skipped.length;
+        } catch (err) {
+          tracker.failed('mob', err);
+          throw err;
+        }
       } else {
         log.info('skipping mobs (Mob.wz hash unchanged)');
       }
 
       if (!shouldSkip(opts.skipWz, 'npc')) {
-        const r = await parser.extractNpcs(onProgress);
-        setProgress({ phase: 'Saving NPCs to database', current: 0, total: r.npcs.length });
-        npcCount = r.npcs.length > 0 ? await db.upsertNpcs(r.npcs) : 0;
-        skippedTotal += r.skipped.length;
+        try {
+          const r = await parser.extractNpcs(onProgress);
+          setProgress({ phase: 'Saving NPCs to database', current: 0, total: r.npcs.length });
+          const npcCount = r.npcs.length > 0 ? await db.upsertNpcs(r.npcs) : 0;
+          tracker.ran('npc', npcCount, r.skipped.length);
+          skippedTotal += r.skipped.length;
+        } catch (err) {
+          tracker.failed('npc', err);
+          throw err;
+        }
       } else {
         log.info('skipping npcs (Npc.wz hash unchanged)');
       }
 
       if (!shouldSkip(opts.skipWz, 'map')) {
-        const r = await parser.extractMaps(onProgress);
-        setProgress({ phase: 'Saving maps to database', current: 0, total: r.maps.length });
-        mapCount = r.maps.length > 0 ? await db.upsertMaps(r.maps) : 0;
-        skippedTotal += r.skipped.length;
-        if (r.mapNpcs.length > 0 || r.mapMobs.length > 0 || r.mapPortals.length > 0) {
-          setProgress({
-            phase: 'Saving map life + portals',
-            current: 0,
-            total: r.mapNpcs.length + r.mapMobs.length + r.mapPortals.length,
-          });
-          await db.replaceMapLife({
-            npcs: r.mapNpcs,
-            mobs: r.mapMobs,
-            portals: r.mapPortals,
-          });
+        try {
+          const r = await parser.extractMaps(onProgress);
+          setProgress({ phase: 'Saving maps to database', current: 0, total: r.maps.length });
+          const mapCount = r.maps.length > 0 ? await db.upsertMaps(r.maps) : 0;
+          tracker.ran('map', mapCount, r.skipped.length);
+          skippedTotal += r.skipped.length;
+          if (r.mapNpcs.length > 0 || r.mapMobs.length > 0 || r.mapPortals.length > 0) {
+            setProgress({
+              phase: 'Saving map life + portals',
+              current: 0,
+              total: r.mapNpcs.length + r.mapMobs.length + r.mapPortals.length,
+            });
+            await db.replaceMapLife({
+              npcs: r.mapNpcs,
+              mobs: r.mapMobs,
+              portals: r.mapPortals,
+            });
+          }
+        } catch (err) {
+          tracker.failed('map', err);
+          throw err;
         }
       } else {
         log.info('skipping maps (Map.wz hash unchanged)');
       }
 
       if (!shouldSkip(opts.skipWz, 'quest')) {
-        const r = await parser.extractQuests(onProgress);
-        setProgress({ phase: 'Saving quests to database', current: 0, total: r.quests.length });
-        questCount = r.quests.length > 0 ? await db.upsertQuests(r.quests) : 0;
-        skippedTotal += r.skipped.length;
-        if (r.requirements.length > 0 || r.rewards.length > 0) {
-          setProgress({
-            phase: 'Saving quest requirements + rewards',
-            current: 0,
-            total: r.requirements.length + r.rewards.length,
-          });
-          await db.replaceQuestRelations({
-            requirements: r.requirements,
-            rewards: r.rewards,
-          });
+        try {
+          const r = await parser.extractQuests(onProgress);
+          setProgress({ phase: 'Saving quests to database', current: 0, total: r.quests.length });
+          const questCount = r.quests.length > 0 ? await db.upsertQuests(r.quests) : 0;
+          tracker.ran('quest', questCount, r.skipped.length, r.placeholderNames);
+          skippedTotal += r.skipped.length;
+          if (r.requirements.length > 0 || r.rewards.length > 0) {
+            setProgress({
+              phase: 'Saving quest requirements + rewards',
+              current: 0,
+              total: r.requirements.length + r.rewards.length,
+            });
+            await db.replaceQuestRelations({
+              requirements: r.requirements,
+              rewards: r.rewards,
+            });
+          }
+        } catch (err) {
+          tracker.failed('quest', err);
+          throw err;
         }
       } else {
         log.info('skipping quests (Quest.wz hash unchanged)');
       }
 
-      // Record a datasets row so feature flags pick up the new files.
+      const ms = Math.round(performance.now() - started);
+      const perExtractor = tracker.records();
+
+      // Persist the run. Merge load errors into the file refs so the
+      // recorded dataset knows which files made it into the parser.
       if (opts.recordFiles && opts.recordFiles.length > 0) {
         setProgress({ phase: 'Recording dataset', current: 0 });
+        const errorByName = new Map((opts.loadErrors ?? []).map((e) => [e.name, e.message]));
+        const filesWithStatus: DatasetFileRef[] = opts.recordFiles.map((f) => {
+          const err = errorByName.get(f.name);
+          return {
+            ...f,
+            loadStatus: err ? 'load_failed' : 'loaded',
+            loadError: err ?? null,
+          };
+        });
         await db.recordDataset({
           label: opts.label ?? `WZ load · ${new Date().toLocaleString()}`,
           wzVersion: opts.wzVersion ?? 'GMS',
-          files: opts.recordFiles,
+          files: filesWithStatus,
+          totalMs: ms,
+          ok: perExtractor.every((e) => !e.error),
+          extractors: perExtractor,
         });
       }
 
-      const ms = Math.round(performance.now() - started);
       const result: ExtractStats = {
-        items: itemCount,
-        equips: equipCount,
-        mobs: mobCount,
-        npcs: npcCount,
-        maps: mapCount,
-        quests: questCount,
+        items: countOf(perExtractor, 'item'),
+        equips: countOf(perExtractor, 'equip'),
+        mobs: countOf(perExtractor, 'mob'),
+        npcs: countOf(perExtractor, 'npc'),
+        maps: countOf(perExtractor, 'map'),
+        quests: countOf(perExtractor, 'quest'),
         skipped: skippedTotal,
         ms,
+        perExtractor,
       };
       log.info('extract+persist complete', result);
       return result;
@@ -207,4 +259,72 @@ export function useExtractAll(opts: UseExtractAllOptions = {}) {
       mutation.reset();
     },
   };
+}
+
+function countOf(records: ExtractorResultRecord[], key: string): number {
+  return records.find((r) => r.extractor === key)?.rows ?? 0;
+}
+
+/**
+ * Accumulates per-extractor results as the pipeline runs. Every known
+ * extractor key starts as `skipped` and is upgraded to `ran` when its
+ * stage actually executes — that way `extraction_extractors` records the
+ * full picture even for extractors that didn't run, which keeps the
+ * Settings panel from leaving question marks in its breakdown.
+ */
+class ExtractorTracker {
+  private readonly map = new Map<string, ExtractorResultRecord>();
+
+  constructor(skipWz?: Set<string>) {
+    const allKeys: ExtractorResultRecord['extractor'][] = [
+      'item',
+      'equip',
+      'mob',
+      'npc',
+      'map',
+      'quest',
+    ];
+    for (const k of allKeys) {
+      this.map.set(k, {
+        extractor: k,
+        status: shouldSkip(skipWz, equivWzKey(k)) ? 'skipped' : 'skipped',
+        rows: 0,
+        skippedRows: 0,
+        placeholderNames: 0,
+        error: null,
+      });
+    }
+  }
+
+  ran(key: string, rows: number, skippedRows: number, placeholderNames = 0): void {
+    this.map.set(key, {
+      extractor: key,
+      status: 'ran',
+      rows,
+      skippedRows,
+      placeholderNames,
+      error: null,
+    });
+  }
+
+  failed(key: string, err: unknown): void {
+    const existing = this.map.get(key);
+    this.map.set(key, {
+      extractor: key,
+      status: 'ran',
+      rows: existing?.rows ?? 0,
+      skippedRows: existing?.skippedRows ?? 0,
+      placeholderNames: existing?.placeholderNames ?? 0,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
+  records(): ExtractorResultRecord[] {
+    return [...this.map.values()];
+  }
+}
+
+/** Item / Equip extractors share the `item` skipWz key (Item.wz drives both). */
+function equivWzKey(extractor: string): string {
+  return extractor === 'equip' ? 'item' : extractor;
 }

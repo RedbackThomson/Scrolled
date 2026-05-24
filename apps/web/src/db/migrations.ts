@@ -212,4 +212,33 @@ export const MIGRATIONS: readonly Migration[] = [
         ON quest_rewards (kind, target_id);
     `,
   },
+  {
+    version: 5,
+    name: 'extraction outcome',
+    sql: `
+      -- One-shot run metrics on datasets so a quick "was the run good?"
+      -- glance is a single row lookup.
+      ALTER TABLE datasets ADD COLUMN total_ms INTEGER;
+      ALTER TABLE datasets ADD COLUMN ok INTEGER;
+
+      -- Per-file load outcome from parser.load. NULL on rows recorded
+      -- before this migration; UI treats null as "loaded" optimistically.
+      ALTER TABLE dataset_files ADD COLUMN load_status TEXT;
+      ALTER TABLE dataset_files ADD COLUMN load_error TEXT;
+
+      -- Per-extractor outcome. One row per (dataset, extractor) so the
+      -- Settings panel can render a breakdown without re-deriving from
+      -- log lines.
+      CREATE TABLE extraction_extractors (
+        dataset_id        INTEGER NOT NULL,
+        extractor         TEXT NOT NULL,
+        status            TEXT NOT NULL,
+        rows              INTEGER NOT NULL DEFAULT 0,
+        skipped_rows      INTEGER NOT NULL DEFAULT 0,
+        placeholder_names INTEGER NOT NULL DEFAULT 0,
+        error             TEXT,
+        PRIMARY KEY (dataset_id, extractor)
+      );
+    `,
+  },
 ];

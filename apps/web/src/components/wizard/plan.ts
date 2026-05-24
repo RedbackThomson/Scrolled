@@ -116,10 +116,14 @@ export function buildPlan(files: WizardFile[]): WizardPlan {
   // (e.g. "Item.wz" → wzKey 'item' must match `ALL_EXTRACTOR_KEYS`).
   for (const r of willRun) skipWz.delete(wzKey(r.primary));
 
+  // loadStatus / loadError land later — useExtractAll merges them in from
+  // parser.load's LoadResult before writing the dataset row.
   const recordFiles: DatasetFileRef[] = included.map((f) => ({
     name: f.file.name,
     size: f.file.size,
     hash: f.hash,
+    loadStatus: null,
+    loadError: null,
   }));
 
   return {

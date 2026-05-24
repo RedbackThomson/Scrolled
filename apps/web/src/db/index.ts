@@ -7,6 +7,7 @@ export type {
   DatasetFileRef,
   DatasetRecord,
   DbStatus,
+  ExtractorResultRecord,
   EntityKind,
   EquipRecord,
   GameDatabase,

@@ -91,6 +91,7 @@ export function StepRun({ version, files, onComplete }: Props) {
     recordFiles,
     wzVersion: version,
     label: `${version} · ${new Date().toLocaleDateString()}`,
+    loadErrors,
   });
   const extractStartedRef = useRef(false);
   useEffect(() => {

@@ -8,6 +8,7 @@ import type {
   DatasetFileRef,
   DatasetRecord,
   DbStatus,
+  ExtractorResultRecord,
   EquipRecord,
   ItemRecord,
   MapMobRecord,
@@ -854,17 +855,52 @@ export class DbApi implements GameDatabase {
     wzVersion: string;
     files: DatasetFileRef[];
     notes?: string;
+    totalMs?: number;
+    ok?: boolean;
+    extractors?: ExtractorResultRecord[];
   }): Promise<DatasetRecord> {
     return this.sql.transaction(() => {
       this.sql.exec(
-        'INSERT INTO datasets (label, loaded_at, wz_version, notes) VALUES (?, ?, ?, ?)',
-        [input.label, Date.now(), input.wzVersion, input.notes ?? null],
+        `INSERT INTO datasets (label, loaded_at, wz_version, notes, total_ms, ok)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          input.label,
+          Date.now(),
+          input.wzVersion,
+          input.notes ?? null,
+          input.totalMs ?? null,
+          input.ok === undefined ? null : input.ok ? 1 : 0,
+        ],
       );
       const id = Number(this.sql.selectValue('SELECT last_insert_rowid()'));
       for (const f of input.files) {
         this.sql.exec(
-          'INSERT INTO dataset_files (dataset_id, name, size, hash) VALUES (?, ?, ?, ?)',
-          [id, f.name, f.size ?? null, f.hash ?? null],
+          `INSERT INTO dataset_files (dataset_id, name, size, hash, load_status, load_error)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [
+            id,
+            f.name,
+            f.size ?? null,
+            f.hash ?? null,
+            f.loadStatus ?? null,
+            f.loadError ?? null,
+          ],
+        );
+      }
+      for (const e of input.extractors ?? []) {
+        this.sql.exec(
+          `INSERT INTO extraction_extractors
+             (dataset_id, extractor, status, rows, skipped_rows, placeholder_names, error)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [
+            id,
+            e.extractor,
+            e.status,
+            e.rows,
+            e.skippedRows,
+            e.placeholderNames,
+            e.error ?? null,
+          ],
         );
       }
       return this.readDataset(id)!;
@@ -890,8 +926,10 @@ export class DbApi implements GameDatabase {
       name: string;
       size: number | null;
       hash: string | null;
+      load_status: string | null;
+      load_error: string | null;
     }>(
-      `SELECT df.name, df.size, df.hash
+      `SELECT df.name, df.size, df.hash, df.load_status, df.load_error
        FROM dataset_files df
        JOIN datasets d ON d.id = df.dataset_id
        WHERE df.hash = ?
@@ -899,7 +937,15 @@ export class DbApi implements GameDatabase {
        LIMIT 1`,
       [hash],
     );
-    return row ? { name: row.name, size: row.size, hash: row.hash } : null;
+    return row
+      ? {
+          name: row.name,
+          size: row.size,
+          hash: row.hash,
+          loadStatus: (row.load_status as DatasetFileRef['loadStatus']) ?? null,
+          loadError: row.load_error,
+        }
+      : null;
   }
 
   async exportBytes(): Promise<Uint8Array> {
@@ -1039,20 +1085,56 @@ export class DbApi implements GameDatabase {
       loaded_at: number;
       wz_version: string;
       notes: string | null;
+      total_ms: number | null;
+      ok: number | null;
     }>('SELECT * FROM datasets WHERE id = ?', [id]);
     if (!ds) return null;
     const files = this.sql.selectObjects<{
       name: string;
       size: number | null;
       hash: string | null;
-    }>('SELECT name, size, hash FROM dataset_files WHERE dataset_id = ? ORDER BY name', [id]);
+      load_status: string | null;
+      load_error: string | null;
+    }>(
+      `SELECT name, size, hash, load_status, load_error
+       FROM dataset_files WHERE dataset_id = ? ORDER BY name`,
+      [id],
+    );
+    const extractors = this.sql.selectObjects<{
+      extractor: string;
+      status: string;
+      rows: number;
+      skipped_rows: number;
+      placeholder_names: number;
+      error: string | null;
+    }>(
+      `SELECT extractor, status, rows, skipped_rows, placeholder_names, error
+       FROM extraction_extractors WHERE dataset_id = ? ORDER BY extractor`,
+      [id],
+    );
     return {
       id: ds.id,
       label: ds.label,
       loadedAt: ds.loaded_at,
       wzVersion: ds.wz_version,
       notes: ds.notes,
-      files: files.map((f) => ({ name: f.name, size: f.size, hash: f.hash })),
+      totalMs: ds.total_ms,
+      ok: ds.ok === null ? null : ds.ok === 1,
+      files: files.map((f) => ({
+        name: f.name,
+        size: f.size,
+        hash: f.hash,
+        loadStatus: (f.load_status as DatasetFileRef['loadStatus']) ?? null,
+        loadError: f.load_error,
+      })),
+      extractors: extractors.map((e) => ({
+        extractor: e.extractor,
+        status: e.status as ExtractorResultRecord['status'],
+        rows: e.rows,
+        skippedRows: e.skipped_rows,
+        placeholderNames: e.placeholder_names,
+        error: e.error,
+      })),
     };
   }
 }

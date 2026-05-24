@@ -14,6 +14,13 @@ export interface ExtractQuestsResult {
   requirements: QuestRequirementRecord[];
   rewards: QuestRewardRecord[];
   skipped: { reason: string; path: string }[];
+  /**
+   * Count of quests whose names fell back to `Quest <id>` because neither
+   * `String.wz/Quest.img/<id>/name` nor `Quest.wz/QuestInfo.img/<id>/name`
+   * produced a string. Surfaced in extraction reports so the user can see
+   * data-quality issues at a glance.
+   */
+  placeholderNames: number;
 }
 
 /**
@@ -57,7 +64,7 @@ export async function extractQuests(
           ? 'Quest.wz appears to have failed to load — check parser.load errors.'
           : 'Quest.wz loaded but has no Check.img; layout may differ from v83.',
     });
-    return { quests, requirements, rewards, skipped };
+    return { quests, requirements, rewards, skipped, placeholderNames: 0 };
   }
 
   const total = checkChildren.length;
@@ -208,7 +215,7 @@ export async function extractQuests(
     placeholderNames,
     skipped: skipped.length,
   });
-  return { quests, requirements, rewards, skipped };
+  return { quests, requirements, rewards, skipped, placeholderNames };
 }
 
 /**
