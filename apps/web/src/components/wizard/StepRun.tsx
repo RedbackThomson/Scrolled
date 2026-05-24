@@ -1,18 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
-import { proxy } from 'comlink';
-import { ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
+import { AlertTriangle, ArrowRight, CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import { ProgressBar } from '@/components/ProgressBar';
-import { getParserClient } from '@/parser';
 import type { WzMapleVersionName } from '@/parser';
-import type { ProgressUpdate } from '@/lib/progress';
-import { useExtractAll } from '@/lib/useExtractAll';
-import { createLogger, describeError } from '@/lib/logger';
+import { POOL_WORKER_NAMES, type PoolWorkerName } from '@/parser';
+import {
+  useWizardExtract,
+  type WorkerStatus,
+} from '@/lib/useWizardExtract';
+import { cn } from '@/lib/utils';
 import { buildPlan } from './plan';
 import type { WizardFile } from './StepFiles';
-
-const log = createLogger('wizard-run');
 
 interface Props {
   version: WzMapleVersionName;
@@ -20,89 +18,47 @@ interface Props {
   onComplete: () => void;
 }
 
+const WORKER_LABELS: Record<PoolWorkerName, string> = {
+  items: 'Items + Equips',
+  mobs: 'Mobs',
+  npcs: 'NPCs',
+  maps: 'Maps',
+  quests: 'Quests',
+};
+
 /**
- * Runs the wizard's extraction:
+ * Runs the wizard's extraction in parallel across the parser pool.
  *
- *   1. Initialize the parser worker with the chosen WZ version.
- *   2. Load **every** dropped WZ file into the parser worker — including
- *      hash-matched ones. Cross-referencing extractors (e.g. quests
- *      reading names from String.wz) need their companion files in worker
- *      memory even when we're not re-extracting them. Hash-skipping is
- *      enforced at the extractor layer, not at load time.
- *   3. Trigger the extract → persist pipeline via `useExtractAll`. The
- *      plan's `skipWz` short-circuits extractors whose primary file
- *      either wasn't dropped or was dropped hash-matched without
- *      force-reprocess.
- *   4. Record the run as a new `datasets` row with each file's hash.
+ * Each primary WZ file (Item.wz, Mob.wz, Npc.wz, Map.wz, Quest.wz) gets
+ * its own worker. The workers load their files in parallel and then run
+ * their extractors in parallel; per-worker progress bars stack below.
+ * The single shared dataset row is written at the end.
  */
 export function StepRun({ version, files, onComplete }: Props) {
-  const parser = useMemo(() => getParserClient(), []);
-  const [loadProgress, setLoadProgress] = useState<ProgressUpdate | null>(null);
-  const [loadDone, setLoadDone] = useState(false);
-  const [loadErrors, setLoadErrors] = useState<{ name: string; message: string }[]>([]);
-
   const plan = useMemo(() => buildPlan(files), [files]);
-  const { filesToLoad, skipWz, recordFiles } = plan;
 
-  // -- Step 1+2: init + load WZ files --
-  const loadM = useMutation({
-    mutationFn: async () => {
-      setLoadProgress({ phase: 'Initializing parser', current: 0 });
-      await parser.init(version);
-      if (filesToLoad.length === 0) {
-        log.info('no files to load');
-        return;
-      }
-      const onLoadProgress = proxy((p: ProgressUpdate) => setLoadProgress(p));
-      // Load every dropped file — including hash-matched ones — so the
-      // parser worker has the data extractors will cross-reference (e.g.
-      // String.wz for quest names). Skipping happens at the extractor
-      // layer via `skipWz`, not at load time.
-      const result = await parser.load(
-        filesToLoad.map((f) => ({ name: f.file.name, source: f.file })),
-        onLoadProgress,
-      );
-      if (result.errors.length > 0) {
-        log.warn('parser.load returned per-file errors', { errors: result.errors });
-        setLoadErrors(result.errors);
-      }
-    },
-    onSuccess: () => {
-      setLoadProgress(null);
-      setLoadDone(true);
-    },
-    onError: (e) => {
-      log.error('load failed', describeError(e));
-      setLoadProgress(null);
-    },
+  const droppedFiles = useMemo(
+    () => plan.filesToLoad.map((f) => ({ name: f.file.name, source: f.file })),
+    [plan.filesToLoad],
+  );
+  const willRunKeys = useMemo(() => new Set(plan.willRun.map((r) => r.key)), [plan.willRun]);
+
+  const extract = useWizardExtract({
+    version,
+    droppedFiles,
+    willRunKeys,
+    recordFiles: plan.recordFiles,
+    label: `${version} · ${new Date().toLocaleDateString()}`,
   });
 
   const startedRef = useRef(false);
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
-    loadM.mutate();
+    extract.run();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // -- Step 3+4: extract + record dataset --
-  const extract = useExtractAll({
-    skipWz,
-    recordFiles,
-    wzVersion: version,
-    label: `${version} · ${new Date().toLocaleDateString()}`,
-    loadErrors,
-  });
-  const extractStartedRef = useRef(false);
-  useEffect(() => {
-    if (!loadDone) return;
-    if (extractStartedRef.current) return;
-    extractStartedRef.current = true;
-    extract.run();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadDone]);
-
-  // Fire onComplete once we have stats.
   const completedRef = useRef(false);
   useEffect(() => {
     if (extract.stats && !completedRef.current) {
@@ -111,13 +67,15 @@ export function StepRun({ version, files, onComplete }: Props) {
     }
   }, [extract.stats, onComplete]);
 
-  const error = loadM.error ?? extract.error;
-  if (error) {
+  const activeWorkers = POOL_WORKER_NAMES.filter((n) => extract.workers[n].active);
+  const failedWorkers = activeWorkers.filter((n) => extract.workers[n].phase === 'failed');
+
+  if (extract.error && failedWorkers.length === 0) {
     return (
       <section className="space-y-4">
         <div className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border p-4">
           <h3 className="font-semibold">Extraction failed</h3>
-          <p className="mt-1 text-sm">{(error as Error).message}</p>
+          <p className="mt-1 text-sm">{(extract.error as Error).message}</p>
         </div>
         <p className="text-muted-foreground text-sm">
           You can fix the issue and try again. Diagnostics on{' '}
@@ -147,23 +105,22 @@ export function StepRun({ version, files, onComplete }: Props) {
             </p>
           </div>
         </div>
-        {loadErrors.length > 0 && (
+        {failedWorkers.length > 0 && (
           <div className="border-amber-500/40 bg-amber-500/10 text-amber-900 dark:text-amber-100 rounded-md border p-4">
             <h3 className="text-sm font-semibold">
-              Some files didn't load ({loadErrors.length})
+              Some workers failed ({failedWorkers.length})
             </h3>
             <p className="mt-1 text-xs">
-              The corresponding extractors found nothing to do. Common cause: WZ encryption
-              version mismatch, or a corrupt/truncated file. Diagnostics on{' '}
+              Diagnostics on{' '}
               <Link to="/debug" className="underline">
                 /debug
               </Link>{' '}
-              have the full library output.
+              have the full error chain.
             </p>
             <ul className="mt-2 space-y-1 text-xs">
-              {loadErrors.map((e) => (
-                <li key={e.name}>
-                  <code className="font-mono">{e.name}</code> — {e.message}
+              {failedWorkers.map((n) => (
+                <li key={n}>
+                  <strong>{WORKER_LABELS[n]}</strong> — {extract.workers[n].error}
                 </li>
               ))}
             </ul>
@@ -181,26 +138,75 @@ export function StepRun({ version, files, onComplete }: Props) {
     );
   }
 
-  const phase = loadM.isPending ? 'Loading files' : extract.isRunning ? 'Extracting' : 'Starting';
-  // Once load is finished we always show extract.progress, even if a
-  // throttled progress event from the worker arrives late and re-fills
-  // loadProgress with a stale value like "Parsing String.wz".
-  const progress = loadDone ? extract.progress : loadProgress;
-
   return (
     <section className="space-y-4">
       <div className="flex items-center gap-3">
         <Loader2 className="text-primary h-6 w-6 animate-spin" />
         <div>
-          <h2 className="text-lg font-semibold">{phase}</h2>
-          <p className="text-muted-foreground text-sm">Hang tight — this only happens once.</p>
+          <h2 className="text-lg font-semibold">Running in parallel</h2>
+          <p className="text-muted-foreground text-sm">
+            One worker per WZ file. Hang tight — this only happens once.
+          </p>
         </div>
       </div>
-      {progress && (
-        <div className="border-border bg-card text-card-foreground rounded-md border p-4">
-          <ProgressBar progress={progress} />
-        </div>
-      )}
+      <ul className="space-y-2">
+        {activeWorkers.map((name) => (
+          <li key={name}>
+            <WorkerCard name={name} status={extract.workers[name]} />
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
+
+function WorkerCard({ name, status }: { name: PoolWorkerName; status: WorkerStatus }) {
+  const icon =
+    status.phase === 'done' ? (
+      <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600 dark:text-green-400" />
+    ) : status.phase === 'failed' ? (
+      <XCircle className="h-4 w-4 shrink-0 text-red-600 dark:text-red-400" />
+    ) : (
+      <Loader2 className="text-primary h-4 w-4 shrink-0 animate-spin" />
+    );
+
+  const phaseLabel =
+    status.phase === 'loading'
+      ? 'Loading'
+      : status.phase === 'extracting'
+        ? 'Extracting'
+        : status.phase === 'done'
+          ? 'Done'
+          : status.phase === 'failed'
+            ? 'Failed'
+            : 'Waiting';
+
+  return (
+    <div
+      className={cn(
+        'border-border bg-card text-card-foreground rounded-md border p-3',
+        status.phase === 'failed' && 'border-destructive/40 bg-destructive/5',
+      )}
+    >
+      <div className="flex items-center gap-2 text-sm">
+        {icon}
+        <strong>{WORKER_LABELS[name]}</strong>
+        <span className="text-muted-foreground text-xs">· {phaseLabel}</span>
+        <span className="text-muted-foreground ml-auto font-mono text-xs">
+          {status.files.join(' + ')}
+        </span>
+      </div>
+      {status.progress && status.phase !== 'done' && status.phase !== 'failed' && (
+        <div className="mt-2">
+          <ProgressBar progress={status.progress} />
+        </div>
+      )}
+      {status.error && (
+        <p className="text-destructive mt-2 inline-flex items-center gap-1.5 text-xs">
+          <AlertTriangle className="h-3 w-3" /> {status.error}
+        </p>
+      )}
+    </div>
+  );
+}
+
