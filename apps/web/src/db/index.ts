@@ -23,6 +23,7 @@ export type {
   MapNpcRecord,
   MapNpcWithName,
   MapPortalRecord,
+  MapPortalWithName,
   MapRecord,
   MobDropRecord,
   MobDropWithName,

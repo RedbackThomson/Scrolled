@@ -22,6 +22,7 @@ import type {
   MapNpcRecord,
   MapNpcWithName,
   MapPortalRecord,
+  MapPortalWithName,
   MapRecord,
   MobDropRecord,
   MobDropWithName,
@@ -968,7 +969,7 @@ export class DbApi implements GameDatabase {
     );
   }
 
-  async getMapPortals(mapId: number): Promise<MapPortalRecord[]> {
+  async getMapPortals(mapId: number): Promise<MapPortalWithName[]> {
     return this.sql
       .selectObjects<{
         map_id: number;
@@ -980,9 +981,14 @@ export class DbApi implements GameDatabase {
         y: number | null;
         portal_type: number | null;
         script: string | null;
+        target_map_name: string | null;
       }>(
-        `SELECT map_id, idx, portal_name, target_map_id, target_portal, x, y, portal_type, script
-         FROM map_portals WHERE map_id = ? ORDER BY idx`,
+        `SELECT mp.map_id, mp.idx, mp.portal_name, mp.target_map_id, mp.target_portal,
+                mp.x, mp.y, mp.portal_type, mp.script, tm.name AS target_map_name
+         FROM map_portals mp
+         LEFT JOIN maps tm ON tm.id = mp.target_map_id
+         WHERE mp.map_id = ?
+         ORDER BY mp.idx`,
         [mapId],
       )
       .map((r) => ({
@@ -995,6 +1001,7 @@ export class DbApi implements GameDatabase {
         y: r.y,
         portalType: r.portal_type,
         script: r.script,
+        targetMapName: r.target_map_name,
       }));
   }
 

@@ -131,6 +131,11 @@ export interface MapPortalRecord {
   script: string | null;
 }
 
+/** A row from `map_portals` joined back to the target map's display name. */
+export interface MapPortalWithName extends MapPortalRecord {
+  targetMapName: string | null;
+}
+
 /** One mob spawn position on a map. Multiple rows with the same (mapId, mobId)
  *  are expected when a mob has several spawn points. */
 export interface MapMobSpawnRecord {
@@ -403,7 +408,7 @@ export interface GameDatabase {
   /** NPCs + mobs + portals attached to a single map. */
   getMapNpcs(mapId: number): Promise<MapNpcWithName[]>;
   getMapMobs(mapId: number): Promise<MapMobWithName[]>;
-  getMapPortals(mapId: number): Promise<MapPortalRecord[]>;
+  getMapPortals(mapId: number): Promise<MapPortalWithName[]>;
   /** Per-spawn mob rows (one per spawn point, not aggregated by mob id). */
   getMapMobSpawns(mapId: number): Promise<MapMobSpawnWithName[]>;
 

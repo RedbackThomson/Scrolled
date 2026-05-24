@@ -311,7 +311,7 @@ export default function MapDetail() {
                         id={p.targetMapId}
                         className="text-primary min-w-0 flex-1 truncate hover:underline"
                       >
-                        Map {p.targetMapId}
+                        {p.targetMapName ?? `Map ${p.targetMapId}`}
                         {p.targetPortal && (
                           <span className="text-muted-foreground"> · {p.targetPortal}</span>
                         )}
