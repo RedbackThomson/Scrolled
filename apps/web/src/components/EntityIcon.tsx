@@ -82,8 +82,8 @@ export function EntityIcon({
       src={url}
       alt={alt ?? ''}
       className={cn(
-        'inline-block rounded',
-        fit ? 'h-auto w-auto object-contain' : '',
+        'inline-block rounded object-contain',
+        fit ? 'h-auto w-auto' : '',
         className,
       )}
       style={boxStyle}
