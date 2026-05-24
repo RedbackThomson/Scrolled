@@ -63,82 +63,37 @@ export async function extractQuests(
   const total = checkChildren.length;
   log.info('discovery complete', { totalQuests: total });
 
-  // Probe a few entries up front so a "0 quests extracted" outcome carries
-  // enough breadcrumbs to diagnose. If String.wz/Quest.img has a different
-  // shape (nested under chapters, different image name, etc.), this surfaces
-  // it in the diagnostics report. The "probe-v2" tag is so we can tell
-  // whether stale code is running after a Vite reload.
-  const probeIds = checkChildren
-    .filter((c) => /^\d+$/.test(c.name))
-    .slice(0, 3)
-    .map((c) => Number(c.name));
-  for (const probeId of probeIds) {
-    const nameNode = await source.getNode(`String.wz/Quest.img/${probeId}/name`);
-    const containerNode = await source.getNode(`String.wz/Quest.img/${probeId}`);
-    log.info('probe-v2 quest name', {
-      id: probeId,
-      stringPath: `String.wz/Quest.img/${probeId}/name`,
-      nameKind: nameNode?.propertyKind ?? null,
-      nameScalar: nameNode?.scalar ?? null,
-      containerExists: !!containerNode,
-      containerKind: containerNode?.kind ?? null,
-      containerHasChildren: containerNode?.hasChildren ?? null,
-    });
-    if (containerNode?.hasChildren) {
-      const containerChildren = await source.listChildren(
-        `String.wz/Quest.img/${probeId}`,
-      );
-      log.info('probe-v2 quest container children', {
-        id: probeId,
-        sample: containerChildren
-          .slice(0, 10)
-          .map((c) => `${c.name}:${c.propertyKind ?? c.kind}`),
-      });
-    }
-  }
-  if (probeIds.length > 0) {
-    // Is Quest.img even present as a child of String.wz?
-    const stringRoot = await source.listChildren('String.wz');
-    const questImgPresent = stringRoot.some((n) => n.name === 'Quest.img');
-    log.info('probe-v2 String.wz top-level', {
-      total: stringRoot.length,
-      hasQuestImg: questImgPresent,
-      questRelated: stringRoot
-        .filter((n) => /quest/i.test(n.name))
-        .map((n) => `${n.name}:${n.kind}`),
-      sample: stringRoot.slice(0, 12).map((n) => `${n.name}:${n.kind}`),
-    });
-    // What does Quest.img itself look like?
-    const questImgNode = await source.getNode('String.wz/Quest.img');
-    log.info('probe-v2 String.wz/Quest.img node', {
-      exists: !!questImgNode,
-      kind: questImgNode?.kind ?? null,
-      hasChildren: questImgNode?.hasChildren ?? null,
-    });
-    const stringQuestTop = await source.listChildren('String.wz/Quest.img');
-    log.info('probe-v2 String.wz/Quest.img top-level', {
-      total: stringQuestTop.length,
-      first: stringQuestTop.slice(0, 12).map((n) => `${n.name}:${n.propertyKind ?? n.kind}`),
-    });
-    // Fallback location: in v83, names sometimes live under
-    // Quest.wz/QuestInfo.img/<id>/0/name. Probe one to confirm.
-    const fallbackName = await source.getNode(
-      `Quest.wz/QuestInfo.img/${probeIds[0]}/0/name`,
-    );
-    log.info('probe-v2 Quest.wz/QuestInfo.img fallback', {
-      id: probeIds[0],
-      path: `Quest.wz/QuestInfo.img/${probeIds[0]}/0/name`,
-      kind: fallbackName?.propertyKind ?? null,
-      scalar: fallbackName?.scalar ?? null,
-    });
-    const questWzTop = await source.listChildren('Quest.wz');
-    log.info('probe-v2 Quest.wz top-level', {
-      total: questWzTop.length,
-      all: questWzTop.map((n) => `${n.name}:${n.kind}`),
+  // Quest strings live in one of two places depending on the dump:
+  //   A) `String.wz/Quest.img/<id>/{name,parent,desc}` — standard v83
+  //      layout, present in vanilla Nexon dumps.
+  //   B) `Quest.wz/QuestInfo.img/<id>/{name,parent,summary}` — used by
+  //      private-server dumps (MapleRoyals included) that strip the
+  //      String.wz copy. The fields are equivalent semantically but
+  //      `desc` becomes `summary`.
+  //
+  // We detect availability once up front, then prefer (A) per-quest and
+  // fall back to (B) for quests whose names aren't in String.wz. Any
+  // quest still without a name keeps `Quest <id>` as a placeholder so
+  // its requirements / rewards remain navigable.
+  const stringRoot = await source.listChildren('String.wz');
+  const hasStringQuestImg = stringRoot.some((n) => n.name === 'Quest.img');
+  const hasQuestInfoNames = await detectQuestInfoNames(source, checkChildren);
+  log.info('quest name sources', {
+    'String.wz/Quest.img': hasStringQuestImg,
+    'Quest.wz/QuestInfo.img': hasQuestInfoNames,
+  });
+  if (!hasStringQuestImg && !hasQuestInfoNames) {
+    log.warn('no quest name source found — quest names will be placeholders', {
+      stringTopLevel: stringRoot.map((n) => n.name),
+      hint:
+        'Neither String.wz/Quest.img nor Quest.wz/QuestInfo.img/<id>/name was readable. Quests still extract by ID; the UI will display "Quest <id>".',
     });
   }
 
   let processed = 0;
+  let namesFromStringWz = 0;
+  let namesFromQuestInfo = 0;
+  let placeholderNames = 0;
   for (const entry of checkChildren) {
     const m = entry.name.match(/^(\d+)$/);
     if (!m) {
@@ -154,17 +109,44 @@ export async function extractQuests(
       detail: String(id),
     });
 
-    const [nameNode, parentNode, descNode] = await Promise.all([
-      source.getNode(`String.wz/Quest.img/${id}/name`),
-      source.getNode(`String.wz/Quest.img/${id}/parent`),
-      source.getNode(`String.wz/Quest.img/${id}/desc`),
-    ]);
-    const name = typeof nameNode?.scalar === 'string' && nameNode.scalar ? nameNode.scalar : null;
-    if (!name) {
-      skipped.push({ reason: 'no localized name', path: entry.fullPath });
-      processed += 1;
-      continue;
+    let name = `Quest ${id}`;
+    let parent: string | null = null;
+    let description: string | null = null;
+    let nameFound = false;
+
+    if (hasStringQuestImg) {
+      const [nameNode, parentNode, descNode] = await Promise.all([
+        source.getNode(`String.wz/Quest.img/${id}/name`),
+        source.getNode(`String.wz/Quest.img/${id}/parent`),
+        source.getNode(`String.wz/Quest.img/${id}/desc`),
+      ]);
+      if (typeof nameNode?.scalar === 'string' && nameNode.scalar) {
+        name = nameNode.scalar;
+        nameFound = true;
+        namesFromStringWz += 1;
+      }
+      if (typeof parentNode?.scalar === 'string') parent = parentNode.scalar;
+      if (typeof descNode?.scalar === 'string') description = descNode.scalar;
     }
+
+    if (!nameFound && hasQuestInfoNames) {
+      // `summary` is QuestInfo's analog of String.wz/Quest.img's `desc`.
+      const [nameNode, parentNode, summaryNode] = await Promise.all([
+        source.getNode(`Quest.wz/QuestInfo.img/${id}/name`),
+        source.getNode(`Quest.wz/QuestInfo.img/${id}/parent`),
+        source.getNode(`Quest.wz/QuestInfo.img/${id}/summary`),
+      ]);
+      if (typeof nameNode?.scalar === 'string' && nameNode.scalar) {
+        name = nameNode.scalar;
+        nameFound = true;
+        namesFromQuestInfo += 1;
+      }
+      if (!parent && typeof parentNode?.scalar === 'string') parent = parentNode.scalar;
+      if (!description && typeof summaryNode?.scalar === 'string')
+        description = summaryNode.scalar;
+    }
+
+    if (!nameFound) placeholderNames += 1;
 
     // -- Check.img/<id>/0 (start) ---------------------------------------
     const startPath = `${entry.fullPath}/0`;
@@ -205,8 +187,8 @@ export async function extractQuests(
     quests.push({
       id,
       name,
-      parent: typeof parentNode?.scalar === 'string' ? parentNode.scalar : null,
-      description: typeof descNode?.scalar === 'string' ? descNode.scalar : null,
+      parent,
+      description,
       startNpcId: startNpcN,
       endNpcId: endNpcN,
       requiredLevel: lvMinN,
@@ -221,9 +203,34 @@ export async function extractQuests(
     quests: quests.length,
     requirements: requirements.length,
     rewards: rewards.length,
+    namesFromStringWz,
+    namesFromQuestInfo,
+    placeholderNames,
     skipped: skipped.length,
   });
   return { quests, requirements, rewards, skipped };
+}
+
+/**
+ * Probe a few quest IDs against `Quest.wz/QuestInfo.img/<id>/name` to decide
+ * whether this dump stores quest titles there. Returns true on the first
+ * non-empty string scalar found. We try 5 candidates because the first
+ * Check.img ID isn't guaranteed to have a QuestInfo entry — some quests
+ * exist in Check.img without metadata.
+ */
+async function detectQuestInfoNames(
+  source: GameDataSource,
+  checkChildren: { name: string }[],
+): Promise<boolean> {
+  const candidates = checkChildren
+    .filter((c) => /^\d+$/.test(c.name))
+    .slice(0, 5)
+    .map((c) => Number(c.name));
+  for (const id of candidates) {
+    const node = await source.getNode(`Quest.wz/QuestInfo.img/${id}/name`);
+    if (node && typeof node.scalar === 'string' && node.scalar) return true;
+  }
+  return false;
 }
 
 async function collectQuestPrereqs(
