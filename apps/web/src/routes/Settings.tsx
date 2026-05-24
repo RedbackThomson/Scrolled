@@ -57,7 +57,12 @@ export default function Settings() {
   const exportM = useMutation({
     mutationFn: async () => {
       const bytes = await db.exportBytes();
-      const blob = new Blob([bytes], { type: 'application/vnd.sqlite3' });
+      // TS's new BlobPart typing rejects `Uint8Array<ArrayBufferLike>` (it
+      // accepts only `ArrayBufferView<ArrayBuffer>`). The bytes are real
+      // backing-store ArrayBuffer at runtime; cast at the boundary.
+      const blob = new Blob([bytes as Uint8Array<ArrayBuffer>], {
+        type: 'application/vnd.sqlite3',
+      });
       const url = URL.createObjectURL(blob);
       try {
         const today = new Date().toISOString().slice(0, 10);

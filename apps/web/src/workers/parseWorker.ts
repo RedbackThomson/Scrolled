@@ -1,8 +1,4 @@
 /// <reference lib="WebWorker" />
-// IMPORTANT: this side-effect import must come first. It aliases `window` to
-// the Worker global so `@tybys/wz` modules don't throw at load time. See
-// workerEnv.ts for details.
-import './workerEnv';
 import { expose } from 'comlink';
 import { WzDataSource } from '@/parser/WzDataSource';
 import { ensureWzInit } from '@/parser/wzInit';

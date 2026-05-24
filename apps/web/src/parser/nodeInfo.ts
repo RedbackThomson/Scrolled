@@ -1,128 +1,79 @@
-import {
-  WzObjectType,
-  WzPropertyType,
-  type WzObject,
-  WzStringProperty,
-  WzIntProperty,
-  WzShortProperty,
-  WzLongProperty,
-  WzFloatProperty,
-  WzDoubleProperty,
-  WzVectorProperty,
+import type {
   WzCanvasProperty,
-  WzSubProperty,
-  WzUOLProperty,
-  WzBinaryProperty,
-  WzLuaProperty,
-  WzNullProperty,
   WzConvexProperty,
-  WzImage,
-  WzDirectory,
-  WzFile,
-  type WzImageProperty,
-} from '@tybys/wz';
-import type { WzNodeInfo, WzNodeKind, WzPropertyKind } from './types';
+  WzProperty,
+  WzSubProperty,
+} from '@mge/wz';
+import type { WzNodeInfo, WzPropertyKind } from './types';
 
-function propertyKindOf(prop: WzImageProperty): WzPropertyKind {
-  if (prop instanceof WzStringProperty) return 'string';
-  if (prop instanceof WzIntProperty) return 'int';
-  if (prop instanceof WzShortProperty) return 'short';
-  if (prop instanceof WzLongProperty) return 'long';
-  if (prop instanceof WzFloatProperty) return 'float';
-  if (prop instanceof WzDoubleProperty) return 'double';
-  if (prop instanceof WzVectorProperty) return 'vector';
-  if (prop instanceof WzCanvasProperty) return 'canvas';
-  if (prop instanceof WzSubProperty) return 'sub';
-  if (prop instanceof WzUOLProperty) return 'uol';
-  if (prop instanceof WzBinaryProperty) return 'binary';
-  if (prop instanceof WzLuaProperty) return 'lua';
-  if (prop instanceof WzConvexProperty) return 'convex';
-  if (prop instanceof WzNullProperty) return 'null';
-  return 'unknown';
+function propertyKindOf(prop: WzProperty): WzPropertyKind {
+  switch (prop.type) {
+    case 'string':
+    case 'int':
+    case 'short':
+    case 'long':
+    case 'float':
+    case 'double':
+    case 'vector':
+    case 'canvas':
+    case 'sub':
+    case 'uol':
+    case 'convex':
+    case 'null':
+      return prop.type;
+    case 'sound':
+      return 'binary';
+    case 'lua':
+      return 'lua';
+    default:
+      return 'unknown';
+  }
 }
 
-function scalarOf(prop: WzImageProperty, kind: WzPropertyKind): string | number | null | undefined {
+function scalarOf(prop: WzProperty, kind: WzPropertyKind): string | number | null | undefined {
   switch (kind) {
     case 'string':
     case 'int':
     case 'short':
     case 'float':
     case 'double':
-      return (prop as { wzValue: string | number }).wzValue;
+      return (prop as { value: string | number }).value;
     case 'long': {
-      const v = (prop as { wzValue: bigint | number }).wzValue;
+      const v = (prop as { value: bigint | number }).value;
       return typeof v === 'bigint' ? v.toString() : v;
     }
-    case 'uol': {
-      const v = (prop as { wzValue: string }).wzValue;
-      return typeof v === 'string' ? v : null;
-    }
+    case 'uol':
+      return (prop as { target: string }).target;
     case 'vector': {
-      const v = (prop as { wzValue: { x: number; y: number } | string }).wzValue;
-      return typeof v === 'string' ? v : v ? `${v.x},${v.y}` : null;
+      const v = prop as { x: number; y: number };
+      return `${v.x},${v.y}`;
     }
     default:
       return undefined;
   }
 }
 
-function kindOf(obj: WzObject): WzNodeKind {
-  switch (obj.objectType) {
-    case WzObjectType.File:
-      return 'file';
-    case WzObjectType.Directory:
-      return 'directory';
-    case WzObjectType.Image:
-      return 'image';
-    case WzObjectType.Property:
-    case WzObjectType.List:
-      return 'property';
-    default:
-      return 'property';
-  }
-}
-
-function hasChildren(obj: WzObject): boolean {
-  if (obj instanceof WzFile) return obj.wzDirectory !== null;
-  if (obj instanceof WzDirectory) {
-    return obj.wzDirectories.size > 0 || obj.wzImages.size > 0;
-  }
-  if (obj instanceof WzImage) {
-    // Images are lazy-parsed; accessing wzProperties before parseImage()
-    // throws. Assume non-empty until the consumer asks for children, at which
-    // point listChildren() will parse and the real count becomes available.
-    return obj.parsed ? obj.wzProperties.size > 0 : true;
-  }
-  if (obj instanceof WzSubProperty || obj instanceof WzConvexProperty) {
-    return (obj as unknown as { wzProperties: Set<unknown> }).wzProperties.size > 0;
+function propertyHasChildren(prop: WzProperty): boolean {
+  if (prop.type === 'sub' || prop.type === 'convex' || prop.type === 'canvas') {
+    return (prop as WzSubProperty | WzConvexProperty | WzCanvasProperty).children.length > 0;
   }
   return false;
 }
 
-export function toNodeInfo(obj: WzObject, fullPath: string): WzNodeInfo {
-  const kind = kindOf(obj);
+/**
+ * Convert an `@mge/wz` `WzProperty` to a worker-boundary `WzNodeInfo`. The
+ * result is structurally cloneable (plain object, primitive scalars only).
+ */
+export function propertyToNodeInfo(prop: WzProperty, fullPath: string): WzNodeInfo {
+  const propKind = propertyKindOf(prop);
   const info: WzNodeInfo = {
-    name: obj.name,
+    name: prop.name,
     fullPath,
-    kind,
-    hasChildren: hasChildren(obj),
+    kind: 'property',
+    propertyKind: propKind,
+    hasChildren: propertyHasChildren(prop),
   };
-  if (kind === 'property') {
-    const prop = obj as WzImageProperty;
-    const propKind = propertyKindOf(prop);
-    info.propertyKind = propKind;
-    const scalar = scalarOf(prop, propKind);
-    if (scalar !== undefined) info.scalar = scalar;
-  }
+  const scalar = scalarOf(prop, propKind);
+  if (scalar !== undefined) info.scalar = scalar;
   return info;
 }
-
-export {
-  WzObjectType,
-  WzPropertyType,
-  WzFile,
-  WzDirectory,
-  WzImage,
-  WzSubProperty,
-  WzConvexProperty,
-};

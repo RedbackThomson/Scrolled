@@ -1,0 +1,23 @@
+{
+  "name": "@mge/wz",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Local TypeScript WZ-file parser. Replaces @tybys/wz with a reentrant reader and a Canvas-free image-decode pipeline.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "fflate": "^0.8.2"
+  },
+  "devDependencies": {
+    "@tybys/wz": "^1.7.1",
+    "@types/node": "^22.7.4",
+    "vitest": "^2.1.2"
+  }
+}
