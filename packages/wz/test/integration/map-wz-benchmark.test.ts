@@ -92,7 +92,7 @@ describe.skipIf(!present)(`Map.wz walk benchmark vs @tybys/wz`, () => {
       const oursTotalMs = tOurs - t0;
       const oracleMs = tOracle - tOracleOpen;
 
-      // eslint-disable-next-line no-console
+       
       console.log(
         `Map.wz benchmark (${sample.length} maps):\n` +
           `  @mge/wz   open=${(tOpen - t0).toFixed(0)}ms  walk=${oursMs.toFixed(0)}ms  total=${oursTotalMs.toFixed(0)}ms  nodes=${nodeCount}\n` +

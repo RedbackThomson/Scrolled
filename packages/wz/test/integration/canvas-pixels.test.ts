@@ -205,7 +205,7 @@ describe.skipIf(!present)(`canvas pixel decode parity vs @tybys/wz (${FIXTURE})`
         }
       }
     }
-    // eslint-disable-next-line no-console
+     
     console.log(`canvases checked: ${checked} (format=1: ${format1Seen}, format=2: ${format2Seen})`);
     expect(checked).toBeGreaterThan(0);
   });

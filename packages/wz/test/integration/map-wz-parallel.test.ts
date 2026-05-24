@@ -127,7 +127,7 @@ describe.skipIf(!present)('Map.wz Map0..Map9 parallel walk', () => {
     const parallelTotalImages = parallelStats.reduce((s, b) => s + b.imageCount, 0);
     const parallelTotalNodes = parallelStats.reduce((s, b) => s + b.nodeCount, 0);
 
-    // eslint-disable-next-line no-console
+     
     console.log(
       `Map.wz: ${buckets.length} buckets, ${totalImages} images, ${totalNodes} nodes\n` +
         `  serial   = ${serialMs.toFixed(0)} ms\n` +

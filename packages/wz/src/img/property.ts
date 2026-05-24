@@ -1,4 +1,4 @@
-import { Reader } from '../io/Reader';
+import type { Reader } from '../io/Reader';
 import { readWzString, readWzStringAtOffset } from '../io/wzString';
 
 export type WzPropertyType =

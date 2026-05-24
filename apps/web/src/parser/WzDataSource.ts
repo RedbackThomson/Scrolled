@@ -23,6 +23,9 @@ import { propertyToNodeInfo } from './nodeInfo';
 import { createLogger, describeError, getLogEntries } from '@/lib/logger';
 import { ensureWzInit, getAesSmokeTestResult } from './wzInit';
 import type { ProgressFn } from '@/lib/progress';
+import type * as NodeZlibModule from 'node:zlib';
+
+type NodeZlib = typeof NodeZlibModule;
 
 const log = createLogger('wz-data-source');
 
@@ -534,8 +537,6 @@ async function encodeRgbaToPng(
   const { default: zlib } = await import('node:zlib');
   return encodePngNode(rgba, width, height, zlib);
 }
-
-type NodeZlib = typeof import('node:zlib');
 
 function encodePngNode(
   rgba: Uint8ClampedArray,

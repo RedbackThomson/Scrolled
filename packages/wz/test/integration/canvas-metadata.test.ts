@@ -103,7 +103,7 @@ for (const fixture of FIXTURES) {
       expect(matched).toBeGreaterThanOrEqual(1);
       // Format diversity is informational, not asserted — but logging it
       // tells us how broad our K-stage coverage will be.
-      // eslint-disable-next-line no-console
+       
       console.log(`${fixture} canvas formats seen:`, [...distinctFormats]);
 
       async function checkImageCanvases(

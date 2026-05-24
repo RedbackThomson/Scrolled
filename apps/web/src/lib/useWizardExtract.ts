@@ -21,7 +21,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { proxy } from 'comlink';
+import { proxy, type Remote } from 'comlink';
 import {
   getPoolWorker,
   POOL_WORKER_FILES,
@@ -29,14 +29,15 @@ import {
   WORKER_EXTRACTORS,
   type PoolWorkerName,
 } from '@/parser/pool';
-import type { WzMapleVersionName } from '@/parser';
+import type { ParserWorkerApi, WzMapleVersionName } from '@/parser';
 import {
   getDbClient,
   type DatasetFileRef,
   type ExtractorResultRecord,
+  type GameDatabase,
 } from '@/db';
 import { createLogger, describeError } from '@/lib/logger';
-import type { ProgressUpdate } from '@/lib/progress';
+import type { ProgressFn, ProgressUpdate } from '@/lib/progress';
 
 const log = createLogger('wizard-extract');
 
@@ -277,10 +278,10 @@ export function useWizardExtract(opts: UseWizardExtractOptions) {
 
 async function runWorkerExtractors(
   name: PoolWorkerName,
-  worker: import('comlink').Remote<import('@/parser').ParserWorkerApi>,
+  worker: Remote<ParserWorkerApi>,
   willRun: Set<string>,
-  onProgress: import('@/lib/progress').ProgressFn,
-  db: import('comlink').Remote<import('@/db').GameDatabase>,
+  onProgress: ProgressFn,
+  db: Remote<GameDatabase>,
   out: ExtractorResultRecord[],
   bumpSkipped: (n: number) => void,
 ): Promise<void> {

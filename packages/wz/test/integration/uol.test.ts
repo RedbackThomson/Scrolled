@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeAll } from 'vitest';
+import type {
+  WzUOLProperty} from '@tybys/wz';
 import {
   WzFile,
   WzMapleVersion,
   WzImage,
-  WzUOLProperty,
   type WzObject,
 } from '@tybys/wz';
 import { Reader } from '@/io/Reader';

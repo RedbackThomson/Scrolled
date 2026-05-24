@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import { WzFile, WzMapleVersion, WzDirectory, WzImage } from '@tybys/wz';
+import type { WzDirectory, WzImage } from '@tybys/wz';
+import { WzFile, WzMapleVersion } from '@tybys/wz';
 import { Reader } from '@/io/Reader';
 import { readHeader } from '@/file/header';
 import { computeVersionHash } from '@/file/versionHash';

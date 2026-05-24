@@ -1,4 +1,4 @@
-import { Reader } from '../io/Reader';
+import type { Reader } from '../io/Reader';
 
 export const WZ_IDENT = 'PKG1';
 

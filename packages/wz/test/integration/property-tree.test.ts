@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeAll } from 'vitest';
+import type {
+  WzImage} from '@tybys/wz';
 import {
   WzFile,
   WzMapleVersion,
-  WzImage,
   WzSubProperty,
   WzConvexProperty,
   WzCanvasProperty,

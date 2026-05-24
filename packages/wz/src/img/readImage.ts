@@ -1,4 +1,4 @@
-import { Reader } from '../io/Reader';
+import type { Reader } from '../io/Reader';
 import { readWzString } from '../io/wzString';
 import { parsePropertyList, type WzProperty } from './property';
 
