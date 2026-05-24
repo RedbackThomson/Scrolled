@@ -19,3 +19,4 @@
 - [ ] Fork the parser to support better parallelism, error handling and API
   stability
 - [ ] Detect version automatically
+- [ ] Clean up wizard copy
