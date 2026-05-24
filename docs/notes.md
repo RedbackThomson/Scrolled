@@ -18,7 +18,7 @@
 - [ ] On mob pages, link to maps with highest spawn rates/density
 - [x] Fork the parser to support better parallelism, error handling and API
   stability
-- [ ] Detect version automatically
+- [x] Detect version automatically
 - [ ] Clean up wizard copy
 - [ ] Think about support for smooth version upgrades
 - [x] Any hyperlinks should have a tooltip showing a summary of the target page
@@ -27,6 +27,6 @@
 - [x] Remove the DB stats from the items page and move it to settings
 - [ ] Clean up the text on each of the pages to remove specificity
 - [ ] On the item page, show who the item is sold by
-- [ ] Have a minimap explorer with a sidebar that lets you enable/disable layers
+- [x] Have a minimap explorer with a sidebar that lets you enable/disable layers
 - [ ] Mobs should have a "calculated" section that shows things like XP per HP
-- [ ] Show weapon by type
+- [x] Show weapon by type

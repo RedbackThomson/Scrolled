@@ -5,6 +5,7 @@ import { DataTable, useColumnFilters, useTableUrlState } from '@/components/data
 import { CollectionsBulkAddMenu } from '@/components/collections';
 import { getDbClient } from '@/db';
 import { labelForEquipSlot } from '@/lib/equipTypes';
+import { ALL_EQUIP_CLASSES } from '@/lib/equipJobs';
 import { columns, defaultSort, defaultVisible, pinnedColumns } from './EquipsColumns';
 
 const DEFAULT_PAGE_SIZE = 50;
@@ -102,7 +103,10 @@ export default function Equips() {
               setFilter(id, v);
               setState({ page: 1 });
             }}
-            enumOptions={{ slot: (slotsQ.data ?? []).filter((s) => s !== 'weapon') }}
+            enumOptions={{
+              slot: (slotsQ.data ?? []).filter((s) => s !== 'weapon'),
+              requiredJob: ALL_EQUIP_CLASSES,
+            }}
             enumLabels={{ slot: labelForEquipSlot }}
             searchValue={state.q}
             onSearchChange={(v) => setState({ q: v, page: 1 })}

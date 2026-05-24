@@ -148,8 +148,29 @@ function clampOffset(offset: number | undefined): number {
  */
 interface FilterSpec {
   col: string;
-  type: 'string' | 'number';
+  type: 'string' | 'number' | 'classMask';
+  /**
+   * For `classMask` columns: maps the enum option value (e.g. "Warrior")
+   * to the WZ class bit (1, 2, 4, 8, 16). `0` is the sentinel for classes
+   * that have no bit of their own (Beginner) and only match equips with
+   * no class restriction.
+   */
+  classBits?: Readonly<Record<string, number>>;
 }
+
+/**
+ * MapleStory class → WZ `reqJob` bit. Mirrors the same mapping the UI
+ * uses in `@/lib/equipJobs`; duplicated here to keep `db/` free of UI
+ * imports per the layer rule.
+ */
+const EQUIP_CLASS_BITS: Readonly<Record<string, number>> = {
+  Beginner: 0,
+  Warrior: 1,
+  Magician: 2,
+  Bowman: 4,
+  Thief: 8,
+  Pirate: 16,
+};
 
 const ITEM_FILTER: Record<string, FilterSpec> = {
   name:          { col: 'name',           type: 'string' },
@@ -176,6 +197,7 @@ const EQUIP_FILTER: Record<string, FilterSpec> = {
   accuracy:      { col: 'accuracy',       type: 'number' },
   avoidability:  { col: 'avoidability',   type: 'number' },
   upgradeSlots:  { col: 'upgrade_slots',  type: 'number' },
+  requiredJob:   { col: 'required_job',   type: 'classMask', classBits: EQUIP_CLASS_BITS },
   id:            { col: 'id',             type: 'number' },
 };
 
@@ -247,6 +269,23 @@ function applyFilters(
       if (filter.max !== undefined && Number.isFinite(filter.max)) {
         where.push(`${spec.col} <= ?`);
         params.push(filter.max);
+      }
+    } else if (
+      spec.type === 'classMask' &&
+      filter.kind === 'string' &&
+      filter.value &&
+      spec.classBits
+    ) {
+      const bit = spec.classBits[filter.value];
+      if (bit === undefined) continue;
+      // Bit-0 classes (Beginner) have no dedicated reqJob bit; only equips
+      // with no class restriction match them. Non-zero bits match either
+      // an unrestricted equip OR one whose bit is set.
+      if (bit === 0) {
+        where.push(`(${spec.col} IS NULL OR ${spec.col} = 0)`);
+      } else {
+        where.push(`(${spec.col} IS NULL OR ${spec.col} = 0 OR (${spec.col} & ?) != 0)`);
+        params.push(bit);
       }
     }
   }

@@ -5,6 +5,7 @@ import { DataTable, useColumnFilters, useTableUrlState } from '@/components/data
 import { CollectionsBulkAddMenu } from '@/components/collections';
 import { getDbClient } from '@/db';
 import { labelForEquipType } from '@/lib/equipTypes';
+import { ALL_EQUIP_CLASSES } from '@/lib/equipJobs';
 import { columns, defaultSort, defaultVisibleForType, pinnedColumns } from './WeaponsColumns';
 
 const DEFAULT_PAGE_SIZE = 50;
@@ -111,7 +112,10 @@ export default function Weapons() {
               setFilter(id, v);
               setState({ page: 1 });
             }}
-            enumOptions={{ equipType: typesQ.data ?? [] }}
+            enumOptions={{
+              equipType: typesQ.data ?? [],
+              requiredJob: ALL_EQUIP_CLASSES,
+            }}
             searchValue={state.q}
             onSearchChange={(v) => setState({ q: v, page: 1 })}
             searchPlaceholder="Search weapons by name"

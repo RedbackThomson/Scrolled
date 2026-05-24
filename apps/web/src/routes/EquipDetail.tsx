@@ -9,6 +9,7 @@ import { CollectionBadgeStrip } from '@/components/collections';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/lib/useFeatures';
 import { labelForEquipSlot, labelForEquipType } from '@/lib/equipTypes';
+import { formatEquipJobs, parseReqJob } from '@/lib/equipJobs';
 
 export default function EquipDetail() {
   const params = useParams<{ id: string }>();
@@ -181,7 +182,9 @@ export default function EquipDetail() {
                 <StatRow label="DEX" value={e.requiredDex} />
                 <StatRow label="INT" value={e.requiredInt} />
                 <StatRow label="LUK" value={e.requiredLuk} />
-                {e.requiredJob !== null && <Row label="Job" value={describeJob(e.requiredJob)} />}
+                {e.requiredJob !== null && (
+                  <Row label="Class" value={formatEquipJobs(parseReqJob(e.requiredJob))} />
+                )}
               </dl>
             </section>
           )}
@@ -235,24 +238,4 @@ function Row({
 function StatRow({ label, value }: { label: string; value: number | null }) {
   if (value === null || value === 0) return null;
   return <Row label={label} value={String(value)} />;
-}
-
-/**
- * Decode a MapleStory job-requirement bitfield. The exact bits vary by
- * version; in the GMS-style data we target, low nibble flags whether each
- * class line is eligible. We surface the raw bits alongside a friendly
- * summary so it's still useful for unknown values.
- */
-function describeJob(bitfield: number): string {
-  const known: { bit: number; label: string }[] = [
-    { bit: 1, label: 'Warrior' },
-    { bit: 2, label: 'Magician' },
-    { bit: 4, label: 'Archer' },
-    { bit: 8, label: 'Thief' },
-    { bit: 16, label: 'Pirate' },
-  ];
-  if (bitfield === 0) return 'Any';
-  const matched = known.filter((j) => (bitfield & j.bit) !== 0).map((j) => j.label);
-  if (matched.length === 0) return `0x${bitfield.toString(16)}`;
-  return matched.join(', ');
 }

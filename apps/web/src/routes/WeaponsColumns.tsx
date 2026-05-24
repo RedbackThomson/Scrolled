@@ -3,6 +3,7 @@ import { ItemIcon } from '@/components/ItemIcon';
 import { EquipLink } from '@/components/entity-links';
 import type { EquipRecord } from '@/db';
 import { labelForEquipType } from '@/lib/equipTypes';
+import { isAnyClass, parseReqJob } from '@/lib/equipJobs';
 
 const num = (v: number | null) => (v === null ? '—' : v.toLocaleString());
 
@@ -55,6 +56,20 @@ export const columns: ColumnDef<EquipRecord>[] = [
     header: 'Req Lv',
     meta: { filter: 'number' },
     cell: ({ row }) => row.original.requiredLevel ?? '—',
+  },
+  {
+    id: 'requiredJob',
+    accessorFn: (e) => e.requiredJob,
+    header: 'Class',
+    enableSorting: false,
+    meta: { filter: 'enum' },
+    cell: ({ row }) => {
+      const jobs = parseReqJob(row.original.requiredJob);
+      if (isAnyClass(jobs)) {
+        return <span className="text-muted-foreground text-xs">Any</span>;
+      }
+      return <span className="text-xs">{jobs.join(', ')}</span>;
+    },
   },
   {
     id: 'attack',
@@ -119,6 +134,7 @@ const PHYSICAL_DEFAULT = [
   'equipType',
   'cash',
   'requiredLevel',
+  'requiredJob',
   'attack',
   'accuracy',
   'upgradeSlots',
@@ -130,6 +146,7 @@ const MAGIC_DEFAULT = [
   'equipType',
   'cash',
   'requiredLevel',
+  'requiredJob',
   'magicAttack',
   'attack',
   'upgradeSlots',

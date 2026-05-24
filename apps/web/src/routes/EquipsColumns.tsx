@@ -3,6 +3,7 @@ import { ItemIcon } from '@/components/ItemIcon';
 import { EquipLink } from '@/components/entity-links';
 import type { EquipRecord } from '@/db';
 import { labelForEquipSlot } from '@/lib/equipTypes';
+import { isAnyClass, parseReqJob } from '@/lib/equipJobs';
 
 const num = (v: number | null) => (v === null ? '—' : v.toLocaleString());
 
@@ -54,6 +55,22 @@ export const columns: ColumnDef<EquipRecord>[] = [
     header: 'Req Lv',
     meta: { filter: 'number' },
     cell: ({ row }) => row.original.requiredLevel ?? '—',
+  },
+  {
+    id: 'requiredJob',
+    accessorFn: (e) => e.requiredJob,
+    header: 'Class',
+    // Raw bitfield ordering isn't meaningful — disable sort so the header
+    // click toggles only when there's a useful order to sort by.
+    enableSorting: false,
+    meta: { filter: 'enum' },
+    cell: ({ row }) => {
+      const jobs = parseReqJob(row.original.requiredJob);
+      if (isAnyClass(jobs)) {
+        return <span className="text-muted-foreground text-xs">Any</span>;
+      }
+      return <span className="text-xs">{jobs.join(', ')}</span>;
+    },
   },
   {
     id: 'attack',
@@ -119,6 +136,7 @@ export const defaultVisible = [
   'slot',
   'cash',
   'requiredLevel',
+  'requiredJob',
   'defense',
   'magicDefense',
   'upgradeSlots',

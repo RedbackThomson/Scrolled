@@ -6,6 +6,7 @@ import { HoverPopover } from '@/components/HoverPopover';
 import { HoverCardSaveFooter } from '@/components/collections';
 import { getDbClient } from '@/db';
 import { labelForEquipSlot, labelForEquipType } from '@/lib/equipTypes';
+import { formatEquipJobs, isAnyClass, parseReqJob } from '@/lib/equipJobs';
 
 interface EquipLinkProps {
   id: number;
@@ -46,6 +47,7 @@ function EquipHoverCard({ id }: { id: number }) {
     { label: 'Def', value: e.defense },
     { label: 'M.Def', value: e.magicDefense },
   ].filter((s) => s.value !== null && s.value !== 0) as { label: string; value: number }[];
+  const jobs = e.requiredJob !== null ? parseReqJob(e.requiredJob) : null;
 
   return (
     <div className="w-72 space-y-1.5">
@@ -70,6 +72,11 @@ function EquipHoverCard({ id }: { id: number }) {
                   Cash
                 </span>
               )}
+            </div>
+          )}
+          {jobs && !isAnyClass(jobs) && (
+            <div className="text-muted-foreground text-[11px]">
+              Class: <span className="text-foreground">{formatEquipJobs(jobs)}</span>
             </div>
           )}
           {e.description && (
