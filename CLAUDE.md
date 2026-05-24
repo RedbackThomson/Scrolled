@@ -7,6 +7,7 @@ Guidance that applies to every change in this repository. Source of truth for pr
 1. **Never commit proprietary game data.** No `.wz`, no extracted `.img`, no PNG sprites or icons, no JSON snapshots derived from MapleStory/MapleRoyals files, no pre-generated databases. This applies to test fixtures and CI too. Tests use synthetic raw-tree fixtures only.
 2. **Local-first. No network calls for parsing or data.** The only traffic the app makes is fetching its own static assets. No analytics, no telemetry, no remote logging, no remote storage of user files.
 3. **No proprietary branding.** Don't use MapleStory or Nexon names/logos as if affiliated. Nominative references in docs are fine; visual branding is not.
+4. **All commands run inside the nix flake dev shell.** Node, pnpm, and the rest of the toolchain are only guaranteed to exist there. Wrap every shell invocation as `nix develop -c <command>` (e.g. `nix develop -c pnpm install`, `nix develop -c pnpm typecheck`). Don't assume `node` / `pnpm` are on PATH outside the shell, and don't suggest commands the user would have to run bare.
 
 ## Architectural rules
 

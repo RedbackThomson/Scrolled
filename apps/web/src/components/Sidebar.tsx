@@ -2,6 +2,10 @@ import { useMemo } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle2,
+  Loader2,
   Package,
   Shield,
   Skull,
@@ -132,8 +136,90 @@ export function Sidebar() {
           <NavItem to="/debug" icon={Wrench} label="Parser debug" />
         </div>
       </nav>
-      <div className="border-border text-sidebar-muted border-t p-3 text-xs">Pre-alpha</div>
+      <DbStatusIndicator />
+      <div className="text-sidebar-muted px-3 pb-3 text-[10px]">Pre-alpha</div>
     </aside>
+  );
+}
+
+type DbHealth = 'pending' | 'healthy' | 'warning' | 'error';
+
+const HEALTH_CONFIG: Record<
+  DbHealth,
+  {
+    icon: LucideIcon;
+    label: string;
+    title: string;
+    iconClass: string;
+    textClass?: string;
+    spin?: boolean;
+  }
+> = {
+  pending: {
+    icon: Loader2,
+    label: 'Checking database…',
+    title: 'Verifying database health',
+    iconClass: 'text-sidebar-muted',
+    spin: true,
+  },
+  healthy: {
+    icon: CheckCircle2,
+    label: 'Database OK',
+    title: 'Database is healthy',
+    iconClass: 'text-green-600 dark:text-green-400',
+  },
+  warning: {
+    icon: AlertTriangle,
+    label: 'Re-import recommended',
+    title: 'Database has problems — a re-import may be needed',
+    iconClass: 'text-amber-600 dark:text-amber-400',
+    textClass: 'text-amber-700 dark:text-amber-300',
+  },
+  error: {
+    icon: AlertCircle,
+    label: 'Database unavailable',
+    title: 'Database is corrupted or unreachable — recreating from scratch may be required',
+    iconClass: 'text-red-600 dark:text-red-400',
+    textClass: 'text-red-700 dark:text-red-300',
+  },
+};
+
+function DbStatusIndicator() {
+  const db = useMemo(() => getDbClient(), []);
+  const statusQ = useQuery({
+    queryKey: ['db', 'status'],
+    queryFn: () => db.status(),
+  });
+
+  // `warning` (needs re-import) and the corruption branch of `error` have no
+  // detection wired up yet — for now we surface only the binary "status query
+  // succeeded vs threw". Both UI states are kept defined so the future signals
+  // have a place to land.
+  let health: DbHealth;
+  if (statusQ.isPending) health = 'pending';
+  else if (statusQ.isError) health = 'error';
+  else health = 'healthy';
+
+  const cfg = HEALTH_CONFIG[health];
+  const Icon = cfg.icon;
+
+  return (
+    <div
+      className="border-border border-t px-3 pb-2 pt-3"
+      title={cfg.title}
+      role="status"
+      aria-live="polite"
+    >
+      <div className="flex items-center gap-2 text-xs">
+        <Icon
+          className={cn('h-3.5 w-3.5 shrink-0', cfg.iconClass, cfg.spin && 'animate-spin')}
+          aria-hidden
+        />
+        <span className={cn('truncate', cfg.textClass ?? 'text-sidebar-foreground')}>
+          {cfg.label}
+        </span>
+      </div>
+    </div>
   );
 }
 
