@@ -1,5 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { ScrollText } from 'lucide-react';
+import { QuestLink } from '@/components/entity-links';
 import type { QuestRecord } from '@/db';
 
 export const columns: ColumnDef<QuestRecord>[] = [
@@ -15,7 +16,11 @@ export const columns: ColumnDef<QuestRecord>[] = [
     accessorFn: (q) => q.name,
     header: 'Name',
     meta: { filter: 'string' },
-    cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
+    cell: ({ row }) => (
+      <QuestLink id={row.original.id} className="font-medium">
+        {row.original.name}
+      </QuestLink>
+    ),
   },
   {
     id: 'parent',

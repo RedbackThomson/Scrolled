@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { Crown, Skull } from 'lucide-react';
 import { EntityIcon } from '@/components/EntityIcon';
+import { MobLink } from '@/components/entity-links';
 import type { MobRecord } from '@/db';
 
 export const columns: ColumnDef<MobRecord>[] = [
@@ -25,7 +26,7 @@ export const columns: ColumnDef<MobRecord>[] = [
     header: 'Name',
     meta: { filter: 'string' },
     cell: ({ row }) => (
-      <span className="inline-flex items-center gap-2">
+      <MobLink id={row.original.id} className="inline-flex items-center gap-2">
         <span className="font-medium">{row.original.name}</span>
         {row.original.isBoss && (
           <span className="inline-flex items-center gap-0.5 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
@@ -33,7 +34,7 @@ export const columns: ColumnDef<MobRecord>[] = [
             Boss
           </span>
         )}
-      </span>
+      </MobLink>
     ),
   },
   {

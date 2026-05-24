@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { Map as MapIcon } from 'lucide-react';
 import { EntityIcon } from '@/components/EntityIcon';
+import { MapLink } from '@/components/entity-links';
 import type { MapRecord } from '@/db';
 
 export const columns: ColumnDef<MapRecord>[] = [
@@ -25,7 +26,9 @@ export const columns: ColumnDef<MapRecord>[] = [
     header: 'Name',
     meta: { filter: 'string' },
     cell: ({ row }) => (
-      <span className="font-medium">{row.original.name ?? `Map ${row.original.id}`}</span>
+      <MapLink id={row.original.id} className="font-medium">
+        {row.original.name ?? `Map ${row.original.id}`}
+      </MapLink>
     ),
   },
   {

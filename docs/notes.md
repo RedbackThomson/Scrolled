@@ -21,9 +21,10 @@
 - [ ] Detect version automatically
 - [ ] Clean up wizard copy
 - [ ] Think about support for smooth version upgrades
-- [ ] Any hyperlinks should have a tooltip showing a summary of the target page
+- [x] Any hyperlinks should have a tooltip showing a summary of the target page
 - [ ] Add equipment set page with minimum requirements and gained stats
 - [ ] Clicking on an image should open a full-screen modal with the image
 - [x] Remove the DB stats from the items page and move it to settings
 - [ ] Clean up the text on each of the pages to remove specificity
 - [ ] On the item page, show who the item is sold by
+- [ ] Have a minimap explorer with a sidebar that lets you enable/disable layers

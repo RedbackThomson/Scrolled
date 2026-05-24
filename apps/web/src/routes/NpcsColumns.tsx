@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { Users } from 'lucide-react';
 import { EntityIcon } from '@/components/EntityIcon';
+import { NpcLink } from '@/components/entity-links';
 import type { NpcRecord } from '@/db';
 
 export const columns: ColumnDef<NpcRecord>[] = [
@@ -24,7 +25,11 @@ export const columns: ColumnDef<NpcRecord>[] = [
     accessorFn: (n) => n.name,
     header: 'Name',
     meta: { filter: 'string' },
-    cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
+    cell: ({ row }) => (
+      <NpcLink id={row.original.id} className="font-medium">
+        {row.original.name}
+      </NpcLink>
+    ),
   },
   {
     id: 'id',

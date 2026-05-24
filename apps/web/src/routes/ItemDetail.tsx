@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Loader2, ScrollText } from 'lucide-react';
 import { ItemIcon } from '@/components/ItemIcon';
+import { QuestLink } from '@/components/entity-links';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/lib/useFeatures';
 
@@ -95,8 +96,8 @@ export default function ItemDetail() {
               <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
                 {questsQ.data.map((q) => (
                   <li key={q.id}>
-                    <Link
-                      to={`/quests/${q.id}`}
+                    <QuestLink
+                      id={q.id}
                       className="hover:bg-accent flex items-center gap-2 px-3 py-1.5 text-sm"
                     >
                       <span className="min-w-0 flex-1 truncate">
@@ -106,7 +107,7 @@ export default function ItemDetail() {
                       <span className="text-muted-foreground shrink-0 font-mono text-xs">
                         {q.id}
                       </span>
-                    </Link>
+                    </QuestLink>
                   </li>
                 ))}
               </ul>

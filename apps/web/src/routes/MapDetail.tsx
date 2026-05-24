@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, DoorOpen, Loader2, Map as MapIcon, Skull, Users } from 'lucide-react';
 import { EntityIcon } from '@/components/EntityIcon';
+import { MapLink, MobLink, NpcLink } from '@/components/entity-links';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/lib/useFeatures';
 
@@ -107,8 +108,8 @@ export default function MapDetail() {
                 <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
                   {npcsQ.data.map((n) => (
                     <li key={`${n.npcId}-${n.x}-${n.y}`}>
-                      <Link
-                        to={`/npcs/${n.npcId}`}
+                      <NpcLink
+                        id={n.npcId}
                         className="hover:bg-accent flex items-center gap-3 px-3 py-1.5 text-sm"
                       >
                         <EntityIcon
@@ -129,7 +130,7 @@ export default function MapDetail() {
                             ({n.x ?? '?'}, {n.y ?? '?'})
                           </span>
                         )}
-                      </Link>
+                      </NpcLink>
                     </li>
                   ))}
                 </ul>
@@ -154,8 +155,8 @@ export default function MapDetail() {
                 <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
                   {mobsQ.data.map((mob) => (
                     <li key={mob.mobId}>
-                      <Link
-                        to={`/mobs/${mob.mobId}`}
+                      <MobLink
+                        id={mob.mobId}
                         className="hover:bg-accent flex items-center gap-3 px-3 py-1.5 text-sm"
                       >
                         <EntityIcon
@@ -181,7 +182,7 @@ export default function MapDetail() {
                         <span className="text-muted-foreground shrink-0 font-mono text-xs">
                           {mob.mobId}
                         </span>
-                      </Link>
+                      </MobLink>
                     </li>
                   ))}
                 </ul>
@@ -211,15 +212,15 @@ export default function MapDetail() {
                     <span className="font-mono text-xs">{p.portalName}</span>
                     <span className="text-muted-foreground">→</span>
                     {p.targetMapId && p.targetMapId !== 999999999 ? (
-                      <Link
-                        to={`/maps/${p.targetMapId}`}
+                      <MapLink
+                        id={p.targetMapId}
                         className="text-primary min-w-0 flex-1 truncate hover:underline"
                       >
                         Map {p.targetMapId}
                         {p.targetPortal && (
                           <span className="text-muted-foreground"> · {p.targetPortal}</span>
                         )}
-                      </Link>
+                      </MapLink>
                     ) : (
                       <span className="text-muted-foreground italic">no target</span>
                     )}
@@ -270,9 +271,9 @@ function RowLink({ label, value }: { label: string; value: number | null }) {
       <dt className="text-muted-foreground text-xs uppercase tracking-wide">{label}</dt>
       <dd className="text-sm">
         {value !== null && value !== 999999999 ? (
-          <Link to={`/maps/${value}`} className="text-primary hover:underline">
+          <MapLink id={value} className="text-primary hover:underline">
             {value}
-          </Link>
+          </MapLink>
         ) : (
           '—'
         )}

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { getDbClient } from '@/db';
 import type { QuestRequirementWithName, QuestRewardWithName } from '@/db';
+import { ItemLink, MobLink, NpcLink, QuestLink } from '@/components/entity-links';
 import { useFeatures } from '@/lib/useFeatures';
 
 export default function QuestDetail() {
@@ -142,7 +143,7 @@ export default function QuestDetail() {
                   <RequirementRow
                     key={`item-${r.targetId}`}
                     r={r}
-                    routePrefix="/items"
+                    entity="item"
                     icon={Sparkles}
                     linkable={features.hasItems}
                   />
@@ -151,7 +152,7 @@ export default function QuestDetail() {
                   <RequirementRow
                     key={`mob-${r.targetId}`}
                     r={r}
-                    routePrefix="/mobs"
+                    entity="mob"
                     icon={Sword}
                     linkable={features.hasMobs}
                   />
@@ -160,7 +161,7 @@ export default function QuestDetail() {
                   <RequirementRow
                     key={`questPre-${r.targetId}`}
                     r={r}
-                    routePrefix="/quests"
+                    entity="quest"
                     icon={ScrollText}
                     linkable
                   />
@@ -244,9 +245,9 @@ function NpcRow({
         {label}
       </span>
       {linkable ? (
-        <Link to={`/npcs/${id}`} className="text-primary min-w-0 flex-1 truncate hover:underline">
+        <NpcLink id={id} className="text-primary min-w-0 flex-1 truncate hover:underline">
           {display}
-        </Link>
+        </NpcLink>
       ) : (
         <span className="min-w-0 flex-1 truncate">{display}</span>
       )}
@@ -255,14 +256,32 @@ function NpcRow({
   );
 }
 
+type RequirementEntity = 'item' | 'mob' | 'quest';
+
+function RequirementLink({
+  entity,
+  id,
+  className,
+  children,
+}: {
+  entity: RequirementEntity;
+  id: number;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  if (entity === 'item') return <ItemLink id={id} className={className}>{children}</ItemLink>;
+  if (entity === 'mob') return <MobLink id={id} className={className}>{children}</MobLink>;
+  return <QuestLink id={id} className={className}>{children}</QuestLink>;
+}
+
 function RequirementRow({
   r,
-  routePrefix,
+  entity,
   icon: Icon,
   linkable,
 }: {
   r: QuestRequirementWithName;
-  routePrefix: string;
+  entity: RequirementEntity;
   icon: React.ComponentType<{ className?: string }>;
   linkable: boolean;
 }) {
@@ -271,12 +290,13 @@ function RequirementRow({
     <li className="flex items-center gap-3 px-3 py-2 text-sm">
       <Icon className="text-muted-foreground h-4 w-4 shrink-0" />
       {linkable && r.targetId !== null ? (
-        <Link
-          to={`${routePrefix}/${r.targetId}`}
+        <RequirementLink
+          entity={entity}
+          id={r.targetId}
           className="text-primary min-w-0 flex-1 truncate hover:underline"
         >
           {display}
-        </Link>
+        </RequirementLink>
       ) : (
         <span className="min-w-0 flex-1 truncate">{display}</span>
       )}
@@ -294,12 +314,12 @@ function RewardRow({ r, linkable }: { r: QuestRewardWithName; linkable: boolean 
     <li className="flex items-center gap-3 px-3 py-2 text-sm">
       <Sparkles className="text-muted-foreground h-4 w-4 shrink-0" />
       {linkable && r.targetId !== null ? (
-        <Link
-          to={`/items/${r.targetId}`}
+        <ItemLink
+          id={r.targetId}
           className="text-primary min-w-0 flex-1 truncate hover:underline"
         >
           {display}
-        </Link>
+        </ItemLink>
       ) : (
         <span className="min-w-0 flex-1 truncate">{display}</span>
       )}

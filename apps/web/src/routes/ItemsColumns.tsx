@@ -1,5 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { ItemIcon } from '@/components/ItemIcon';
+import { ItemLink } from '@/components/entity-links';
 import type { ItemRecord } from '@/db';
 
 export const columns: ColumnDef<ItemRecord>[] = [
@@ -17,7 +18,11 @@ export const columns: ColumnDef<ItemRecord>[] = [
     accessorFn: (i) => i.name,
     header: 'Name',
     meta: { filter: 'string' },
-    cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
+    cell: ({ row }) => (
+      <ItemLink id={row.original.id} className="font-medium">
+        {row.original.name}
+      </ItemLink>
+    ),
   },
   {
     id: 'category',

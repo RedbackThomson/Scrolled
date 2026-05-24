@@ -1,5 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { ItemIcon } from '@/components/ItemIcon';
+import { EquipLink } from '@/components/entity-links';
 import type { EquipRecord } from '@/db';
 
 const num = (v: number | null) => (v === null ? '—' : v.toLocaleString());
@@ -19,7 +20,11 @@ export const columns: ColumnDef<EquipRecord>[] = [
     accessorFn: (e) => e.name,
     header: 'Name',
     meta: { filter: 'string' },
-    cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
+    cell: ({ row }) => (
+      <EquipLink id={row.original.id} className="font-medium">
+        {row.original.name}
+      </EquipLink>
+    ),
   },
   {
     id: 'slot',

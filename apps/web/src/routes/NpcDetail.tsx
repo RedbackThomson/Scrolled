@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Loader2, Map as MapIcon, ScrollText, Users } from 'lucide-react';
 import { EntityIcon } from '@/components/EntityIcon';
+import { MapLink, QuestLink } from '@/components/entity-links';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/lib/useFeatures';
 
@@ -98,8 +99,8 @@ export default function NpcDetail() {
                 <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
                   {questsQ.data.map((q) => (
                     <li key={q.id}>
-                      <Link
-                        to={`/quests/${q.id}`}
+                      <QuestLink
+                        id={q.id}
                         className="hover:bg-accent flex items-center gap-2 px-3 py-1.5 text-sm"
                       >
                         <span className="min-w-0 flex-1 truncate">
@@ -111,7 +112,7 @@ export default function NpcDetail() {
                         <span className="text-muted-foreground shrink-0 font-mono text-xs">
                           {q.id}
                         </span>
-                      </Link>
+                      </QuestLink>
                     </li>
                   ))}
                 </ul>
@@ -130,8 +131,8 @@ export default function NpcDetail() {
                 <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
                   {mapsQ.data.map((m) => (
                     <li key={m.id}>
-                      <Link
-                        to={`/maps/${m.id}`}
+                      <MapLink
+                        id={m.id}
                         className="hover:bg-accent flex items-center gap-2 px-3 py-2 text-sm"
                       >
                         <MapIcon className="text-muted-foreground h-4 w-4 shrink-0" />
@@ -144,7 +145,7 @@ export default function NpcDetail() {
                         <span className="text-muted-foreground shrink-0 font-mono text-xs">
                           {m.id}
                         </span>
-                      </Link>
+                      </MapLink>
                     </li>
                   ))}
                 </ul>
