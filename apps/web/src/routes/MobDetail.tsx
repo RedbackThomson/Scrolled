@@ -16,6 +16,12 @@ import { EntityIcon } from '@/components/EntityIcon';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/lib/useFeatures';
+import {
+  ELEMENT_ORDER,
+  parseMobElements,
+  type ElementStatus,
+} from '@/lib/mobElements';
+import { cn } from '@/lib/utils';
 
 export default function MobDetail() {
   const params = useParams<{ id: string }>();
@@ -238,24 +244,61 @@ export default function MobDetail() {
           )}
         </article>
 
-        <aside className="border-border bg-card text-card-foreground self-start rounded-md border p-4 text-sm">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide">Stats</h2>
-          <dl className="divide-border divide-y">
-            <Row label="ID" value={String(m.id)} mono />
-            <Row label="Level" value={m.level !== null ? String(m.level) : '—'} />
-            <Row label="HP" value={m.hp !== null ? m.hp.toLocaleString() : '—'} />
-            <Row label="MP" value={m.mp !== null ? m.mp.toLocaleString() : '—'} />
-            <Row label="EXP" value={m.exp !== null ? m.exp.toLocaleString() : '—'} />
-            <Row label="Element" value={m.elementAttack ?? '—'} />
-            <Row label="Boss" value={m.isBoss ? 'Yes' : 'No'} />
-          </dl>
-          <div className="text-muted-foreground mt-4 text-xs">
-            <div className="uppercase tracking-wide">WZ path</div>
-            <code className="break-all font-mono">{m.sourcePath}</code>
-          </div>
-        </aside>
+        <div className="space-y-4 self-start">
+          <aside className="border-border bg-card text-card-foreground rounded-md border p-4 text-sm">
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide">Stats</h2>
+            <dl className="divide-border divide-y">
+              <Row label="ID" value={String(m.id)} mono />
+              <Row label="Level" value={m.level !== null ? String(m.level) : '—'} />
+              <Row label="HP" value={m.hp !== null ? m.hp.toLocaleString() : '—'} />
+              <Row label="MP" value={m.mp !== null ? m.mp.toLocaleString() : '—'} />
+              <Row label="EXP" value={m.exp !== null ? m.exp.toLocaleString() : '—'} />
+              <Row label="Boss" value={m.isBoss ? 'Yes' : 'No'} />
+            </dl>
+            <div className="text-muted-foreground mt-4 text-xs">
+              <div className="uppercase tracking-wide">WZ path</div>
+              <code className="break-all font-mono">{m.sourcePath}</code>
+            </div>
+          </aside>
+
+          <ElementsAside element={m.elementAttack} />
+        </div>
       </div>
     </div>
+  );
+}
+
+const STATUS_LABEL: Record<ElementStatus, string> = {
+  neutral: 'Neutral',
+  immune: 'Immune',
+  resistant: 'Resistant',
+  weak: 'Weak',
+};
+
+const STATUS_CLASS: Record<ElementStatus, string> = {
+  neutral: 'text-muted-foreground',
+  immune: 'text-sky-700 dark:text-sky-300',
+  resistant: 'text-amber-700 dark:text-amber-300',
+  weak: 'text-rose-700 dark:text-rose-300',
+};
+
+function ElementsAside({ element }: { element: string | null }) {
+  const statuses = parseMobElements(element);
+  return (
+    <aside className="border-border bg-card text-card-foreground rounded-md border p-4 text-sm">
+      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide">Elements</h2>
+      <dl className="divide-border divide-y">
+        {ELEMENT_ORDER.map((name) => {
+          const status = statuses[name];
+          return (
+            <div key={name} className="flex items-baseline justify-between gap-3 py-1.5">
+              <dt className="text-muted-foreground text-xs uppercase tracking-wide">{name}</dt>
+              <dd className={cn('text-sm', STATUS_CLASS[status])}>{STATUS_LABEL[status]}</dd>
+            </div>
+          );
+        })}
+      </dl>
+    </aside>
   );
 }
 
