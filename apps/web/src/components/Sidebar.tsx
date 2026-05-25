@@ -324,7 +324,17 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
       </nav>
       <DbStatusIndicator collapsed={collapsed} />
       {!collapsed && (
-        <div className="text-sidebar-muted px-3 pb-3 text-[10px]">{APP_VERSION_LABEL}</div>
+        <div className="text-sidebar-muted flex items-center justify-between px-3 pb-3 text-[10px]">
+          <span>{APP_VERSION_LABEL}</span>
+          <a
+            href="https://github.com/RedbackThomson"
+            target="_blank"
+            rel="noreferrer noopener"
+            className="hover:text-foreground transition-colors"
+          >
+            Redback
+          </a>
+        </div>
       )}
     </aside>
   );
