@@ -406,7 +406,7 @@ export interface GameDatabase {
 
   upsertMobs(mobs: MobRecord[]): Promise<number>;
   getMob(id: number): Promise<MobRecord | null>;
-  listMobs(opts?: ListOptsBase & { bossOnly?: boolean }): Promise<PageResult<MobRecord>>;
+  listMobs(opts?: ListOptsBase): Promise<PageResult<MobRecord>>;
   /** Decoded PNG bytes for the mob's stand sprite, or null. */
   getMobIcon(id: number): Promise<Uint8Array | null>;
   /** Items this mob can drop (from MonsterBook.img), joined to the target's name. */

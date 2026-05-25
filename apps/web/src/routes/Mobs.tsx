@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { parseAsBoolean, useQueryState } from 'nuqs';
 import { DataTable, useColumnFilters, useTableUrlState } from '@/components/data-table';
 import { CollectionsBulkAddMenu } from '@/components/collections';
 import { getDbClient } from '@/db';
@@ -17,11 +16,14 @@ export default function Mobs() {
     defaultVisible,
   });
   const { filters, setFilter, active: filtersActive } = useColumnFilters(columns);
-  const [bossOnly, setBossOnly] = useQueryState(
-    'boss',
-    parseAsBoolean.withDefault(false).withOptions({ clearOnDefault: true }),
-  );
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // The "Bosses only" toolbar checkbox is a shortcut for the standard
+  // `boss` boolean column filter (?f_boss=1). Reading/writing here goes
+  // through the same column-filter state the popover uses.
+  const bossFilter = filters.boss;
+  const bossOnly =
+    bossFilter?.kind === 'range' && bossFilter.min === 1 && bossFilter.max === 1;
 
   const mobsQ = useQuery({
     queryKey: [
@@ -29,7 +31,6 @@ export default function Mobs() {
       'mobs',
       {
         q: state.q,
-        bossOnly,
         sort: state.sort,
         dir: state.dir,
         page: state.page,
@@ -40,7 +41,6 @@ export default function Mobs() {
     queryFn: () =>
       client.listMobs({
         search: state.q || undefined,
-        bossOnly,
         orderBy: state.sort,
         dir: state.dir,
         limit: state.size,
@@ -50,8 +50,7 @@ export default function Mobs() {
     placeholderData: keepPreviousData,
   });
 
-  const isEmpty =
-    mobsQ.data?.total === 0 && !state.q && !bossOnly && !filtersActive;
+  const isEmpty = mobsQ.data?.total === 0 && !state.q && !filtersActive;
 
   return (
     <div className="max-w-6xl space-y-6">
@@ -108,7 +107,12 @@ export default function Mobs() {
                     type="checkbox"
                     checked={bossOnly}
                     onChange={(e) => {
-                      void setBossOnly(e.target.checked);
+                      setFilter(
+                        'boss',
+                        e.target.checked
+                          ? { kind: 'range', min: 1, max: 1 }
+                          : null,
+                      );
                       setState({ page: 1 });
                     }}
                     className="accent-primary h-3.5 w-3.5"

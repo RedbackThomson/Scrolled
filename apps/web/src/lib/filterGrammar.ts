@@ -25,8 +25,7 @@ type FilterSpec =
   | { kind: 'number'; param: string }
   | { kind: 'string'; param: string }
   | { kind: 'enum'; param: string; values?: readonly string[] }
-  | { kind: 'boolean'; param: string }
-  | { kind: 'custom'; encode: (value: string) => Record<string, string> };
+  | { kind: 'boolean'; param: string };
 
 type FilterMap = Record<string, FilterSpec>;
 
@@ -45,15 +44,6 @@ const ENTITY_ALIAS: Record<string, EntityScope> = {
   quest: 'quest',
 };
 
-const BOSS_VALUES: Record<string, string> = {
-  true: '1',
-  yes: '1',
-  '1': '1',
-  false: '0',
-  no: '0',
-  '0': '0',
-};
-
 const FILTER_KEYS: Record<EntityScope, FilterMap> = {
   mob: {
     level: { kind: 'number', param: 'level' },
@@ -61,13 +51,7 @@ const FILTER_KEYS: Record<EntityScope, FilterMap> = {
     mp: { kind: 'number', param: 'mp' },
     exp: { kind: 'number', param: 'exp' },
     element: { kind: 'string', param: 'element' },
-    boss: {
-      kind: 'custom',
-      encode: (v): Record<string, string> => {
-        const mapped = BOSS_VALUES[v.toLowerCase()];
-        return mapped ? { boss: mapped } : {};
-      },
-    },
+    boss: { kind: 'boolean', param: 'boss' },
   },
   item: {
     category: {
@@ -205,26 +189,9 @@ export function parseFilterQuery(raw: string): ParsedFilterQuery {
             producedFilter = true;
             continue;
           }
-        } else if (spec.kind === 'custom') {
-          const out = spec.encode(value);
-          if (Object.keys(out).length > 0) {
-            Object.assign(params, out);
-            producedFilter = true;
-            continue;
-          }
         }
       }
-      // Bare boolean shortcut: `boss` alone == `boss:true`
-    } else if (map && map[tok.toLowerCase()]?.kind === 'custom') {
-      const spec = map[tok.toLowerCase()];
-      if (spec.kind === 'custom') {
-        const out = spec.encode('true');
-        if (Object.keys(out).length > 0) {
-          Object.assign(params, out);
-          producedFilter = true;
-          continue;
-        }
-      }
+      // Bare boolean shortcut: a lone `boss` token == `boss:true`.
     } else if (map && map[tok.toLowerCase()]?.kind === 'boolean') {
       const spec = map[tok.toLowerCase()];
       if (spec.kind === 'boolean') {

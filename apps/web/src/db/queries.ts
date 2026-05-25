@@ -208,6 +208,9 @@ const MOB_FILTER: Record<string, FilterSpec> = {
   mp:      { col: 'mp',             type: 'number' },
   exp:     { col: 'exp',            type: 'number' },
   element: { col: 'element_attack', type: 'string' },
+  // is_boss is INTEGER 0/1; same trick as equips.cash — a boolean column
+  // filter ({min:1,max:1}) maps cleanly through the number filter path.
+  boss:    { col: 'is_boss',        type: 'number' },
   id:      { col: 'id',             type: 'number' },
 };
 
@@ -740,9 +743,7 @@ export class DbApi implements GameDatabase {
     return row ? rowToMob(row) : null;
   }
 
-  async listMobs(
-    opts: ListOptsBase & { bossOnly?: boolean } = {},
-  ): Promise<PageResult<MobRecord>> {
+  async listMobs(opts: ListOptsBase = {}): Promise<PageResult<MobRecord>> {
     const limit = clampLimit(opts.limit);
     const offset = clampOffset(opts.offset);
     const order = resolveOrder(MOB_ORDER, MOB_ORDER_DEFAULT, opts.orderBy, opts.dir);
@@ -751,9 +752,6 @@ export class DbApi implements GameDatabase {
     if (opts.search?.trim()) {
       where.push('name LIKE ?');
       params.push(`%${opts.search.trim()}%`);
-    }
-    if (opts.bossOnly) {
-      where.push('is_boss = 1');
     }
     applyFilters(MOB_FILTER, opts.filters, where, params);
     const clause = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';

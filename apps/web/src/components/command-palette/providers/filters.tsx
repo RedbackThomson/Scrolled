@@ -11,9 +11,7 @@ import { useCommandPalette } from '@/lib/useCommandPalette';
 function describeParams(params: Record<string, string>): string {
   const parts: string[] = [];
   for (const [k, v] of Object.entries(params)) {
-    if (k === 'boss') {
-      parts.push(v === '1' ? 'boss' : 'non-boss');
-    } else if (k.startsWith('f_') && k.endsWith('_min')) {
+    if (k.startsWith('f_') && k.endsWith('_min')) {
       const col = k.slice(2, -4);
       const max = params[`f_${col}_max`];
       if (max != null && max !== v) parts.push(`${col} ${v}–${max}`);

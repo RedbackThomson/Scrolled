@@ -73,6 +73,21 @@ export const columns: ColumnDef<MobRecord>[] = [
     cell: ({ row }) => row.original.elementAttack ?? '—',
   },
   {
+    id: 'boss',
+    accessorFn: (m) => m.isBoss,
+    header: 'Boss',
+    meta: { filter: 'boolean', booleanLabels: { trueLabel: 'Boss', falseLabel: 'Non-boss' } },
+    cell: ({ row }) =>
+      row.original.isBoss ? (
+        <span className="inline-flex items-center gap-0.5 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
+          <Crown className="h-3 w-3" />
+          Boss
+        </span>
+      ) : (
+        '—'
+      ),
+  },
+  {
     id: 'id',
     accessorFn: (m) => m.id,
     header: 'ID',

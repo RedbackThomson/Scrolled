@@ -22,14 +22,14 @@ describe('parseFilterQuery', () => {
     expect(r.params).toEqual({
       f_level_min: '50',
       f_level_max: '70',
-      boss: '1',
+      f_boss: '1',
     });
     expect(r.hasFilters).toBe(true);
   });
 
   it('accepts the bare `boss` token as boss:true', () => {
     const r = parseFilterQuery('mobs boss');
-    expect(r.params).toEqual({ boss: '1' });
+    expect(r.params).toEqual({ f_boss: '1' });
   });
 
   it('parses comparison operators on numbers', () => {
@@ -71,7 +71,7 @@ describe('parseFilterQuery', () => {
     expect(url.startsWith('/mobs?')).toBe(true);
     expect(url).toContain('f_level_min=50');
     expect(url).toContain('f_level_max=70');
-    expect(url).toContain('boss=1');
+    expect(url).toContain('f_boss=1');
   });
 
   it('singular and plural entity aliases both work', () => {
