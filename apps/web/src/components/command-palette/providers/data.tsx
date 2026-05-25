@@ -1,9 +1,6 @@
 import { Database, Wrench } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import {
-  CommandGroup,
-  CommandItem as CommandItemPrimitive,
-} from '@/components/ui/command';
+import { CommandGroup, CommandItem as CommandItemPrimitive } from '@/components/ui/command';
 import { useCommandPalette } from '@/lib/useCommandPalette';
 
 function fuzzy(q: string, hay: string): boolean {
@@ -34,9 +31,7 @@ export function DataProvider() {
   const setOpen = useCommandPalette((s) => s.setOpen);
   const query = useCommandPalette((s) => s.query);
 
-  const visible = ENTRIES.filter((e) =>
-    fuzzy(query, `${e.label} ${e.keywords.join(' ')}`),
-  );
+  const visible = ENTRIES.filter((e) => fuzzy(query, `${e.label} ${e.keywords.join(' ')}`));
   if (visible.length === 0) return null;
 
   return (

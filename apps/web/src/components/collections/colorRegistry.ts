@@ -108,9 +108,7 @@ const COLOR_BY_NAME = new Map<string, CollectionColorOption>(
   COLLECTION_COLORS.map((o) => [o.name, o]),
 );
 
-export function resolveCollectionColor(
-  name: string | null | undefined,
-): CollectionColorOption {
+export function resolveCollectionColor(name: string | null | undefined): CollectionColorOption {
   if (!name) return DEFAULT_COLLECTION_COLOR;
   return COLOR_BY_NAME.get(name) ?? DEFAULT_COLLECTION_COLOR;
 }

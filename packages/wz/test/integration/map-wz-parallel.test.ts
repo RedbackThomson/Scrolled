@@ -72,7 +72,11 @@ describe.skipIf(!present)('Map.wz Map0..Map9 parallel walk', () => {
     // Locate the parent of MapN buckets. Different dumps wrap it differently.
     for (const candidate of [['Map'], ['Map', 'Map']]) {
       const node = file.resolve(candidate);
-      if (node && node.kind === 'dir' && (node as WzDirNode).children.some((c) => /^Map\d$/.test(c.name))) {
+      if (
+        node &&
+        node.kind === 'dir' &&
+        (node as WzDirNode).children.some((c) => /^Map\d$/.test(c.name))
+      ) {
         mapRoot = node as WzDirNode;
         mapRootSegments = candidate;
         break;
@@ -80,8 +84,7 @@ describe.skipIf(!present)('Map.wz Map0..Map9 parallel walk', () => {
     }
     if (!mapRoot!) throw new Error('Map bucket parent (with Map0..Map9) not found');
 
-    bucketSegmentsByName = mapRoot
-      .children
+    bucketSegmentsByName = mapRoot.children
       .filter((c) => c.kind === 'dir' && /^Map\d$/.test(c.name))
       .map((c) => ({ name: c.name, segments: [...mapRootSegments, c.name] }));
 
@@ -127,7 +130,6 @@ describe.skipIf(!present)('Map.wz Map0..Map9 parallel walk', () => {
     const parallelTotalImages = parallelStats.reduce((s, b) => s + b.imageCount, 0);
     const parallelTotalNodes = parallelStats.reduce((s, b) => s + b.nodeCount, 0);
 
-     
     console.log(
       `Map.wz: ${buckets.length} buckets, ${totalImages} images, ${totalNodes} nodes\n` +
         `  serial   = ${serialMs.toFixed(0)} ms\n` +

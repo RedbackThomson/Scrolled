@@ -89,13 +89,7 @@ export default function NpcDetail() {
       <div className="grid gap-6 sm:grid-cols-[1fr_18rem]">
         <article className="space-y-6">
           <header className="flex items-center gap-3">
-            <EntityIcon
-              entity="npc"
-              id={n.id}
-              size={96}
-              placeholder={Users}
-              alt={n.name}
-            />
+            <EntityIcon entity="npc" id={n.id} size={96} placeholder={Users} alt={n.name} />
             <div>
               <h1 className="text-3xl font-semibold tracking-tight">{n.name}</h1>
               <p className="text-muted-foreground font-mono text-xs">{n.id}</p>
@@ -168,7 +162,7 @@ export default function NpcDetail() {
                             to={`/maps/${m.id}?viewer=npc:${n.id}`}
                             aria-label={`Show ${n.name} on ${m.name ?? `Map ${m.id}`}`}
                             title="Show on map"
-                            className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                            className="text-muted-foreground hover:bg-background hover:text-foreground focus-visible:ring-primary/60 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 group-hover:opacity-100"
                           >
                             <MapPin className="h-4 w-4" />
                           </Link>
@@ -182,7 +176,7 @@ export default function NpcDetail() {
           )}
         </article>
 
-        <aside className="border-border bg-card text-card-foreground self-start space-y-4 rounded-md border p-4 text-sm">
+        <aside className="border-border bg-card text-card-foreground space-y-4 self-start rounded-md border p-4 text-sm">
           <section>
             <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Info</h2>
             <dl className="divide-border divide-y">

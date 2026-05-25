@@ -43,10 +43,7 @@ export interface TableUrlStatePatch {
  */
 export function useTableUrlState(opts: TableUrlStateOptions) {
   const { defaultSort, defaultSize, defaultVisible } = opts;
-  const defaultVisibleKey = useMemo(
-    () => [...defaultVisible].sort().join(','),
-    [defaultVisible],
-  );
+  const defaultVisibleKey = useMemo(() => [...defaultVisible].sort().join(','), [defaultVisible]);
 
   const [state, setStateRaw] = useQueryStates(
     {

@@ -12,7 +12,7 @@ export function computeVersionHash(mapleVersion: number): { hash: number; encVer
   for (let i = 0; i < s.length; i++) {
     // The multiplication can briefly overflow 32 bits in JS doubles; coerce
     // with `>>> 0` to keep it as an unsigned 32-bit integer.
-    hash = ((32 * hash + s.charCodeAt(i) + 1) >>> 0);
+    hash = (32 * hash + s.charCodeAt(i) + 1) >>> 0;
   }
   const b0 = (hash >>> 24) & 0xff;
   const b1 = (hash >>> 16) & 0xff;

@@ -53,16 +53,12 @@ export function readImage(args: ReadImageArgs): ParsedImage {
     };
   }
   if (headerByte !== WZ_IMG_HEADER_WITHOUT_OFFSET) {
-    throw new Error(
-      `unknown image header byte 0x${headerByte.toString(16)} at ${imageOffset}`,
-    );
+    throw new Error(`unknown image header byte 0x${headerByte.toString(16)} at ${imageOffset}`);
   }
   const propTag = readWzString(reader, keystream);
   const reserved = reader.readUInt16LE();
   if (propTag !== 'Property' || reserved !== 0) {
-    throw new Error(
-      `image header mismatch: tag=${JSON.stringify(propTag)} reserved=${reserved}`,
-    );
+    throw new Error(`image header mismatch: tag=${JSON.stringify(propTag)} reserved=${reserved}`);
   }
   const properties = parsePropertyList({ reader, imageOffset, keystream });
   return { offset: imageOffset, isLua: false, properties };

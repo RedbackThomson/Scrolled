@@ -49,13 +49,10 @@ export class UserDbApi implements UserDatabase {
   }
 
   async status(): Promise<UserDbStatus> {
-    const schemaVersion =
-      this.db.selectValue<number>('SELECT MAX(version) FROM _migrations') ?? 0;
+    const schemaVersion = this.db.selectValue<number>('SELECT MAX(version) FROM _migrations') ?? 0;
     const collections = this.db.selectValue<number>('SELECT COUNT(*) FROM collections') ?? 0;
-    const members =
-      this.db.selectValue<number>('SELECT COUNT(*) FROM collection_members') ?? 0;
-    const pinnedSearches =
-      this.db.selectValue<number>('SELECT COUNT(*) FROM pinned_searches') ?? 0;
+    const members = this.db.selectValue<number>('SELECT COUNT(*) FROM collection_members') ?? 0;
+    const pinnedSearches = this.db.selectValue<number>('SELECT COUNT(*) FROM pinned_searches') ?? 0;
     return {
       schemaVersion,
       backend: this.db.backend,
@@ -90,14 +87,7 @@ export class UserDbApi implements UserDatabase {
       this.db.exec(
         `INSERT INTO collections (name, description, color, icon, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?)`,
-        [
-          name,
-          input.description ?? null,
-          input.color ?? null,
-          input.icon ?? null,
-          now,
-          now,
-        ],
+        [name, input.description ?? null, input.color ?? null, input.icon ?? null, now, now],
       );
       return this.db.selectValue<number>('SELECT last_insert_rowid()') ?? 0;
     });
@@ -239,10 +229,7 @@ export class UserDbApi implements UserDatabase {
     );
   }
 
-  async bulkAddMembers(
-    collectionId: number,
-    refs: readonly EntityRef[],
-  ): Promise<BulkAddResult> {
+  async bulkAddMembers(collectionId: number, refs: readonly EntityRef[]): Promise<BulkAddResult> {
     if (refs.length === 0) return { added: 0, skipped: 0 };
     let added = 0;
     let skipped = 0;
@@ -271,10 +258,7 @@ export class UserDbApi implements UserDatabase {
     return { added, skipped };
   }
 
-  async bulkRemoveMembers(
-    collectionId: number,
-    refs: readonly EntityRef[],
-  ): Promise<void> {
+  async bulkRemoveMembers(collectionId: number, refs: readonly EntityRef[]): Promise<void> {
     if (refs.length === 0) return;
     this.db.transaction(() => {
       for (const ref of refs) {
@@ -433,10 +417,7 @@ export class UserDbApi implements UserDatabase {
   }
 
   private findCollectionIdByName(name: string): number | null {
-    const id = this.db.selectValue<number>(
-      'SELECT id FROM collections WHERE name = ?',
-      [name],
-    );
+    const id = this.db.selectValue<number>('SELECT id FROM collections WHERE name = ?', [name]);
     return id == null ? null : Number(id);
   }
 

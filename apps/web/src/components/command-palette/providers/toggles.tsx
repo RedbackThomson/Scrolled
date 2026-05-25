@@ -1,8 +1,13 @@
-import { Monitor, Moon, PanelLeftClose, PanelLeftOpen, Sidebar as SidebarIcon, Sun, type LucideIcon } from 'lucide-react';
 import {
-  CommandGroup,
-  CommandItem as CommandItemPrimitive,
-} from '@/components/ui/command';
+  Monitor,
+  Moon,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Sidebar as SidebarIcon,
+  Sun,
+  type LucideIcon,
+} from 'lucide-react';
+import { CommandGroup, CommandItem as CommandItemPrimitive } from '@/components/ui/command';
 import { useCommandPalette } from '@/lib/useCommandPalette';
 import { useTheme, type ThemeMode } from '@/lib/theme';
 import { useSidebarLayout } from '@/lib/sidebarState';

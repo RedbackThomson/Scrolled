@@ -181,9 +181,7 @@ export default function Debug() {
             Look up
           </Button>
         </div>
-        {lookupResult === 'pending' && (
-          <p className="text-muted-foreground text-sm">Resolving…</p>
-        )}
+        {lookupResult === 'pending' && <p className="text-muted-foreground text-sm">Resolving…</p>}
         {lookupResult === null && <p className="text-muted-foreground text-sm">No result yet.</p>}
         {lookupResult && typeof lookupResult === 'object' && (
           <>

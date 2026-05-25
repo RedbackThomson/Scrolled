@@ -62,7 +62,10 @@ function verifyKeystreamFirstBytes(
     // smoke test.
     for (let i = 0; i < 16; i++) {
       if (keystream[i] !== 0) {
-        return { ok: false, error: `expected zero keystream for ${version}, got non-zero at byte ${i}` };
+        return {
+          ok: false,
+          error: `expected zero keystream for ${version}, got non-zero at byte ${i}`,
+        };
       }
     }
     return { ok: true };
@@ -71,7 +74,10 @@ function verifyKeystreamFirstBytes(
   let nonZero = 0;
   for (let i = 0; i < 16; i++) if (keystream[i] !== 0) nonZero++;
   if (nonZero < 4) {
-    return { ok: false, error: `${version} keystream looks trivial (${nonZero}/16 non-zero bytes)` };
+    return {
+      ok: false,
+      error: `${version} keystream looks trivial (${nonZero}/16 non-zero bytes)`,
+    };
   }
   return { ok: true };
 }

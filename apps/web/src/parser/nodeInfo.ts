@@ -1,9 +1,4 @@
-import type {
-  WzCanvasProperty,
-  WzConvexProperty,
-  WzProperty,
-  WzSubProperty,
-} from '@mushex/wz';
+import type { WzCanvasProperty, WzConvexProperty, WzProperty, WzSubProperty } from '@mushex/wz';
 import type { WzNodeInfo, WzPropertyKind } from './types';
 
 function propertyKindOf(prop: WzProperty): WzPropertyKind {

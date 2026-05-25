@@ -54,10 +54,11 @@ export function HoverPopover({
   const triggerRef = useRef<HTMLSpanElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
-  const [coords, setCoords] = useState<
-    | { top: number; left: number; placement: 'top' | 'bottom' }
-    | null
-  >(null);
+  const [coords, setCoords] = useState<{
+    top: number;
+    left: number;
+    placement: 'top' | 'bottom';
+  } | null>(null);
   const showTimer = useRef<number | null>(null);
   const hideTimer = useRef<number | null>(null);
 
@@ -134,7 +135,8 @@ export function HoverPopover({
       >
         {children}
       </span>
-      {open && coords &&
+      {open &&
+        coords &&
         createPortal(
           <div
             ref={popoverRef}

@@ -7,11 +7,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { BookmarkPlus, ChevronDown, Loader2, Plus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  useBulkAddMembers,
-  useCollectionsList,
-  useCreateCollection,
-} from '@/lib/useCollections';
+import { useBulkAddMembers, useCollectionsList, useCreateCollection } from '@/lib/useCollections';
 import type { CollectionEntityType, EntityRef } from '@/db/user';
 import { cn } from '@/lib/utils';
 
@@ -131,9 +127,7 @@ export function CollectionsBulkAddMenu({
 
   return (
     <span className="inline-flex items-center gap-2">
-      <span className="text-muted-foreground text-xs">
-        {count} selected
-      </span>
+      <span className="text-muted-foreground text-xs">{count} selected</span>
       <Button
         ref={triggerRef}
         type="button"
@@ -148,13 +142,7 @@ export function CollectionsBulkAddMenu({
         Add to collection
         <ChevronDown className="h-3.5 w-3.5" />
       </Button>
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        onClick={onClear}
-        disabled={count === 0}
-      >
+      <Button type="button" variant="ghost" size="sm" onClick={onClear} disabled={count === 0}>
         Clear
       </Button>
       {status && (
@@ -162,7 +150,8 @@ export function CollectionsBulkAddMenu({
           {status}
         </span>
       )}
-      {open && coords &&
+      {open &&
+        coords &&
         createPortal(
           <div
             ref={popoverRef}

@@ -16,7 +16,13 @@ interface EquipLinkProps {
   triggerClassName?: string;
 }
 
-export function EquipLink({ id, children, className, noPreview, triggerClassName }: EquipLinkProps) {
+export function EquipLink({
+  id,
+  children,
+  className,
+  noPreview,
+  triggerClassName,
+}: EquipLinkProps) {
   const link = (
     <Link to={`/equips/${id}`} className={className}>
       {children}

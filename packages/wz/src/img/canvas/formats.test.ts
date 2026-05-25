@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  decodeArgb1555,
-  decodeBgra4444,
-  decodeBgra8888,
-  decodeRgb565,
-} from './formats';
+import { decodeArgb1555, decodeBgra4444, decodeBgra8888, decodeRgb565 } from './formats';
 
 describe('decodeBgra8888', () => {
   it('swaps B and R into RGBA layout', () => {

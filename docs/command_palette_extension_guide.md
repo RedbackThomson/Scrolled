@@ -80,7 +80,7 @@ export function MyThingProvider() {
       {items.map((e) => (
         <CommandItemPrimitive
           key={e.id}
-          value={e.id}                       // must be unique across the whole palette
+          value={e.id} // must be unique across the whole palette
           keywords={[e.label, ...e.keywords]}
           onSelect={() => {
             e.action();
@@ -111,7 +111,7 @@ Then mount it in the right slot in `Palette.tsx`'s `<CommandList>`.
    - `kind: 'enum'` for fixed sets (`category:use`)
    - `kind: 'string'` for substring (`subcategory:foo`)
    - `kind: 'boolean'` for flags (`cash:true`, bare `cash`)
-   The grammar emits standard `f_<param>=…` URL params — the same shape the column-filter pipeline produces — so navigating to `<listing>?<params>` lights up the existing filter UI without a parallel code path. Keys you register here surface automatically in the palette's "available filters" chip row (`providers/filterKeys.tsx`) once an entity prefix is typed, so users don't have to read this file to discover them.
+     The grammar emits standard `f_<param>=…` URL params — the same shape the column-filter pipeline produces — so navigating to `<listing>?<params>` lights up the existing filter UI without a parallel code path. Keys you register here surface automatically in the palette's "available filters" chip row (`providers/filterKeys.tsx`) once an entity prefix is typed, so users don't have to read this file to discover them.
 6. **Wire collection actions.** If the entity is in `COLLECTION_ENTITY_TYPES`, the existing `CollectionsContextProvider` and bulk-add UI work without changes. Confirm by opening the palette on a detail page of the new type — you should see "Add to <collection>" entries.
 7. **Add a random-entity command** in `providers/fun.tsx` by extending the `ENTITY_KINDS`/`enabled` gate.
 

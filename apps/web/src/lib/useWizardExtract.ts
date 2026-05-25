@@ -41,14 +41,7 @@ import type { ProgressUpdate } from '@/lib/progress';
 
 const log = createLogger('wizard-extract');
 
-export const ALL_EXTRACTOR_KEYS = [
-  'item',
-  'equip',
-  'mob',
-  'npc',
-  'map',
-  'quest',
-] as const;
+export const ALL_EXTRACTOR_KEYS = ['item', 'equip', 'mob', 'npc', 'map', 'quest'] as const;
 export type ExtractorKey = (typeof ALL_EXTRACTOR_KEYS)[number];
 
 export const EXTRACTOR_TO_WORKER: Record<ExtractorKey, PoolWorkerName> = {
@@ -130,17 +123,14 @@ function makeInitialStatuses(): Record<ExtractorKey, ExtractorStatus> {
 export function useWizardExtract(opts: UseWizardExtractOptions) {
   const db = useMemo(() => getDbClient(), []);
   const queryClient = useQueryClient();
-  const [extractors, setExtractors] = useState<Record<ExtractorKey, ExtractorStatus>>(
-    () => makeInitialStatuses(),
+  const [extractors, setExtractors] = useState<Record<ExtractorKey, ExtractorStatus>>(() =>
+    makeInitialStatuses(),
   );
   const [stats, setStats] = useState<ExtractStats | null>(null);
 
-  const patchExtractor = useCallback(
-    (key: ExtractorKey, patch: Partial<ExtractorStatus>) => {
-      setExtractors((prev) => ({ ...prev, [key]: { ...prev[key], ...patch } }));
-    },
-    [],
-  );
+  const patchExtractor = useCallback((key: ExtractorKey, patch: Partial<ExtractorStatus>) => {
+    setExtractors((prev) => ({ ...prev, [key]: { ...prev[key], ...patch } }));
+  }, []);
 
   /** Patch every active extractor that lives on a given worker. */
   const patchWorkerExtractors = useCallback(
@@ -256,11 +246,7 @@ export function useWizardExtract(opts: UseWizardExtractOptions) {
             setExtractors((prev) => {
               const out = { ...prev };
               for (const k of ALL_EXTRACTOR_KEYS) {
-                if (
-                  EXTRACTOR_TO_WORKER[k] === name &&
-                  prev[k].active &&
-                  prev[k].phase !== 'done'
-                ) {
+                if (EXTRACTOR_TO_WORKER[k] === name && prev[k].active && prev[k].phase !== 'done') {
                   out[k] = {
                     ...prev[k],
                     phase: 'failed',
@@ -366,9 +352,7 @@ async function runWorkerExtractors(
   if (name === 'items' && (willRun.has('item') || willRun.has('equip'))) {
     if (willRun.has('item')) {
       patchExtractor('item', { phase: 'extracting' });
-      const onProgress = proxy((p: ProgressUpdate) =>
-        patchExtractor('item', { progress: p }),
-      );
+      const onProgress = proxy((p: ProgressUpdate) => patchExtractor('item', { progress: p }));
       const r = await worker.extractItems(onProgress);
       const rows = r.items.length > 0 ? await db.upsertItems(r.items) : 0;
       out.push({
@@ -384,9 +368,7 @@ async function runWorkerExtractors(
     }
     if (willRun.has('equip')) {
       patchExtractor('equip', { phase: 'extracting' });
-      const onProgress = proxy((p: ProgressUpdate) =>
-        patchExtractor('equip', { progress: p }),
-      );
+      const onProgress = proxy((p: ProgressUpdate) => patchExtractor('equip', { progress: p }));
       const r = await worker.extractEquips(onProgress);
       const rows = r.equips.length > 0 ? await db.upsertEquips(r.equips) : 0;
       out.push({
@@ -405,9 +387,7 @@ async function runWorkerExtractors(
 
   if (name === 'mobs' && willRun.has('mob')) {
     patchExtractor('mob', { phase: 'extracting' });
-    const onProgress = proxy((p: ProgressUpdate) =>
-      patchExtractor('mob', { progress: p }),
-    );
+    const onProgress = proxy((p: ProgressUpdate) => patchExtractor('mob', { progress: p }));
     const r = await worker.extractMobs(onProgress);
     const rows = r.mobs.length > 0 ? await db.upsertMobs(r.mobs) : 0;
     if (r.drops.length > 0) {
@@ -428,9 +408,7 @@ async function runWorkerExtractors(
 
   if (name === 'npcs' && willRun.has('npc')) {
     patchExtractor('npc', { phase: 'extracting' });
-    const onProgress = proxy((p: ProgressUpdate) =>
-      patchExtractor('npc', { progress: p }),
-    );
+    const onProgress = proxy((p: ProgressUpdate) => patchExtractor('npc', { progress: p }));
     const r = await worker.extractNpcs(onProgress);
     const rows = r.npcs.length > 0 ? await db.upsertNpcs(r.npcs) : 0;
     out.push({
@@ -448,9 +426,7 @@ async function runWorkerExtractors(
 
   if (name === 'maps' && willRun.has('map')) {
     patchExtractor('map', { phase: 'extracting' });
-    const onProgress = proxy((p: ProgressUpdate) =>
-      patchExtractor('map', { progress: p }),
-    );
+    const onProgress = proxy((p: ProgressUpdate) => patchExtractor('map', { progress: p }));
     const r = await worker.extractMaps(onProgress);
     const rows = r.maps.length > 0 ? await db.upsertMaps(r.maps) : 0;
     if (
@@ -481,9 +457,7 @@ async function runWorkerExtractors(
 
   if (name === 'quests' && willRun.has('quest')) {
     patchExtractor('quest', { phase: 'extracting' });
-    const onProgress = proxy((p: ProgressUpdate) =>
-      patchExtractor('quest', { progress: p }),
-    );
+    const onProgress = proxy((p: ProgressUpdate) => patchExtractor('quest', { progress: p }));
     const r = await worker.extractQuests(onProgress);
     const rows = r.quests.length > 0 ? await db.upsertQuests(r.quests) : 0;
     if (r.requirements.length > 0 || r.rewards.length > 0) {

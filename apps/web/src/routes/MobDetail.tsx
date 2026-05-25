@@ -115,13 +115,7 @@ export default function MobDetail() {
       <div className="grid gap-6 sm:grid-cols-[1fr_18rem]">
         <article className="space-y-6">
           <header className="flex items-center gap-3">
-            <EntityIcon
-              entity="mob"
-              id={m.id}
-              size={96}
-              placeholder={Skull}
-              alt={m.name}
-            />
+            <EntityIcon entity="mob" id={m.id} size={96} placeholder={Skull} alt={m.name} />
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-3xl font-semibold tracking-tight">{m.name}</h1>
@@ -154,10 +148,7 @@ export default function MobDetail() {
               <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
                 {dropsQ.data.map((d) =>
                   d.entity === null ? (
-                    <li
-                      key={d.itemId}
-                      className="flex items-center gap-3 px-3 py-1.5 text-sm"
-                    >
+                    <li key={d.itemId} className="flex items-center gap-3 px-3 py-1.5 text-sm">
                       <EntityAvatar entity="item" id={d.itemId} alt={d.itemName ?? undefined} />
                       <span className="text-muted-foreground min-w-0 flex-1 truncate italic">
                         {d.itemName ?? `Item #${d.itemId}`}
@@ -167,12 +158,7 @@ export default function MobDetail() {
                       </span>
                     </li>
                   ) : (
-                    <EntityRow
-                      key={d.itemId}
-                      entity={d.entity}
-                      id={d.itemId}
-                      name={d.itemName}
-                    />
+                    <EntityRow key={d.itemId} entity={d.entity} id={d.itemId} name={d.itemName} />
                   ),
                 )}
               </ul>
@@ -208,7 +194,7 @@ export default function MobDetail() {
                             to={`/maps/${mp.id}?viewer=mob:${m.id}`}
                             aria-label={`Show ${m.name} on ${mp.name ?? `Map ${mp.id}`}`}
                             title="Show on map"
-                            className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                            className="text-muted-foreground hover:bg-background hover:text-foreground focus-visible:ring-primary/60 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 group-hover:opacity-100"
                           >
                             <MapPin className="h-4 w-4" />
                           </Link>
@@ -254,7 +240,7 @@ export default function MobDetail() {
           )}
         </article>
 
-        <aside className="border-border bg-card text-card-foreground self-start space-y-4 rounded-md border p-4 text-sm">
+        <aside className="border-border bg-card text-card-foreground space-y-4 self-start rounded-md border p-4 text-sm">
           <section>
             <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Info</h2>
             <dl className="divide-border divide-y">

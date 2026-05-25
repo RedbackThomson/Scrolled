@@ -91,9 +91,7 @@ function buildParsers(
     } else if (type === 'enum') {
       // Enum has no mode picker — the user is choosing from a known set
       // and the server treats it as equality.
-      map[`f_${id}`] = parseAsString
-        .withDefault('')
-        .withOptions({ clearOnDefault: true });
+      map[`f_${id}`] = parseAsString.withDefault('').withOptions({ clearOnDefault: true });
     } else if (type === 'boolean') {
       // Boolean filters are tristate (any / true / false) and surface as
       // a range filter with min=max=1 or 0, so the server's number-column
@@ -130,8 +128,7 @@ export function useColumnFilters<TData>(
       if (type === 'string') {
         const v = (state[`f_${id}`] as string | null | undefined) ?? '';
         const m =
-          (state[`f_${id}_mode`] as StringFilterMode | null | undefined) ??
-          DEFAULT_STRING_MODE;
+          (state[`f_${id}_mode`] as StringFilterMode | null | undefined) ?? DEFAULT_STRING_MODE;
         // Surface an entry whenever EITHER the value is non-empty OR the
         // user has explicitly picked a non-default mode (so the popover's
         // mode selector reflects the URL even before typing).
@@ -169,9 +166,7 @@ export function useColumnFilters<TData>(
   const active = useMemo(
     () =>
       Object.values(filters).some((f) =>
-        f.kind === 'string'
-          ? f.value.length > 0
-          : f.min !== undefined || f.max !== undefined,
+        f.kind === 'string' ? f.value.length > 0 : f.min !== undefined || f.max !== undefined,
       ),
     [filters],
   );
@@ -186,26 +181,21 @@ export function useColumnFilters<TData>(
         // Mode persists even when the value is empty so the picker remembers
         // the user's choice between keystrokes. Passing `null` clears both.
         const nextMode =
-          value === null
-            ? DEFAULT_STRING_MODE
-            : isStringPatch
-              ? value.mode
-              : DEFAULT_STRING_MODE;
+          value === null ? DEFAULT_STRING_MODE : isStringPatch ? value.mode : DEFAULT_STRING_MODE;
         void setState({
           [`f_${columnId}`]: nextValue,
           [`f_${columnId}_mode`]: nextMode,
         });
       } else if (spec.type === 'enum') {
-        const next =
-          value !== null && value.kind === 'string' ? value.value : '';
+        const next = value !== null && value.kind === 'string' ? value.value : '';
         void setState({ [`f_${columnId}`]: next });
       } else if (spec.type === 'boolean') {
-        const n = value && value.kind === 'range' ? value.min ?? value.max : null;
+        const n = value && value.kind === 'range' ? (value.min ?? value.max) : null;
         const next = n === 1 ? '1' : n === 0 ? '0' : null;
         void setState({ [`f_${columnId}`]: next });
       } else {
-        const min = value && value.kind === 'range' ? value.min ?? null : null;
-        const max = value && value.kind === 'range' ? value.max ?? null : null;
+        const min = value && value.kind === 'range' ? (value.min ?? null) : null;
+        const max = value && value.kind === 'range' ? (value.max ?? null) : null;
         void setState({
           [`f_${columnId}_min`]: min,
           [`f_${columnId}_max`]: max,

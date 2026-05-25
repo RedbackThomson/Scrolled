@@ -83,7 +83,11 @@ function Harness({ data, total }: HarnessProps) {
   );
 }
 
-function renderHarness(args: { data: Row[]; total: number; onUrlUpdate?: (e: UrlUpdateEvent) => void }) {
+function renderHarness(args: {
+  data: Row[];
+  total: number;
+  onUrlUpdate?: (e: UrlUpdateEvent) => void;
+}) {
   return render(
     <MemoryRouter>
       <NuqsTestingAdapter onUrlUpdate={args.onUrlUpdate} hasMemory>

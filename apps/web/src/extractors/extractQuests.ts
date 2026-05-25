@@ -1,9 +1,5 @@
 import type { GameDataSource } from '@/parser';
-import type {
-  QuestRecord,
-  QuestRequirementRecord,
-  QuestRewardRecord,
-} from '@/db';
+import type { QuestRecord, QuestRequirementRecord, QuestRewardRecord } from '@/db';
 import { createLogger } from '@/lib/logger';
 import type { ProgressFn } from '@/lib/progress';
 import { unescapeWzString } from './wzText';
@@ -93,8 +89,7 @@ export async function extractQuests(
   if (!hasStringQuestImg && !hasQuestInfoNames) {
     log.warn('no quest name source found — quest names will be placeholders', {
       stringTopLevel: stringRoot.map((n) => n.name),
-      hint:
-        'Neither String.wz/Quest.img nor Quest.wz/QuestInfo.img/<id>/name was readable. Quests still extract by ID; the UI will display "Quest <id>".',
+      hint: 'Neither String.wz/Quest.img nor Quest.wz/QuestInfo.img/<id>/name was readable. Quests still extract by ID; the UI will display "Quest <id>".',
     });
   }
 

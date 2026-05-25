@@ -25,7 +25,7 @@ The app is a **generic, format-agnostic wiki tool**. It happens to read a file f
 When you must refer to the game whose files the user loaded, call it:
 
 - **"the Mushroom Game"** — friendly, neutral, used in welcome / pitch copy
-- **"your game"** or **"your version of the game"** — when referring to *this user's* loaded data
+- **"your game"** or **"your version of the game"** — when referring to _this user's_ loaded data
 - **"the game"** — in passing references where context makes it clear
 
 Never: "MapleStory", "Maple", "MS", "the Maple wiki", "your MapleStory data", etc.
@@ -115,24 +115,24 @@ Three parts, in order:
 
 1. **What's about to happen**, framed as a question. ("Clear all data from the local library?")
 2. **The scope** of the destruction. ("Every loaded item, mob, NPC, map, and quest will be removed.")
-3. **What's *not* affected**, when relevant. ("Your game files on disk are untouched.")
+3. **What's _not_ affected**, when relevant. ("Your game files on disk are untouched.")
 
 ---
 
 ## 5. Vocabulary cheat sheet
 
-| Prefer | Avoid | Why |
-| --- | --- | --- |
-| the Mushroom Game | MapleStory, Maple, MS, MapleRoyals | Brand safety |
-| your game / your wiki | their game, the source game | Speaks to the user |
-| your library | the database, the SQLite store, the index | Plain language |
-| game files | WZ files, `.wz` files | In welcome/marketing copy |
-| Run setup / Setup | the wizard, the importer, the loader | Matches the URL/button label |
-| Diagnostics | Debug, Parser debug, the dev page | Matches the page title |
-| load / loaded | extract / extracted, ingest / ingested | Plain |
-| library / loaded data | dataset, dataset record, corpus | Plain |
-| backup file | `.sqlite3` export, raw dump | Hides implementation |
-| collection | bookmark folder, saved list (in formal contexts) | The product term |
+| Prefer                | Avoid                                            | Why                          |
+| --------------------- | ------------------------------------------------ | ---------------------------- |
+| the Mushroom Game     | MapleStory, Maple, MS, MapleRoyals               | Brand safety                 |
+| your game / your wiki | their game, the source game                      | Speaks to the user           |
+| your library          | the database, the SQLite store, the index        | Plain language               |
+| game files            | WZ files, `.wz` files                            | In welcome/marketing copy    |
+| Run setup / Setup     | the wizard, the importer, the loader             | Matches the URL/button label |
+| Diagnostics           | Debug, Parser debug, the dev page                | Matches the page title       |
+| load / loaded         | extract / extracted, ingest / ingested           | Plain                        |
+| library / loaded data | dataset, dataset record, corpus                  | Plain                        |
+| backup file           | `.sqlite3` export, raw dump                      | Hides implementation         |
+| collection            | bookmark folder, saved list (in formal contexts) | The product term             |
 
 ---
 

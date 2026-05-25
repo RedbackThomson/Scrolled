@@ -19,9 +19,7 @@ import type { Reader } from './Reader';
 export function readWzAsciiString(r: Reader, length: number, keystream: Uint8Array): string {
   if (length === 0) return '';
   if (keystream.length < length) {
-    throw new RangeError(
-      `ascii keystream too short: need ${length}, got ${keystream.length}`,
-    );
+    throw new RangeError(`ascii keystream too short: need ${length}, got ${keystream.length}`);
   }
   const enc = r.readBytes(length);
   let s = '';
@@ -39,9 +37,7 @@ export function readWzUnicodeString(r: Reader, length: number, keystream: Uint8A
   if (length === 0) return '';
   const byteLen = length * 2;
   if (keystream.length < byteLen) {
-    throw new RangeError(
-      `unicode keystream too short: need ${byteLen}, got ${keystream.length}`,
-    );
+    throw new RangeError(`unicode keystream too short: need ${byteLen}, got ${keystream.length}`);
   }
   const enc = r.readBytes(byteLen);
   let s = '';
@@ -116,7 +112,8 @@ export function encodeWzUnicodeString(s: string, keystream: Uint8Array): Uint8Ar
   const out = new Uint8Array(s.length * 2);
   let mask = 0xaaaa;
   for (let i = 0; i < s.length; i++) {
-    const enc = (s.charCodeAt(i) ^ mask ^ ((keystream[i * 2 + 1]! << 8) | keystream[i * 2]!)) & 0xffff;
+    const enc =
+      (s.charCodeAt(i) ^ mask ^ ((keystream[i * 2 + 1]! << 8) | keystream[i * 2]!)) & 0xffff;
     out[i * 2] = enc & 0xff;
     out[i * 2 + 1] = (enc >> 8) & 0xff;
     mask = (mask + 1) & 0xffff;

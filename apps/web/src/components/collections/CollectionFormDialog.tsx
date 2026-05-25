@@ -4,18 +4,11 @@
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  useCreateCollection,
-  useUpdateCollection,
-} from '@/lib/useCollections';
+import { useCreateCollection, useUpdateCollection } from '@/lib/useCollections';
 import type { CollectionRecord } from '@/db/user';
 import { cn } from '@/lib/utils';
 import { Modal } from './Modal';
-import {
-  COLLECTION_ICONS,
-  DEFAULT_COLLECTION_ICON,
-  resolveCollectionIcon,
-} from './iconRegistry';
+import { COLLECTION_ICONS, DEFAULT_COLLECTION_ICON, resolveCollectionIcon } from './iconRegistry';
 import {
   COLLECTION_COLORS,
   DEFAULT_COLLECTION_COLOR,
@@ -76,8 +69,7 @@ export function CollectionFormDialog({
     // and rows that opt-in to "no color" are indistinguishable from the
     // DB's perspective. resolveCollectionColor handles the null case.
     const iconPatch = iconName === DEFAULT_COLLECTION_ICON.name ? null : iconName;
-    const colorPatch =
-      colorName === DEFAULT_COLLECTION_COLOR.name ? null : colorName;
+    const colorPatch = colorName === DEFAULT_COLLECTION_COLOR.name ? null : colorName;
     try {
       const result = isEdit
         ? await updateM.mutateAsync({

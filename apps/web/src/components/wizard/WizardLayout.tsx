@@ -52,36 +52,37 @@ export function WizardLayout({
             {exitSlot && <div className="shrink-0">{exitSlot}</div>}
           </div>
           {steps.length > 0 && (
-          <ol className="flex items-center gap-2 text-xs">
-            {steps.map((step, idx) => {
-              const state = idx < currentIdx ? 'done' : idx === currentIdx ? 'current' : 'upcoming';
-              return (
-                <li key={step.id} className="flex items-center gap-2">
-                  <span
-                    className={cn(
-                      'flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium',
-                      state === 'done' && 'bg-primary text-primary-foreground',
-                      state === 'current' && 'bg-primary/15 text-primary ring-primary/40 ring-2',
-                      state === 'upcoming' && 'bg-muted text-muted-foreground',
+            <ol className="flex items-center gap-2 text-xs">
+              {steps.map((step, idx) => {
+                const state =
+                  idx < currentIdx ? 'done' : idx === currentIdx ? 'current' : 'upcoming';
+                return (
+                  <li key={step.id} className="flex items-center gap-2">
+                    <span
+                      className={cn(
+                        'flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium',
+                        state === 'done' && 'bg-primary text-primary-foreground',
+                        state === 'current' && 'bg-primary/15 text-primary ring-primary/40 ring-2',
+                        state === 'upcoming' && 'bg-muted text-muted-foreground',
+                      )}
+                    >
+                      {state === 'done' ? <Check className="h-3 w-3" /> : idx + 1}
+                    </span>
+                    <span
+                      className={cn(
+                        'font-medium',
+                        state === 'current' ? 'text-foreground' : 'text-muted-foreground',
+                      )}
+                    >
+                      {step.label}
+                    </span>
+                    {idx < steps.length - 1 && (
+                      <span className="text-muted-foreground/50 mx-1">›</span>
                     )}
-                  >
-                    {state === 'done' ? <Check className="h-3 w-3" /> : idx + 1}
-                  </span>
-                  <span
-                    className={cn(
-                      'font-medium',
-                      state === 'current' ? 'text-foreground' : 'text-muted-foreground',
-                    )}
-                  >
-                    {step.label}
-                  </span>
-                  {idx < steps.length - 1 && (
-                    <span className="text-muted-foreground/50 mx-1">›</span>
-                  )}
-                </li>
-              );
-            })}
-          </ol>
+                  </li>
+                );
+              })}
+            </ol>
           )}
         </div>
       </header>

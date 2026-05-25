@@ -1,12 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import type {
-  WzUOLProperty} from '@tybys/wz';
-import {
-  WzFile,
-  WzMapleVersion,
-  WzImage,
-  type WzObject,
-} from '@tybys/wz';
+import type { WzUOLProperty } from '@tybys/wz';
+import { WzFile, WzMapleVersion, WzImage, type WzObject } from '@tybys/wz';
 import { Reader } from '@/io/Reader';
 import { readHeader } from '@/file/header';
 import { computeVersionHash } from '@/file/versionHash';
@@ -96,9 +90,7 @@ for (const fixture of FIXTURES) {
         const oracleImage = oracle.at(child.name) as WzImage | null;
         if (!oracleImage) continue;
         await oracleImage.parseImage();
-        const oracleUol = oracleImage.getFromPath(uol.path.join('/')) as
-          | WzUOLProperty
-          | null;
+        const oracleUol = oracleImage.getFromPath(uol.path.join('/')) as WzUOLProperty | null;
         if (!oracleUol) continue;
         const oracleLink = oracleUol.linkValue as WzObject | null;
         if (!oracleLink) continue;

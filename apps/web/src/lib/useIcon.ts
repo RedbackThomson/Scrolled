@@ -5,10 +5,7 @@ import { createLogger, describeError } from '@/lib/logger';
 
 const log = createLogger('icons-client');
 
-async function fetchBytes(
-  db: Remote<GameDatabase>,
-  ref: IconRef,
-): Promise<Uint8Array | null> {
+async function fetchBytes(db: Remote<GameDatabase>, ref: IconRef): Promise<Uint8Array | null> {
   switch (ref.entity) {
     case 'item':
       return db.getItemIcon(ref.id);

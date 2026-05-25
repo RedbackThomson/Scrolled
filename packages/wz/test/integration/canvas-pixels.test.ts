@@ -139,14 +139,14 @@ describe.skipIf(!present)(`canvas pixel decode parity vs @tybys/wz (${FIXTURE})`
           if (code !== 1 && code !== 2) continue;
 
           // Locate the same canvas in the oracle.
-          const oracleImage = (oracle.at(dir.name) as unknown as { at(n: string): WzObject | null })
-            ?.at(sub.name) as WzImage | null;
+          const oracleImage = (
+            oracle.at(dir.name) as unknown as { at(n: string): WzObject | null }
+          )?.at(sub.name) as WzImage | null;
           if (!oracleImage) continue;
           await oracleImage.parseImage();
           const oracleCanvas = findOracleCanvas(oracleImage, c.path);
           if (!oracleCanvas) continue;
-          const oraclePng = (oracleCanvas as unknown as { pngProperty: WzPngProperty })
-            .pngProperty;
+          const oraclePng = (oracleCanvas as unknown as { pngProperty: WzPngProperty }).pngProperty;
           const oracleRaw = await oraclePng.getCompressedBytes(true);
 
           // Skip listWz-encoded canvases — those are tested separately.
@@ -158,10 +158,7 @@ describe.skipIf(!present)(`canvas pixel decode parity vs @tybys/wz (${FIXTURE})`
           const dv = new DataView(bytes.buffer, bytes.byteOffset);
           const rawLenAtOffset = dv.getInt32(c.canvas.dataOffset, true);
           const oursPayloadLen = rawLenAtOffset - 1;
-          const oursPayload = bytes.subarray(
-            oursPayloadStart,
-            oursPayloadStart + oursPayloadLen,
-          );
+          const oursPayload = bytes.subarray(oursPayloadStart, oursPayloadStart + oursPayloadLen);
           expect(oursPayload.length).toBe(oracleRaw.length);
           for (let i = 0; i < oursPayload.length; i++) {
             if (oursPayload[i] !== oracleRaw[i]) {
@@ -205,8 +202,10 @@ describe.skipIf(!present)(`canvas pixel decode parity vs @tybys/wz (${FIXTURE})`
         }
       }
     }
-     
-    console.log(`canvases checked: ${checked} (format=1: ${format1Seen}, format=2: ${format2Seen})`);
+
+    console.log(
+      `canvases checked: ${checked} (format=1: ${format1Seen}, format=2: ${format2Seen})`,
+    );
     expect(checked).toBeGreaterThan(0);
   });
 });

@@ -46,10 +46,10 @@ function MobileSidebarDrawer() {
   return (
     <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 md:hidden" />
+        <DialogPrimitive.Overlay className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-40 bg-black/50 md:hidden" />
         <DialogPrimitive.Content
           aria-label="Navigation"
-          className="bg-sidebar fixed inset-y-0 left-0 z-50 flex w-64 max-w-[85vw] flex-col shadow-xl outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left md:hidden"
+          className="bg-sidebar data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left fixed inset-y-0 left-0 z-50 flex w-64 max-w-[85vw] flex-col shadow-xl outline-none md:hidden"
         >
           <DialogPrimitive.Title className="sr-only">Navigation</DialogPrimitive.Title>
           <DialogPrimitive.Close
@@ -88,11 +88,5 @@ function useFirstRunRedirect(): void {
     if (!features.isFirstRun) return;
     if (location.pathname === '/setup') return;
     navigate('/setup', { replace: true });
-  }, [
-    features.ready,
-    features.isFetching,
-    features.isFirstRun,
-    location.pathname,
-    navigate,
-  ]);
+  }, [features.ready, features.isFetching, features.isFirstRun, location.pathname, navigate]);
 }

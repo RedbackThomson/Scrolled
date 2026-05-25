@@ -12,7 +12,10 @@ import type { GameDataSource, WzNodeInfo } from '@/parser';
  * calls — everything else throws so a regression that adds new reads is
  * loud instead of silently passing.
  */
-function makeSource(tree: Record<string, WzNodeInfo[]>, nodes: Record<string, WzNodeInfo>): GameDataSource {
+function makeSource(
+  tree: Record<string, WzNodeInfo[]>,
+  nodes: Record<string, WzNodeInfo>,
+): GameDataSource {
   return {
     init: async () => {},
     load: async () => ({ loaded: [], errors: [] }),

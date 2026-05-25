@@ -61,12 +61,7 @@ export function EntityRow({
       )}
     >
       {linkable ? (
-        <EntityLink
-          entity={entity}
-          id={id}
-          className={linkClass}
-          triggerClassName={linkClass}
-        >
+        <EntityLink entity={entity} id={id} className={linkClass} triggerClassName={linkClass}>
           {body}
         </EntityLink>
       ) : (
@@ -91,4 +86,3 @@ const ENTITY_LABEL: Record<EntityKind, string> = {
   map: 'Map',
   quest: 'Quest',
 };
-

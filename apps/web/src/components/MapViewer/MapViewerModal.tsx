@@ -49,10 +49,7 @@ export function MapViewerModal({
   // Built once per (portals, mapId) and shared with the sidebar (to render
   // "Same map -> foo" labels) and the canvas (to highlight every portal in
   // the same teleport chain when one is selected/hovered).
-  const portalGraph = useMemo(
-    () => buildPortalGraph(portals, mapId),
-    [portals, mapId],
-  );
+  const portalGraph = useMemo(() => buildPortalGraph(portals, mapId), [portals, mapId]);
 
   const counts = useMemo<Record<LayerKey, number>>(() => {
     let spawns = 0;
@@ -79,11 +76,7 @@ export function MapViewerModal({
     setVisible((v) => (v[key] ? v : { ...v, [key]: true }));
   };
 
-  const title = map
-    ? map.name
-      ? `${map.name} · ${map.id}`
-      : `Map ${map.id}`
-    : `Map ${mapId}`;
+  const title = map ? (map.name ? `${map.name} · ${map.id}` : `Map ${map.id}`) : `Map ${mapId}`;
 
   return (
     <Modal

@@ -81,11 +81,7 @@ export function EntityIcon({
     <img
       src={url}
       alt={alt ?? ''}
-      className={cn(
-        'inline-block rounded object-contain',
-        fit ? 'h-auto w-auto' : '',
-        className,
-      )}
+      className={cn('inline-block rounded object-contain', fit ? 'h-auto w-auto' : '', className)}
       style={boxStyle}
       onError={(e) => {
         log.warn('img onError', { entity, id, event: e.type });

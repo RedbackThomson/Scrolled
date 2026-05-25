@@ -83,10 +83,7 @@ export default function MapDetail() {
   const viewerState = useMemo(() => parseViewerParam(viewerParam), [viewerParam]);
 
   const writeViewerParam = useCallback(
-    (
-      next: { open: boolean; highlight: MapViewerHighlight | null },
-      opts: { replace: boolean },
-    ) => {
+    (next: { open: boolean; highlight: MapViewerHighlight | null }, opts: { replace: boolean }) => {
       setSearchParams(
         (prev) => {
           const params = new URLSearchParams(prev);
@@ -106,8 +103,7 @@ export default function MapDetail() {
   // doesn't fill up with every entity the user clicks on.
   const openViewer = (highlight: MapViewerHighlight | null = null) =>
     writeViewerParam({ open: true, highlight }, { replace: false });
-  const closeViewer = () =>
-    writeViewerParam({ open: false, highlight: null }, { replace: false });
+  const closeViewer = () => writeViewerParam({ open: false, highlight: null }, { replace: false });
   const setViewerSelection = (highlight: MapViewerHighlight | null) =>
     writeViewerParam({ open: true, highlight }, { replace: true });
 
@@ -119,8 +115,7 @@ export default function MapDetail() {
         label: 'Open in MapViewer',
         keywords: ['minimap', 'viewer', 'map'],
         icon: Maximize,
-        onSelect: () =>
-          writeViewerParam({ open: true, highlight: null }, { replace: false }),
+        onSelect: () => writeViewerParam({ open: true, highlight: null }, { replace: false }),
       },
       {
         id: 'copy-map-id',
@@ -195,7 +190,7 @@ export default function MapDetail() {
                   type="button"
                   onClick={() => openViewer()}
                   aria-label="Open map viewer"
-                  className="border-border bg-card hover:ring-primary/40 inline-flex max-w-full items-center justify-start rounded-md border p-3 transition hover:ring-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                  className="border-border bg-card hover:ring-primary/40 focus-visible:ring-primary/60 inline-flex max-w-full items-center justify-start rounded-md border p-3 transition hover:ring-2 focus-visible:outline-none focus-visible:ring-2"
                 >
                   <EntityIcon
                     entity="map-mini"
@@ -238,7 +233,7 @@ export default function MapDetail() {
                       id={n.npcId}
                       name={n.name}
                       meta={
-                        (n.x !== null || n.y !== null) ? (
+                        n.x !== null || n.y !== null ? (
                           <span className="font-mono">
                             ({n.x ?? '?'}, {n.y ?? '?'})
                           </span>
@@ -251,7 +246,7 @@ export default function MapDetail() {
                             onClick={() => openViewer({ kind: 'npc', key: String(n.npcId) })}
                             aria-label={`Show ${n.name ?? `NPC ${n.npcId}`} on map`}
                             title="Show on map"
-                            className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
+                            className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition focus-visible:opacity-100 group-hover:opacity-100"
                           >
                             <MapPin className="h-4 w-4" />
                           </button>
@@ -300,7 +295,7 @@ export default function MapDetail() {
                             onClick={() => openViewer({ kind: 'mob', key: String(mob.mobId) })}
                             aria-label={`Show ${mob.name ?? `Mob ${mob.mobId}`} on map`}
                             title="Show on map"
-                            className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
+                            className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition focus-visible:opacity-100 group-hover:opacity-100"
                           >
                             <MapPin className="h-4 w-4" />
                           </button>
@@ -367,7 +362,7 @@ export default function MapDetail() {
           onSelectionChange={setViewerSelection}
         />
 
-        <aside className="border-border bg-card text-card-foreground self-start space-y-4 rounded-md border p-4 text-sm">
+        <aside className="border-border bg-card text-card-foreground space-y-4 self-start rounded-md border p-4 text-sm">
           <section>
             <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Info</h2>
             <dl className="divide-border divide-y">
@@ -402,9 +397,7 @@ export default function MapDetail() {
             <section>
               <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Stats</h2>
               <dl className="divide-border divide-y">
-                {m.fieldLimit !== null && (
-                  <Row label="Field limit" value={String(m.fieldLimit)} />
-                )}
+                {m.fieldLimit !== null && <Row label="Field limit" value={String(m.fieldLimit)} />}
                 {m.mobRate !== null && <Row label="Mob rate" value={m.mobRate.toFixed(2)} />}
               </dl>
             </section>
@@ -450,9 +443,10 @@ function RowLink({ label, id, name }: { label: string; id: number; name: string 
 //   "1"        → modal open, no highlight
 //   "npc:1234" → modal open, NPC 1234 highlighted (likewise mob:, portal:)
 // Splits on the first `:` so portal names containing colons round-trip.
-function parseViewerParam(
-  value: string | null,
-): { open: boolean; highlight: MapViewerHighlight | null } {
+function parseViewerParam(value: string | null): {
+  open: boolean;
+  highlight: MapViewerHighlight | null;
+} {
   if (!value) return { open: false, highlight: null };
   if (value === '1') return { open: true, highlight: null };
   const idx = value.indexOf(':');
@@ -466,10 +460,7 @@ function parseViewerParam(
   return { open: true, highlight: null };
 }
 
-function serializeViewerParam(
-  open: boolean,
-  highlight: MapViewerHighlight | null,
-): string | null {
+function serializeViewerParam(open: boolean, highlight: MapViewerHighlight | null): string | null {
   if (!open) return null;
   if (!highlight) return '1';
   return `${highlight.kind}:${highlight.key}`;

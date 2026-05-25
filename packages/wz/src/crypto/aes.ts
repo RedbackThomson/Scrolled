@@ -34,13 +34,9 @@ export async function aesChainEncryptZeros(
   keyBuf.set(key);
   const ivBuf = new Uint8Array(new ArrayBuffer(ivBlock.length));
   ivBuf.set(ivBlock);
-  const cryptoKey = await subtle.importKey(
-    'raw',
-    keyBuf,
-    { name: 'AES-CBC', length: 256 },
-    false,
-    ['encrypt'],
-  );
+  const cryptoKey = await subtle.importKey('raw', keyBuf, { name: 'AES-CBC', length: 256 }, false, [
+    'encrypt',
+  ]);
   const plaintext = new Uint8Array(new ArrayBuffer(numBlocks * 16));
   const ciphertext = new Uint8Array(
     await subtle.encrypt({ name: 'AES-CBC', iv: ivBuf }, cryptoKey, plaintext),

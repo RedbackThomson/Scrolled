@@ -11,11 +11,7 @@
 const channel4 = (n: number) => ((n << 4) | n) & 0xff;
 
 /** BGRA4444 — 2 bytes per pixel, low/high nibble of each byte encodes one channel. */
-export function decodeBgra4444(
-  raw: Uint8Array,
-  width: number,
-  height: number,
-): Uint8ClampedArray {
+export function decodeBgra4444(raw: Uint8Array, width: number, height: number): Uint8ClampedArray {
   const expected = width * height * 2;
   if (raw.length < expected) {
     throw new RangeError(`BGRA4444 raw too short: have ${raw.length}, need ${expected}`);
@@ -27,19 +23,15 @@ export function decodeBgra4444(
     const bg = raw[i]!;
     const ra = raw[i + 1]!;
     out[p + 2] = channel4(bg & 0x0f); // B → store at index 2 of RGBA
-    out[p + 1] = channel4(bg >>> 4);  // G
+    out[p + 1] = channel4(bg >>> 4); // G
     out[p + 0] = channel4(ra & 0x0f); // R
-    out[p + 3] = channel4(ra >>> 4);  // A
+    out[p + 3] = channel4(ra >>> 4); // A
   }
   return out;
 }
 
 /** BGRA8888 — already a full byte per channel; swap B and R into RGBA. */
-export function decodeBgra8888(
-  raw: Uint8Array,
-  width: number,
-  height: number,
-): Uint8ClampedArray {
+export function decodeBgra8888(raw: Uint8Array, width: number, height: number): Uint8ClampedArray {
   const expected = width * height * 4;
   if (raw.length < expected) {
     throw new RangeError(`BGRA8888 raw too short: have ${raw.length}, need ${expected}`);
@@ -55,11 +47,7 @@ export function decodeBgra8888(
 }
 
 /** ARGB1555 — 2 bytes per pixel, 1 alpha + 5R + 5G + 5B bits. */
-export function decodeArgb1555(
-  raw: Uint8Array,
-  width: number,
-  height: number,
-): Uint8ClampedArray {
+export function decodeArgb1555(raw: Uint8Array, width: number, height: number): Uint8ClampedArray {
   const out = new Uint8ClampedArray(width * height * 4);
   for (let i = 0, p = 0; i < raw.length; i += 2, p += 4) {
     const word = raw[i]! | (raw[i + 1]! << 8);
@@ -76,11 +64,7 @@ export function decodeArgb1555(
 }
 
 /** RGB565 — 2 bytes per pixel; opaque (alpha = 0xFF). */
-export function decodeRgb565(
-  raw: Uint8Array,
-  width: number,
-  height: number,
-): Uint8ClampedArray {
+export function decodeRgb565(raw: Uint8Array, width: number, height: number): Uint8ClampedArray {
   const out = new Uint8ClampedArray(width * height * 4);
   for (let i = 0, p = 0; i < raw.length; i += 2, p += 4) {
     const word = raw[i]! | (raw[i + 1]! << 8);
@@ -105,12 +89,7 @@ function rgb565ToRgb(c: number): [number, number, number] {
 }
 
 function expandDxtColors(c0: number, c1: number): [number, number, number][] {
-  const out: [number, number, number][] = [
-    rgb565ToRgb(c0),
-    rgb565ToRgb(c1),
-    [0, 0, 0],
-    [0, 0, 0],
-  ];
+  const out: [number, number, number][] = [rgb565ToRgb(c0), rgb565ToRgb(c1), [0, 0, 0], [0, 0, 0]];
   // DXT colour interpolation matches the c0 > c1 branch used by MapleLib /
   // @tybys/wz (DXT5 always uses this branch since it has an explicit alpha
   // table).
@@ -151,11 +130,7 @@ function setPixel(
   out[offset + 3] = alpha;
 }
 
-export function decodeDxt3(
-  raw: Uint8Array,
-  width: number,
-  height: number,
-): Uint8ClampedArray {
+export function decodeDxt3(raw: Uint8Array, width: number, height: number): Uint8ClampedArray {
   const out = new Uint8ClampedArray(width * height * 4);
   for (let y = 0; y < height; y += 4) {
     for (let x = 0; x < width; x += 4) {
@@ -183,11 +158,7 @@ export function decodeDxt3(
   return out;
 }
 
-export function decodeDxt5(
-  raw: Uint8Array,
-  width: number,
-  height: number,
-): Uint8ClampedArray {
+export function decodeDxt5(raw: Uint8Array, width: number, height: number): Uint8ClampedArray {
   const out = new Uint8ClampedArray(width * height * 4);
   for (let y = 0; y < height; y += 4) {
     for (let x = 0; x < width; x += 4) {

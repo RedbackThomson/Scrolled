@@ -14,7 +14,13 @@ interface QuestLinkProps {
   triggerClassName?: string;
 }
 
-export function QuestLink({ id, children, className, noPreview, triggerClassName }: QuestLinkProps) {
+export function QuestLink({
+  id,
+  children,
+  className,
+  noPreview,
+  triggerClassName,
+}: QuestLinkProps) {
   const link = (
     <Link to={`/quests/${id}`} className={className}>
       {children}

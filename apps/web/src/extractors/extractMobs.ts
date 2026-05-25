@@ -99,9 +99,7 @@ export async function extractMobs(
     // reward child is an integer leaf containing an item or equip ID. The
     // node may be absent for mobs that have no Monster Book entry — that's
     // expected and not an error.
-    const rewardChildren = await source.listChildren(
-      `String.wz/MonsterBook.img/${id}/reward`,
-    );
+    const rewardChildren = await source.listChildren(`String.wz/MonsterBook.img/${id}/reward`);
     for (const r of rewardChildren) {
       const itemId = typeof r.scalar === 'number' ? r.scalar : Number(r.scalar);
       if (Number.isFinite(itemId) && itemId > 0) {

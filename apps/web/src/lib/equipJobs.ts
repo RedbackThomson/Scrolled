@@ -6,13 +6,7 @@
 // 1/2/4/8/16 are the five non-Beginner job lines and only appear when the
 // equip is restricted to those classes.
 
-export type EquipClass =
-  | 'Beginner'
-  | 'Warrior'
-  | 'Magician'
-  | 'Bowman'
-  | 'Thief'
-  | 'Pirate';
+export type EquipClass = 'Beginner' | 'Warrior' | 'Magician' | 'Bowman' | 'Thief' | 'Pirate';
 
 export const ALL_EQUIP_CLASSES: readonly EquipClass[] = [
   'Beginner',

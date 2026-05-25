@@ -93,9 +93,7 @@ export function Modal({
         <div className="flex items-start justify-between gap-3 p-4">
           <div className="min-w-0 space-y-1">
             <h2 className="truncate text-base font-semibold">{title}</h2>
-            {description && (
-              <p className="text-muted-foreground text-xs">{description}</p>
-            )}
+            {description && <p className="text-muted-foreground text-xs">{description}</p>}
           </div>
           <button
             type="button"
@@ -107,9 +105,7 @@ export function Modal({
             <X className="h-4 w-4" />
           </button>
         </div>
-        <div className={cn('border-border border-t', bodyClassName ?? 'px-4 py-3')}>
-          {children}
-        </div>
+        <div className={cn('border-border border-t', bodyClassName ?? 'px-4 py-3')}>{children}</div>
         {footer && (
           <div className="border-border bg-muted/30 flex items-center justify-end gap-2 rounded-b-lg border-t px-4 py-3">
             {footer}

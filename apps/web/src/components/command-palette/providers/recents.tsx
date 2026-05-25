@@ -1,9 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Clock, History } from 'lucide-react';
-import {
-  CommandGroup,
-  CommandItem as CommandItemPrimitive,
-} from '@/components/ui/command';
+import { CommandGroup, CommandItem as CommandItemPrimitive } from '@/components/ui/command';
 import { iconForEntity, labelForEntityKind, routeForEntity } from '@/lib/entityRoutes';
 import { useRecentEntities, useRecentQueries } from '@/lib/recents';
 import { useCommandPalette } from '@/lib/useCommandPalette';
@@ -27,9 +24,7 @@ export function RecentsProvider() {
     .filter((e) => fuzzy(query, `${e.name} ${labelForEntityKind(e.entity)}`))
     .slice(0, query.trim() ? 12 : 6);
 
-  const visibleQueries = query.trim()
-    ? []
-    : queries.items.slice(0, 5);
+  const visibleQueries = query.trim() ? [] : queries.items.slice(0, 5);
 
   if (visibleEntities.length === 0 && visibleQueries.length === 0) return null;
 

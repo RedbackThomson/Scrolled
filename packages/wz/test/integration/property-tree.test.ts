@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import type {
-  WzImage} from '@tybys/wz';
+import type { WzImage } from '@tybys/wz';
 import {
   WzFile,
   WzMapleVersion,
@@ -99,7 +98,10 @@ function classifyOracle(p: WzObject): string {
   if (p instanceof WzConvexProperty) return 'convex';
   if (p instanceof WzSubProperty) return 'sub';
   // Sound (WzBinaryProperty), Lua, etc.
-  return p.constructor.name.replace(/^Wz/, '').replace(/Property$/, '').toLowerCase();
+  return p.constructor.name
+    .replace(/^Wz/, '')
+    .replace(/Property$/, '')
+    .toLowerCase();
 }
 
 function walkOracle(props: Iterable<WzObject>, base: string, out: OracleWalk[]): void {
@@ -107,8 +109,12 @@ function walkOracle(props: Iterable<WzObject>, base: string, out: OracleWalk[]):
     const path = base ? `${base}/${p.name}` : p.name;
     const type = classifyOracle(p);
     const entry: OracleWalk = { path, type };
-    if (p instanceof WzShortProperty || p instanceof WzIntProperty
-        || p instanceof WzFloatProperty || p instanceof WzDoubleProperty) {
+    if (
+      p instanceof WzShortProperty ||
+      p instanceof WzIntProperty ||
+      p instanceof WzFloatProperty ||
+      p instanceof WzDoubleProperty
+    ) {
       entry.value = (p as unknown as { value: number }).value;
     } else if (p instanceof WzLongProperty) {
       entry.value = (p as unknown as { value: bigint }).value;

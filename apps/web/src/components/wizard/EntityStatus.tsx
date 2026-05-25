@@ -11,7 +11,13 @@ import type { WizardFile } from './StepFiles';
  */
 const ENTITY_FEATURE: Record<
   ExtractorKey,
-  { flag: keyof Pick<Features, 'hasItems' | 'hasEquips' | 'hasMobs' | 'hasNpcs' | 'hasMaps' | 'hasQuests'>; countKey: 'items' | 'equips' | 'mobs' | 'npcs' | 'maps' | 'quests' }
+  {
+    flag: keyof Pick<
+      Features,
+      'hasItems' | 'hasEquips' | 'hasMobs' | 'hasNpcs' | 'hasMaps' | 'hasQuests'
+    >;
+    countKey: 'items' | 'equips' | 'mobs' | 'npcs' | 'maps' | 'quests';
+  }
 > = {
   item: { flag: 'hasItems', countKey: 'items' },
   equip: { flag: 'hasEquips', countKey: 'equips' },
@@ -22,13 +28,7 @@ const ENTITY_FEATURE: Record<
 };
 
 type ChipState = 'needed' | 'ready' | 'hashing' | 'already-loaded' | 'error';
-type RowState =
-  | 'loaded'
-  | 'will-refresh'
-  | 'will-load'
-  | 'pending'
-  | 'missing-deps'
-  | 'empty';
+type RowState = 'loaded' | 'will-refresh' | 'will-load' | 'pending' | 'missing-deps' | 'empty';
 
 interface Props {
   files: WizardFile[];
@@ -218,32 +218,27 @@ const CHIP_META: Record<
   { className: string; Icon: typeof CheckCircle2 | null; title: string }
 > = {
   needed: {
-    className:
-      'border-border text-muted-foreground border border-dashed bg-transparent',
+    className: 'border-border text-muted-foreground border border-dashed bg-transparent',
     Icon: null,
     title: 'Not provided yet',
   },
   ready: {
-    className:
-      'border-transparent bg-green-500/15 text-green-700 dark:text-green-300',
+    className: 'border-transparent bg-green-500/15 text-green-700 dark:text-green-300',
     Icon: CheckCircle2,
     title: 'Ready',
   },
   hashing: {
-    className:
-      'border-transparent bg-muted text-muted-foreground',
+    className: 'border-transparent bg-muted text-muted-foreground',
     Icon: Loader2,
     title: 'Reading…',
   },
   'already-loaded': {
-    className:
-      'border-transparent bg-green-500/10 text-green-700/80 dark:text-green-300/80',
+    className: 'border-transparent bg-green-500/10 text-green-700/80 dark:text-green-300/80',
     Icon: CheckCircle2,
     title: 'Already loaded',
   },
   error: {
-    className:
-      'border-transparent bg-destructive/15 text-destructive',
+    className: 'border-transparent bg-destructive/15 text-destructive',
     Icon: XCircle,
     title: 'Error',
   },

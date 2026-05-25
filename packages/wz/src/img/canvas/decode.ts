@@ -120,7 +120,9 @@ async function lenientInflate(zlibData: Uint8Array, expectedSize: number): Promi
     const zlib = await import('node:zlib');
     await new Promise<void>((resolve) => {
       const stream = zlib.createInflate();
-      stream.on('data', (chunk: Buffer) => append(new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength)));
+      stream.on('data', (chunk: Buffer) =>
+        append(new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength)),
+      );
       stream.on('end', () => resolve());
       stream.on('error', () => resolve());
       stream.end(zlibData);
@@ -129,7 +131,9 @@ async function lenientInflate(zlibData: Uint8Array, expectedSize: number): Promi
     // Browser / Worker: DecompressionStream('deflate') handles zlib-wrapped
     // streams; whatever bytes arrive before the stream closes are kept.
     const ds = new DecompressionStream('deflate');
-    const reader = new Response(new Blob([new Uint8Array(zlibData)])).body!.pipeThrough(ds).getReader();
+    const reader = new Response(new Blob([new Uint8Array(zlibData)]))
+      .body!.pipeThrough(ds)
+      .getReader();
     try {
       while (true) {
         const { value, done } = await reader.read();

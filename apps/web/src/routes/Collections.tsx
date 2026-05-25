@@ -38,12 +38,7 @@ export default function Collections() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setImportOpen(true)}
-          >
+          <Button type="button" variant="outline" size="sm" onClick={() => setImportOpen(true)}>
             <Upload className="h-3.5 w-3.5" />
             Import
           </Button>

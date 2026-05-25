@@ -21,11 +21,7 @@ const LAYERS: Array<{
   { key: 'mobs', label: 'Mobs', Icon: Skull, swatch: 'text-rose-500' },
 ];
 
-export function MapViewerLayerControls({
-  value,
-  onChange,
-  counts,
-}: MapViewerLayerControlsProps) {
+export function MapViewerLayerControls({ value, onChange, counts }: MapViewerLayerControlsProps) {
   return (
     <div className="border-border bg-muted/30 flex shrink-0 flex-wrap items-center gap-2 border-t px-4 py-2">
       {LAYERS.map(({ key, label, Icon, swatch }) => {
@@ -39,7 +35,7 @@ export function MapViewerLayerControls({
             aria-pressed={on}
             className={cn(
               'border-border inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs',
-              on ? 'bg-card text-foreground' : 'bg-transparent text-muted-foreground opacity-60',
+              on ? 'bg-card text-foreground' : 'text-muted-foreground bg-transparent opacity-60',
             )}
           >
             <Icon className={cn('h-3.5 w-3.5', swatch)} strokeWidth={2.5} />

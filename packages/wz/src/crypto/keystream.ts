@@ -28,10 +28,7 @@ export async function getKeystream(
 }
 
 /** Build a fresh keystream of exactly `lengthBytes` bytes, ignoring the cache. */
-export async function buildKeystream(
-  version: WzVersion,
-  lengthBytes: number,
-): Promise<Uint8Array> {
+export async function buildKeystream(version: WzVersion, lengthBytes: number): Promise<Uint8Array> {
   if (lengthBytes === 0) return new Uint8Array(0);
   if (isUnencrypted(version)) return new Uint8Array(lengthBytes);
 

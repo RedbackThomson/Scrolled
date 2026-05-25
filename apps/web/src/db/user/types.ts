@@ -6,11 +6,7 @@
 // structured-cloneable.
 
 import type { EntityKind } from '../types';
-import type {
-  CollectionsExportJson,
-  ImportConflictMode,
-  ImportReport,
-} from './collectionsJson';
+import type { CollectionsExportJson, ImportConflictMode, ImportReport } from './collectionsJson';
 
 export type CollectionEntityType = Extract<
   EntityKind,
@@ -191,7 +187,5 @@ export interface UserDatabase {
   exportBytes(): Promise<Uint8Array>;
   /** Replace the live user.sqlite3 with the given bytes. Migrations run
    *  afterwards so an older export gets brought up to current. */
-  importBytes(
-    bytes: Uint8Array,
-  ): Promise<{ backend: 'opfs' | 'memory'; schemaVersion: number }>;
+  importBytes(bytes: Uint8Array): Promise<{ backend: 'opfs' | 'memory'; schemaVersion: number }>;
 }

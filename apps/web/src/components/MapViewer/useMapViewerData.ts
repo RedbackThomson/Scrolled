@@ -37,7 +37,6 @@ export function useMapViewerData(mapId: number, enabled: boolean) {
     npcs: npcsQ.data ?? [],
     portals: portalsQ.data ?? [],
     mobSpawns: mobSpawnsQ.data ?? [],
-    isLoading:
-      mapQ.isLoading || npcsQ.isLoading || portalsQ.isLoading || mobSpawnsQ.isLoading,
+    isLoading: mapQ.isLoading || npcsQ.isLoading || portalsQ.isLoading || mobSpawnsQ.isLoading,
   };
 }

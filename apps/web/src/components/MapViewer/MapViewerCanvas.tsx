@@ -1,18 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import {
-  DoorOpen,
-  Repeat,
-  Skull,
-  Sparkles,
-  Users,
-  type LucideIcon,
-} from 'lucide-react';
-import type {
-  MapMobSpawnWithName,
-  MapNpcWithName,
-  MapPortalRecord,
-  MapRecord,
-} from '@/db';
+import { DoorOpen, Repeat, Skull, Sparkles, Users, type LucideIcon } from 'lucide-react';
+import type { MapMobSpawnWithName, MapNpcWithName, MapPortalRecord, MapRecord } from '@/db';
 import { MapHoverCard, MobHoverCard, NpcHoverCard } from '@/components/entity-links';
 import { classifyPortal, gameToPixel, type PortalGraph } from '@/lib/portal-types';
 import type { LayerVisibility, MapViewerHighlight } from './types';
@@ -79,7 +67,7 @@ export function MapViewerCanvas({
   // ring; siblings get a subtler violet ring (see MapViewerIcon).
   const linkedPortalIdxSet =
     effective?.kind === 'portal'
-      ? portalGraph.componentOf.get(Number(effective.key)) ?? null
+      ? (portalGraph.componentOf.get(Number(effective.key)) ?? null)
       : null;
   // Build a blob URL once per minimap blob. The DB returns a fresh
   // Uint8Array per query so the blob is keyed by reference, not content.
@@ -138,14 +126,14 @@ export function MapViewerCanvas({
 
   if (!blobUrl || centerX === null || centerY === null || mag === null || mag === 0) {
     return (
-      <div className="flex flex-1 items-center justify-center p-6 text-sm text-muted-foreground">
+      <div className="text-muted-foreground flex flex-1 items-center justify-center p-6 text-sm">
         This map has no minimap geometry.
       </div>
     );
   }
   if (!imgSize) {
     return (
-      <div className="flex flex-1 items-center justify-center p-6 text-sm text-muted-foreground">
+      <div className="text-muted-foreground flex flex-1 items-center justify-center p-6 text-sm">
         Loading minimap…
       </div>
     );
@@ -189,7 +177,7 @@ export function MapViewerCanvas({
   return (
     <div
       ref={scrollRef}
-      className="relative flex-1 overflow-auto bg-muted/30"
+      className="bg-muted/30 relative flex-1 overflow-auto"
       role="img"
       aria-label={`Map of ${map.name ?? `Map ${map.id}`}`}
     >
@@ -197,10 +185,7 @@ export function MapViewerCanvas({
           smaller than the scroll viewport, while still letting the grid track
           grow past `min-h/w-full` (triggering scroll) for larger maps. */}
       <div className="grid min-h-full min-w-full place-content-center p-6">
-        <div
-          style={{ width: width * scale, height: height * scale }}
-          className="relative"
-        >
+        <div style={{ width: width * scale, height: height * scale }} className="relative">
           <div
             style={{
               width,
@@ -284,7 +269,7 @@ export function MapViewerCanvas({
                   <MapHoverCard id={p.targetMapId} />
                 ) : (
                   <div className="text-xs">
-                    <div className="font-mono text-foreground">{p.portalName}</div>
+                    <div className="text-foreground font-mono">{p.portalName}</div>
                     <div className="text-muted-foreground">{meta.label}</div>
                     {p.targetMapId !== null && p.targetMapId !== 999999999 && (
                       <div className="text-muted-foreground">→ Map {p.targetMapId}</div>

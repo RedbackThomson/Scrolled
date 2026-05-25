@@ -17,7 +17,7 @@
       one page
 - [ ] On mob pages, link to maps with highest spawn rates/density
 - [x] Fork the parser to support better parallelism, error handling and API
-  stability
+      stability
 - [x] Detect version automatically
 - [x] Clean up wizard copy
 - [ ] Think about support for smooth version upgrades

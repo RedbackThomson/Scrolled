@@ -21,9 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  ColumnVisibility,
-} from './ColumnVisibility';
+import { ColumnVisibility } from './ColumnVisibility';
 import { ColumnFilterPopover } from './ColumnFilter';
 import type { TableUrlState, TableUrlStatePatch, TableSortDir } from './useTableUrlState';
 import type { ColumnFilter } from '@/db';
@@ -102,10 +100,7 @@ export function DataTable<TData>({
   onSelectionChange,
 }: DataTableProps<TData>) {
   const pinned = useMemo(() => new Set(pinnedColumns ?? []), [pinnedColumns]);
-  const defaultVisibleKey = useMemo(
-    () => [...defaultVisible].sort().join(','),
-    [defaultVisible],
-  );
+  const defaultVisibleKey = useMemo(() => [...defaultVisible].sort().join(','), [defaultVisible]);
 
   const columnVisibility: VisibilityState = useMemo(() => {
     const v: VisibilityState = {};
@@ -127,10 +122,7 @@ export function DataTable<TData>({
   );
 
   const pageIndex = Math.max(state.page - 1, 0);
-  const pagination = useMemo(
-    () => ({ pageIndex, pageSize: state.size }),
-    [pageIndex, state.size],
-  );
+  const pagination = useMemo(() => ({ pageIndex, pageSize: state.size }), [pageIndex, state.size]);
 
   const table = useReactTable<TData>({
     data: data as TData[],
@@ -270,9 +262,7 @@ export function DataTable<TData>({
                       if (el) el.indeterminate = someOnPageSelected;
                     }}
                     onChange={toggleAllOnPage}
-                    aria-label={
-                      allOnPageSelected ? 'Deselect all on page' : 'Select all on page'
-                    }
+                    aria-label={allOnPageSelected ? 'Deselect all on page' : 'Select all on page'}
                     className="border-input h-3.5 w-3.5 cursor-pointer rounded-sm"
                   />
                 </TableHead>
@@ -282,10 +272,7 @@ export function DataTable<TData>({
                 const canSort = header.column.getCanSort();
                 const isActive = state.sort === header.column.id;
                 const filterType = header.column.columnDef.meta?.filter;
-                const headerNode = flexRender(
-                  header.column.columnDef.header,
-                  header.getContext(),
-                );
+                const headerNode = flexRender(header.column.columnDef.header, header.getContext());
                 const labelText =
                   typeof header.column.columnDef.header === 'string'
                     ? header.column.columnDef.header

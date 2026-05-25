@@ -26,14 +26,14 @@ export const ELEMENT_ORDER: readonly ElementName[] = Object.values(ELEMENT_NAMES
 
 /** Lowercase name → WZ code. Powers case-insensitive lookups (palette
  *  grammar uses lowercase, column popovers pass Title-Case). */
-export const ELEMENT_CODE_BY_NAME: Readonly<Record<string, ElementCode>> =
-  Object.freeze(
-    Object.fromEntries(
-      (Object.entries(ELEMENT_NAMES) as [ElementCode, ElementName][]).map(
-        ([code, name]) => [name.toLowerCase(), code],
-      ),
-    ) as Record<string, ElementCode>,
-  );
+export const ELEMENT_CODE_BY_NAME: Readonly<Record<string, ElementCode>> = Object.freeze(
+  Object.fromEntries(
+    (Object.entries(ELEMENT_NAMES) as [ElementCode, ElementName][]).map(([code, name]) => [
+      name.toLowerCase(),
+      code,
+    ]),
+  ) as Record<string, ElementCode>,
+);
 
 export const STATUS_BY_LEVEL = {
   '1': 'immune',
@@ -84,8 +84,7 @@ export function parseMobElements(element?: string | null): Record<ElementName, E
   for (const name of ELEMENT_ORDER) result[name] = 'neutral';
   if (!element) return result;
   for (const [, code, level] of element.matchAll(/([ILFSHDP])([123])/g)) {
-    result[ELEMENT_NAMES[code as ElementCode]] =
-      STATUS_BY_LEVEL[level as ElementLevel];
+    result[ELEMENT_NAMES[code as ElementCode]] = STATUS_BY_LEVEL[level as ElementLevel];
   }
   return result;
 }

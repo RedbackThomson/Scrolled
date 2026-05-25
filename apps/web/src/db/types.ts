@@ -413,7 +413,9 @@ export interface GameDatabase {
   /** Maps where this mob spawns. */
   getMobMaps(mobId: number): Promise<MapRecord[]>;
   /** Mobs that drop the given item, joined to mob name + level. */
-  getItemDroppedBy(itemId: number): Promise<{ mobId: number; name: string; level: number | null }[]>;
+  getItemDroppedBy(
+    itemId: number,
+  ): Promise<{ mobId: number; name: string; level: number | null }[]>;
   /** Replace `mob_drops` rows for the affected mob IDs in one transaction. */
   replaceMobDrops(drops: MobDropRecord[]): Promise<void>;
 
@@ -476,10 +478,7 @@ export interface GameDatabase {
    * use this gap to render "tombstone" rows for collection members whose
    * underlying entity hasn't been loaded into the game DB.
    */
-  getEntitySummariesByIds(
-    entityType: EntityKind,
-    ids: readonly number[],
-  ): Promise<EntitySummary[]>;
+  getEntitySummariesByIds(entityType: EntityKind, ids: readonly number[]): Promise<EntitySummary[]>;
 
   recordDataset(input: {
     label: string;

@@ -182,7 +182,7 @@ export default function ItemDetail() {
           )}
         </article>
 
-        <aside className="border-border bg-card text-card-foreground self-start space-y-4 rounded-md border p-4 text-sm">
+        <aside className="border-border bg-card text-card-foreground space-y-4 self-start rounded-md border p-4 text-sm">
           <section>
             <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Info</h2>
             <dl className="divide-border divide-y">
@@ -196,12 +196,8 @@ export default function ItemDetail() {
             <section>
               <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Stats</h2>
               <dl className="divide-border divide-y">
-                {item.price !== null && (
-                  <Row label="Price" value={item.price.toLocaleString()} />
-                )}
-                {item.stackSize !== null && (
-                  <Row label="Stack" value={String(item.stackSize)} />
-                )}
+                {item.price !== null && <Row label="Price" value={item.price.toLocaleString()} />}
+                {item.stackSize !== null && <Row label="Stack" value={String(item.stackSize)} />}
                 {item.requiredLevel !== null && (
                   <Row label="Req. level" value={String(item.requiredLevel)} />
                 )}

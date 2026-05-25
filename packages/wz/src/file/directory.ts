@@ -61,9 +61,7 @@ function parseDir(
   reader.seek(dirOffset);
   const entryCount = reader.readCompressedInt32();
   if (entryCount < 0 || entryCount > 100_000) {
-    throw new Error(
-      `invalid directory entry count ${entryCount}; likely wrong versionHash`,
-    );
+    throw new Error(`invalid directory entry count ${entryCount}; likely wrong versionHash`);
   }
 
   const children: WzDirEntry[] = [];
@@ -111,7 +109,14 @@ function parseDir(
     const offset = decryptDirectoryOffset(offsetPos, header.dataStart, versionHash, encrypted);
 
     if (type === 3) {
-      children.push({ kind: 'dir', name: entryName, fileSize, checksum, offset, children: [] } as WzDirNode);
+      children.push({
+        kind: 'dir',
+        name: entryName,
+        fileSize,
+        checksum,
+        offset,
+        children: [],
+      } as WzDirNode);
     } else if (type === 4) {
       children.push({ kind: 'image', name: entryName, fileSize, checksum, offset });
     } else {

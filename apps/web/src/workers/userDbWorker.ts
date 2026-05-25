@@ -74,11 +74,7 @@ class WorkerUserDb {
     await this.ensureOpen();
     return this.api.addMember(collectionId, entityType, entityId, opts);
   }
-  async removeMember(
-    collectionId: number,
-    entityType: CollectionEntityType,
-    entityId: number,
-  ) {
+  async removeMember(collectionId: number, entityType: CollectionEntityType, entityId: number) {
     await this.ensureOpen();
     return this.api.removeMember(collectionId, entityType, entityId);
   }

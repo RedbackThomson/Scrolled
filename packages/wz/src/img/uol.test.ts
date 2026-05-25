@@ -17,10 +17,7 @@ const uolProp = (name: string, target: string): WzProperty => ({
 describe('resolveUol — synthetic', () => {
   it('resolves a sibling reference', () => {
     const root: WzProperty[] = [
-      subProp('info', [
-        intProp('iconRef', 99),
-        uolProp('icon', '../info/iconRef'),
-      ]),
+      subProp('info', [intProp('iconRef', 99), uolProp('icon', '../info/iconRef')]),
     ];
     const target = resolveUol(root, ['info', 'icon'], '../info/iconRef');
     expect(target?.type).toBe('int');
@@ -29,13 +26,7 @@ describe('resolveUol — synthetic', () => {
 
   it('walks up multiple levels with consecutive ..', () => {
     const root: WzProperty[] = [
-      subProp('a', [
-        subProp('b', [
-          subProp('c', [
-            uolProp('here', '../../../target'),
-          ]),
-        ]),
-      ]),
+      subProp('a', [subProp('b', [subProp('c', [uolProp('here', '../../../target')])])]),
       intProp('target', 7),
     ];
     const resolved = resolveUol(root, ['a', 'b', 'c', 'here'], '../../../target');
@@ -66,9 +57,7 @@ describe('resolveUol — synthetic', () => {
   });
 
   it('detects cycles and returns null', () => {
-    const root: WzProperty[] = [
-      subProp('group', [uolProp('a', 'b'), uolProp('b', 'a')]),
-    ];
+    const root: WzProperty[] = [subProp('group', [uolProp('a', 'b'), uolProp('b', 'a')])];
     expect(resolveUol(root, ['group', 'a'], 'b')).toBeNull();
   });
 });

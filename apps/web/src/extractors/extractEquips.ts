@@ -115,17 +115,17 @@ export async function extractEquips(
       detail: `${w.characterSlot} · ${w.id}`,
     });
 
-    const name = await readScalarString(source, `String.wz/Eqp.img/Eqp/${w.stringSlot}/${w.id}/name`);
+    const name = await readScalarString(
+      source,
+      `String.wz/Eqp.img/Eqp/${w.stringSlot}/${w.id}/name`,
+    );
     if (!name) {
       skipped.push({ reason: 'no localized name', path: w.imagePath });
       processed += 1;
       continue;
     }
     const description = unescapeWzString(
-      await readScalarString(
-        source,
-        `String.wz/Eqp.img/Eqp/${w.stringSlot}/${w.id}/desc`,
-      ),
+      await readScalarString(source, `String.wz/Eqp.img/Eqp/${w.stringSlot}/${w.id}/desc`),
     );
     const info = await readInfo(source, w.imagePath);
     const slotKey = normalizeEquipSlot(w.stringSlot);

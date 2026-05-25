@@ -112,9 +112,7 @@ for (const fixture of FIXTURES) {
     });
 
     it('decrypted offsets match', () => {
-      const ourByKey = new Map<string, FlatEntry>(
-        flattenOurs(ours).map((e) => [sortKey(e), e]),
-      );
+      const ourByKey = new Map<string, FlatEntry>(flattenOurs(ours).map((e) => [sortKey(e), e]));
       for (const ref of oracleFlat) {
         const ourEntry = ourByKey.get(sortKey(ref));
         expect(ourEntry, `missing entry for ${ref.path}`).toBeDefined();

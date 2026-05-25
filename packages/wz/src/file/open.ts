@@ -3,12 +3,7 @@ import { Reader } from '../io/Reader';
 import { getKeystream } from '../crypto/keystream';
 import { readHeader, type WzHeader } from './header';
 import { computeVersionHash, findVersionCandidates } from './versionHash';
-import {
-  readDirectory,
-  type WzDirEntry,
-  type WzDirNode,
-  type WzImageNode,
-} from './directory';
+import { readDirectory, type WzDirEntry, type WzDirNode, type WzImageNode } from './directory';
 import { readImage, type ParsedImage } from '../img/readImage';
 
 export interface OpenFileOptions {
@@ -53,17 +48,15 @@ export interface WzFile {
  * metadata even for Map.wz). Image bodies are parsed lazily on first call to
  * `readImage(path)` and memoised.
  */
-export async function openFile(
-  bytes: Uint8Array,
-  options: OpenFileOptions,
-): Promise<WzFile> {
+export async function openFile(bytes: Uint8Array, options: OpenFileOptions): Promise<WzFile> {
   const { version, name = '', mapleVersion: pinnedVersion } = options;
   const header = readHeader(new Reader(bytes));
   const keystream = await getKeystream(version, 256 * 1024);
 
-  const { mapleVersion, hash } = pinnedVersion !== undefined
-    ? { mapleVersion: pinnedVersion, hash: computeVersionHash(pinnedVersion).hash }
-    : detectMapleVersion(bytes, header, keystream);
+  const { mapleVersion, hash } =
+    pinnedVersion !== undefined
+      ? { mapleVersion: pinnedVersion, hash: computeVersionHash(pinnedVersion).hash }
+      : detectMapleVersion(bytes, header, keystream);
 
   const root = readDirectory({
     reader: new Reader(bytes, header.dataStart + 2),

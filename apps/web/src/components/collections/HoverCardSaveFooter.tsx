@@ -13,11 +13,7 @@ interface HoverCardSaveFooterProps {
   className?: string;
 }
 
-export function HoverCardSaveFooter({
-  entityType,
-  entityId,
-  className,
-}: HoverCardSaveFooterProps) {
+export function HoverCardSaveFooter({ entityType, entityId, className }: HoverCardSaveFooterProps) {
   return (
     <div className={cn('border-border -mx-3 mt-1.5 border-t px-3 pt-1.5', className)}>
       <CollectionPicker entityType={entityType} entityId={entityId}>
@@ -35,9 +31,7 @@ export function HoverCardSaveFooter({
             <BookmarkPlus className="h-3.5 w-3.5" aria-hidden />
             <span className="flex-1 text-left">Save to collection</span>
             {memberCount > 0 && (
-              <span className="text-foreground font-mono text-[10px]">
-                in {memberCount}
-              </span>
+              <span className="text-foreground font-mono text-[10px]">in {memberCount}</span>
             )}
           </button>
         )}

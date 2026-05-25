@@ -35,14 +35,7 @@ export const EXTRACTOR_DEPS = {
 } as const;
 
 export type ExtractorKey = keyof typeof EXTRACTOR_DEPS;
-export const ALL_EXTRACTOR_KEYS: ExtractorKey[] = [
-  'item',
-  'equip',
-  'mob',
-  'npc',
-  'map',
-  'quest',
-];
+export const ALL_EXTRACTOR_KEYS: ExtractorKey[] = ['item', 'equip', 'mob', 'npc', 'map', 'quest'];
 
 export interface PlannedExtractor {
   key: ExtractorKey;

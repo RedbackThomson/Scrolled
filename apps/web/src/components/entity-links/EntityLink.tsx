@@ -24,7 +24,14 @@ interface Props {
  * Dispatches to the type-specific EntityLink. Use this instead of
  * branching on entity at every call site.
  */
-export function EntityLink({ entity, id, children, className, triggerClassName, noPreview }: Props) {
+export function EntityLink({
+  entity,
+  id,
+  children,
+  className,
+  triggerClassName,
+  noPreview,
+}: Props) {
   switch (entity) {
     case 'item':
       return (

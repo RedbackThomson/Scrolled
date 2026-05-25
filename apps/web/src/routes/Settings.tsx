@@ -144,12 +144,12 @@ export default function Settings() {
                 <span
                   className={cn(
                     'text-foreground/80 ml-2 rounded px-2 py-0.5 text-xs font-medium',
-                    statusQ.data.backend === 'opfs'
-                      ? 'bg-green-500/15'
-                      : 'bg-amber-500/15',
+                    statusQ.data.backend === 'opfs' ? 'bg-green-500/15' : 'bg-amber-500/15',
                   )}
                 >
-                  {statusQ.data.backend === 'opfs' ? 'OPFS (persistent)' : 'memory (not persistent)'}
+                  {statusQ.data.backend === 'opfs'
+                    ? 'OPFS (persistent)'
+                    : 'memory (not persistent)'}
                 </span>
                 <span className="text-muted-foreground ml-auto text-xs">
                   schema v{statusQ.data.schemaVersion}
@@ -208,8 +208,8 @@ export default function Settings() {
         <div className="border-border bg-card text-card-foreground rounded-md border p-4">
           <h3 className="text-sm font-semibold">Recent setup runs</h3>
           <p className="text-muted-foreground mt-1 text-xs">
-            Each setup run records which files were loaded and what was indexed. Expand a row to
-            see per-file results and counts.
+            Each setup run records which files were loaded and what was indexed. Expand a row to see
+            per-file results and counts.
           </p>
           {datasetsQ.isLoading && (
             <p className="text-muted-foreground mt-2 text-sm">
@@ -252,8 +252,8 @@ export default function Settings() {
           <h3 className="text-sm font-semibold">Database file</h3>
           <p className="text-muted-foreground mt-1 text-xs">
             Save your library as a backup file, or restore from one. Useful for moving between
-            browsers or sharing a pre-built library. Importing replaces everything currently on
-            this device.
+            browsers or sharing a pre-built library. Importing replaces everything currently on this
+            device.
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <Button
@@ -523,14 +523,15 @@ function RunCard({ dataset: d }: { dataset: DatasetRecord }) {
                         {e.placeholderNames === 1 ? '' : 's'}
                       </span>
                     )}
-                    {e.error && (
-                      <span className="text-red-700 dark:text-red-300">· {e.error}</span>
-                    )}
+                    {e.error && <span className="text-red-700 dark:text-red-300">· {e.error}</span>}
                   </li>
                 ))}
                 {skippedExtractors.length > 0 && (
                   <li className="text-muted-foreground">
-                    Skipped: {skippedExtractors.map((e) => EXTRACTOR_LABELS[e.extractor] ?? e.extractor).join(', ')}
+                    Skipped:{' '}
+                    {skippedExtractors
+                      .map((e) => EXTRACTOR_LABELS[e.extractor] ?? e.extractor)
+                      .join(', ')}
                   </li>
                 )}
               </ul>

@@ -27,9 +27,7 @@ export function PaletteTrigger() {
       )}
     >
       <Search className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
-      <span className="text-muted-foreground flex-1 truncate">
-        Search or jump to…
-      </span>
+      <span className="text-muted-foreground flex-1 truncate">Search or jump to…</span>
       <kbd className="bg-muted text-muted-foreground pointer-events-none ml-2 hidden h-5 select-none items-center gap-0.5 rounded border px-1.5 font-mono text-[10px] sm:inline-flex">
         {isMac ? '⌘' : 'Ctrl'}
         <span>K</span>

@@ -1,10 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import {
-  CommandGroup,
-  CommandItem as CommandItemPrimitive,
-} from '@/components/ui/command';
+import { CommandGroup, CommandItem as CommandItemPrimitive } from '@/components/ui/command';
 import { getDbClient, type EntityKind } from '@/db';
 import { getSearchIndex, querySearch, type SearchHit } from '@/search';
 import { iconForEntity, labelForEntityKind, routeForEntity } from '@/lib/entityRoutes';
@@ -69,7 +66,11 @@ export function GlobalSearchProvider() {
         kinds.map((k) => db.getEntitySummariesByIds(k, [id]).then((rows) => ({ kind: k, rows }))),
       );
       return results.flatMap(({ kind, rows }) =>
-        rows.map((r) => ({ entity: kind, id: r.id, name: r.name ?? `${labelForEntityKind(kind)} ${r.id}` })),
+        rows.map((r) => ({
+          entity: kind,
+          id: r.id,
+          name: r.name ?? `${labelForEntityKind(kind)} ${r.id}`,
+        })),
       );
     },
     enabled: /^\d+$/.test(trimmed),
@@ -121,9 +122,7 @@ export function GlobalSearchProvider() {
             <Icon className="text-muted-foreground h-4 w-4" />
             <span className="min-w-0 flex-1 truncate">{hit.name}</span>
             <span className="text-muted-foreground shrink-0 font-mono text-xs">{hit.id}</span>
-            {subtitle && (
-              <span className="text-muted-foreground shrink-0 text-xs">{subtitle}</span>
-            )}
+            {subtitle && <span className="text-muted-foreground shrink-0 text-xs">{subtitle}</span>}
           </CommandItemPrimitive>
         );
       })}

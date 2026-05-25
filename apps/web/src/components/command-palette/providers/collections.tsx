@@ -1,14 +1,7 @@
 import { BookmarkPlus, FolderPlus, Folder } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import {
-  CommandGroup,
-  CommandItem as CommandItemPrimitive,
-} from '@/components/ui/command';
-import {
-  useCollectionsList,
-  useCreateCollection,
-  useToggleMembership,
-} from '@/lib/useCollections';
+import { CommandGroup, CommandItem as CommandItemPrimitive } from '@/components/ui/command';
+import { useCollectionsList, useCreateCollection, useToggleMembership } from '@/lib/useCollections';
 import { useCommandPalette } from '@/lib/useCommandPalette';
 import type { CollectionEntityType } from '@/db/user';
 
@@ -19,8 +12,14 @@ function fuzzy(q: string, hay: string): boolean {
 }
 
 function isCollectableEntity(entity?: string): entity is CollectionEntityType {
-  return entity === 'item' || entity === 'equip' || entity === 'mob' ||
-    entity === 'npc' || entity === 'map' || entity === 'quest';
+  return (
+    entity === 'item' ||
+    entity === 'equip' ||
+    entity === 'mob' ||
+    entity === 'npc' ||
+    entity === 'map' ||
+    entity === 'quest'
+  );
 }
 
 /**
@@ -65,9 +64,7 @@ export function CollectionsContextProvider() {
         >
           <BookmarkPlus className="text-muted-foreground h-4 w-4" />
           <span className="min-w-0 flex-1 truncate">Add to {c.name}</span>
-          <span className="text-muted-foreground shrink-0 font-mono text-xs">
-            {c.memberCount}
-          </span>
+          <span className="text-muted-foreground shrink-0 font-mono text-xs">{c.memberCount}</span>
         </CommandItemPrimitive>
       ))}
     </CommandGroup>
@@ -151,9 +148,7 @@ export function CollectionsNavigationProvider() {
         >
           <Folder className="text-muted-foreground h-4 w-4" />
           <span className="min-w-0 flex-1 truncate">{c.name}</span>
-          <span className="text-muted-foreground shrink-0 font-mono text-xs">
-            {c.memberCount}
-          </span>
+          <span className="text-muted-foreground shrink-0 font-mono text-xs">{c.memberCount}</span>
         </CommandItemPrimitive>
       ))}
     </CommandGroup>

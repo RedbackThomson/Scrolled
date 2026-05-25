@@ -1,11 +1,7 @@
 // Domain query helpers built on top of the thin `Sqlite` wrapper.
 
 import { EQUIP_CLASS_BIT, type EquipClass } from '@/lib/equipJobs';
-import {
-  ELEMENT_CODE_BY_NAME,
-  LEVEL_BY_STATUS,
-  type ElementStatus,
-} from '@/lib/mobElements';
+import { ELEMENT_CODE_BY_NAME, LEVEL_BY_STATUS, type ElementStatus } from '@/lib/mobElements';
 import type { Sqlite, Row } from './sqlite';
 import type {
   ColumnFilter,
@@ -65,62 +61,62 @@ interface OrderSpec {
 }
 
 const ITEM_ORDER: Record<string, OrderSpec> = {
-  name:          { col: 'name',           defaultDir: 'asc'  },
-  category:      { col: 'category',       defaultDir: 'asc'  },
-  subcategory:   { col: 'subcategory',    defaultDir: 'asc'  },
-  requiredLevel: { col: 'required_level', defaultDir: 'asc'  },
-  price:         { col: 'price',          defaultDir: 'desc' },
-  id:            { col: 'id',             defaultDir: 'asc'  },
+  name: { col: 'name', defaultDir: 'asc' },
+  category: { col: 'category', defaultDir: 'asc' },
+  subcategory: { col: 'subcategory', defaultDir: 'asc' },
+  requiredLevel: { col: 'required_level', defaultDir: 'asc' },
+  price: { col: 'price', defaultDir: 'desc' },
+  id: { col: 'id', defaultDir: 'asc' },
 };
 const ITEM_ORDER_DEFAULT = 'name';
 
 const EQUIP_ORDER: Record<string, OrderSpec> = {
-  name:          { col: 'name',           defaultDir: 'asc'  },
-  slot:          { col: 'slot',           defaultDir: 'asc'  },
-  equipType:     { col: 'equip_type',     defaultDir: 'asc'  },
-  cash:          { col: 'cash',           defaultDir: 'asc'  },
-  requiredLevel: { col: 'required_level', defaultDir: 'asc'  },
-  attack:        { col: 'attack',         defaultDir: 'desc' },
-  magicAttack:   { col: 'magic_attack',   defaultDir: 'desc' },
-  defense:       { col: 'defense',        defaultDir: 'desc' },
-  magicDefense:  { col: 'magic_defense',  defaultDir: 'desc' },
-  accuracy:      { col: 'accuracy',       defaultDir: 'desc' },
-  avoidability:  { col: 'avoidability',   defaultDir: 'desc' },
-  upgradeSlots:  { col: 'upgrade_slots',  defaultDir: 'desc' },
-  id:            { col: 'id',             defaultDir: 'asc'  },
+  name: { col: 'name', defaultDir: 'asc' },
+  slot: { col: 'slot', defaultDir: 'asc' },
+  equipType: { col: 'equip_type', defaultDir: 'asc' },
+  cash: { col: 'cash', defaultDir: 'asc' },
+  requiredLevel: { col: 'required_level', defaultDir: 'asc' },
+  attack: { col: 'attack', defaultDir: 'desc' },
+  magicAttack: { col: 'magic_attack', defaultDir: 'desc' },
+  defense: { col: 'defense', defaultDir: 'desc' },
+  magicDefense: { col: 'magic_defense', defaultDir: 'desc' },
+  accuracy: { col: 'accuracy', defaultDir: 'desc' },
+  avoidability: { col: 'avoidability', defaultDir: 'desc' },
+  upgradeSlots: { col: 'upgrade_slots', defaultDir: 'desc' },
+  id: { col: 'id', defaultDir: 'asc' },
 };
 const EQUIP_ORDER_DEFAULT = 'name';
 
 const MOB_ORDER: Record<string, OrderSpec> = {
-  name:  { col: 'name',  defaultDir: 'asc'  },
-  level: { col: 'level', defaultDir: 'asc'  },
-  hp:    { col: 'hp',    defaultDir: 'asc'  },
-  mp:    { col: 'mp',    defaultDir: 'asc'  },
-  exp:   { col: 'exp',   defaultDir: 'desc' },
-  id:    { col: 'id',    defaultDir: 'asc'  },
+  name: { col: 'name', defaultDir: 'asc' },
+  level: { col: 'level', defaultDir: 'asc' },
+  hp: { col: 'hp', defaultDir: 'asc' },
+  mp: { col: 'mp', defaultDir: 'asc' },
+  exp: { col: 'exp', defaultDir: 'desc' },
+  id: { col: 'id', defaultDir: 'asc' },
 };
 const MOB_ORDER_DEFAULT = 'level';
 
 const NPC_ORDER: Record<string, OrderSpec> = {
   name: { col: 'name', defaultDir: 'asc' },
-  id:   { col: 'id',   defaultDir: 'asc' },
+  id: { col: 'id', defaultDir: 'asc' },
 };
 const NPC_ORDER_DEFAULT = 'name';
 
 const MAP_ORDER: Record<string, OrderSpec> = {
-  name:        { col: 'name',          defaultDir: 'asc' },
-  streetName:  { col: 'street_name',   defaultDir: 'asc' },
-  mobRate:     { col: 'mob_rate',      defaultDir: 'asc' },
+  name: { col: 'name', defaultDir: 'asc' },
+  streetName: { col: 'street_name', defaultDir: 'asc' },
+  mobRate: { col: 'mob_rate', defaultDir: 'asc' },
   returnMapId: { col: 'return_map_id', defaultDir: 'asc' },
-  id:          { col: 'id',            defaultDir: 'asc' },
+  id: { col: 'id', defaultDir: 'asc' },
 };
 const MAP_ORDER_DEFAULT = 'name';
 
 const QUEST_ORDER: Record<string, OrderSpec> = {
-  name:          { col: 'name',           defaultDir: 'asc' },
-  parent:        { col: 'parent',         defaultDir: 'asc' },
+  name: { col: 'name', defaultDir: 'asc' },
+  parent: { col: 'parent', defaultDir: 'asc' },
   requiredLevel: { col: 'required_level', defaultDir: 'asc' },
-  id:            { col: 'id',             defaultDir: 'asc' },
+  id: { col: 'id', defaultDir: 'asc' },
 };
 const QUEST_ORDER_DEFAULT = 'name';
 
@@ -164,67 +160,67 @@ interface FilterSpec {
 }
 
 const ITEM_FILTER: Record<string, FilterSpec> = {
-  name:          { col: 'name',           type: 'string' },
-  category:      { col: 'category',       type: 'string' },
-  subcategory:   { col: 'subcategory',    type: 'string' },
+  name: { col: 'name', type: 'string' },
+  category: { col: 'category', type: 'string' },
+  subcategory: { col: 'subcategory', type: 'string' },
   requiredLevel: { col: 'required_level', type: 'number' },
-  price:         { col: 'price',          type: 'number' },
-  id:            { col: 'id',             type: 'number' },
+  price: { col: 'price', type: 'number' },
+  id: { col: 'id', type: 'number' },
 };
 
 const EQUIP_FILTER: Record<string, FilterSpec> = {
-  name:          { col: 'name',           type: 'string' },
-  slot:          { col: 'slot',           type: 'string' },
-  equipType:     { col: 'equip_type',     type: 'string' },
+  name: { col: 'name', type: 'string' },
+  slot: { col: 'slot', type: 'string' },
+  equipType: { col: 'equip_type', type: 'string' },
   // cash is stored as INTEGER 0/1; range filters compare numerically, and
   // {min:1,max:1} or {min:0,max:0} from the UI's boolean filter type maps
   // cleanly to col = ?.
-  cash:          { col: 'cash',           type: 'number' },
+  cash: { col: 'cash', type: 'number' },
   requiredLevel: { col: 'required_level', type: 'number' },
-  attack:        { col: 'attack',         type: 'number' },
-  magicAttack:   { col: 'magic_attack',   type: 'number' },
-  defense:       { col: 'defense',        type: 'number' },
-  magicDefense:  { col: 'magic_defense',  type: 'number' },
-  accuracy:      { col: 'accuracy',       type: 'number' },
-  avoidability:  { col: 'avoidability',   type: 'number' },
-  upgradeSlots:  { col: 'upgrade_slots',  type: 'number' },
-  requiredJob:   { col: 'required_job',   type: 'classMask' },
-  id:            { col: 'id',             type: 'number' },
+  attack: { col: 'attack', type: 'number' },
+  magicAttack: { col: 'magic_attack', type: 'number' },
+  defense: { col: 'defense', type: 'number' },
+  magicDefense: { col: 'magic_defense', type: 'number' },
+  accuracy: { col: 'accuracy', type: 'number' },
+  avoidability: { col: 'avoidability', type: 'number' },
+  upgradeSlots: { col: 'upgrade_slots', type: 'number' },
+  requiredJob: { col: 'required_job', type: 'classMask' },
+  id: { col: 'id', type: 'number' },
 };
 
 const MOB_FILTER: Record<string, FilterSpec> = {
-  name:           { col: 'name',  type: 'string' },
-  level:          { col: 'level', type: 'number' },
-  hp:             { col: 'hp',    type: 'number' },
-  mp:             { col: 'mp',    type: 'number' },
-  exp:            { col: 'exp',   type: 'number' },
-  weakAgainst:    { col: 'element_attack', type: 'elementStatus', elementStatus: 'weak' },
-  strongAgainst:  { col: 'element_attack', type: 'elementStatus', elementStatus: 'resistant' },
-  immuneTo:       { col: 'element_attack', type: 'elementStatus', elementStatus: 'immune' },
+  name: { col: 'name', type: 'string' },
+  level: { col: 'level', type: 'number' },
+  hp: { col: 'hp', type: 'number' },
+  mp: { col: 'mp', type: 'number' },
+  exp: { col: 'exp', type: 'number' },
+  weakAgainst: { col: 'element_attack', type: 'elementStatus', elementStatus: 'weak' },
+  strongAgainst: { col: 'element_attack', type: 'elementStatus', elementStatus: 'resistant' },
+  immuneTo: { col: 'element_attack', type: 'elementStatus', elementStatus: 'immune' },
   // is_boss is INTEGER 0/1; same trick as equips.cash — a boolean column
   // filter ({min:1,max:1}) maps cleanly through the number filter path.
-  boss:           { col: 'is_boss', type: 'number' },
-  id:             { col: 'id',      type: 'number' },
+  boss: { col: 'is_boss', type: 'number' },
+  id: { col: 'id', type: 'number' },
 };
 
 const NPC_FILTER: Record<string, FilterSpec> = {
   name: { col: 'name', type: 'string' },
-  id:   { col: 'id',   type: 'number' },
+  id: { col: 'id', type: 'number' },
 };
 
 const MAP_FILTER: Record<string, FilterSpec> = {
-  name:        { col: 'name',          type: 'string' },
-  streetName:  { col: 'street_name',   type: 'string' },
-  mobRate:     { col: 'mob_rate',      type: 'number' },
+  name: { col: 'name', type: 'string' },
+  streetName: { col: 'street_name', type: 'string' },
+  mobRate: { col: 'mob_rate', type: 'number' },
   returnMapId: { col: 'return_map_id', type: 'number' },
-  id:          { col: 'id',            type: 'number' },
+  id: { col: 'id', type: 'number' },
 };
 
 const QUEST_FILTER: Record<string, FilterSpec> = {
-  name:          { col: 'name',           type: 'string' },
-  parent:        { col: 'parent',         type: 'string' },
+  name: { col: 'name', type: 'string' },
+  parent: { col: 'parent', type: 'string' },
   requiredLevel: { col: 'required_level', type: 'number' },
-  id:            { col: 'id',             type: 'number' },
+  id: { col: 'id', type: 'number' },
 };
 
 /**
@@ -281,11 +277,7 @@ function applyFilters(
       const esc = escapeLikeLiteral(`${code}${LEVEL_BY_STATUS[spec.elementStatus]}`);
       where.push(`${spec.col} LIKE ? ESCAPE '\\'`);
       params.push(`%${esc}%`);
-    } else if (
-      spec.type === 'classMask' &&
-      filter.kind === 'string' &&
-      filter.value
-    ) {
+    } else if (spec.type === 'classMask' && filter.kind === 'string' && filter.value) {
       const bit = EQUIP_CLASS_BIT[filter.value as EquipClass];
       if (bit === undefined) continue;
       // Bit-0 classes (Beginner) have no dedicated reqJob bit; only equips
@@ -1154,10 +1146,12 @@ export class DbApi implements GameDatabase {
         );
       }
       for (const r of rows.mobSpawns) {
-        this.sql.exec(
-          'INSERT INTO map_mob_spawns (map_id, mob_id, x, y) VALUES (?, ?, ?, ?)',
-          [r.mapId, r.mobId, r.x, r.y],
-        );
+        this.sql.exec('INSERT INTO map_mob_spawns (map_id, mob_id, x, y) VALUES (?, ?, ?, ?)', [
+          r.mapId,
+          r.mobId,
+          r.x,
+          r.y,
+        ]);
       }
     });
   }
@@ -1240,7 +1234,9 @@ export class DbApi implements GameDatabase {
 
   async listQuestParents(): Promise<string[]> {
     return this.sql
-      .selectObjects<{ parent: string }>(
+      .selectObjects<{
+        parent: string;
+      }>(
         `SELECT DISTINCT parent FROM quests WHERE parent IS NOT NULL AND parent <> '' ORDER BY parent`,
       )
       .map((r) => r.parent);
@@ -1462,21 +1458,14 @@ export class DbApi implements GameDatabase {
       );
       const id = Number(this.sql.selectValue('SELECT last_insert_rowid()'));
       // INSERT OR REPLACE so we self-heal from any orphaned rows whose
-       // dataset_id was recycled by AUTOINCREMENT after a `clearAllData`
-       // that pre-dated the fix to also clear these child tables.
+      // dataset_id was recycled by AUTOINCREMENT after a `clearAllData`
+      // that pre-dated the fix to also clear these child tables.
       for (const f of input.files) {
         this.sql.exec(
           `INSERT OR REPLACE INTO dataset_files
              (dataset_id, name, size, hash, load_status, load_error)
            VALUES (?, ?, ?, ?, ?, ?)`,
-          [
-            id,
-            f.name,
-            f.size ?? null,
-            f.hash ?? null,
-            f.loadStatus ?? null,
-            f.loadError ?? null,
-          ],
+          [id, f.name, f.size ?? null, f.hash ?? null, f.loadStatus ?? null, f.loadError ?? null],
         );
       }
       for (const e of input.extractors ?? []) {
@@ -1484,15 +1473,7 @@ export class DbApi implements GameDatabase {
           `INSERT OR REPLACE INTO extraction_extractors
              (dataset_id, extractor, status, rows, skipped_rows, placeholder_names, error)
            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [
-            id,
-            e.extractor,
-            e.status,
-            e.rows,
-            e.skippedRows,
-            e.placeholderNames,
-            e.error ?? null,
-          ],
+          [id, e.extractor, e.status, e.rows, e.skippedRows, e.placeholderNames, e.error ?? null],
         );
       }
       return this.readDataset(id)!;
@@ -1551,10 +1532,7 @@ export class DbApi implements GameDatabase {
     const rows = this.sql.selectObjects<{
       id: number;
       name: string | null;
-    }>(
-      `SELECT id, name FROM ${table} WHERE id IN (${placeholders})`,
-      ids as (string | number)[],
-    );
+    }>(`SELECT id, name FROM ${table} WHERE id IN (${placeholders})`, ids as (string | number)[]);
     return rows
       .filter((r) => r.name !== null && r.name !== '')
       .map((r) => ({ id: r.id, name: r.name as string }));
@@ -1564,7 +1542,9 @@ export class DbApi implements GameDatabase {
     return this.sql.exportBytes();
   }
 
-  async importBytes(bytes: Uint8Array): Promise<{ backend: 'opfs' | 'memory'; schemaVersion: number }> {
+  async importBytes(
+    bytes: Uint8Array,
+  ): Promise<{ backend: 'opfs' | 'memory'; schemaVersion: number }> {
     return this.sql.importBytes(bytes);
   }
 

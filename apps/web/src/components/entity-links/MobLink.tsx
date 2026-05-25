@@ -6,11 +6,7 @@ import { EntityIcon } from '@/components/EntityIcon';
 import { HoverPopover } from '@/components/HoverPopover';
 import { HoverCardSaveFooter } from '@/components/collections';
 import { getDbClient } from '@/db';
-import {
-  ELEMENT_GROUP_LABELS,
-  ELEMENT_STATUS_CLASSES,
-  elementsByStatus,
-} from '@/lib/mobElements';
+import { ELEMENT_GROUP_LABELS, ELEMENT_STATUS_CLASSES, elementsByStatus } from '@/lib/mobElements';
 
 const HOVER_CARD_STATUSES = ['immune', 'resistant', 'weak'] as const;
 

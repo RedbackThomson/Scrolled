@@ -194,12 +194,7 @@ export default function QuestDetail() {
                   />
                 ))}
                 {questPreReqs.map((r) => (
-                  <RequirementRow
-                    key={`questPre-${r.targetId}`}
-                    r={r}
-                    entity="quest"
-                    linkable
-                  />
+                  <RequirementRow key={`questPre-${r.targetId}`} r={r} entity="quest" linkable />
                 ))}
               </ul>
             )}
@@ -244,7 +239,7 @@ export default function QuestDetail() {
           </section>
         </article>
 
-        <aside className="border-border bg-card text-card-foreground self-start space-y-4 rounded-md border p-4 text-sm">
+        <aside className="border-border bg-card text-card-foreground space-y-4 self-start rounded-md border p-4 text-sm">
           <section>
             <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Info</h2>
             <dl className="divide-border divide-y">
@@ -305,10 +300,7 @@ function NpcRow({
   return (
     <li>
       {linkable ? (
-        <NpcLink
-          id={id}
-          className="hover:bg-accent flex items-center gap-3 px-3 py-1.5 text-sm"
-        >
+        <NpcLink id={id} className="hover:bg-accent flex items-center gap-3 px-3 py-1.5 text-sm">
           {rowContent}
         </NpcLink>
       ) : (
@@ -347,7 +339,11 @@ function RequirementRow({
       entity={entity}
       id={r.targetId}
       name={r.targetName}
-      meta={r.amount !== null && r.amount > 1 ? <span className="font-mono">×{r.amount}</span> : undefined}
+      meta={
+        r.amount !== null && r.amount > 1 ? (
+          <span className="font-mono">×{r.amount}</span>
+        ) : undefined
+      }
       linkable={linkable}
     />
   );
@@ -372,7 +368,11 @@ function RewardRow({ r, linkable }: { r: QuestRewardWithName; linkable: boolean 
       entity="item"
       id={r.targetId}
       name={r.targetName}
-      meta={r.amount !== null && r.amount > 1 ? <span className="font-mono">×{r.amount}</span> : undefined}
+      meta={
+        r.amount !== null && r.amount > 1 ? (
+          <span className="font-mono">×{r.amount}</span>
+        ) : undefined
+      }
       linkable={linkable}
     />
   );

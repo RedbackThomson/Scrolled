@@ -166,10 +166,7 @@ export function useExtractAll(opts: UseExtractAllOptions = {}) {
               phase: 'Saving map life + portals',
               current: 0,
               total:
-                r.mapNpcs.length +
-                r.mapMobs.length +
-                r.mapPortals.length +
-                r.mapMobSpawns.length,
+                r.mapNpcs.length + r.mapMobs.length + r.mapPortals.length + r.mapMobSpawns.length,
             });
             await db.replaceMapLife({
               npcs: r.mapNpcs,

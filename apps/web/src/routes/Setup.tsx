@@ -5,11 +5,7 @@ import { ArrowLeft, ArrowRight, Info, Loader2 } from 'lucide-react';
 import { detectVersion } from '@mushex/wz';
 import { Button } from '@/components/ui/button';
 import { WizardLayout, type WizardStep } from '@/components/wizard/WizardLayout';
-import {
-  StepFiles,
-  type DetectionState,
-  type WizardFile,
-} from '@/components/wizard/StepFiles';
+import { StepFiles, type DetectionState, type WizardFile } from '@/components/wizard/StepFiles';
 import { StepRun } from '@/components/wizard/StepRun';
 import { StepRestore, type RestoreState } from '@/components/wizard/StepRestore';
 import { buildPlan } from '@/components/wizard/plan';
@@ -82,10 +78,7 @@ export default function Setup() {
     // If we have a settled result whose source file is still present, do
     // nothing. If the source file was removed, drop back to idle so the
     // next render picks a new candidate.
-    if (
-      (detection.status === 'done' || detection.status === 'failed') &&
-      detection.sourceFile
-    ) {
+    if ((detection.status === 'done' || detection.status === 'failed') && detection.sourceFile) {
       const stillThere = files.some((f) => f.file.name === detection.sourceFile);
       if (stillThere) return;
       setDetection({
@@ -155,8 +148,7 @@ export default function Setup() {
       // In update mode with data already loaded, mirror Settings' confirm UX
       // before doing anything destructive. First-run has nothing to replace
       // (counts are all 0), so skip the dialog.
-      const hasData =
-        features.hasAny || (features.counts?.datasets ?? 0) > 0;
+      const hasData = features.hasAny || (features.counts?.datasets ?? 0) > 0;
       if (hasData) {
         const sizeMb = (file.size / 1_000_000).toFixed(1);
         const proceed = confirm(
@@ -263,7 +255,10 @@ export default function Setup() {
         currentStepId=""
         exitSlot={<ExitToApp />}
       >
-        <RestoreDropZone onPick={(f) => onRestoreFile(f, 0)} onSwitchBack={onSwitchBackFromRestore} />
+        <RestoreDropZone
+          onPick={(f) => onRestoreFile(f, 0)}
+          onSwitchBack={onSwitchBackFromRestore}
+        />
       </WizardLayout>
     );
   }
@@ -393,8 +388,7 @@ export default function Setup() {
       </>
     );
 
-  const title =
-    stepMode === 'update' ? 'Manage your wiki' : 'Set up your wiki';
+  const title = stepMode === 'update' ? 'Manage your wiki' : 'Set up your wiki';
   const subtitle =
     stepMode === 'update'
       ? 'Add files for more categories, refresh existing ones, or drop a backup to restore.'
@@ -438,7 +432,7 @@ function RestoreDropZone({
   const accept = (file: File | undefined) => {
     if (!file) return;
     if (!/\.(sqlite3?|db)$/i.test(file.name)) {
-      alert('That doesn\'t look like a database backup. Pick a .sqlite, .sqlite3, or .db file.');
+      alert("That doesn't look like a database backup. Pick a .sqlite, .sqlite3, or .db file.");
       return;
     }
     onPick(file);

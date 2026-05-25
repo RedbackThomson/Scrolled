@@ -65,9 +65,7 @@ export function useCollection(id: number | null): UseQueryResult<CollectionRecor
   });
 }
 
-export function useCollectionMembers(
-  id: number | null,
-): UseQueryResult<CollectionMember[]> {
+export function useCollectionMembers(id: number | null): UseQueryResult<CollectionMember[]> {
   const db = useUserDb();
   return useQuery({
     queryKey: collectionMembersKey(id ?? -1),
@@ -135,11 +133,7 @@ export interface ToggleMembershipArgs {
   member: boolean;
 }
 
-export function useToggleMembership(): UseMutationResult<
-  void,
-  Error,
-  ToggleMembershipArgs
-> {
+export function useToggleMembership(): UseMutationResult<void, Error, ToggleMembershipArgs> {
   const db = useUserDb();
   const invalidate = useInvalidateAll();
   return useMutation({
@@ -197,11 +191,7 @@ export function useBulkAddMembers(): UseMutationResult<
   });
 }
 
-export function useExportCollectionJson(): UseMutationResult<
-  CollectionsExportJson,
-  Error,
-  number
-> {
+export function useExportCollectionJson(): UseMutationResult<CollectionsExportJson, Error, number> {
   const db = useUserDb();
   return useMutation<CollectionsExportJson, Error, number>({
     mutationFn: (id) => db.exportCollectionJson(id),

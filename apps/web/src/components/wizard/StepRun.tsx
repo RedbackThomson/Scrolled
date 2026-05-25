@@ -65,9 +65,7 @@ export function StepRun({ version, files, forceAll, onComplete, mode }: Props) {
   }, [extract.stats, onComplete]);
 
   const activeExtractors = ALL_EXTRACTOR_KEYS.filter((k) => extract.extractors[k].active);
-  const failedExtractors = activeExtractors.filter(
-    (k) => extract.extractors[k].phase === 'failed',
-  );
+  const failedExtractors = activeExtractors.filter((k) => extract.extractors[k].phase === 'failed');
 
   if (extract.error && failedExtractors.length === 0) {
     return (
@@ -108,7 +106,9 @@ export function StepRun({ version, files, forceAll, onComplete, mode }: Props) {
         </div>
         {failedExtractors.length > 0 && (
           <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-4 text-amber-900 dark:text-amber-100">
-            <h3 className="text-sm font-semibold">Some categories failed ({failedExtractors.length})</h3>
+            <h3 className="text-sm font-semibold">
+              Some categories failed ({failedExtractors.length})
+            </h3>
             <p className="mt-1 text-xs">
               The{' '}
               <Link to="/debug" className="underline">

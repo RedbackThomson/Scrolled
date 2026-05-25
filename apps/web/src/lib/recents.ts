@@ -34,9 +34,7 @@ export function useRecentEntities() {
   const trackM = useMutation({
     mutationFn: async (input: Omit<RecentEntity, 'viewedAt'>) => {
       const current = (await get<RecentEntity[]>(ENTITIES_KEY)) ?? [];
-      const filtered = current.filter(
-        (r) => !(r.entity === input.entity && r.id === input.id),
-      );
+      const filtered = current.filter((r) => !(r.entity === input.entity && r.id === input.id));
       const next = [{ ...input, viewedAt: Date.now() }, ...filtered].slice(0, MAX_ENTITIES);
       await set(ENTITIES_KEY, next);
       return next;
@@ -72,10 +70,7 @@ export function useRecentQueries() {
       if (!trimmed) return (await get<RecentQuery[]>(QUERIES_KEY)) ?? [];
       const current = (await get<RecentQuery[]>(QUERIES_KEY)) ?? [];
       const filtered = current.filter((r) => r.query !== trimmed);
-      const next = [{ query: trimmed, ranAt: Date.now() }, ...filtered].slice(
-        0,
-        MAX_QUERIES,
-      );
+      const next = [{ query: trimmed, ranAt: Date.now() }, ...filtered].slice(0, MAX_QUERIES);
       await set(QUERIES_KEY, next);
       return next;
     },

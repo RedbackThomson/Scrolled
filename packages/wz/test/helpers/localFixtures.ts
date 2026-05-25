@@ -8,13 +8,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // drop their WZ files once.
 const FIXTURES_DIR = resolve(__dirname, '../../../../apps/web/test/fixtures/local');
 
-const VALID_VERSIONS: ReadonlySet<WzVersion> = new Set([
-  'BMS',
-  'GMS',
-  'EMS',
-  'MSEA',
-  'CLASSIC',
-]);
+const VALID_VERSIONS: ReadonlySet<WzVersion> = new Set(['BMS', 'GMS', 'EMS', 'MSEA', 'CLASSIC']);
 
 export function wzVersionFromEnv(): WzVersion {
   const raw = process.env.MUSHEX_WZ_VERSION?.toUpperCase() as WzVersion | undefined;

@@ -2,11 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { DoorOpen, Repeat, Skull, Sparkles, Users, X, type LucideIcon } from 'lucide-react';
 import { getDbClient } from '@/db';
-import type {
-  MapMobSpawnWithName,
-  MapNpcWithName,
-  MapPortalRecord,
-} from '@/db';
+import type { MapMobSpawnWithName, MapNpcWithName, MapPortalRecord } from '@/db';
 import { MapHoverCard, MobHoverCard, NpcHoverCard } from '@/components/entity-links';
 import { HoverPopover } from '@/components/HoverPopover';
 import { classifyPortal, type PortalGraph, type PortalLayer } from '@/lib/portal-types';
@@ -73,10 +69,7 @@ export function MapViewerSidebar({
   }, [npcs]);
 
   const mobRows = useMemo(() => {
-    const m = new Map<
-      number,
-      { id: number; name: string; level: number | null; count: number }
-    >();
+    const m = new Map<number, { id: number; name: string; level: number | null; count: number }>();
     for (const s of mobSpawns) {
       const cur = m.get(s.mobId);
       if (cur) cur.count += 1;
@@ -125,12 +118,7 @@ export function MapViewerSidebar({
     const ids = new Set<number>();
     for (const r of portalRows) {
       const tm = r.portal.targetMapId;
-      if (
-        r.layer === 'portal' &&
-        tm !== null &&
-        tm !== NO_TARGET &&
-        tm !== mapId
-      ) {
+      if (r.layer === 'portal' && tm !== null && tm !== NO_TARGET && tm !== mapId) {
         ids.add(tm);
       }
     }
@@ -150,12 +138,8 @@ export function MapViewerSidebar({
 
   const q = search.trim().toLowerCase();
 
-  const filteredNpcs = q
-    ? npcRows.filter((r) => r.name.toLowerCase().includes(q))
-    : npcRows;
-  const filteredMobs = q
-    ? mobRows.filter((r) => r.name.toLowerCase().includes(q))
-    : mobRows;
+  const filteredNpcs = q ? npcRows.filter((r) => r.name.toLowerCase().includes(q)) : npcRows;
+  const filteredMobs = q ? mobRows.filter((r) => r.name.toLowerCase().includes(q)) : mobRows;
   const filteredPortals = q
     ? portalRows.filter((r) => {
         if (r.portal.portalName.toLowerCase().includes(q)) return true;
@@ -294,17 +278,13 @@ export function MapViewerSidebar({
                 layer={r.layer}
                 spawnCounter={r.spawnCounter}
                 linkedToName={portalGraph.forwardNames.get(r.portal.idx)?.[0] ?? null}
-                selected={
-                  selection?.kind === 'portal' && selection.key === String(r.portal.idx)
-                }
+                selected={selection?.kind === 'portal' && selection.key === String(r.portal.idx)}
                 onClick={() => handleSelectPortal(r.portal.idx)}
-                onHoverEnter={() =>
-                  onHover({ kind: 'portal', key: String(r.portal.idx) })
-                }
+                onHoverEnter={() => onHover({ kind: 'portal', key: String(r.portal.idx) })}
                 onHoverLeave={() => onHover(null)}
                 mapName={
                   r.portal.targetMapId !== null && r.portal.targetMapId !== NO_TARGET
-                    ? mapNameById.get(r.portal.targetMapId) ?? null
+                    ? (mapNameById.get(r.portal.targetMapId) ?? null)
                     : null
                 }
               />
@@ -363,9 +343,7 @@ function SidebarRow({
         {count !== undefined && count > 1 && (
           <span className="text-muted-foreground shrink-0 text-[10px]">×{count}</span>
         )}
-        {meta && (
-          <span className="text-muted-foreground shrink-0 text-[10px]">{meta}</span>
-        )}
+        {meta && <span className="text-muted-foreground shrink-0 text-[10px]">{meta}</span>}
       </button>
     </li>
   );
@@ -407,15 +385,14 @@ function PortalRow({
   mapName,
 }: PortalRowProps) {
   const tm = portal.targetMapId;
-  const targetIsExternal =
-    layer === 'portal' && tm !== null && tm !== NO_TARGET;
+  const targetIsExternal = layer === 'portal' && tm !== null && tm !== NO_TARGET;
 
   let labelContent: ReactNode;
   let labelClass = 'min-w-0 flex-1 truncate';
   if (layer === 'spawn') {
     labelContent = (
       <span className="text-muted-foreground inline-flex items-center gap-1.5 italic">
-        <Sparkles className="text-emerald-500 h-3 w-3 shrink-0" />
+        <Sparkles className="h-3 w-3 shrink-0 text-emerald-500" />
         Player spawn
         {spawnCounter !== null && <span className="font-mono">{spawnCounter}</span>}
       </span>
@@ -426,12 +403,12 @@ function PortalRow({
     // signal that no map change happens.
     labelContent = (
       <span className="text-muted-foreground inline-flex items-center gap-1.5 italic">
-        <Repeat className="text-violet-500 h-3 w-3 shrink-0" />
+        <Repeat className="h-3 w-3 shrink-0 text-violet-500" />
         {linkedToName ? (
           <>
             Same map
             <span className="text-foreground/70">→</span>
-            <span className="text-foreground/90 not-italic font-mono">{linkedToName}</span>
+            <span className="text-foreground/90 font-mono not-italic">{linkedToName}</span>
           </>
         ) : (
           'Same map'
@@ -452,10 +429,7 @@ function PortalRow({
   // that direct child, so we apply `labelClass` to it via triggerClassName
   // instead of nesting another span inside.
   const wrappedLabel = targetIsExternal ? (
-    <HoverPopover
-      content={<MapHoverCard id={tm} />}
-      triggerClassName={labelClass}
-    >
+    <HoverPopover content={<MapHoverCard id={tm} />} triggerClassName={labelClass}>
       {labelContent}
     </HoverPopover>
   ) : (

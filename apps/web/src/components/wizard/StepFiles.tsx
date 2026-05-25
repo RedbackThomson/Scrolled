@@ -454,4 +454,3 @@ function AdvancedPanel({
     </details>
   );
 }
-

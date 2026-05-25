@@ -28,8 +28,7 @@ export default function Mobs() {
   // `boss` boolean column filter (?f_boss=1). Reading/writing here goes
   // through the same column-filter state the popover uses.
   const bossFilter = filters.boss;
-  const bossOnly =
-    bossFilter?.kind === 'range' && bossFilter.min === 1 && bossFilter.max === 1;
+  const bossOnly = bossFilter?.kind === 'range' && bossFilter.min === 1 && bossFilter.max === 1;
 
   const mobsQ = useQuery({
     queryKey: [
@@ -116,9 +115,7 @@ export default function Mobs() {
                     onChange={(e) => {
                       setFilter(
                         'boss',
-                        e.target.checked
-                          ? { kind: 'range', min: 1, max: 1 }
-                          : null,
+                        e.target.checked ? { kind: 'range', min: 1, max: 1 } : null,
                       );
                       setState({ page: 1 });
                     }}

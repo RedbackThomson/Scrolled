@@ -1,10 +1,5 @@
 import { useHotkey } from '@tanstack/react-hotkeys';
-import {
-  CommandDialog,
-  CommandEmpty,
-  CommandInput,
-  CommandList,
-} from '@/components/ui/command';
+import { CommandDialog, CommandEmpty, CommandInput, CommandList } from '@/components/ui/command';
 import { useCommandPalette } from '@/lib/useCommandPalette';
 import {
   CollectionsContextProvider,
@@ -19,10 +14,7 @@ import { FunProvider } from './providers/fun';
 import { GlobalSearchProvider } from './providers/globalSearch';
 import { HelpProvider } from './providers/help';
 import { NavigationProvider } from './providers/navigation';
-import {
-  PinCurrentProvider,
-  PinnedSearchesProvider,
-} from './providers/pinned';
+import { PinCurrentProvider, PinnedSearchesProvider } from './providers/pinned';
 import { RecentsProvider } from './providers/recents';
 import { TogglesProvider } from './providers/toggles';
 

@@ -108,10 +108,7 @@ function isBareWord(s: string): boolean {
   return /^[a-zA-Z_][a-zA-Z0-9_-]*$/.test(s);
 }
 
-function parseNumberValue(
-  raw: string,
-  param: string,
-): Record<string, string> | null {
+function parseNumberValue(raw: string, param: string): Record<string, string> | null {
   // `>=N`, `<=N`, `>N`, `<N`
   const cmpMatch = raw.match(/^(>=|<=|>|<)\s*(-?\d+(?:\.\d+)?)$/);
   if (cmpMatch) {

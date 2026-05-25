@@ -85,9 +85,7 @@ export function CollectionsImportDialog({
       setPayload(parsed);
     } catch (err) {
       setParseError(
-        err instanceof Error
-          ? err.message
-          : 'Could not read this file as collections JSON.',
+        err instanceof Error ? err.message : 'Could not read this file as collections JSON.',
       );
     }
   };
@@ -99,19 +97,13 @@ export function CollectionsImportDialog({
       setReport(result);
       onImported?.(result);
     } catch (err) {
-      setParseError(
-        err instanceof Error ? err.message : 'Import failed.',
-      );
+      setParseError(err instanceof Error ? err.message : 'Import failed.');
     }
   };
 
   const ready = payload !== null && parseError === null;
   const bundleCount =
-    payload === null
-      ? 0
-      : payload.kind === 'collection'
-        ? 1
-        : payload.collections.length;
+    payload === null ? 0 : payload.kind === 'collection' ? 1 : payload.collections.length;
 
   return (
     <Modal
@@ -135,12 +127,7 @@ export function CollectionsImportDialog({
             >
               Cancel
             </Button>
-            <Button
-              type="button"
-              size="sm"
-              onClick={submit}
-              disabled={!ready || importM.isPending}
-            >
+            <Button type="button" size="sm" onClick={submit} disabled={!ready || importM.isPending}>
               {importM.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               <Upload className="h-3.5 w-3.5" />
               Import
@@ -149,17 +136,17 @@ export function CollectionsImportDialog({
         )
       }
     >
-      {report ? <ReportPanel report={report} /> : (
+      {report ? (
+        <ReportPanel report={report} />
+      ) : (
         <div className="space-y-3 text-sm">
           <label className="block space-y-1">
-            <span className="text-muted-foreground text-xs uppercase tracking-wide">
-              File
-            </span>
+            <span className="text-muted-foreground text-xs uppercase tracking-wide">File</span>
             <input
               type="file"
               accept="application/json,.json"
               onChange={onPickFile}
-              className="text-muted-foreground file:bg-secondary file:text-secondary-foreground file:mr-3 file:rounded-md file:border-0 file:px-3 file:py-1.5 file:text-xs file:font-medium hover:file:bg-secondary/80 block w-full text-xs"
+              className="text-muted-foreground file:bg-secondary file:text-secondary-foreground hover:file:bg-secondary/80 block w-full text-xs file:mr-3 file:rounded-md file:border-0 file:px-3 file:py-1.5 file:text-xs file:font-medium"
             />
           </label>
 
@@ -242,9 +229,7 @@ function ReportPanel({ report }: { report: ImportReport }) {
       </dl>
       {report.importedNames.length > 0 && (
         <div className="border-border bg-muted/40 rounded-md border p-2 text-xs">
-          <div className="text-muted-foreground mb-1 uppercase tracking-wide">
-            Imported names
-          </div>
+          <div className="text-muted-foreground mb-1 uppercase tracking-wide">Imported names</div>
           <ul className="list-disc space-y-0.5 pl-4">
             {report.importedNames.map((n) => (
               <li key={n}>{n}</li>

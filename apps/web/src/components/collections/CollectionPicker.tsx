@@ -38,11 +38,7 @@ interface CollectionPickerProps {
   children: (args: { open: boolean; toggle: () => void; memberCount: number }) => ReactNode;
 }
 
-export function CollectionPicker({
-  entityType,
-  entityId,
-  children,
-}: CollectionPickerProps) {
+export function CollectionPicker({ entityType, entityId, children }: CollectionPickerProps) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLSpanElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -141,7 +137,8 @@ export function CollectionPicker({
       <span ref={triggerRef} className="inline-flex">
         {children({ open, toggle, memberCount: membershipByCollection.size })}
       </span>
-      {open && coords &&
+      {open &&
+        coords &&
         createPortal(
           <div
             ref={popoverRef}
@@ -334,9 +331,7 @@ function PickerRow({
           onClick={(e) => e.stopPropagation()}
         >
           <label className="flex items-center gap-2 text-[11px]">
-            <span className="text-muted-foreground w-12 shrink-0 uppercase tracking-wide">
-              Qty
-            </span>
+            <span className="text-muted-foreground w-12 shrink-0 uppercase tracking-wide">Qty</span>
             <input
               type="number"
               min={0}

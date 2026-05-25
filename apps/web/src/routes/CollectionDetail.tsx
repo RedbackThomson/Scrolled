@@ -6,15 +6,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import {
-  ArrowLeft,
-  Check,
-  Download,
-  Loader2,
-  Pencil,
-  Trash2,
-  X,
-} from 'lucide-react';
+import { ArrowLeft, Check, Download, Loader2, Pencil, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   CollectionFormDialog,
@@ -35,10 +27,7 @@ import {
   useRemoveMember,
   useUpdateMember,
 } from '@/lib/useCollections';
-import type {
-  CollectionEntityType,
-  CollectionMember,
-} from '@/db/user';
+import type { CollectionEntityType, CollectionMember } from '@/db/user';
 import { COLLECTION_ENTITY_TYPES } from '@/db/user';
 import { cn } from '@/lib/utils';
 
@@ -82,7 +71,12 @@ export default function CollectionDetail() {
     () =>
       COLLECTION_ENTITY_TYPES.map((t) => {
         const ids = idsByType[t];
-        return ids ? `${t}:${ids.slice().sort((a, b) => a - b).join(',')}` : '';
+        return ids
+          ? `${t}:${ids
+              .slice()
+              .sort((a, b) => a - b)
+              .join(',')}`
+          : '';
       }).join('|'),
     [idsByType],
   );
@@ -341,12 +335,7 @@ function MemberRow({ member, name }: MemberRowProps) {
 
   const linkClass = 'flex min-w-0 items-center gap-3';
   const nameContent = (
-    <span
-      className={cn(
-        'min-w-0 truncate',
-        member.done && 'text-muted-foreground line-through',
-      )}
-    >
+    <span className={cn('min-w-0 truncate', member.done && 'text-muted-foreground line-through')}>
       {name}
     </span>
   );

@@ -116,7 +116,9 @@ describe.skipIf(!present)(`parallel parse parity (${FIXTURE})`, () => {
 
     const decodeAll = async (): Promise<Uint8ClampedArray[]> => {
       return Promise.all(
-        canvases.map((c) => decodeCanvas({ canvas: c, fileBytes: bytes, keystream }).then((p) => p.rgba)),
+        canvases.map((c) =>
+          decodeCanvas({ canvas: c, fileBytes: bytes, keystream }).then((p) => p.rgba),
+        ),
       );
     };
 

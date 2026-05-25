@@ -39,9 +39,8 @@ describe.skipIf(!present)('header + versionHash parity vs @tybys/wz (String.wz)'
     await oracle.parseWzFile();
 
     const oracleHash = (oracle as unknown as { _versionHash: number })._versionHash;
-    const oracleMapleVersion = (
-      oracle as unknown as { mapleStoryPatchVersion: number }
-    ).mapleStoryPatchVersion;
+    const oracleMapleVersion = (oracle as unknown as { mapleStoryPatchVersion: number })
+      .mapleStoryPatchVersion;
 
     expect(oracleHash).toBeGreaterThan(0);
     expect(oracleMapleVersion).toBeGreaterThan(0);

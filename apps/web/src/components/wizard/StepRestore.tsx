@@ -1,12 +1,5 @@
 import { Link } from 'react-router-dom';
-import {
-  AlertTriangle,
-  ArrowLeft,
-  ArrowRight,
-  CheckCircle2,
-  Loader2,
-  Upload,
-} from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Loader2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export type RestoreState =
@@ -100,7 +93,8 @@ export function StepRestore({ file, state, onPickAgain, onSwitchBack, parentMode
       <p className="text-muted-foreground text-xs">
         Your wiki database is being replaced with the contents of the backup. Once this finishes
         you'll go straight to the app.
-        {parentMode === 'update' && ' Anything that was previously loaded on this device is replaced.'}
+        {parentMode === 'update' &&
+          ' Anything that was previously loaded on this device is replaced.'}
       </p>
     </section>
   );

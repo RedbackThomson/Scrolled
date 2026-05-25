@@ -68,7 +68,12 @@ export class WzDataSource implements GameDataSource {
       try {
         const bytes = await this.toBytes(spec.source, spec.name, onProgress);
         if (onProgress) {
-          onProgress({ phase: `Parsing ${spec.name}`, current: 0, total: 0, detail: 'reading header' });
+          onProgress({
+            phase: `Parsing ${spec.name}`,
+            current: 0,
+            total: 0,
+            detail: 'reading header',
+          });
         }
         const file = await openFile(bytes, {
           version: this.version as WzVersion,
@@ -283,8 +288,21 @@ export class WzDataSource implements GameDataSource {
 // ----------------------------------------------------------------------------
 
 type ResolvedNode =
-  | { kind: 'file'; file: WzFile; fullPath: string; toNodeInfo(): WzNodeInfo; listChildren(): WzNodeInfo[] }
-  | { kind: 'dir'; file: WzFile; dir: WzDirNode; fullPath: string; toNodeInfo(): WzNodeInfo; listChildren(): WzNodeInfo[] }
+  | {
+      kind: 'file';
+      file: WzFile;
+      fullPath: string;
+      toNodeInfo(): WzNodeInfo;
+      listChildren(): WzNodeInfo[];
+    }
+  | {
+      kind: 'dir';
+      file: WzFile;
+      dir: WzDirNode;
+      fullPath: string;
+      toNodeInfo(): WzNodeInfo;
+      listChildren(): WzNodeInfo[];
+    }
   | {
       kind: 'image';
       file: WzFile;
@@ -428,8 +446,7 @@ function makeImage(
       kind: 'image',
       hasChildren: props.length > 0,
     }),
-    listChildren: () =>
-      props.map((p) => propertyToNodeInfo(p, `${fullPath}/${p.name}`)),
+    listChildren: () => props.map((p) => propertyToNodeInfo(p, `${fullPath}/${p.name}`)),
   };
 }
 

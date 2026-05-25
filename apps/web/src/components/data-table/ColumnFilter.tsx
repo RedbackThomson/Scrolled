@@ -110,9 +110,7 @@ export function ColumnFilterPopover({
         }}
         className={cn(
           'inline-flex h-5 w-5 items-center justify-center rounded-sm',
-          active
-            ? 'text-primary'
-            : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+          active ? 'text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground',
         )}
         aria-haspopup="dialog"
         aria-expanded={open}
@@ -121,7 +119,8 @@ export function ColumnFilterPopover({
       >
         <Filter className="h-3.5 w-3.5" />
       </button>
-      {open && coords &&
+      {open &&
+        coords &&
         createPortal(
           <div
             ref={popoverRef}
@@ -216,7 +215,9 @@ function StringFilterInput({ columnId, value, mode, onChange }: StringInputProps
               onClick={() =>
                 onChange(
                   columnId,
-                  value ? { kind: 'string', mode: m.value, value } : { kind: 'string', mode: m.value, value: '' },
+                  value
+                    ? { kind: 'string', mode: m.value, value }
+                    : { kind: 'string', mode: m.value, value: '' },
                 )
               }
               className={cn(
@@ -337,10 +338,7 @@ function EnumFilterSelect({ columnId, options, label, value, onChange }: EnumInp
       value={value}
       onChange={(e) => {
         const next = e.target.value;
-        onChange(
-          columnId,
-          next ? { kind: 'string', mode: 'equals', value: next } : null,
-        );
+        onChange(columnId, next ? { kind: 'string', mode: 'equals', value: next } : null);
       }}
       className="border-input bg-background focus-visible:ring-ring h-8 w-full rounded-md border px-2 text-sm focus-visible:outline-none focus-visible:ring-2"
     >

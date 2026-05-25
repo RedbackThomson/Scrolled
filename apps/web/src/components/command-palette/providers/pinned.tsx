@@ -1,14 +1,7 @@
 import { Pin, PinOff } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import {
-  CommandGroup,
-  CommandItem as CommandItemPrimitive,
-} from '@/components/ui/command';
-import {
-  iconForEntity,
-  labelForEntityKind,
-  listingRouteForEntity,
-} from '@/lib/entityRoutes';
+import { CommandGroup, CommandItem as CommandItemPrimitive } from '@/components/ui/command';
+import { iconForEntity, labelForEntityKind, listingRouteForEntity } from '@/lib/entityRoutes';
 import { useCommandPalette } from '@/lib/useCommandPalette';
 import {
   useCreatePinnedSearch,

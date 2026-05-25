@@ -33,8 +33,7 @@ export const columns: ColumnDef<EquipRecord>[] = [
     accessorFn: (e) => e.equipType,
     header: 'Type',
     meta: { filter: 'enum' },
-    cell: ({ row }) =>
-      row.original.equipType ? labelForEquipType(row.original.equipType) : '—',
+    cell: ({ row }) => (row.original.equipType ? labelForEquipType(row.original.equipType) : '—'),
   },
   {
     id: 'cash',

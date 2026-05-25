@@ -1,7 +1,4 @@
-import {
-  CommandGroup,
-  CommandItem as CommandItemPrimitive,
-} from '@/components/ui/command';
+import { CommandGroup, CommandItem as CommandItemPrimitive } from '@/components/ui/command';
 import { useCommandPalette } from '@/lib/useCommandPalette';
 import type { CommandItem } from '../types';
 

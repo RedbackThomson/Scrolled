@@ -1,10 +1,7 @@
 import { Bookmark, Cog, Home, Wrench } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import {
-  CommandGroup,
-  CommandItem as CommandItemPrimitive,
-} from '@/components/ui/command';
+import { CommandGroup, CommandItem as CommandItemPrimitive } from '@/components/ui/command';
 import {
   ENTITY_KINDS,
   iconForEntity,

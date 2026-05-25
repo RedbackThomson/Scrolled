@@ -72,8 +72,7 @@ export async function extractNpcs(
     npcs.push({
       id,
       name,
-      description:
-        typeof funcNode?.scalar === 'string' ? unescapeWzString(funcNode.scalar) : null,
+      description: typeof funcNode?.scalar === 'string' ? unescapeWzString(funcNode.scalar) : null,
       iconPath,
       iconData,
       sourcePath: img.fullPath,

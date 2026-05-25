@@ -33,17 +33,20 @@ Target user: a player exploring or organizing data deeply enough to hit the pale
 ## Command categories
 
 ### 1. Global search & navigation
+
 - Fuzzy match across all entity types by name and ID
 - Category-prefix shorthand for scoped search (e.g. `m ` for mobs, `i ` for items, `q ` for quests, `mp ` for maps, `n ` for NPCs, `e ` for equips, `c ` for collections)
 - Raw entity ID resolution — typing a numeric ID jumps to the matching entity
 - Top-level destinations: each listing page, settings panes, debug, collections index
 
 ### 2. Recents & history
+
 - Recently viewed entities, ranked by recency
 - Recent search queries (re-runnable)
 - Resume last filtered listing view ("where I was")
 
 ### 3. Context-aware jumps (from a detail page)
+
 - **Mob** → drops, spawn maps, quests using this mob
 - **Map** → connected maps via portals, "Open in MapViewer"
 - **Quest** → prerequisite chain, quests this unlocks, start/end NPC
@@ -52,11 +55,13 @@ Target user: a player exploring or organizing data deeply enough to hit the pale
 - These appear pinned at the top of the palette when on the relevant detail page
 
 ### 4. Filtered navigation in one shot
+
 - Inline filter syntax (Linear/GitHub style `key:value`): `mobs level:50-70 boss`, `equips class:warrior slot:weapon`
 - **Pinned/saved searches** — save a filter combination with a name, relaunch by name
 - "Reset filters on current listing"
 
 ### 5. Collections
+
 - Add to / remove from collection (context-aware on entity detail pages)
 - Create new collection, optionally seeded with the current entity
 - Move entity between collections
@@ -65,12 +70,14 @@ Target user: a player exploring or organizing data deeply enough to hit the pale
 - Export single collection / export all / import JSON
 
 ### 6. Bulk actions on current selection
+
 - "Add N selected to collection…"
 - "Remove N selected from collection…"
 - "Export N selected as JSON"
 - "Save current filtered view as a collection"
 
 ### 7. UI & accessibility toggles
+
 - Theme: light / dark / system
 - Sidebar collapse
 - Density toggle (compact ↔ comfortable)
@@ -78,30 +85,33 @@ Target user: a player exploring or organizing data deeply enough to hit the pale
 - "Show keyboard shortcuts" cheatsheet
 
 ### 8. Data management & debug
+
 - Reload data files / re-open setup wizard
 - Show data validation warnings / unparsed entities
 - Open WZ tree viewer (debug page)
 - Copy entity ID / WZ path / permalink to clipboard
 
 ### 9. Exploration & discovery
+
 - Random entity — "Random map," "Random boss," "Random anything"
 - Open MapViewer directly for a chosen map (skip the detail page)
 
 ### 10. Settings & meta
+
 - Jump to a specific settings pane (data, theme, collections)
 - Show app + data version
 
 ## Design decisions
 
-| Topic | Decision |
-| --- | --- |
-| Trigger | Cmd/Ctrl+K, or click the top-bar search input (which the palette replaces). Esc closes. |
-| Result ranking | Hybrid: fuzzy match score blended with recency weight. Context-aware results pinned above globals on detail pages. |
-| Context scope | Show context + globals together, with context pinned at the top. Not context-only. |
-| Prefix syntax | Optional accelerator; free-text always works. |
-| Filter grammar | GitHub/Linear-style `key:value`, space-separated terms. |
-| Selection awareness | Palette reads the current listing's row selection and filter state. |
-| Persistence | `idb-keyval` for recents and pinned searches, per the existing convention in `CLAUDE.md`. |
+| Topic               | Decision                                                                                                           |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Trigger             | Cmd/Ctrl+K, or click the top-bar search input (which the palette replaces). Esc closes.                            |
+| Result ranking      | Hybrid: fuzzy match score blended with recency weight. Context-aware results pinned above globals on detail pages. |
+| Context scope       | Show context + globals together, with context pinned at the top. Not context-only.                                 |
+| Prefix syntax       | Optional accelerator; free-text always works.                                                                      |
+| Filter grammar      | GitHub/Linear-style `key:value`, space-separated terms.                                                            |
+| Selection awareness | Palette reads the current listing's row selection and filter state.                                                |
+| Persistence         | `idb-keyval` for recents and pinned searches, per the existing convention in `CLAUDE.md`.                          |
 
 ## Open questions
 

@@ -66,9 +66,7 @@ export default function Weapons() {
 
   const isEmpty = weaponsQ.data?.total === 0 && !state.q && !filtersActive;
 
-  const headerTitle = pinnedType
-    ? `Weapons · ${labelForEquipType(pinnedType)}`
-    : 'Weapons';
+  const headerTitle = pinnedType ? `Weapons · ${labelForEquipType(pinnedType)}` : 'Weapons';
 
   return (
     <div className="max-w-6xl space-y-6">

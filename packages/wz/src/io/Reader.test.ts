@@ -13,10 +13,8 @@ describe('Reader', () => {
     expect(r.readUInt8()).toBe(0x08);
   });
 
-  it('reads signed integers little-endian with two\'s-complement semantics', () => {
-    const r = new Reader(
-      new Uint8Array([0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x80, 0x80]),
-    );
+  it("reads signed integers little-endian with two's-complement semantics", () => {
+    const r = new Reader(new Uint8Array([0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x80, 0x80]));
     expect(r.readInt32LE()).toBe(-1);
     expect(r.readInt32LE()).toBe(-0x80000000); // INT32_MIN
     expect(r.readInt8()).toBe(-128);
