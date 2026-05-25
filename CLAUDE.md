@@ -2,6 +2,8 @@
 
 Guidance that applies to every change in this repository. Source of truth for product scope is `docs/mapleroyals_wiki_clone_requirements.md`; source of truth for technical decisions is `docs/technical_requirements.md`. If this file disagrees with either, those win — update this file.
 
+When you add an entity type, a route, or a user-facing feature, follow `docs/command_palette_extension_guide.md` so the command palette grows with the app. Palette wiring is part of the feature, not a follow-up. The palette's own spec is `docs/command_palette_requirements.md`.
+
 ## Hard rules
 
 1. **Never commit proprietary game data.** No `.wz`, no extracted `.img`, no PNG sprites or icons, no JSON snapshots derived from MapleStory/MapleRoyals files, no pre-generated databases. This applies to test fixtures and CI too. Tests use synthetic raw-tree fixtures only.

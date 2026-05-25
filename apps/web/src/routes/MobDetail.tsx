@@ -4,6 +4,7 @@ import { EquipLink, ItemLink, MapLink, QuestLink } from '@/components/entity-lin
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
+  Copy,
   Crown,
   Loader2,
   Map as MapIcon,
@@ -14,6 +15,8 @@ import {
 } from 'lucide-react';
 import { EntityIcon } from '@/components/EntityIcon';
 import { CollectionBadgeStrip } from '@/components/collections';
+import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
+import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/lib/useFeatures';
 import {
@@ -49,6 +52,21 @@ export default function MobDetail() {
     queryFn: () => client.getMobMaps(id),
     enabled: Number.isFinite(id) && features.hasMaps,
   });
+
+  const paletteItems = useMemo<CommandItem[]>(
+    () => [
+      {
+        id: 'copy-mob-id',
+        group: 'context',
+        label: 'Copy mob ID',
+        keywords: ['copy', 'id', 'clipboard'],
+        icon: Copy,
+        onSelect: () => navigator.clipboard.writeText(String(id)),
+      },
+    ],
+    [id],
+  );
+  useDetailPalette({ entity: 'mob', id, name: mobQ.data?.name, items: paletteItems });
 
   if (mobQ.isLoading) {
     return (

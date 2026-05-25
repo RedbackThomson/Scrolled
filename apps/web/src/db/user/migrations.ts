@@ -45,4 +45,18 @@ export const USER_MIGRATIONS: readonly Migration[] = [
       VALUES ('Favourites', 'star', strftime('%s','now')*1000, strftime('%s','now')*1000);
     `,
   },
+  {
+    version: 2,
+    name: 'pinned searches v1',
+    sql: `
+      CREATE TABLE pinned_searches (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        name        TEXT    NOT NULL UNIQUE,
+        entity      TEXT    NOT NULL CHECK (entity IN ('item','equip','mob','npc','map','quest')),
+        params_json TEXT    NOT NULL DEFAULT '{}',
+        created_at  INTEGER NOT NULL,
+        updated_at  INTEGER NOT NULL
+      );
+    `,
+  },
 ];

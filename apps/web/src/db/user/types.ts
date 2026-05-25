@@ -104,12 +104,36 @@ export interface BulkAddResult {
   skipped: number;
 }
 
+/** A user-saved listing filter (entity + URL params). Replayed by navigating
+ *  to `<listing>?<params>`. */
+export interface PinnedSearchRecord {
+  id: number;
+  name: string;
+  entity: CollectionEntityType;
+  /** URL search params for the target listing (e.g. f_level_min=50, q=foo). */
+  params: Record<string, string>;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface CreatePinnedSearchInput {
+  name: string;
+  entity: CollectionEntityType;
+  params: Record<string, string>;
+}
+
+export interface UpdatePinnedSearchPatch {
+  name?: string;
+  params?: Record<string, string>;
+}
+
 export interface UserDbStatus {
   schemaVersion: number;
   backend: 'opfs' | 'memory';
   counts: {
     collections: number;
     members: number;
+    pinnedSearches: number;
   };
 }
 
@@ -156,6 +180,12 @@ export interface UserDatabase {
   exportCollectionJson(id: number): Promise<CollectionsExportJson>;
   exportAllJson(): Promise<CollectionsExportJson>;
   importJson(payload: unknown, conflict: ImportConflictMode): Promise<ImportReport>;
+
+  listPinnedSearches(): Promise<PinnedSearchRecord[]>;
+  getPinnedSearch(id: number): Promise<PinnedSearchRecord | null>;
+  createPinnedSearch(input: CreatePinnedSearchInput): Promise<PinnedSearchRecord>;
+  updatePinnedSearch(id: number, patch: UpdatePinnedSearchPatch): Promise<PinnedSearchRecord>;
+  deletePinnedSearch(id: number): Promise<void>;
 
   /** Serialize the live user.sqlite3 to a Uint8Array. */
   exportBytes(): Promise<Uint8Array>;

@@ -11,10 +11,13 @@ export type {
   CollectionMember,
   CollectionRecord,
   CreateCollectionInput,
+  CreatePinnedSearchInput,
   EntityRef,
   MembershipBadge,
+  PinnedSearchRecord,
   UpdateCollectionPatch,
   UpdateMemberPatch,
+  UpdatePinnedSearchPatch,
   UserDatabase,
   UserDbStatus,
 } from './types';
@@ -24,6 +27,7 @@ export type {
   CollectionsExportJson,
   ImportConflictMode,
   ImportReport,
+  PinnedSearchJson,
 } from './collectionsJson';
 export { COLLECTIONS_JSON_VERSION } from './collectionsJson';
 export { COLLECTION_ENTITY_TYPES } from './types';

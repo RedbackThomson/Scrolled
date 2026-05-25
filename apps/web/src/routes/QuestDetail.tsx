@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   Award,
   Coins,
+  Copy,
   Loader2,
   Package,
   ScrollText,
@@ -19,6 +20,8 @@ import { getDbClient } from '@/db';
 import type { QuestRequirementWithName, QuestRewardWithName } from '@/db';
 import { ItemLink, MobLink, NpcLink, QuestLink } from '@/components/entity-links';
 import { CollectionBadgeStrip } from '@/components/collections';
+import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
+import type { CommandItem } from '@/components/command-palette/types';
 import { useFeatures } from '@/lib/useFeatures';
 
 export default function QuestDetail() {
@@ -55,6 +58,21 @@ export default function QuestDetail() {
       !!questQ.data?.endNpcId &&
       questQ.data.endNpcId !== questQ.data.startNpcId,
   });
+
+  const paletteItems = useMemo<CommandItem[]>(
+    () => [
+      {
+        id: 'copy-quest-id',
+        group: 'context',
+        label: 'Copy quest ID',
+        keywords: ['copy', 'id', 'clipboard'],
+        icon: Copy,
+        onSelect: () => navigator.clipboard.writeText(String(id)),
+      },
+    ],
+    [id],
+  );
+  useDetailPalette({ entity: 'quest', id, name: questQ.data?.name, items: paletteItems });
 
   if (questQ.isLoading) {
     return (

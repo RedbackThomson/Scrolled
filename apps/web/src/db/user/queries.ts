@@ -20,10 +20,13 @@ import type {
   CollectionMember,
   CollectionRecord,
   CreateCollectionInput,
+  CreatePinnedSearchInput,
   EntityRef,
   MembershipBadge,
+  PinnedSearchRecord,
   UpdateCollectionPatch,
   UpdateMemberPatch,
+  UpdatePinnedSearchPatch,
   UserDatabase,
   UserDbStatus,
 } from './types';
@@ -52,10 +55,12 @@ export class UserDbApi implements UserDatabase {
     const collections = this.db.selectValue<number>('SELECT COUNT(*) FROM collections') ?? 0;
     const members =
       this.db.selectValue<number>('SELECT COUNT(*) FROM collection_members') ?? 0;
+    const pinnedSearches =
+      this.db.selectValue<number>('SELECT COUNT(*) FROM pinned_searches') ?? 0;
     return {
       schemaVersion,
       backend: this.db.backend,
-      counts: { collections, members },
+      counts: { collections, members, pinnedSearches },
     };
   }
 
@@ -302,10 +307,16 @@ export class UserDbApi implements UserDatabase {
       const b = this.buildBundle(id);
       if (b) bundles.push(b);
     }
+    const pinned = await this.listPinnedSearches();
     return {
       version: COLLECTIONS_JSON_VERSION,
       kind: 'all',
       collections: bundles,
+      pinnedSearches: pinned.map((p) => ({
+        name: p.name,
+        entity: p.entity,
+        params: p.params,
+      })),
     };
   }
 
@@ -322,6 +333,8 @@ export class UserDbApi implements UserDatabase {
       addedMembers: 0,
       skippedMembers: 0,
       importedNames: [],
+      importedPinnedSearches: 0,
+      skippedPinnedSearches: 0,
     };
 
     this.db.transaction(() => {
@@ -355,6 +368,26 @@ export class UserDbApi implements UserDatabase {
         this.insertBundleMembers(newId, bundle, report);
         report.renamedCollections++;
         report.importedNames.push(newName);
+      }
+
+      if (parsed.kind === 'all' && parsed.pinnedSearches) {
+        const now = Date.now();
+        for (const pinned of parsed.pinnedSearches) {
+          const existing = this.db.selectValue<number>(
+            'SELECT 1 FROM pinned_searches WHERE name = ?',
+            [pinned.name],
+          );
+          if (existing != null) {
+            report.skippedPinnedSearches++;
+            continue;
+          }
+          this.db.exec(
+            `INSERT INTO pinned_searches (name, entity, params_json, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?)`,
+            [pinned.name, pinned.entity, JSON.stringify(pinned.params), now, now],
+          );
+          report.importedPinnedSearches++;
+        }
       }
     });
 
@@ -478,6 +511,77 @@ export class UserDbApi implements UserDatabase {
     }
   }
 
+  async listPinnedSearches(): Promise<PinnedSearchRecord[]> {
+    const rows = this.db.selectObjects<Row>(
+      `SELECT id, name, entity, params_json, created_at, updated_at
+       FROM pinned_searches
+       ORDER BY name COLLATE NOCASE ASC`,
+    );
+    return rows.map(rowToPinnedSearch);
+  }
+
+  async getPinnedSearch(id: number): Promise<PinnedSearchRecord | null> {
+    const row = this.db.selectObject<Row>(
+      `SELECT id, name, entity, params_json, created_at, updated_at
+       FROM pinned_searches WHERE id = ?`,
+      [id],
+    );
+    return row ? rowToPinnedSearch(row) : null;
+  }
+
+  async createPinnedSearch(input: CreatePinnedSearchInput): Promise<PinnedSearchRecord> {
+    const name = input.name.trim();
+    if (!name) throw new Error('Pinned search name is required');
+    const now = Date.now();
+    this.db.exec(
+      `INSERT INTO pinned_searches (name, entity, params_json, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?)`,
+      [name, input.entity, JSON.stringify(input.params ?? {}), now, now],
+    );
+    const id = this.db.selectValue<number>('SELECT last_insert_rowid()') ?? 0;
+    const row = this.db.selectObject<Row>(
+      `SELECT id, name, entity, params_json, created_at, updated_at
+       FROM pinned_searches WHERE id = ?`,
+      [id],
+    );
+    if (!row) throw new Error('Failed to load created pinned search');
+    return rowToPinnedSearch(row);
+  }
+
+  async updatePinnedSearch(
+    id: number,
+    patch: UpdatePinnedSearchPatch,
+  ): Promise<PinnedSearchRecord> {
+    const sets: string[] = [];
+    const params: (string | number | null)[] = [];
+    if (patch.name !== undefined) {
+      const name = patch.name.trim();
+      if (!name) throw new Error('Pinned search name is required');
+      sets.push('name = ?');
+      params.push(name);
+    }
+    if (patch.params !== undefined) {
+      sets.push('params_json = ?');
+      params.push(JSON.stringify(patch.params));
+    }
+    if (sets.length === 0) {
+      const existing = await this.getPinnedSearch(id);
+      if (!existing) throw new Error(`Pinned search ${id} not found`);
+      return existing;
+    }
+    sets.push('updated_at = ?');
+    params.push(Date.now());
+    params.push(id);
+    this.db.exec(`UPDATE pinned_searches SET ${sets.join(', ')} WHERE id = ?`, params);
+    const updated = await this.getPinnedSearch(id);
+    if (!updated) throw new Error(`Pinned search ${id} not found after update`);
+    return updated;
+  }
+
+  async deletePinnedSearch(id: number): Promise<void> {
+    this.db.exec('DELETE FROM pinned_searches WHERE id = ?', [id]);
+  }
+
   async listMembershipsFor(
     entityType: CollectionEntityType,
     entityId: number,
@@ -513,6 +617,31 @@ function rowToMember(row: Row): CollectionMember {
     quantity: row.quantity == null ? null : Number(row.quantity),
     done: Number(row.done) === 1,
     addedAt: Number(row.added_at),
+  };
+}
+
+function rowToPinnedSearch(row: Row): PinnedSearchRecord {
+  let params: Record<string, string> = {};
+  const raw = row.params_json;
+  if (typeof raw === 'string' && raw.length > 0) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        params = Object.fromEntries(
+          Object.entries(parsed as Record<string, unknown>).map(([k, v]) => [k, String(v)]),
+        );
+      }
+    } catch {
+      params = {};
+    }
+  }
+  return {
+    id: Number(row.id),
+    name: String(row.name),
+    entity: String(row.entity) as CollectionEntityType,
+    params,
+    createdAt: Number(row.created_at),
+    updatedAt: Number(row.updated_at),
   };
 }
 

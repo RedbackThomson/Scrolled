@@ -26,6 +26,12 @@ export const collectionBundleSchema = z.object({
   members: z.array(collectionMemberJsonSchema),
 });
 
+export const pinnedSearchJsonSchema = z.object({
+  name: z.string().min(1),
+  entity: z.enum(COLLECTION_ENTITY_TYPES),
+  params: z.record(z.string()),
+});
+
 export const collectionsExportSchema = z.discriminatedUnion('kind', [
   z.object({
     version: z.literal(COLLECTIONS_JSON_VERSION),
@@ -36,11 +42,15 @@ export const collectionsExportSchema = z.discriminatedUnion('kind', [
     version: z.literal(COLLECTIONS_JSON_VERSION),
     kind: z.literal('all'),
     collections: z.array(collectionBundleSchema),
+    /** Pinned searches travel with the full-library export. Optional so
+     *  pre-pinned-search export files still validate. */
+    pinnedSearches: z.array(pinnedSearchJsonSchema).optional(),
   }),
 ]);
 
 export type CollectionMemberJson = z.infer<typeof collectionMemberJsonSchema>;
 export type CollectionBundleJson = z.infer<typeof collectionBundleSchema>;
+export type PinnedSearchJson = z.infer<typeof pinnedSearchJsonSchema>;
 export type CollectionsExportJson = z.infer<typeof collectionsExportSchema>;
 
 /**
@@ -68,4 +78,8 @@ export interface ImportReport {
   /** Names of imported collections after conflict resolution; useful
    *  for the post-import status toast. */
   importedNames: string[];
+  /** Pinned searches imported (kind = 'all' only). Name collisions on
+   *  pinned searches always skip — no merge mode for these. */
+  importedPinnedSearches: number;
+  skippedPinnedSearches: number;
 }

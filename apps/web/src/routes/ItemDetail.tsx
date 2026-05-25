@@ -1,11 +1,13 @@
 import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Loader2, ScrollText, Skull } from 'lucide-react';
+import { ArrowLeft, Copy, Loader2, ScrollText, Skull } from 'lucide-react';
 import { EntityIcon } from '@/components/EntityIcon';
 import { ItemIcon } from '@/components/ItemIcon';
 import { MobLink, QuestLink } from '@/components/entity-links';
 import { CollectionBadgeStrip } from '@/components/collections';
+import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
+import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/lib/useFeatures';
 
@@ -30,6 +32,21 @@ export default function ItemDetail() {
     queryFn: () => client.getItemDroppedBy(id),
     enabled: Number.isFinite(id) && features.hasMobs,
   });
+
+  const paletteItems = useMemo<CommandItem[]>(
+    () => [
+      {
+        id: 'copy-item-id',
+        group: 'context',
+        label: 'Copy item ID',
+        keywords: ['copy', 'id', 'clipboard'],
+        icon: Copy,
+        onSelect: () => navigator.clipboard.writeText(String(id)),
+      },
+    ],
+    [id],
+  );
+  useDetailPalette({ entity: 'item', id, name: itemQ.data?.name, items: paletteItems });
 
   if (itemQ.isLoading) {
     return (

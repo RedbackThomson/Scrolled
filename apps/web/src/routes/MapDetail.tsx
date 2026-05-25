@@ -3,10 +3,12 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
+  Copy,
   DoorOpen,
   Loader2,
   Map as MapIcon,
   MapPin,
+  Maximize,
   Skull,
   Users,
 } from 'lucide-react';
@@ -14,6 +16,8 @@ import { EntityIcon } from '@/components/EntityIcon';
 import { MapLink, MobLink, NpcLink } from '@/components/entity-links';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { MapViewerModal, type MapViewerHighlight } from '@/components/MapViewer';
+import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
+import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/lib/useFeatures';
 
@@ -105,6 +109,30 @@ export default function MapDetail() {
     writeViewerParam({ open: false, highlight: null }, { replace: false });
   const setViewerSelection = (highlight: MapViewerHighlight | null) =>
     writeViewerParam({ open: true, highlight }, { replace: true });
+
+  const paletteItems = useMemo<CommandItem[]>(
+    () => [
+      {
+        id: 'open-mapviewer',
+        group: 'context',
+        label: 'Open in MapViewer',
+        keywords: ['minimap', 'viewer', 'map'],
+        icon: Maximize,
+        onSelect: () =>
+          writeViewerParam({ open: true, highlight: null }, { replace: false }),
+      },
+      {
+        id: 'copy-map-id',
+        group: 'context',
+        label: 'Copy map ID',
+        keywords: ['copy', 'id', 'clipboard'],
+        icon: Copy,
+        onSelect: () => navigator.clipboard.writeText(String(id)),
+      },
+    ],
+    [id, writeViewerParam],
+  );
+  useDetailPalette({ entity: 'map', id, name: mapQ.data?.name, items: paletteItems });
 
   if (mapQ.isLoading) {
     return (

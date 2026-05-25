@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Loader2, Map as MapIcon, MapPin, ScrollText, Users } from 'lucide-react';
+import { ArrowLeft, Copy, Loader2, Map as MapIcon, MapPin, ScrollText, Users } from 'lucide-react';
 import { EntityIcon } from '@/components/EntityIcon';
 import { MapLink, QuestLink } from '@/components/entity-links';
 import { CollectionBadgeStrip } from '@/components/collections';
+import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
+import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/lib/useFeatures';
 
@@ -29,6 +31,21 @@ export default function NpcDetail() {
     queryFn: () => client.getNpcQuests(id),
     enabled: Number.isFinite(id) && features.hasQuests,
   });
+
+  const paletteItems = useMemo<CommandItem[]>(
+    () => [
+      {
+        id: 'copy-npc-id',
+        group: 'context',
+        label: 'Copy NPC ID',
+        keywords: ['copy', 'id', 'clipboard'],
+        icon: Copy,
+        onSelect: () => navigator.clipboard.writeText(String(id)),
+      },
+    ],
+    [id],
+  );
+  useDetailPalette({ entity: 'npc', id, name: npcQ.data?.name, items: paletteItems });
 
   if (npcQ.isLoading) {
     return (

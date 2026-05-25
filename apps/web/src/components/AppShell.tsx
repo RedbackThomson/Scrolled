@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Palette } from '@/components/command-palette/Palette';
 import { Sidebar } from '@/components/Sidebar';
 import { TopBar } from '@/components/TopBar';
 import { useFeatures } from '@/lib/useFeatures';
@@ -17,6 +18,7 @@ export function AppShell() {
           </div>
         </main>
       </div>
+      <Palette />
     </div>
   );
 }
