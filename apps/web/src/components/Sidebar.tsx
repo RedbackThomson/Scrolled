@@ -19,11 +19,13 @@ import {
   ScrollText,
   Home,
   Settings as SettingsIcon,
+  WifiOff,
   Wrench,
   type LucideIcon,
 } from 'lucide-react';
 import { WEAPON_TYPE_ORDER, labelForEquipSlot, labelForEquipType } from '@/lib/equipTypes';
 import { useFeatures } from '@/lib/useFeatures';
+import { useOnlineStatus } from '@/lib/useOnlineStatus';
 import { useSidebarLayout, useSidebarSections } from '@/lib/sidebarState';
 import { getDbClient } from '@/db';
 import { getUserDbClient } from '@/db/user';
@@ -322,7 +324,10 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
           <NavItem to="/debug" icon={Wrench} label="Diagnostics" collapsed={collapsed} />
         </div>
       </nav>
-      <DbStatusIndicator collapsed={collapsed} />
+      <div className="border-border border-t">
+        <OfflineIndicator collapsed={collapsed} />
+        <DbStatusIndicator collapsed={collapsed} />
+      </div>
       {!collapsed && (
         <div className="text-sidebar-muted flex items-center justify-between px-3 pb-3 text-[10px]">
           <span>{APP_VERSION_LABEL}</span>
@@ -387,6 +392,34 @@ const HEALTH_CONFIG: Record<
   },
 };
 
+const OFFLINE_TOOLTIP =
+  'Everything still works while offline. The app will check for new versions once you reconnect.';
+
+function OfflineIndicator({ collapsed }: { collapsed: boolean }) {
+  const online = useOnlineStatus();
+  if (online) return null;
+  if (collapsed) {
+    return (
+      <div
+        className="flex justify-center px-2 pb-0 pt-2"
+        title={OFFLINE_TOOLTIP}
+        role="status"
+        aria-live="polite"
+      >
+        <WifiOff className="text-sidebar-muted h-4 w-4 shrink-0" aria-label="Offline mode" />
+      </div>
+    );
+  }
+  return (
+    <div className="px-3 pb-0 pt-3" title={OFFLINE_TOOLTIP} role="status" aria-live="polite">
+      <div className="flex items-center gap-2 text-xs">
+        <WifiOff className="text-sidebar-muted h-3.5 w-3.5 shrink-0" aria-hidden />
+        <span className="text-sidebar-foreground truncate">Offline mode</span>
+      </div>
+    </div>
+  );
+}
+
 function DbStatusIndicator({ collapsed }: { collapsed: boolean }) {
   const db = useMemo(() => getDbClient(), []);
   const statusQ = useQuery({
@@ -408,10 +441,7 @@ function DbStatusIndicator({ collapsed }: { collapsed: boolean }) {
 
   return (
     <div
-      className={cn(
-        'border-border border-t',
-        collapsed ? 'flex justify-center px-2 py-2' : 'px-3 pb-2 pt-3',
-      )}
+      className={cn(collapsed ? 'flex justify-center px-2 py-2' : 'px-3 pb-2 pt-3')}
       title={cfg.title}
       role="status"
       aria-live="polite"
