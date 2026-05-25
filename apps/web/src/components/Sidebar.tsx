@@ -197,9 +197,12 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
       >
         {!collapsed && (
           <>
-            <div className="bg-primary text-primary-foreground flex h-7 w-7 shrink-0 items-center justify-center rounded font-bold">
-              M
-            </div>
+            <img
+              src={`${import.meta.env.BASE_URL}icon.svg`}
+              alt=""
+              aria-hidden
+              className="h-7 w-7 shrink-0 rounded"
+            />
             <span className="font-semibold tracking-tight">Mushroom</span>
           </>
         )}
