@@ -1,6 +1,7 @@
 /// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
 import path from 'node:path';
 
 // Deploying to a GitHub Pages project site (`<user>.github.io/<repo>/`) means
@@ -10,7 +11,36 @@ const basePath = process.env.BASE_PATH ?? '/';
 
 export default defineConfig({
   base: basePath,
-  plugins: [react()],
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: 'prompt',
+      injectRegister: null,
+      includeAssets: ['icon.svg', 'icon-192.png', 'icon-512.png'],
+      manifest: {
+        name: 'Mushroom Explorer',
+        short_name: 'Mushroom Explorer',
+        description: 'Browse items, mobs, NPCs, maps, and quests from your game data, fully on-device.',
+        theme_color: '#0f172a',
+        background_color: '#0f172a',
+        display: 'standalone',
+        icons: [
+          { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        ],
+      },
+      workbox: {
+        // Precache the full build output so the app works fully offline once
+        // loaded. `wasm` is the critical addition over Workbox defaults —
+        // sqlite-wasm is ~1MB and would otherwise miss the cache.
+        globPatterns: ['**/*.{js,css,html,wasm,woff2,svg,png,ico,webp}'],
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        navigateFallback: `${basePath}index.html`,
+        cleanupOutdatedCaches: true,
+      },
+    }),
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

@@ -80,6 +80,7 @@ Schema and join-table inventory follow §8.4 of the MVP doc.
 
 - Asset decoding pipeline: `URL.createObjectURL` for sprites, LRU memoization for decoded thumbnails, IndexedDB cache for repeat sessions, explicit "clear cache" control.
 - No analytics, no telemetry, no remote logging.
+- PWA / offline: [`vite-plugin-pwa`](https://vite-pwa-org.netlify.app/) with Workbox's `generateSW`. Precaches the full build output (including `.wasm` for sqlite-wasm) so the app loads and runs with no network once installed. Generates the web app manifest for installability. Updates are surfaced via a user-driven "reload to update" prompt rather than silent activation.
 
 ## 3. Design language
 
