@@ -15,11 +15,14 @@ import {
 import { EntityAvatar } from '@/components/EntityAvatar';
 import { EntityIcon } from '@/components/EntityIcon';
 import { EntityRow } from '@/components/EntityRow';
+import { ListSectionHeader } from '@/components/ListSectionHeader';
+import { ListSortControl } from '@/components/ListSortControl';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
 import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/lib/useFeatures';
+import { useListSort } from '@/lib/useListSort';
 import {
   ELEMENT_ORDER,
   ELEMENT_STATUS_CLASSES,
@@ -54,6 +57,19 @@ export default function MobDetail() {
     queryFn: () => client.getMobMaps(id),
     enabled: Number.isFinite(id) && features.hasMaps,
   });
+
+  const dropSort = useListSort(dropsQ.data, [
+    { id: 'name', label: 'Name', get: (d) => d.itemName },
+    { id: 'id', label: 'Item ID', get: (d) => d.itemId },
+  ]);
+  const mapsSort = useListSort(mapsQ.data, [
+    { id: 'name', label: 'Map name', get: (m) => m.name },
+    { id: 'street', label: 'Street', get: (m) => m.streetName },
+    { id: 'spawns', label: 'Spawns', get: (m) => m.spawnCount },
+  ]);
+  const questsSort = useListSort(questsQ.data, [
+    { id: 'name', label: 'Quest name', get: (q) => q.name },
+  ]);
 
   const paletteItems = useMemo<CommandItem[]>(
     () => [
@@ -132,21 +148,27 @@ export default function MobDetail() {
           <CollectionBadgeStrip entityType="mob" entityId={m.id} />
 
           <section>
-            <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
-              <Package className="h-4 w-4" /> Drops
-              {dropsQ.data && (
-                <span className="text-muted-foreground text-xs normal-case">
-                  ({dropsQ.data.length})
-                </span>
-              )}
-            </h2>
+            <ListSectionHeader
+              icon={Package}
+              title="Drops"
+              count={dropsQ.data?.length}
+              action={
+                dropsQ.data && dropsQ.data.length > 0 ? (
+                  <ListSortControl
+                    fields={dropSort.fieldOptions}
+                    value={dropSort.sort}
+                    onChange={dropSort.setSort}
+                  />
+                ) : null
+              }
+            />
             {dropsQ.isLoading && <p className="text-muted-foreground text-xs">Loading drops…</p>}
             {dropsQ.data && dropsQ.data.length === 0 && (
               <p className="text-muted-foreground text-xs italic">None.</p>
             )}
             {dropsQ.data && dropsQ.data.length > 0 && (
               <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
-                {dropsQ.data.map((d) =>
+                {dropSort.sorted.map((d) =>
                   d.entity === null ? (
                     <li key={d.itemId} className="flex items-center gap-3 px-3 py-1.5 text-sm">
                       <EntityAvatar entity="item" id={d.itemId} alt={d.itemName ?? undefined} />
@@ -167,27 +189,36 @@ export default function MobDetail() {
 
           {features.hasMaps && (
             <section>
-              <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
-                <MapIcon className="h-4 w-4" /> Appears on
-                {mapsQ.data && (
-                  <span className="text-muted-foreground text-xs normal-case">
-                    ({mapsQ.data.length})
-                  </span>
-                )}
-              </h2>
+              <ListSectionHeader
+                icon={MapIcon}
+                title="Appears on"
+                count={mapsQ.data?.length}
+                action={
+                  mapsQ.data && mapsQ.data.length > 0 ? (
+                    <ListSortControl
+                      fields={mapsSort.fieldOptions}
+                      value={mapsSort.sort}
+                      onChange={mapsSort.setSort}
+                    />
+                  ) : null
+                }
+              />
               {mapsQ.isLoading && <p className="text-muted-foreground text-xs">Loading maps…</p>}
               {mapsQ.data && mapsQ.data.length === 0 && (
                 <p className="text-muted-foreground text-xs italic">None.</p>
               )}
               {mapsQ.data && mapsQ.data.length > 0 && (
                 <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
-                  {mapsQ.data.map((mp) => (
+                  {mapsSort.sorted.map((mp) => (
                     <EntityRow
                       key={mp.id}
                       entity="map"
                       id={mp.id}
                       name={mp.name}
                       subtitle={mp.streetName}
+                      meta={
+                        mp.spawnCount !== null && mp.spawnCount > 0 ? `×${mp.spawnCount}` : undefined
+                      }
                       trailing={
                         mp.minimapPath && (
                           <Link
@@ -209,14 +240,20 @@ export default function MobDetail() {
 
           {features.hasQuests && (
             <section>
-              <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
-                <ScrollText className="h-4 w-4" /> Required by quests
-                {questsQ.data && (
-                  <span className="text-muted-foreground text-xs normal-case">
-                    ({questsQ.data.length})
-                  </span>
-                )}
-              </h2>
+              <ListSectionHeader
+                icon={ScrollText}
+                title="Required by quests"
+                count={questsQ.data?.length}
+                action={
+                  questsQ.data && questsQ.data.length > 0 ? (
+                    <ListSortControl
+                      fields={questsSort.fieldOptions}
+                      value={questsSort.sort}
+                      onChange={questsSort.setSort}
+                    />
+                  ) : null
+                }
+              />
               {questsQ.isLoading && (
                 <p className="text-muted-foreground text-xs">Loading quests…</p>
               )}
@@ -225,7 +262,7 @@ export default function MobDetail() {
               )}
               {questsQ.data && questsQ.data.length > 0 && (
                 <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
-                  {questsQ.data.map((q) => (
+                  {questsSort.sorted.map((q) => (
                     <EntityRow
                       key={q.id}
                       entity="quest"

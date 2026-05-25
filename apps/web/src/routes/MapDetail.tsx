@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { EntityIcon } from '@/components/EntityIcon';
 import { EntityRow } from '@/components/EntityRow';
+import { ListSectionHeader } from '@/components/ListSectionHeader';
+import { ListSortControl } from '@/components/ListSortControl';
 import { MapLink } from '@/components/entity-links';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { MapViewerModal, type MapViewerHighlight } from '@/components/MapViewer';
@@ -21,6 +23,7 @@ import { useDetailPalette } from '@/components/command-palette/useDetailPalette'
 import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/lib/useFeatures';
+import { useListSort } from '@/lib/useListSort';
 
 // Sentinel value the WZ data uses to mean "no map" for return / target fields.
 const NO_TARGET = 999999999;
@@ -75,6 +78,27 @@ export default function MapDetail() {
     for (const s of returnNamesQ.data ?? []) m.set(s.id, s.name);
     return m;
   }, [returnNamesQ.data]);
+
+  const npcsSort = useListSort(npcsQ.data, [
+    { id: 'name', label: 'Name', get: (n) => n.name },
+    { id: 'id', label: 'NPC ID', get: (n) => n.npcId },
+  ]);
+  const mobsSort = useListSort(mobsQ.data, [
+    { id: 'name', label: 'Name', get: (m) => m.name },
+    { id: 'level', label: 'Level', get: (m) => m.level },
+    { id: 'count', label: 'Count', get: (m) => m.count },
+  ]);
+  const portalsSort = useListSort(portalsQ.data, [
+    { id: 'portal', label: 'Portal name', get: (p) => p.portalName },
+    {
+      id: 'target',
+      label: 'Target map',
+      get: (p) =>
+        p.targetMapId === null || p.targetMapId === NO_TARGET
+          ? null
+          : (p.targetMapName ?? p.targetMapId),
+    },
+  ]);
 
   // Viewer open + selection live in the URL (`?viewer=1`, `?viewer=npc:1234`,
   // …) so the modal can be hard-linked and restored on reload.
@@ -213,20 +237,26 @@ export default function MapDetail() {
 
           {features.hasNpcs && (
             <section>
-              <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
-                <Users className="h-4 w-4" /> NPCs
-                {npcsQ.data && (
-                  <span className="text-muted-foreground text-xs normal-case">
-                    ({npcsQ.data.length})
-                  </span>
-                )}
-              </h2>
+              <ListSectionHeader
+                icon={Users}
+                title="NPCs"
+                count={npcsQ.data?.length}
+                action={
+                  npcsQ.data && npcsQ.data.length > 0 ? (
+                    <ListSortControl
+                      fields={npcsSort.fieldOptions}
+                      value={npcsSort.sort}
+                      onChange={npcsSort.setSort}
+                    />
+                  ) : null
+                }
+              />
               {npcsQ.data && npcsQ.data.length === 0 && (
                 <p className="text-muted-foreground text-xs italic">None.</p>
               )}
               {npcsQ.data && npcsQ.data.length > 0 && (
                 <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
-                  {npcsQ.data.map((n) => (
+                  {npcsSort.sorted.map((n) => (
                     <EntityRow
                       key={`${n.npcId}-${n.x}-${n.y}`}
                       entity="npc"
@@ -261,20 +291,26 @@ export default function MapDetail() {
 
           {features.hasMobs && (
             <section>
-              <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
-                <Skull className="h-4 w-4" /> Mobs
-                {mobsQ.data && (
-                  <span className="text-muted-foreground text-xs normal-case">
-                    ({mobsQ.data.length})
-                  </span>
-                )}
-              </h2>
+              <ListSectionHeader
+                icon={Skull}
+                title="Mobs"
+                count={mobsQ.data?.length}
+                action={
+                  mobsQ.data && mobsQ.data.length > 0 ? (
+                    <ListSortControl
+                      fields={mobsSort.fieldOptions}
+                      value={mobsSort.sort}
+                      onChange={mobsSort.setSort}
+                    />
+                  ) : null
+                }
+              />
               {mobsQ.data && mobsQ.data.length === 0 && (
                 <p className="text-muted-foreground text-xs italic">None.</p>
               )}
               {mobsQ.data && mobsQ.data.length > 0 && (
                 <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
-                  {mobsQ.data.map((mob) => (
+                  {mobsSort.sorted.map((mob) => (
                     <EntityRow
                       key={mob.mobId}
                       entity="mob"
@@ -309,20 +345,26 @@ export default function MapDetail() {
           )}
 
           <section>
-            <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
-              <DoorOpen className="h-4 w-4" /> Portals
-              {portalsQ.data && (
-                <span className="text-muted-foreground text-xs normal-case">
-                  ({portalsQ.data.length})
-                </span>
-              )}
-            </h2>
+            <ListSectionHeader
+              icon={DoorOpen}
+              title="Portals"
+              count={portalsQ.data?.length}
+              action={
+                portalsQ.data && portalsQ.data.length > 0 ? (
+                  <ListSortControl
+                    fields={portalsSort.fieldOptions}
+                    value={portalsSort.sort}
+                    onChange={portalsSort.setSort}
+                  />
+                ) : null
+              }
+            />
             {portalsQ.data && portalsQ.data.length === 0 && (
               <p className="text-muted-foreground text-xs italic">None.</p>
             )}
             {portalsQ.data && portalsQ.data.length > 0 && (
               <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
-                {portalsQ.data.map((p) => (
+                {portalsSort.sorted.map((p) => (
                   <li
                     key={`${p.portalName}-${p.x ?? 0}-${p.y ?? 0}`}
                     className="flex items-center gap-3 px-3 py-1.5 text-sm"

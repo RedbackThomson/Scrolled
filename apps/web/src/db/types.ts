@@ -173,6 +173,11 @@ export interface MapMobWithName extends MapMobRecord {
   level: number | null;
 }
 
+/** A map this mob appears on, with the aggregated spawn count from `map_mobs`. */
+export interface MobMapAppearance extends MapRecord {
+  spawnCount: number | null;
+}
+
 /**
  * One item this mob can drop, taken from
  * `String.wz/MonsterBook.img/<mobId>/reward/<index>`. Rates and quantities
@@ -410,8 +415,8 @@ export interface GameDatabase {
   getMobIcon(id: number): Promise<Uint8Array | null>;
   /** Items this mob can drop (from MonsterBook.img), joined to the target's name. */
   getMobDrops(mobId: number): Promise<MobDropWithName[]>;
-  /** Maps where this mob spawns. */
-  getMobMaps(mobId: number): Promise<MapRecord[]>;
+  /** Maps where this mob spawns, with the per-map aggregated spawn count. */
+  getMobMaps(mobId: number): Promise<MobMapAppearance[]>;
   /** Mobs that drop the given item, joined to mob name + level. */
   getItemDroppedBy(
     itemId: number,

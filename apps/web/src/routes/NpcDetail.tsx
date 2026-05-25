@@ -4,11 +4,14 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Copy, Loader2, Map as MapIcon, MapPin, ScrollText, Users } from 'lucide-react';
 import { EntityIcon } from '@/components/EntityIcon';
 import { EntityRow } from '@/components/EntityRow';
+import { ListSectionHeader } from '@/components/ListSectionHeader';
+import { ListSortControl } from '@/components/ListSortControl';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
 import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/lib/useFeatures';
+import { useListSort } from '@/lib/useListSort';
 
 export default function NpcDetail() {
   const params = useParams<{ id: string }>();
@@ -31,6 +34,14 @@ export default function NpcDetail() {
     queryFn: () => client.getNpcQuests(id),
     enabled: Number.isFinite(id) && features.hasQuests,
   });
+
+  const questsSort = useListSort(questsQ.data, [
+    { id: 'name', label: 'Quest name', get: (q) => q.name },
+  ]);
+  const mapsSort = useListSort(mapsQ.data, [
+    { id: 'name', label: 'Map name', get: (m) => m.name },
+    { id: 'street', label: 'Street', get: (m) => m.streetName },
+  ]);
 
   const paletteItems = useMemo<CommandItem[]>(
     () => [
@@ -106,20 +117,26 @@ export default function NpcDetail() {
 
           {features.hasQuests && (
             <section>
-              <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
-                <ScrollText className="h-4 w-4" /> Quests
-                {questsQ.data && (
-                  <span className="text-muted-foreground text-xs normal-case">
-                    ({questsQ.data.length})
-                  </span>
-                )}
-              </h2>
+              <ListSectionHeader
+                icon={ScrollText}
+                title="Quests"
+                count={questsQ.data?.length}
+                action={
+                  questsQ.data && questsQ.data.length > 0 ? (
+                    <ListSortControl
+                      fields={questsSort.fieldOptions}
+                      value={questsSort.sort}
+                      onChange={questsSort.setSort}
+                    />
+                  ) : null
+                }
+              />
               {questsQ.data && questsQ.data.length === 0 && (
                 <p className="text-muted-foreground text-xs italic">None.</p>
               )}
               {questsQ.data && questsQ.data.length > 0 && (
                 <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
-                  {questsQ.data.map((q) => (
+                  {questsSort.sorted.map((q) => (
                     <EntityRow
                       key={q.id}
                       entity="quest"
@@ -135,21 +152,27 @@ export default function NpcDetail() {
 
           {features.hasMaps && (
             <section>
-              <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
-                <MapIcon className="h-4 w-4" /> Appears on
-                {mapsQ.data && (
-                  <span className="text-muted-foreground text-xs normal-case">
-                    ({mapsQ.data.length})
-                  </span>
-                )}
-              </h2>
+              <ListSectionHeader
+                icon={MapIcon}
+                title="Appears on"
+                count={mapsQ.data?.length}
+                action={
+                  mapsQ.data && mapsQ.data.length > 0 ? (
+                    <ListSortControl
+                      fields={mapsSort.fieldOptions}
+                      value={mapsSort.sort}
+                      onChange={mapsSort.setSort}
+                    />
+                  ) : null
+                }
+              />
               {mapsQ.isLoading && <p className="text-muted-foreground text-xs">Loading maps…</p>}
               {mapsQ.data && mapsQ.data.length === 0 && (
                 <p className="text-muted-foreground text-xs italic">None.</p>
               )}
               {mapsQ.data && mapsQ.data.length > 0 && (
                 <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
-                  {mapsQ.data.map((m) => (
+                  {mapsSort.sorted.map((m) => (
                     <EntityRow
                       key={m.id}
                       entity="map"

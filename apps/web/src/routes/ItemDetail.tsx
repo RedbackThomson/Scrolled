@@ -4,11 +4,14 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Copy, Loader2, ScrollText, Skull } from 'lucide-react';
 import { EntityRow } from '@/components/EntityRow';
 import { ItemIcon } from '@/components/ItemIcon';
+import { ListSectionHeader } from '@/components/ListSectionHeader';
+import { ListSortControl } from '@/components/ListSortControl';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
 import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/lib/useFeatures';
+import { useListSort } from '@/lib/useListSort';
 
 export default function ItemDetail() {
   const params = useParams<{ id: string }>();
@@ -31,6 +34,14 @@ export default function ItemDetail() {
     queryFn: () => client.getItemDroppedBy(id),
     enabled: Number.isFinite(id) && features.hasMobs,
   });
+
+  const questsSort = useListSort(questsQ.data, [
+    { id: 'name', label: 'Quest name', get: (q) => q.name },
+  ]);
+  const droppedBySort = useListSort(droppedByQ.data, [
+    { id: 'name', label: 'Mob name', get: (m) => m.name },
+    { id: 'level', label: 'Level', get: (m) => m.level },
+  ]);
 
   const paletteItems = useMemo<CommandItem[]>(
     () => [
@@ -119,14 +130,20 @@ export default function ItemDetail() {
 
           {features.hasQuests && (
             <section>
-              <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
-                <ScrollText className="h-4 w-4" /> Used in quests
-                {questsQ.data && (
-                  <span className="text-muted-foreground text-xs normal-case">
-                    ({questsQ.data.length})
-                  </span>
-                )}
-              </h2>
+              <ListSectionHeader
+                icon={ScrollText}
+                title="Used in quests"
+                count={questsQ.data?.length}
+                action={
+                  questsQ.data && questsQ.data.length > 0 ? (
+                    <ListSortControl
+                      fields={questsSort.fieldOptions}
+                      value={questsSort.sort}
+                      onChange={questsSort.setSort}
+                    />
+                  ) : null
+                }
+              />
               {questsQ.isLoading && (
                 <p className="text-muted-foreground text-xs">Loading quests…</p>
               )}
@@ -135,7 +152,7 @@ export default function ItemDetail() {
               )}
               {questsQ.data && questsQ.data.length > 0 && (
                 <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
-                  {questsQ.data.map((q) => (
+                  {questsSort.sorted.map((q) => (
                     <EntityRow
                       key={q.id}
                       entity="quest"
@@ -151,14 +168,20 @@ export default function ItemDetail() {
 
           {features.hasMobs && (
             <section>
-              <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
-                <Skull className="h-4 w-4" /> Dropped by
-                {droppedByQ.data && (
-                  <span className="text-muted-foreground text-xs normal-case">
-                    ({droppedByQ.data.length})
-                  </span>
-                )}
-              </h2>
+              <ListSectionHeader
+                icon={Skull}
+                title="Dropped by"
+                count={droppedByQ.data?.length}
+                action={
+                  droppedByQ.data && droppedByQ.data.length > 0 ? (
+                    <ListSortControl
+                      fields={droppedBySort.fieldOptions}
+                      value={droppedBySort.sort}
+                      onChange={droppedBySort.setSort}
+                    />
+                  ) : null
+                }
+              />
               {droppedByQ.isLoading && (
                 <p className="text-muted-foreground text-xs">Loading mobs…</p>
               )}
@@ -167,7 +190,7 @@ export default function ItemDetail() {
               )}
               {droppedByQ.data && droppedByQ.data.length > 0 && (
                 <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
-                  {droppedByQ.data.map((m) => (
+                  {droppedBySort.sorted.map((m) => (
                     <EntityRow
                       key={m.mobId}
                       entity="mob"
