@@ -38,9 +38,6 @@ jobs:
 
       - name: Build
         env:
-          # Project Pages site lives under `/<repo>/`; asset URLs and the
-          # React Router basename are both derived from this.
-          BASE_PATH: /${{ github.event.repository.name }}/
           # Only tag pushes get a stamped version; main-branch builds keep the
           # "Pre-alpha" fallback the sidebar uses by default.
           VITE_APP_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
