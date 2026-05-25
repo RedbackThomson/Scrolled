@@ -7,11 +7,11 @@
 - [ ] Add a page for debugging the database directly
 - [ ] Add a debug panel on every page to show information about where the
       information came from (any other internal metadata)
-- [ ] Create a first run experience that walks users through the process of loading
+- [x] Create a first run experience that walks users through the process of loading
       their game files and setting up the app
 - [x] Add support for favouriting anything
 - [x] Add support for creating collections of things
-- [ ] On the NPC page, link to each of the map pages that the NPC is located in
+- [x] On the NPC page, link to each of the map pages that the NPC is located in
       (or embed the map images with where the NPC is on them)
 - [ ] Support seeing entire quest chains, where each of the relevant NPCs all on
       one page
@@ -19,7 +19,7 @@
 - [x] Fork the parser to support better parallelism, error handling and API
   stability
 - [x] Detect version automatically
-- [ ] Clean up wizard copy
+- [x] Clean up wizard copy
 - [ ] Think about support for smooth version upgrades
 - [x] Any hyperlinks should have a tooltip showing a summary of the target page
 - [ ] Add equipment set page with minimum requirements and gained stats
