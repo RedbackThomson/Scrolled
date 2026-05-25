@@ -14,6 +14,11 @@ interface Props {
   currentStepId: string;
   children: ReactNode;
   footer?: ReactNode;
+  /**
+   * Rendered top-right of the header, opposite the title. Use for an
+   * escape-hatch link (e.g. "Return to app") in update / restore modes.
+   */
+  exitSlot?: ReactNode;
 }
 
 /**
@@ -21,7 +26,15 @@ interface Props {
  * indicator, the active step's content, and an optional sticky footer for
  * primary/secondary actions.
  */
-export function WizardLayout({ title, subtitle, steps, currentStepId, children, footer }: Props) {
+export function WizardLayout({
+  title,
+  subtitle,
+  steps,
+  currentStepId,
+  children,
+  footer,
+  exitSlot,
+}: Props) {
   const currentIdx = Math.max(
     0,
     steps.findIndex((s) => s.id === currentStepId),
@@ -31,10 +44,14 @@ export function WizardLayout({ title, subtitle, steps, currentStepId, children, 
     <div className="bg-background flex min-h-full flex-col">
       <header className="border-border border-b">
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-6 py-6">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-            {subtitle && <p className="text-muted-foreground mt-1 text-sm">{subtitle}</p>}
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+              {subtitle && <p className="text-muted-foreground mt-1 text-sm">{subtitle}</p>}
+            </div>
+            {exitSlot && <div className="shrink-0">{exitSlot}</div>}
           </div>
+          {steps.length > 0 && (
           <ol className="flex items-center gap-2 text-xs">
             {steps.map((step, idx) => {
               const state = idx < currentIdx ? 'done' : idx === currentIdx ? 'current' : 'upcoming';
@@ -65,6 +82,7 @@ export function WizardLayout({ title, subtitle, steps, currentStepId, children, 
               );
             })}
           </ol>
+          )}
         </div>
       </header>
 

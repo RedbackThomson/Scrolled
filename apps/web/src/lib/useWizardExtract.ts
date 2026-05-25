@@ -11,10 +11,10 @@
 //   2. Load each worker's files in parallel (parser.load is itself
 //      sequential within a worker, but a different worker can be loading
 //      Mob.wz at the same time a third is loading Map.wz).
-//   3. Once every active worker reports loadDone, kick off extractors in
-//      parallel — one extractor call per worker. The items worker does
-//      extractItems then extractEquips back-to-back since they share the
-//      same WZ files.
+//   3. Once a worker reports loadDone, kick off its extractors. The items
+//      worker runs extractItems then extractEquips sequentially within
+//      its thread; the wizard surfaces those as two separate status rows
+//      so the UI can show progress per extractor.
 //   4. Aggregate per-extractor outcomes + load errors into one
 //      `recordDataset` call. The Settings extraction-report panel reads
 //      from there.
@@ -37,19 +37,53 @@ import {
   type GameDatabase,
 } from '@/db';
 import { createLogger, describeError } from '@/lib/logger';
-import type { ProgressFn, ProgressUpdate } from '@/lib/progress';
+import type { ProgressUpdate } from '@/lib/progress';
 
 const log = createLogger('wizard-extract');
 
-export interface WorkerStatus {
-  /** False when the worker isn't part of this run at all. */
+export const ALL_EXTRACTOR_KEYS = [
+  'item',
+  'equip',
+  'mob',
+  'npc',
+  'map',
+  'quest',
+] as const;
+export type ExtractorKey = (typeof ALL_EXTRACTOR_KEYS)[number];
+
+export const EXTRACTOR_TO_WORKER: Record<ExtractorKey, PoolWorkerName> = {
+  item: 'items',
+  equip: 'items',
+  mob: 'mobs',
+  npc: 'npcs',
+  map: 'maps',
+  quest: 'quests',
+};
+
+export const EXTRACTOR_LABEL: Record<ExtractorKey, string> = {
+  item: 'Items',
+  equip: 'Equips',
+  mob: 'Mobs',
+  npc: 'NPCs',
+  map: 'Maps',
+  quest: 'Quests',
+};
+
+export interface ExtractorStatus {
+  /** False when this extractor isn't part of the current run. */
   active: boolean;
-  phase: 'idle' | 'loading' | 'extracting' | 'done' | 'failed';
-  /** Latest progress update reported from inside the worker. */
+  /**
+   * - `loading`: the underlying worker is loading its files.
+   * - `waiting`: load complete; an earlier extractor on the same worker is
+   *    still running (only meaningful for `equip`, which runs after `item`
+   *    on the shared items worker).
+   * - `extracting`: this extractor is currently running.
+   * - `done` / `failed`: terminal.
+   */
+  phase: 'idle' | 'loading' | 'waiting' | 'extracting' | 'done' | 'failed';
   progress: ProgressUpdate | null;
-  /** Human-readable error if anything threw. */
   error: string | null;
-  /** Files this worker is responsible for loading. */
+  /** Files the underlying worker is loading. */
   files: string[];
 }
 
@@ -85,23 +119,41 @@ interface WorkerLoadResult {
   errors: { name: string; message: string }[];
 }
 
-const INITIAL_STATUSES: Record<PoolWorkerName, WorkerStatus> = {
-  items: { active: false, phase: 'idle', progress: null, error: null, files: [] },
-  mobs: { active: false, phase: 'idle', progress: null, error: null, files: [] },
-  npcs: { active: false, phase: 'idle', progress: null, error: null, files: [] },
-  maps: { active: false, phase: 'idle', progress: null, error: null, files: [] },
-  quests: { active: false, phase: 'idle', progress: null, error: null, files: [] },
-};
+function makeInitialStatuses(): Record<ExtractorKey, ExtractorStatus> {
+  const out = {} as Record<ExtractorKey, ExtractorStatus>;
+  for (const k of ALL_EXTRACTOR_KEYS) {
+    out[k] = { active: false, phase: 'idle', progress: null, error: null, files: [] };
+  }
+  return out;
+}
 
 export function useWizardExtract(opts: UseWizardExtractOptions) {
   const db = useMemo(() => getDbClient(), []);
   const queryClient = useQueryClient();
-  const [workers, setWorkers] = useState<Record<PoolWorkerName, WorkerStatus>>(INITIAL_STATUSES);
+  const [extractors, setExtractors] = useState<Record<ExtractorKey, ExtractorStatus>>(
+    () => makeInitialStatuses(),
+  );
   const [stats, setStats] = useState<ExtractStats | null>(null);
 
-  const patchWorker = useCallback(
-    (name: PoolWorkerName, patch: Partial<WorkerStatus>) => {
-      setWorkers((prev) => ({ ...prev, [name]: { ...prev[name], ...patch } }));
+  const patchExtractor = useCallback(
+    (key: ExtractorKey, patch: Partial<ExtractorStatus>) => {
+      setExtractors((prev) => ({ ...prev, [key]: { ...prev[key], ...patch } }));
+    },
+    [],
+  );
+
+  /** Patch every active extractor that lives on a given worker. */
+  const patchWorkerExtractors = useCallback(
+    (worker: PoolWorkerName, patch: Partial<ExtractorStatus>) => {
+      setExtractors((prev) => {
+        const out = { ...prev };
+        for (const k of ALL_EXTRACTOR_KEYS) {
+          if (EXTRACTOR_TO_WORKER[k] === worker && prev[k].active) {
+            out[k] = { ...prev[k], ...patch };
+          }
+        }
+        return out;
+      });
     },
     [],
   );
@@ -113,13 +165,12 @@ export function useWizardExtract(opts: UseWizardExtractOptions) {
       const droppedByName = new Map(opts.droppedFiles.map((f) => [f.name, f.source]));
       const willRun = opts.willRunKeys;
 
-      // Figure out which workers are active and what files each needs.
+      // Figure out which workers (and extractors) are active.
       const activeWorkers: PoolWorkerName[] = [];
-      const nextStatuses: Record<PoolWorkerName, WorkerStatus> = {
-        ...INITIAL_STATUSES,
-      };
+      const workerFiles: Partial<Record<PoolWorkerName, string[]>> = {};
+      const next = makeInitialStatuses();
       for (const name of POOL_WORKER_NAMES) {
-        const extractorsHere = WORKER_EXTRACTORS[name];
+        const extractorsHere = WORKER_EXTRACTORS[name] as readonly ExtractorKey[];
         const willAnyRun = extractorsHere.some((e) => willRun.has(e));
         if (!willAnyRun) continue;
         const required = POOL_WORKER_FILES[name];
@@ -127,15 +178,19 @@ export function useWizardExtract(opts: UseWizardExtractOptions) {
         if (!droppedByName.has(primary)) continue;
         const files = required.filter((f) => droppedByName.has(f));
         activeWorkers.push(name);
-        nextStatuses[name] = {
-          active: true,
-          phase: 'loading',
-          progress: null,
-          error: null,
-          files,
-        };
+        workerFiles[name] = files;
+        for (const ek of extractorsHere) {
+          if (!willRun.has(ek)) continue;
+          next[ek] = {
+            active: true,
+            phase: 'loading',
+            progress: null,
+            error: null,
+            files,
+          };
+        }
       }
-      setWorkers(nextStatuses);
+      setExtractors(next);
       log.info('pool run start', {
         active: activeWorkers,
         willRun: [...willRun],
@@ -147,18 +202,24 @@ export function useWizardExtract(opts: UseWizardExtractOptions) {
         activeWorkers.map(async (name) => {
           const worker = getPoolWorker(name);
           await worker.init(opts.version);
-          const files = nextStatuses[name].files.map((fname) => ({
+          const files = (workerFiles[name] ?? []).map((fname) => ({
             name: fname,
             source: droppedByName.get(fname)!,
           }));
-          const onProgress = proxy((p: ProgressUpdate) => patchWorker(name, { progress: p }));
+          const onProgress = proxy((p: ProgressUpdate) =>
+            patchWorkerExtractors(name, { progress: p }),
+          );
           try {
             const result = await worker.load(files, onProgress);
             loadResults[name] = result;
-            patchWorker(name, { phase: 'extracting', progress: null });
+            // Load done. Move each extractor on this worker to `waiting`.
+            // The extract phase below promotes them to `extracting` one at
+            // a time (so the items worker's `item` and `equip` rows show
+            // sequential progress).
+            patchWorkerExtractors(name, { phase: 'waiting', progress: null });
           } catch (e) {
             log.error('pool worker load failed', { worker: name, ...describeError(e) });
-            patchWorker(name, {
+            patchWorkerExtractors(name, {
               phase: 'failed',
               progress: null,
               error: (e as Error).message,
@@ -175,18 +236,40 @@ export function useWizardExtract(opts: UseWizardExtractOptions) {
       await Promise.all(
         activeWorkers.map(async (name) => {
           const worker = getPoolWorker(name);
-          const onProgress = proxy((p: ProgressUpdate) => patchWorker(name, { progress: p }));
           try {
-            await runWorkerExtractors(name, worker, willRun, onProgress, db, perExtractor, (n) => {
-              skippedTotal += n;
-            });
-            patchWorker(name, { phase: 'done', progress: null });
+            await runWorkerExtractors(
+              name,
+              worker,
+              willRun,
+              patchExtractor,
+              db,
+              perExtractor,
+              (n) => {
+                skippedTotal += n;
+              },
+            );
           } catch (e) {
             log.error('pool worker extract failed', { worker: name, ...describeError(e) });
-            patchWorker(name, {
-              phase: 'failed',
-              progress: null,
-              error: (e as Error).message,
+            // Any extractor on this worker that didn't already reach
+            // `done` is marked `failed`. We patch via per-extractor so we
+            // don't clobber the ones that finished cleanly.
+            setExtractors((prev) => {
+              const out = { ...prev };
+              for (const k of ALL_EXTRACTOR_KEYS) {
+                if (
+                  EXTRACTOR_TO_WORKER[k] === name &&
+                  prev[k].active &&
+                  prev[k].phase !== 'done'
+                ) {
+                  out[k] = {
+                    ...prev[k],
+                    phase: 'failed',
+                    progress: null,
+                    error: (e as Error).message,
+                  };
+                }
+              }
+              return out;
             });
             throw e;
           }
@@ -196,7 +279,7 @@ export function useWizardExtract(opts: UseWizardExtractOptions) {
       // Add 'skipped' entries for extractors that didn't run at all so
       // the dataset record carries the full picture.
       const ranKeys = new Set(perExtractor.map((e) => e.extractor));
-      for (const k of ['item', 'equip', 'mob', 'npc', 'map', 'quest']) {
+      for (const k of ALL_EXTRACTOR_KEYS) {
         if (!ranKeys.has(k)) {
           perExtractor.push({
             extractor: k,
@@ -263,16 +346,8 @@ export function useWizardExtract(opts: UseWizardExtractOptions) {
     run: useCallback(() => mutation.mutate(), [mutation]),
     isRunning: mutation.isPending,
     error: mutation.error as Error | null,
-    workers,
+    extractors,
     stats,
-    /** Per-file load errors aggregated across the pool. */
-    loadErrors: useMemo(() => {
-      const out: { name: string; message: string }[] = [];
-      // Currently surfaced only via the dataset record; the wizard can
-      // also derive them from `workers[name].error` for the failed
-      // panel without needing this list. Reserved.
-      return out;
-    }, []),
   };
 }
 
@@ -280,7 +355,7 @@ async function runWorkerExtractors(
   name: PoolWorkerName,
   worker: Remote<ParserWorkerApi>,
   willRun: Set<string>,
-  onProgress: ProgressFn,
+  patchExtractor: (key: ExtractorKey, patch: Partial<ExtractorStatus>) => void,
   db: Remote<GameDatabase>,
   out: ExtractorResultRecord[],
   bumpSkipped: (n: number) => void,
@@ -290,6 +365,10 @@ async function runWorkerExtractors(
   // make progress concurrently on different threads.
   if (name === 'items' && (willRun.has('item') || willRun.has('equip'))) {
     if (willRun.has('item')) {
+      patchExtractor('item', { phase: 'extracting' });
+      const onProgress = proxy((p: ProgressUpdate) =>
+        patchExtractor('item', { progress: p }),
+      );
       const r = await worker.extractItems(onProgress);
       const rows = r.items.length > 0 ? await db.upsertItems(r.items) : 0;
       out.push({
@@ -301,8 +380,13 @@ async function runWorkerExtractors(
         error: null,
       });
       bumpSkipped(r.skipped.length);
+      patchExtractor('item', { phase: 'done', progress: null });
     }
     if (willRun.has('equip')) {
+      patchExtractor('equip', { phase: 'extracting' });
+      const onProgress = proxy((p: ProgressUpdate) =>
+        patchExtractor('equip', { progress: p }),
+      );
       const r = await worker.extractEquips(onProgress);
       const rows = r.equips.length > 0 ? await db.upsertEquips(r.equips) : 0;
       out.push({
@@ -314,11 +398,16 @@ async function runWorkerExtractors(
         error: null,
       });
       bumpSkipped(r.skipped.length);
+      patchExtractor('equip', { phase: 'done', progress: null });
     }
     return;
   }
 
   if (name === 'mobs' && willRun.has('mob')) {
+    patchExtractor('mob', { phase: 'extracting' });
+    const onProgress = proxy((p: ProgressUpdate) =>
+      patchExtractor('mob', { progress: p }),
+    );
     const r = await worker.extractMobs(onProgress);
     const rows = r.mobs.length > 0 ? await db.upsertMobs(r.mobs) : 0;
     if (r.drops.length > 0) {
@@ -333,10 +422,15 @@ async function runWorkerExtractors(
       error: null,
     });
     bumpSkipped(r.skipped.length);
+    patchExtractor('mob', { phase: 'done', progress: null });
     return;
   }
 
   if (name === 'npcs' && willRun.has('npc')) {
+    patchExtractor('npc', { phase: 'extracting' });
+    const onProgress = proxy((p: ProgressUpdate) =>
+      patchExtractor('npc', { progress: p }),
+    );
     const r = await worker.extractNpcs(onProgress);
     const rows = r.npcs.length > 0 ? await db.upsertNpcs(r.npcs) : 0;
     out.push({
@@ -348,10 +442,15 @@ async function runWorkerExtractors(
       error: null,
     });
     bumpSkipped(r.skipped.length);
+    patchExtractor('npc', { phase: 'done', progress: null });
     return;
   }
 
   if (name === 'maps' && willRun.has('map')) {
+    patchExtractor('map', { phase: 'extracting' });
+    const onProgress = proxy((p: ProgressUpdate) =>
+      patchExtractor('map', { progress: p }),
+    );
     const r = await worker.extractMaps(onProgress);
     const rows = r.maps.length > 0 ? await db.upsertMaps(r.maps) : 0;
     if (
@@ -376,10 +475,15 @@ async function runWorkerExtractors(
       error: null,
     });
     bumpSkipped(r.skipped.length);
+    patchExtractor('map', { phase: 'done', progress: null });
     return;
   }
 
   if (name === 'quests' && willRun.has('quest')) {
+    patchExtractor('quest', { phase: 'extracting' });
+    const onProgress = proxy((p: ProgressUpdate) =>
+      patchExtractor('quest', { progress: p }),
+    );
     const r = await worker.extractQuests(onProgress);
     const rows = r.quests.length > 0 ? await db.upsertQuests(r.quests) : 0;
     if (r.requirements.length > 0 || r.rewards.length > 0) {
@@ -397,6 +501,7 @@ async function runWorkerExtractors(
       error: null,
     });
     bumpSkipped(r.skipped.length);
+    patchExtractor('quest', { phase: 'done', progress: null });
     return;
   }
 }

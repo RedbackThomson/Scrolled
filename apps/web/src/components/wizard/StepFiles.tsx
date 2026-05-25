@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   FileWarning,
+  Info,
   Loader2,
   RefreshCw,
   Trash2,
@@ -13,13 +14,16 @@ import { Button } from '@/components/ui/button';
 import { getDbClient } from '@/db';
 import { sha256OfFile, shortHash } from '@/lib/hashFile';
 import { createLogger, describeError } from '@/lib/logger';
+import type { Features } from '@/lib/useFeatures';
 import { cn } from '@/lib/utils';
 import type { WzMapleVersionName } from '@/parser';
+import { splitByKind } from './dropClassify';
+import { EntityStatus } from './EntityStatus';
+import { WelcomePanel } from './WelcomePanel';
 
 const log = createLogger('wizard-files');
 
 const HEAVY_FILES = new Set(['Map.wz', 'Character.wz', 'Sound.wz', 'Effect.wz']);
-const RECOMMENDED = ['String.wz', 'Item.wz'] as const;
 
 export type HashPhase = 'queued' | 'hashing' | 'done' | 'error';
 
@@ -58,6 +62,14 @@ interface Props {
   /** Manual override; `null` means "trust the auto-detected version." */
   versionOverride: WzMapleVersionName | null;
   onVersionOverrideChange: (v: WzMapleVersionName | null) => void;
+  /** Wizard mode — drives welcome panel visibility and entity-status copy. */
+  mode: 'first-run' | 'update';
+  features: Features;
+  /**
+   * Called when the user drops a `.sqlite` / `.db` file. The parent owns the
+   * confirm-before-replace dialog and the actual mode switch.
+   */
+  onRestoreFile: (file: File, ignoredOthers: number) => void;
 }
 
 const VERSION_OPTIONS: { id: WzMapleVersionName; label: string }[] = [
@@ -75,6 +87,9 @@ export function StepFiles({
   detection,
   versionOverride,
   onVersionOverrideChange,
+  mode,
+  features,
+  onRestoreFile,
 }: Props) {
   const db = useMemo(() => getDbClient(), []);
   const [dragging, setDragging] = useState(false);
@@ -91,12 +106,20 @@ export function StepFiles({
 
   const addFiles = useCallback(
     (list: FileList | File[]) => {
+      const split = splitByKind(Array.from(list));
+      if (split.sqlite.length > 0) {
+        // SQLite drop wins. Restore is destructive and explicit; mixing in
+        // fresh-import would be ambiguous.
+        const ignored = split.wz.length + split.other.length + (split.sqlite.length - 1);
+        onRestoreFile(split.sqlite[0], ignored);
+        return;
+      }
+      for (const f of split.other) {
+        log.warn('ignoring unknown file', { name: f.name });
+      }
+      if (split.wz.length === 0) return;
       const incoming: WizardFile[] = [];
-      for (const f of Array.from(list)) {
-        if (!/\.wz$/i.test(f.name)) {
-          log.warn('ignoring non-.wz file', { name: f.name });
-          continue;
-        }
+      for (const f of split.wz) {
         // Dedup by (name, size) so a re-drop doesn't double the list.
         const dup = files.some((x) => x.file.name === f.name && x.file.size === f.size);
         if (dup) continue;
@@ -113,7 +136,7 @@ export function StepFiles({
       if (incoming.length === 0) return;
       onChange((prev) => [...prev, ...incoming]);
     },
-    [files, onChange],
+    [files, onChange, onRestoreFile],
   );
 
   // Kick off hashing for any newly added files. Each hash is started exactly
@@ -154,7 +177,7 @@ export function StepFiles({
           log.error('hashing failed', describeError(e));
           patch({
             hashPhase: 'error',
-            hashError: (e as Error).message ?? 'hash failed',
+            hashError: (e as Error).message ?? 'failed to read',
           });
         });
     }
@@ -174,177 +197,187 @@ export function StepFiles({
     onChange(files.map((f) => (f === file ? { ...f, [field]: value } : f)));
   }
 
-  const knownNames = useMemo(() => new Set(files.map((f) => f.file.name)), [files]);
-  const missingRecommended = RECOMMENDED.filter((r) => !knownNames.has(r));
   const hasAnyMatched = useMemo(() => files.some((f) => f.matchedExisting !== null), [files]);
 
   return (
-    <section className="space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold">Drop your WZ files</h2>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Files stay in your browser; nothing is uploaded anywhere. We compute a SHA-256 of each
-          file so we can skip re-processing on subsequent runs.
-        </p>
-      </div>
+    <section className="space-y-6">
+      {mode === 'first-run' && <WelcomePanel />}
 
-      <div
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragging(true);
-        }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={onDrop}
-        className={cn(
-          'border-border bg-card flex flex-col items-center justify-center rounded-md border-2 border-dashed py-10 text-center transition-colors',
-          dragging && 'border-primary bg-primary/5',
-        )}
-      >
-        <Upload className="text-muted-foreground mb-3 h-8 w-8" />
-        <p className="text-sm font-medium">Drag and drop .wz files here</p>
-        <p className="text-muted-foreground mt-1 text-xs">or</p>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="mt-2"
-          onClick={() => inputRef.current?.click()}
-        >
-          Choose files
-        </Button>
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".wz"
-          multiple
-          className="hidden"
-          onChange={(e) => {
-            if (e.target.files) addFiles(e.target.files);
-            e.target.value = '';
+      <div className="space-y-3">
+        <div>
+          <h2 className="text-lg font-semibold">Add your files</h2>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Drop your <code className="font-mono text-xs">.wz</code> files to enable categories, or
+            drop a <code className="font-mono text-xs">.sqlite</code> backup to restore a previously
+            exported wiki. Everything stays on this device.
+          </p>
+        </div>
+
+        <div
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragging(true);
           }}
-        />
-      </div>
-
-      {missingRecommended.length > 0 && (
-        <p className="text-muted-foreground text-xs">
-          Recommended minimum: {RECOMMENDED.join(' + ')}. Missing: {missingRecommended.join(', ')}.
-        </p>
-      )}
-
-      {files.length > 0 && (
-        <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
-          {files.map((f) => (
-            <li key={f.file.name} className="space-y-2 px-4 py-3 text-sm">
-              <div className="flex items-center gap-3">
-                <label className="text-muted-foreground flex items-center gap-2 text-xs">
-                  <input
-                    type="checkbox"
-                    checked={f.include}
-                    onChange={(e) => toggle(f, 'include', e.target.checked)}
-                    className="accent-primary h-3.5 w-3.5"
-                    disabled={f.hashPhase === 'queued' || f.hashPhase === 'hashing'}
-                  />
-                </label>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-medium">{f.file.name}</span>
-                    {HEAVY_FILES.has(f.file.name) && (
-                      <span className="inline-flex items-center gap-1 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
-                        <FileWarning className="h-3 w-3" /> heavy
-                      </span>
-                    )}
-                    {existingNames.data?.includes(f.file.name) && !f.matchedExisting && (
-                      <span className="inline-flex items-center gap-1 rounded bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:text-blue-300">
-                        updating
-                      </span>
-                    )}
-                    {f.matchedExisting && (
-                      <span className="inline-flex items-center gap-1 rounded bg-green-500/15 px-1.5 py-0.5 text-[10px] font-medium text-green-700 dark:text-green-300">
-                        <CheckCircle2 className="h-3 w-3" /> already loaded
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-muted-foreground mt-0.5 text-xs">
-                    {(f.file.size / 1_000_000).toFixed(1)} MB
-                    {f.hash && (
-                      <>
-                        {' · '}
-                        <span className="font-mono" title={f.hash}>
-                          sha256:{shortHash(f.hash)}…
-                        </span>
-                      </>
-                    )}
-                  </div>
-                </div>
-                {f.matchedExisting && f.hashPhase === 'done' && (
-                  <button
-                    type="button"
-                    onClick={() => toggle(f, 'forceReprocess', !f.forceReprocess)}
-                    disabled={forceAll}
-                    aria-pressed={forceAll || f.forceReprocess}
-                    aria-label="Force re-process (extractors will run again for this file)"
-                    title="Force re-process (extractors will run again for this file)"
-                    className={cn(
-                      'shrink-0 transition-colors',
-                      forceAll || f.forceReprocess
-                        ? 'text-primary'
-                        : 'text-muted-foreground hover:text-foreground',
-                      forceAll && 'cursor-not-allowed opacity-60',
-                    )}
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => remove(f)}
-                  className="text-muted-foreground hover:text-destructive shrink-0"
-                  aria-label={`Remove ${f.file.name}`}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-
-              {(f.hashPhase === 'queued' || f.hashPhase === 'hashing') && (
-                <p className="text-muted-foreground inline-flex items-center gap-1.5 pl-7 text-xs">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  {f.hashPhase === 'queued' ? 'Queued…' : 'Hashing…'}
-                </p>
-              )}
-              {f.hashPhase === 'error' && f.hashError && (
-                <p className="text-destructive inline-flex items-center gap-1.5 pl-7 text-xs">
-                  <AlertTriangle className="h-3 w-3" /> {f.hashError}
-                </p>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {hasAnyMatched && (
-        <label className="text-muted-foreground flex items-center gap-2 text-xs">
+          onDragLeave={() => setDragging(false)}
+          onDrop={onDrop}
+          className={cn(
+            'border-border bg-card flex flex-col items-center justify-center rounded-md border-2 border-dashed py-10 text-center transition-colors',
+            dragging && 'border-primary bg-primary/5',
+          )}
+        >
+          <Upload className="text-muted-foreground mb-3 h-8 w-8" />
+          <p className="text-sm font-medium">Drag and drop files here</p>
+          <p className="text-muted-foreground mt-1 text-xs">
+            <code className="font-mono">.wz</code> game files, or a{' '}
+            <code className="font-mono">.sqlite</code> backup
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="mt-3"
+            onClick={() => inputRef.current?.click()}
+          >
+            Choose files
+          </Button>
           <input
-            type="checkbox"
-            checked={forceAll}
-            onChange={(e) => onForceAllChange(e.target.checked)}
-            className="accent-primary h-3.5 w-3.5"
+            ref={inputRef}
+            type="file"
+            accept=".wz,.sqlite,.sqlite3,.db,application/vnd.sqlite3"
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              if (e.target.files) addFiles(e.target.files);
+              e.target.value = '';
+            }}
           />
-          Force re-process all (re-run extractors for every hash-matched file)
-        </label>
-      )}
+        </div>
 
-      {files.length > 0 && (
-        <DetectionPanel
-          detection={detection}
-          versionOverride={versionOverride}
-          onVersionOverrideChange={onVersionOverrideChange}
-        />
-      )}
+        <EntityStatus files={files} features={features} mode={mode} forceAll={forceAll} />
+
+        {files.length > 0 && (
+          <details className="border-border bg-card group rounded-md border text-sm">
+            <summary className="text-muted-foreground flex cursor-pointer items-center justify-between gap-2 px-4 py-2.5 text-xs">
+              <span className="font-medium uppercase tracking-wide">
+                Dropped files · {files.length}
+              </span>
+              <span className="text-muted-foreground/70 text-[10px] uppercase tracking-wide">
+                details
+              </span>
+            </summary>
+            <ul className="divide-border divide-y border-t">
+              {files.map((f) => (
+                <li key={f.file.name} className="space-y-2 px-4 py-3 text-sm">
+                  <div className="flex items-center gap-3">
+                    <label className="text-muted-foreground flex items-center gap-2 text-xs">
+                      <input
+                        type="checkbox"
+                        checked={f.include}
+                        onChange={(e) => toggle(f, 'include', e.target.checked)}
+                        className="accent-primary h-3.5 w-3.5"
+                        disabled={f.hashPhase === 'queued' || f.hashPhase === 'hashing'}
+                      />
+                    </label>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-medium">{f.file.name}</span>
+                        {HEAVY_FILES.has(f.file.name) && (
+                          <span className="inline-flex items-center gap-1 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
+                            <FileWarning className="h-3 w-3" /> large file
+                          </span>
+                        )}
+                        {existingNames.data?.includes(f.file.name) && !f.matchedExisting && (
+                          <span className="inline-flex items-center gap-1 rounded bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:text-blue-300">
+                            updating
+                          </span>
+                        )}
+                        {f.matchedExisting && (
+                          <span className="inline-flex items-center gap-1 rounded bg-green-500/15 px-1.5 py-0.5 text-[10px] font-medium text-green-700 dark:text-green-300">
+                            <CheckCircle2 className="h-3 w-3" /> already loaded
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-muted-foreground mt-0.5 text-xs">
+                        {(f.file.size / 1_000_000).toFixed(1)} MB
+                      </div>
+                    </div>
+                    {f.matchedExisting && f.hashPhase === 'done' && (
+                      <button
+                        type="button"
+                        onClick={() => toggle(f, 'forceReprocess', !f.forceReprocess)}
+                        disabled={forceAll}
+                        aria-pressed={forceAll || f.forceReprocess}
+                        aria-label="Re-process this file (load it again from scratch)"
+                        title="Re-process this file (load it again from scratch)"
+                        className={cn(
+                          'shrink-0 transition-colors',
+                          forceAll || f.forceReprocess
+                            ? 'text-primary'
+                            : 'text-muted-foreground hover:text-foreground',
+                          forceAll && 'cursor-not-allowed opacity-60',
+                        )}
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => remove(f)}
+                      className="text-muted-foreground hover:text-destructive shrink-0"
+                      aria-label={`Remove ${f.file.name}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  {(f.hashPhase === 'queued' || f.hashPhase === 'hashing') && (
+                    <p className="text-muted-foreground inline-flex items-center gap-1.5 pl-7 text-xs">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      {f.hashPhase === 'queued' ? 'Queued…' : 'Reading…'}
+                    </p>
+                  )}
+                  {f.hashPhase === 'error' && f.hashError && (
+                    <p className="text-destructive inline-flex items-center gap-1.5 pl-7 text-xs">
+                      <AlertTriangle className="h-3 w-3" /> {f.hashError}
+                    </p>
+                  )}
+                  {f.hash && (
+                    <details className="text-muted-foreground/70 pl-7 text-[11px]">
+                      <summary className="cursor-pointer">Technical details</summary>
+                      <div className="mt-1 font-mono">sha256: {shortHash(f.hash)}…</div>
+                    </details>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
+
+        {hasAnyMatched && (
+          <label className="text-muted-foreground flex items-center gap-2 text-xs">
+            <input
+              type="checkbox"
+              checked={forceAll}
+              onChange={(e) => onForceAllChange(e.target.checked)}
+              className="accent-primary h-3.5 w-3.5"
+            />
+            Re-process every file (even ones already loaded before)
+          </label>
+        )}
+
+        {files.length > 0 && (
+          <AdvancedPanel
+            detection={detection}
+            versionOverride={versionOverride}
+            onVersionOverrideChange={onVersionOverrideChange}
+          />
+        )}
+      </div>
     </section>
   );
 }
 
-function DetectionPanel({
+function AdvancedPanel({
   detection,
   versionOverride,
   onVersionOverrideChange,
@@ -356,12 +389,12 @@ function DetectionPanel({
   const detected = detection.version;
   const summary =
     detection.status === 'running'
-      ? 'Detecting encryption…'
+      ? 'Detecting client variant…'
       : detection.status === 'done' && detected
-        ? `Detected ${detected}${detection.mapleVersion ? ` · MapleStory v${detection.mapleVersion}` : ''}`
+        ? `Detected client variant: ${detected}${detection.mapleVersion ? ` · v${detection.mapleVersion}` : ''}`
         : detection.status === 'failed'
-          ? 'Could not auto-detect encryption — defaulting to GMS'
-          : 'Encryption will be auto-detected from the first hashed file';
+          ? 'Could not auto-detect client variant — defaulting to GMS. Pick one below if names look wrong.'
+          : 'Client variant will be detected from your files automatically';
 
   const Icon =
     detection.status === 'running'
@@ -370,7 +403,7 @@ function DetectionPanel({
         ? CheckCircle2
         : detection.status === 'failed'
           ? AlertTriangle
-          : Loader2;
+          : Info;
 
   return (
     <details className="border-border bg-card group rounded-md border text-xs">
@@ -395,12 +428,11 @@ function DetectionPanel({
       </summary>
       <div className="border-border border-t px-3 py-2.5">
         <p className="text-muted-foreground mb-2 text-[11px] leading-relaxed">
-          We try each known WZ initialization vector against your file's root directory and pick the
-          one that decodes to readable ASCII. Override this only if the detected value comes out
-          wrong — e.g. names render as garbage in the wiki.
+          We automatically detect which game-client variant your files come from. Override this only
+          if names render as garbage in the wiki.
         </p>
         <label className="flex items-center gap-2">
-          <span className="text-muted-foreground shrink-0">Force version:</span>
+          <span className="text-muted-foreground shrink-0">Force variant:</span>
           <select
             value={versionOverride ?? ''}
             onChange={(e) => {
@@ -421,3 +453,4 @@ function DetectionPanel({
     </details>
   );
 }
+
