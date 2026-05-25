@@ -41,6 +41,13 @@ jobs:
           # Only tag pushes get a stamped version; main-branch builds keep the
           # "Pre-alpha" fallback the sidebar uses by default.
           VITE_APP_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+          # Pageview analytics activate only when all three are non-empty
+          # AND the deployed hostname matches the allowlist at runtime. Forks
+          # don't inherit repo variables on their own Pages deploys, so they
+          # ship with no beacon.
+          VITE_ANALYTICS_PROVIDER: ${{ vars.ANALYTICS_PROVIDER }}
+          VITE_ANALYTICS_TOKEN: ${{ vars.ANALYTICS_TOKEN }}
+          VITE_ANALYTICS_ALLOWED_HOSTS: ${{ vars.ANALYTICS_ALLOWED_HOSTS }}
         run: pnpm build
 
       - name: SPA fallback (copy index.html to 404.html)

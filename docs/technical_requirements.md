@@ -79,7 +79,15 @@ Schema and join-table inventory follow §8.4 of the MVP doc.
 ### 2.7 Other
 
 - Asset decoding pipeline: `URL.createObjectURL` for sprites, LRU memoization for decoded thumbnails, IndexedDB cache for repeat sessions, explicit "clear cache" control.
-- No analytics, no telemetry, no remote logging.
+- **Pageview analytics — narrow carve-out from local-first.** The canonical hosted deployment loads an external pageview-analytics beacon (currently Cloudflare Web Analytics). Every other deployment, including local dev and forks, ships with no analytics. Constraints:
+  - **Swappable provider.** Implementation lives in `apps/web/src/lib/analytics/` behind an `AnalyticsProvider` interface so the vendor can be replaced without touching call sites.
+  - **Build-time gate.** Activated only when `VITE_ANALYTICS_PROVIDER`, `VITE_ANALYTICS_TOKEN`, and `VITE_ANALYTICS_ALLOWED_HOSTS` are all set at build time. When unset (default), the analytics module is a no-op and tree-shakes out.
+  - **Runtime host gate.** Even with the env vars set, the beacon is only loaded when `window.location.hostname` matches the allowlist. A fork that somehow inherits the env vars still won't ship traffic to the upstream account.
+  - **Privacy signals respected.** Skip the beacon when `navigator.doNotTrack === '1'` or `navigator.globalPrivacyControl === true`.
+  - **Opt-out.** A Settings toggle writes `mushex.analytics.optout=1` to localStorage; the beacon is skipped when present.
+  - **No identifiers, no events.** Pageviews only. No user IDs, no entity IDs in URLs sent as custom events, no fingerprinting. Whatever the provider's URL-tracking does is the only signal we collect.
+  - **Ad-blocker tolerant.** The beacon must be blockable by uBlock Origin and similar without breaking the app. No fallback proxying.
+- No telemetry beyond the pageview carve-out above. No remote error reporting, no usage analytics, no remote logging of game data or user actions.
 - PWA / offline: [`vite-plugin-pwa`](https://vite-pwa-org.netlify.app/) with Workbox's `generateSW`. Precaches the full build output (including `.wasm` for sqlite-wasm) so the app loads and runs with no network once installed. Generates the web app manifest for installability. Updates are surfaced via a user-driven "reload to update" prompt rather than silent activation.
 
 ## 3. Design language

@@ -7,7 +7,10 @@ import { NuqsAdapter } from 'nuqs/adapters/react-router/v6';
 
 import { router } from '@/router';
 import { UpdatePrompt } from '@/components/UpdatePrompt';
+import { initAnalytics } from '@/lib/analytics';
 import '@/styles/index.css';
+
+initAnalytics();
 
 const queryClient = new QueryClient({
   defaultOptions: {
