@@ -73,9 +73,9 @@ interface Props {
 }
 
 const VERSION_OPTIONS: { id: WzMapleVersionName; label: string }[] = [
-  { id: 'GMS', label: 'GMS · old Global MapleStory' },
-  { id: 'BMS', label: 'BMS · modern Global / MapleSEA / Japan' },
-  { id: 'EMS', label: 'EMS · old MapleStory Europe / China' },
+  { id: 'GMS', label: 'GMS · older global-region client' },
+  { id: 'BMS', label: 'BMS · modern client (alternate IV)' },
+  { id: 'EMS', label: 'EMS · older European client' },
   { id: 'CLASSIC', label: 'Classic · uncommon, zero-IV variant' },
 ];
 

@@ -153,6 +153,6 @@ function detectMapleVersion(
     }
   }
   throw new Error(
-    `could not find a MapleStory patch version whose hash matches encVersion=${header.encVersion}`,
+    `could not find a patch version whose hash matches encVersion=${header.encVersion}`,
   );
 }

@@ -1,6 +1,6 @@
 # Mushroom Game Explorer
 
-A self-hostable, local-first wiki for MapleStory/MapleRoyals-style game data.
+A self-hostable, local-first wiki for Mushroom Game data.
 
 The app parses **your own local game files** in your browser and renders pages for items, equips, mobs, NPCs, maps, and quests. Nothing is uploaded; nothing leaves your machine.
 
@@ -12,9 +12,9 @@ Pre-alpha. Phase 0 (scaffold). See [`docs/technical_requirements.md`](docs/techn
 
 ## Legal notice
 
-This project is not affiliated with, endorsed by, or sponsored by Nexon or any MapleStory operator. "MapleStory" and related names are trademarks of their respective owners; nominative references in this repository exist solely to describe the file formats the tool can parse.
+This project is not affiliated with, endorsed by, or sponsored by any game operator or rights holder. All trademarks, trade names, and copyrighted material belong to their respective owners. This repository ships code only — it does not include, distribute, or host any game data, assets, or branding.
 
-You are responsible for ensuring that any game files you load are files you are legally permitted to use. The maintainers do not distribute, host, or store such files.
+You are responsible for ensuring that any files you load are files you are legally permitted to use. The maintainers do not distribute, host, or store such files.
 
 ## Quickstart
 

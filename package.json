@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Self-hostable, local-first wiki for MapleStory/MapleRoyals-style game data. Ships code only — users provide their own files.",
+  "description": "Self-hostable, local-first wiki for Mushroom Game data. Ships code only — users provide their own files.",
   "license": "Apache-2.0",
   "author": "Nicholas Thomson (RedbackThomson)",
   "engines": {

@@ -1,12 +1,11 @@
 import type { WzVersion } from '../types';
 
 /**
- * MapleStory's published "AES UserKey" — the source material from which the
- * 32-byte AES-256 key is derived.
- *
- * Identical to `MAPLESTORY_USERKEY_DEFAULT` in MapleLib / @tybys/wz.
+ * Published 128-byte "AES UserKey" — the source material from which the
+ * 32-byte AES-256 key is derived. Matches the default UserKey in upstream
+ * WZ parsers.
  */
-export const MAPLESTORY_USERKEY = new Uint8Array([
+export const WZ_USERKEY = new Uint8Array([
   0x13, 0x00, 0x00, 0x00, 0x52, 0x00, 0x00, 0x00, 0x2a, 0x00, 0x00, 0x00, 0x5b, 0x00, 0x00, 0x00,
   0x08, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x60, 0x00, 0x00, 0x00,
   0x06, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x43, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00,
@@ -30,7 +29,7 @@ export const WZ_OFFSET_CONSTANT = 0x581c3f6d;
  * 0, 16, 32, ..., 112) and write them to key positions 0, 4, 8, ..., 28.
  * The 24 in-between bytes stay zero.
  */
-export function trimUserKey(userKey: Uint8Array = MAPLESTORY_USERKEY): Uint8Array {
+export function trimUserKey(userKey: Uint8Array = WZ_USERKEY): Uint8Array {
   if (userKey.length !== 128) {
     throw new RangeError(`UserKey must be 128 bytes, got ${userKey.length}`);
   }
