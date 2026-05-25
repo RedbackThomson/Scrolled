@@ -11,16 +11,23 @@ interface ItemLinkProps {
   children: ReactNode;
   className?: string;
   noPreview?: boolean;
+  /** Applied to the HoverPopover wrapper span — use this when the link needs
+   *  to participate in a flex layout (e.g. `flex min-w-0 flex-1`). */
+  triggerClassName?: string;
 }
 
-export function ItemLink({ id, children, className, noPreview }: ItemLinkProps) {
+export function ItemLink({ id, children, className, noPreview, triggerClassName }: ItemLinkProps) {
   const link = (
     <Link to={`/items/${id}`} className={className}>
       {children}
     </Link>
   );
   if (noPreview) return link;
-  return <HoverPopover content={<ItemHoverCard id={id} />}>{link}</HoverPopover>;
+  return (
+    <HoverPopover content={<ItemHoverCard id={id} />} triggerClassName={triggerClassName}>
+      {link}
+    </HoverPopover>
+  );
 }
 
 function ItemHoverCard({ id }: { id: number }) {

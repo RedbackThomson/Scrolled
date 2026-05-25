@@ -30,3 +30,4 @@
 - [x] Have a minimap explorer with a sidebar that lets you enable/disable layers
 - [ ] Mobs should have a "calculated" section that shows things like XP per HP
 - [x] Show weapon by type
+- [ ] On mob tooltip, rework elements to show only weak/strong

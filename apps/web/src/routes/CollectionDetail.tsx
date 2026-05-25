@@ -24,14 +24,8 @@ import {
   slugify,
   todayStamp,
 } from '@/components/collections';
-import {
-  EquipLink,
-  ItemLink,
-  MapLink,
-  MobLink,
-  NpcLink,
-  QuestLink,
-} from '@/components/entity-links';
+import { EntityLink } from '@/components/entity-links';
+import { EntityAvatar } from '@/components/EntityAvatar';
 import { getDbClient, type EntitySummary } from '@/db';
 import {
   useCollection,
@@ -345,8 +339,25 @@ function MemberRow({ member, name }: MemberRowProps) {
     });
   };
 
+  const linkClass = 'flex min-w-0 items-center gap-3';
+  const nameContent = (
+    <span
+      className={cn(
+        'min-w-0 truncate',
+        member.done && 'text-muted-foreground line-through',
+      )}
+    >
+      {name}
+    </span>
+  );
+
   return (
-    <li className="flex flex-wrap items-center gap-3 px-3 py-2 text-sm">
+    <li
+      className={cn(
+        'group flex flex-wrap items-center gap-3 px-3 py-1.5 text-sm',
+        !isTombstone && 'hover:bg-accent',
+      )}
+    >
       <button
         type="button"
         onClick={toggleDone}
@@ -360,27 +371,27 @@ function MemberRow({ member, name }: MemberRowProps) {
         {member.done && <Check className="h-3 w-3" />}
       </button>
 
-      <span
-        className={cn(
-          'min-w-0 flex-1 truncate',
-          member.done && 'text-muted-foreground line-through',
-        )}
-      >
-        {isTombstone ? (
-          <span className="text-muted-foreground italic">
+      {isTombstone ? (
+        <div className={linkClass}>
+          <EntityAvatar entity={member.entityType} id={member.entityId} />
+          <span className="text-muted-foreground min-w-0 truncate italic">
             {capitalize(member.entityType)} #{member.entityId}
             <span className="ml-1 text-[10px] uppercase tracking-wide">(not loaded)</span>
           </span>
-        ) : (
-          <EntityNameLink
-            entityType={member.entityType}
-            entityId={member.entityId}
-            name={name!}
-          />
-        )}
-      </span>
+        </div>
+      ) : (
+        <EntityLink
+          entity={member.entityType}
+          id={member.entityId}
+          className={linkClass}
+          triggerClassName={linkClass}
+        >
+          <EntityAvatar entity={member.entityType} id={member.entityId} alt={name!} />
+          {nameContent}
+        </EntityLink>
+      )}
 
-      <div className="flex min-w-0 flex-1 basis-full items-center gap-2 sm:basis-auto">
+      <div className="ml-auto flex min-w-0 flex-1 basis-full items-center gap-2 sm:basis-auto">
         {editingNote ? (
           <input
             value={noteDraft}
@@ -452,56 +463,6 @@ function MemberRow({ member, name }: MemberRowProps) {
       </button>
     </li>
   );
-}
-
-function EntityNameLink({
-  entityType,
-  entityId,
-  name,
-}: {
-  entityType: CollectionEntityType;
-  entityId: number;
-  name: string;
-}) {
-  const className = 'text-primary hover:underline';
-  switch (entityType) {
-    case 'item':
-      return (
-        <ItemLink id={entityId} className={className}>
-          {name}
-        </ItemLink>
-      );
-    case 'equip':
-      return (
-        <EquipLink id={entityId} className={className}>
-          {name}
-        </EquipLink>
-      );
-    case 'mob':
-      return (
-        <MobLink id={entityId} className={className}>
-          {name}
-        </MobLink>
-      );
-    case 'npc':
-      return (
-        <NpcLink id={entityId} className={className}>
-          {name}
-        </NpcLink>
-      );
-    case 'map':
-      return (
-        <MapLink id={entityId} className={className}>
-          {name}
-        </MapLink>
-      );
-    case 'quest':
-      return (
-        <QuestLink id={entityId} className={className}>
-          {name}
-        </QuestLink>
-      );
-  }
 }
 
 function NotFound() {

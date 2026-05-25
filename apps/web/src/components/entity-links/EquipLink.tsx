@@ -13,16 +13,21 @@ interface EquipLinkProps {
   children: ReactNode;
   className?: string;
   noPreview?: boolean;
+  triggerClassName?: string;
 }
 
-export function EquipLink({ id, children, className, noPreview }: EquipLinkProps) {
+export function EquipLink({ id, children, className, noPreview, triggerClassName }: EquipLinkProps) {
   const link = (
     <Link to={`/equips/${id}`} className={className}>
       {children}
     </Link>
   );
   if (noPreview) return link;
-  return <HoverPopover content={<EquipHoverCard id={id} />}>{link}</HoverPopover>;
+  return (
+    <HoverPopover content={<EquipHoverCard id={id} />} triggerClassName={triggerClassName}>
+      {link}
+    </HoverPopover>
+  );
 }
 
 function EquipHoverCard({ id }: { id: number }) {

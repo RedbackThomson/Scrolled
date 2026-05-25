@@ -12,16 +12,21 @@ interface MapLinkProps {
   children: ReactNode;
   className?: string;
   noPreview?: boolean;
+  triggerClassName?: string;
 }
 
-export function MapLink({ id, children, className, noPreview }: MapLinkProps) {
+export function MapLink({ id, children, className, noPreview, triggerClassName }: MapLinkProps) {
   const link = (
     <Link to={`/maps/${id}`} className={className}>
       {children}
     </Link>
   );
   if (noPreview) return link;
-  return <HoverPopover content={<MapHoverCard id={id} />}>{link}</HoverPopover>;
+  return (
+    <HoverPopover content={<MapHoverCard id={id} />} triggerClassName={triggerClassName}>
+      {link}
+    </HoverPopover>
+  );
 }
 
 export function MapHoverCard({ id }: { id: number }) {

@@ -12,16 +12,21 @@ interface MobLinkProps {
   children: ReactNode;
   className?: string;
   noPreview?: boolean;
+  triggerClassName?: string;
 }
 
-export function MobLink({ id, children, className, noPreview }: MobLinkProps) {
+export function MobLink({ id, children, className, noPreview, triggerClassName }: MobLinkProps) {
   const link = (
     <Link to={`/mobs/${id}`} className={className}>
       {children}
     </Link>
   );
   if (noPreview) return link;
-  return <HoverPopover content={<MobHoverCard id={id} />}>{link}</HoverPopover>;
+  return (
+    <HoverPopover content={<MobHoverCard id={id} />} triggerClassName={triggerClassName}>
+      {link}
+    </HoverPopover>
+  );
 }
 
 export function MobHoverCard({ id }: { id: number }) {

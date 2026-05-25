@@ -15,16 +15,21 @@ interface NpcLinkProps {
   /** Opt out of the hover preview (e.g. when the row already conveys
    *  the same info). */
   noPreview?: boolean;
+  triggerClassName?: string;
 }
 
-export function NpcLink({ id, children, className, noPreview }: NpcLinkProps) {
+export function NpcLink({ id, children, className, noPreview, triggerClassName }: NpcLinkProps) {
   const link = (
     <Link to={`/npcs/${id}`} className={className}>
       {children}
     </Link>
   );
   if (noPreview) return link;
-  return <HoverPopover content={<NpcHoverCard id={id} />}>{link}</HoverPopover>;
+  return (
+    <HoverPopover content={<NpcHoverCard id={id} />} triggerClassName={triggerClassName}>
+      {link}
+    </HoverPopover>
+  );
 }
 
 export function NpcHoverCard({ id }: { id: number }) {

@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Copy, Loader2, Map as MapIcon, MapPin, ScrollText, Users } from 'lucide-react';
 import { EntityIcon } from '@/components/EntityIcon';
-import { MapLink, QuestLink } from '@/components/entity-links';
+import { EntityRow } from '@/components/EntityRow';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
 import type { CommandItem } from '@/components/command-palette/types';
@@ -118,23 +118,13 @@ export default function NpcDetail() {
               {questsQ.data && questsQ.data.length > 0 && (
                 <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
                   {questsQ.data.map((q) => (
-                    <li key={q.id}>
-                      <QuestLink
-                        id={q.id}
-                        className="hover:bg-accent flex items-center gap-3 px-3 py-1.5 text-sm"
-                      >
-                        <ScrollText className="text-muted-foreground h-6 w-6 shrink-0" />
-                        <span className="min-w-0 flex-1 truncate">
-                          {q.name}
-                          {q.parent && (
-                            <span className="text-muted-foreground"> · {q.parent}</span>
-                          )}
-                        </span>
-                        <span className="text-muted-foreground shrink-0 font-mono text-xs">
-                          {q.id}
-                        </span>
-                      </QuestLink>
-                    </li>
+                    <EntityRow
+                      key={q.id}
+                      entity="quest"
+                      id={q.id}
+                      name={q.name}
+                      subtitle={q.parent}
+                    />
                   ))}
                 </ul>
               )}
@@ -158,33 +148,25 @@ export default function NpcDetail() {
               {mapsQ.data && mapsQ.data.length > 0 && (
                 <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
                   {mapsQ.data.map((m) => (
-                    <li
+                    <EntityRow
                       key={m.id}
-                      className="hover:bg-accent group flex items-center gap-2 px-3 py-1.5 text-sm"
-                    >
-                      <MapLink id={m.id} className="flex items-center gap-2">
-                        <MapIcon className="text-muted-foreground h-4 w-4 shrink-0" />
-                        <span className="truncate">
-                          {m.name ?? `Map ${m.id}`}
-                          {m.streetName && (
-                            <span className="text-muted-foreground"> · {m.streetName}</span>
-                          )}
-                        </span>
-                      </MapLink>
-                      {m.minimapPath && (
-                        <Link
-                          to={`/maps/${m.id}?viewer=npc:${n.id}`}
-                          aria-label={`Show ${n.name} on ${m.name ?? `Map ${m.id}`}`}
-                          title="Show on map"
-                          className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
-                        >
-                          <MapPin className="h-4 w-4" />
-                        </Link>
-                      )}
-                      <span className="text-muted-foreground ml-auto shrink-0 font-mono text-xs">
-                        {m.id}
-                      </span>
-                    </li>
+                      entity="map"
+                      id={m.id}
+                      name={m.name}
+                      subtitle={m.streetName}
+                      trailing={
+                        m.minimapPath && (
+                          <Link
+                            to={`/maps/${m.id}?viewer=npc:${n.id}`}
+                            aria-label={`Show ${n.name} on ${m.name ?? `Map ${m.id}`}`}
+                            title="Show on map"
+                            className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                          >
+                            <MapPin className="h-4 w-4" />
+                          </Link>
+                        )
+                      }
+                    />
                   ))}
                 </ul>
               )}

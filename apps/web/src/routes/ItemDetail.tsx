@@ -2,9 +2,8 @@ import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Copy, Loader2, ScrollText, Skull } from 'lucide-react';
-import { EntityIcon } from '@/components/EntityIcon';
+import { EntityRow } from '@/components/EntityRow';
 import { ItemIcon } from '@/components/ItemIcon';
-import { MobLink, QuestLink } from '@/components/entity-links';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
 import type { CommandItem } from '@/components/command-palette/types';
@@ -137,21 +136,13 @@ export default function ItemDetail() {
               {questsQ.data && questsQ.data.length > 0 && (
                 <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
                   {questsQ.data.map((q) => (
-                    <li key={q.id}>
-                      <QuestLink
-                        id={q.id}
-                        className="hover:bg-accent flex items-center gap-3 px-3 py-1.5 text-sm"
-                      >
-                        <ScrollText className="text-muted-foreground h-6 w-6 shrink-0" />
-                        <span className="min-w-0 flex-1 truncate">
-                          {q.name}
-                          {q.parent && <span className="text-muted-foreground"> · {q.parent}</span>}
-                        </span>
-                        <span className="text-muted-foreground shrink-0 font-mono text-xs">
-                          {q.id}
-                        </span>
-                      </QuestLink>
-                    </li>
+                    <EntityRow
+                      key={q.id}
+                      entity="quest"
+                      id={q.id}
+                      name={q.name}
+                      subtitle={q.parent}
+                    />
                   ))}
                 </ul>
               )}
@@ -177,23 +168,13 @@ export default function ItemDetail() {
               {droppedByQ.data && droppedByQ.data.length > 0 && (
                 <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
                   {droppedByQ.data.map((m) => (
-                    <li key={m.mobId}>
-                      <MobLink
-                        id={m.mobId}
-                        className="hover:bg-accent flex items-center gap-3 px-3 py-1.5 text-sm"
-                      >
-                        <EntityIcon entity="mob" id={m.mobId} size={24} placeholder={Skull} alt={m.name} />
-                        <span className="min-w-0 flex-1 truncate">{m.name}</span>
-                        {m.level !== null && (
-                          <span className="text-muted-foreground shrink-0 text-xs">
-                            Lv {m.level}
-                          </span>
-                        )}
-                        <span className="text-muted-foreground shrink-0 font-mono text-xs">
-                          {m.mobId}
-                        </span>
-                      </MobLink>
-                    </li>
+                    <EntityRow
+                      key={m.mobId}
+                      entity="mob"
+                      id={m.mobId}
+                      name={m.name}
+                      meta={m.level !== null ? `Lv ${m.level}` : undefined}
+                    />
                   ))}
                 </ul>
               )}

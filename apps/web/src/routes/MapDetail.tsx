@@ -13,7 +13,8 @@ import {
   Users,
 } from 'lucide-react';
 import { EntityIcon } from '@/components/EntityIcon';
-import { MapLink, MobLink, NpcLink } from '@/components/entity-links';
+import { EntityRow } from '@/components/EntityRow';
+import { MapLink } from '@/components/entity-links';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { MapViewerModal, type MapViewerHighlight } from '@/components/MapViewer';
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
@@ -223,48 +224,32 @@ export default function MapDetail() {
               {npcsQ.data && npcsQ.data.length > 0 && (
                 <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
                   {npcsQ.data.map((n) => (
-                    <li
+                    <EntityRow
                       key={`${n.npcId}-${n.x}-${n.y}`}
-                      className="hover:bg-accent group flex items-center gap-2 px-3 py-1.5 text-sm"
-                    >
-                      <NpcLink
-                        id={n.npcId}
-                        className="flex items-center gap-3"
-                      >
-                        <EntityIcon
-                          entity="npc"
-                          id={n.npcId}
-                          size={24}
-                          placeholder={Users}
-                          alt={n.name ?? `NPC ${n.npcId}`}
-                        />
-                        <span className="truncate">{n.name ?? `NPC ${n.npcId}`}</span>
-                      </NpcLink>
-                      {m.minimapPath && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openViewer({ kind: 'npc', key: String(n.npcId) });
-                          }}
-                          aria-label={`Show ${n.name ?? `NPC ${n.npcId}`} on map`}
-                          title="Show on map"
-                          className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
-                        >
-                          <MapPin className="h-4 w-4" />
-                        </button>
-                      )}
-                      <div className="ml-auto flex shrink-0 items-center gap-3">
-                        {(n.x !== null || n.y !== null) && (
-                          <span className="text-muted-foreground font-mono text-xs">
+                      entity="npc"
+                      id={n.npcId}
+                      name={n.name}
+                      meta={
+                        (n.x !== null || n.y !== null) ? (
+                          <span className="font-mono">
                             ({n.x ?? '?'}, {n.y ?? '?'})
                           </span>
-                        )}
-                        <span className="text-muted-foreground font-mono text-xs">
-                          {n.npcId}
-                        </span>
-                      </div>
-                    </li>
+                        ) : undefined
+                      }
+                      trailing={
+                        m.minimapPath && (
+                          <button
+                            type="button"
+                            onClick={() => openViewer({ kind: 'npc', key: String(n.npcId) })}
+                            aria-label={`Show ${n.name ?? `NPC ${n.npcId}`} on map`}
+                            title="Show on map"
+                            className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
+                          >
+                            <MapPin className="h-4 w-4" />
+                          </button>
+                        )
+                      }
+                    />
                   ))}
                 </ul>
               )}
@@ -287,49 +272,33 @@ export default function MapDetail() {
               {mobsQ.data && mobsQ.data.length > 0 && (
                 <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
                   {mobsQ.data.map((mob) => (
-                    <li
+                    <EntityRow
                       key={mob.mobId}
-                      className="hover:bg-accent group flex items-center gap-2 px-3 py-1.5 text-sm"
-                    >
-                      <MobLink
-                        id={mob.mobId}
-                        className="flex items-center gap-3"
-                      >
-                        <EntityIcon
-                          entity="mob"
-                          id={mob.mobId}
-                          size={24}
-                          placeholder={Skull}
-                          alt={mob.name ?? `Mob ${mob.mobId}`}
-                        />
-                        <span className="truncate">{mob.name ?? `Mob ${mob.mobId}`}</span>
-                      </MobLink>
-                      {m.minimapPath && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openViewer({ kind: 'mob', key: String(mob.mobId) });
-                          }}
-                          aria-label={`Show ${mob.name ?? `Mob ${mob.mobId}`} on map`}
-                          title="Show on map"
-                          className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
-                        >
-                          <MapPin className="h-4 w-4" />
-                        </button>
-                      )}
-                      <div className="ml-auto flex shrink-0 items-center gap-3">
-                        {mob.level !== null && (
-                          <span className="text-muted-foreground text-xs">Lv {mob.level}</span>
-                        )}
-                        {mob.count !== null && mob.count > 1 && (
-                          <span className="text-muted-foreground text-xs">×{mob.count}</span>
-                        )}
-                        <span className="text-muted-foreground font-mono text-xs">
-                          {mob.mobId}
-                        </span>
-                      </div>
-                    </li>
+                      entity="mob"
+                      id={mob.mobId}
+                      name={mob.name}
+                      meta={
+                        (mob.level !== null || (mob.count !== null && mob.count > 1)) && (
+                          <span className="flex items-center gap-3">
+                            {mob.level !== null && <span>Lv {mob.level}</span>}
+                            {mob.count !== null && mob.count > 1 && <span>×{mob.count}</span>}
+                          </span>
+                        )
+                      }
+                      trailing={
+                        m.minimapPath && (
+                          <button
+                            type="button"
+                            onClick={() => openViewer({ kind: 'mob', key: String(mob.mobId) })}
+                            aria-label={`Show ${mob.name ?? `Mob ${mob.mobId}`} on map`}
+                            title="Show on map"
+                            className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
+                          >
+                            <MapPin className="h-4 w-4" />
+                          </button>
+                        )
+                      }
+                    />
                   ))}
                 </ul>
               )}

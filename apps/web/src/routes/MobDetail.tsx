@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { EquipLink, ItemLink, MapLink, QuestLink } from '@/components/entity-links';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
@@ -13,7 +12,9 @@ import {
   ScrollText,
   Skull,
 } from 'lucide-react';
+import { EntityAvatar } from '@/components/EntityAvatar';
 import { EntityIcon } from '@/components/EntityIcon';
+import { EntityRow } from '@/components/EntityRow';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
 import type { CommandItem } from '@/components/command-palette/types';
@@ -142,39 +143,29 @@ export default function MobDetail() {
             )}
             {dropsQ.data && dropsQ.data.length > 0 && (
               <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
-                {dropsQ.data.map((d) => {
-                  const label = d.itemName ?? `Item ${d.itemId}`;
-                  const row = (
-                    <div className="hover:bg-accent flex items-center gap-3 px-3 py-1.5 text-sm">
-                      <EntityIcon
-                        entity={d.entity ?? 'item'}
-                        id={d.itemId}
-                        size={24}
-                        placeholder={Package}
-                        alt={label}
-                      />
-                      <span className="min-w-0 flex-1 truncate">{label}</span>
+                {dropsQ.data.map((d) =>
+                  d.entity === null ? (
+                    <li
+                      key={d.itemId}
+                      className="flex items-center gap-3 px-3 py-1.5 text-sm"
+                    >
+                      <EntityAvatar entity="item" id={d.itemId} alt={d.itemName ?? undefined} />
+                      <span className="text-muted-foreground min-w-0 flex-1 truncate italic">
+                        {d.itemName ?? `Item #${d.itemId}`}
+                      </span>
                       <span className="text-muted-foreground shrink-0 font-mono text-xs">
                         {d.itemId}
                       </span>
-                    </div>
-                  );
-                  return (
-                    <li key={d.itemId}>
-                      {d.entity === 'equip' ? (
-                        <EquipLink id={d.itemId} className="block">
-                          {row}
-                        </EquipLink>
-                      ) : d.entity === 'item' ? (
-                        <ItemLink id={d.itemId} className="block">
-                          {row}
-                        </ItemLink>
-                      ) : (
-                        row
-                      )}
                     </li>
-                  );
-                })}
+                  ) : (
+                    <EntityRow
+                      key={d.itemId}
+                      entity={d.entity}
+                      id={d.itemId}
+                      name={d.itemName}
+                    />
+                  ),
+                )}
               </ul>
             )}
           </section>
@@ -196,33 +187,25 @@ export default function MobDetail() {
               {mapsQ.data && mapsQ.data.length > 0 && (
                 <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
                   {mapsQ.data.map((mp) => (
-                    <li
+                    <EntityRow
                       key={mp.id}
-                      className="hover:bg-accent group flex items-center gap-2 px-3 py-1.5 text-sm"
-                    >
-                      <MapLink id={mp.id} className="flex items-center gap-2">
-                        <MapIcon className="text-muted-foreground h-4 w-4 shrink-0" />
-                        <span className="truncate">
-                          {mp.name ?? `Map ${mp.id}`}
-                          {mp.streetName && (
-                            <span className="text-muted-foreground"> · {mp.streetName}</span>
-                          )}
-                        </span>
-                      </MapLink>
-                      {mp.minimapPath && (
-                        <Link
-                          to={`/maps/${mp.id}?viewer=mob:${m.id}`}
-                          aria-label={`Show ${m.name} on ${mp.name ?? `Map ${mp.id}`}`}
-                          title="Show on map"
-                          className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
-                        >
-                          <MapPin className="h-4 w-4" />
-                        </Link>
-                      )}
-                      <span className="text-muted-foreground ml-auto shrink-0 font-mono text-xs">
-                        {mp.id}
-                      </span>
-                    </li>
+                      entity="map"
+                      id={mp.id}
+                      name={mp.name}
+                      subtitle={mp.streetName}
+                      trailing={
+                        mp.minimapPath && (
+                          <Link
+                            to={`/maps/${mp.id}?viewer=mob:${m.id}`}
+                            aria-label={`Show ${m.name} on ${mp.name ?? `Map ${mp.id}`}`}
+                            title="Show on map"
+                            className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                          >
+                            <MapPin className="h-4 w-4" />
+                          </Link>
+                        )
+                      }
+                    />
                   ))}
                 </ul>
               )}
@@ -248,21 +231,13 @@ export default function MobDetail() {
               {questsQ.data && questsQ.data.length > 0 && (
                 <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
                   {questsQ.data.map((q) => (
-                    <li key={q.id}>
-                      <QuestLink
-                        id={q.id}
-                        className="hover:bg-accent flex items-center gap-3 px-3 py-1.5 text-sm"
-                      >
-                        <ScrollText className="text-muted-foreground h-6 w-6 shrink-0" />
-                        <span className="min-w-0 flex-1 truncate">
-                          {q.name}
-                          {q.parent && <span className="text-muted-foreground"> · {q.parent}</span>}
-                        </span>
-                        <span className="text-muted-foreground shrink-0 font-mono text-xs">
-                          {q.id}
-                        </span>
-                      </QuestLink>
-                    </li>
+                    <EntityRow
+                      key={q.id}
+                      entity="quest"
+                      id={q.id}
+                      name={q.name}
+                      subtitle={q.parent}
+                    />
                   ))}
                 </ul>
               )}

@@ -11,16 +11,21 @@ interface QuestLinkProps {
   children: ReactNode;
   className?: string;
   noPreview?: boolean;
+  triggerClassName?: string;
 }
 
-export function QuestLink({ id, children, className, noPreview }: QuestLinkProps) {
+export function QuestLink({ id, children, className, noPreview, triggerClassName }: QuestLinkProps) {
   const link = (
     <Link to={`/quests/${id}`} className={className}>
       {children}
     </Link>
   );
   if (noPreview) return link;
-  return <HoverPopover content={<QuestHoverCard id={id} />}>{link}</HoverPopover>;
+  return (
+    <HoverPopover content={<QuestHoverCard id={id} />} triggerClassName={triggerClassName}>
+      {link}
+    </HoverPopover>
+  );
 }
 
 function QuestHoverCard({ id }: { id: number }) {
