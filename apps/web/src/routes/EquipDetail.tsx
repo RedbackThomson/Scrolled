@@ -1,8 +1,16 @@
 import { useMemo } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Copy, Loader2, Skull } from 'lucide-react';
+import { Copy, Skull } from 'lucide-react';
 import { DetailListSection } from '@/components/DetailListSection';
+import {
+  DetailPageLayout,
+  DetailPageLoading,
+  DetailPageNotFound,
+  InfoRow,
+  InfoSection,
+  SourceSection,
+} from '@/components/DetailPageLayout';
 import { EntityRow } from '@/components/EntityRow';
 import { ItemIcon } from '@/components/ItemIcon';
 import { ListSortControl } from '@/components/ListSortControl';
@@ -52,46 +60,20 @@ export default function EquipDetail() {
   );
   useDetailPalette({ entity: 'equip', id, name: equipQ.data?.name, items: paletteItems });
 
-  if (equipQ.isLoading) {
-    return (
-      <p className="text-muted-foreground text-sm">
-        <Loader2 className="inline h-4 w-4 animate-spin" /> Loading equip {id}…
-      </p>
-    );
-  }
+  // Route the breadcrumb back to whichever listing this row came from, so
+  // a user landing here from /weapons doesn't get bounced to /equips.
+  const isWeapon = equipQ.data?.equipType !== null && equipQ.data?.equipType !== undefined;
+  const back = isWeapon
+    ? { to: '/weapons', label: 'Back to weapons' }
+    : { to: '/equips', label: 'Back to equips' };
 
+  if (equipQ.isLoading) return <DetailPageLoading entity="Equip" id={id} />;
   if (equipQ.error) {
     return <p className="text-destructive text-sm">{(equipQ.error as Error).message}</p>;
   }
-
-  if (!equipQ.data) {
-    return (
-      <div className="max-w-3xl">
-        <Link
-          to="/equips"
-          className="text-primary inline-flex items-center gap-1 text-sm hover:underline"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to equips
-        </Link>
-        <h1 className="mt-4 text-3xl font-semibold tracking-tight">Equip not found</h1>
-        <p className="text-muted-foreground mt-2 text-sm">
-          Equip <code className="font-mono">{id}</code> isn't in your library yet. It may not have
-          been loaded —{' '}
-          <Link to="/setup" className="text-primary hover:underline">
-            visit Setup
-          </Link>{' '}
-          to add more files.
-        </p>
-      </div>
-    );
-  }
+  if (!equipQ.data) return <DetailPageNotFound entity="Equip" id={id} back={back} />;
 
   const e = equipQ.data;
-  // Route the breadcrumb back to whichever listing this row came from, so
-  // a user landing here from /weapons doesn't get bounced to /equips.
-  const isWeapon = e.equipType !== null;
-  const backTo = isWeapon ? '/weapons' : '/equips';
-  const backLabel = isWeapon ? 'Back to weapons' : 'Back to equips';
   const hasAnyRequirement =
     e.requiredLevel !== null ||
     e.requiredStr !== null ||
@@ -109,152 +91,106 @@ export default function EquipDetail() {
     e.upgradeSlots !== null;
 
   return (
-    <div className="max-w-4xl space-y-6">
-      <Link
-        to={backTo}
-        className="text-primary inline-flex items-center gap-1 text-sm hover:underline"
-      >
-        <ArrowLeft className="h-4 w-4" /> {backLabel}
-      </Link>
-
-      <div className="grid gap-6 sm:grid-cols-[1fr_18rem]">
-        <article className="space-y-6">
-          <header className="flex items-center gap-3">
-            <ItemIcon entity="equip" id={e.id} size={48} alt={e.name} />
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight">{e.name}</h1>
-              <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-1.5 text-xs">
-                <span className="font-mono">{e.id}</span>
-                {e.cash && (
-                  <span className="inline-flex items-center rounded bg-pink-500/15 px-1.5 py-0.5 text-[10px] font-medium text-pink-700 dark:text-pink-300">
-                    Cash Shop (cosmetic)
-                  </span>
-                )}
-                {e.equipType && (
-                  <span className="inline-flex items-center rounded bg-slate-500/15 px-1.5 py-0.5 text-[10px] font-medium text-slate-700 dark:text-slate-300">
-                    {labelForEquipType(e.equipType)}
-                  </span>
-                )}
-              </div>
+    <DetailPageLayout
+      back={back}
+      header={
+        <header className="flex items-center gap-3">
+          <ItemIcon entity="equip" id={e.id} size={48} alt={e.name} />
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight">{e.name}</h1>
+            <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-1.5 text-xs">
+              <span className="font-mono">{e.id}</span>
+              {e.cash && (
+                <span className="inline-flex items-center rounded bg-pink-500/15 px-1.5 py-0.5 text-[10px] font-medium text-pink-700 dark:text-pink-300">
+                  Cash Shop (cosmetic)
+                </span>
+              )}
+              {e.equipType && (
+                <span className="inline-flex items-center rounded bg-slate-500/15 px-1.5 py-0.5 text-[10px] font-medium text-slate-700 dark:text-slate-300">
+                  {labelForEquipType(e.equipType)}
+                </span>
+              )}
             </div>
-          </header>
-
-          <CollectionBadgeStrip entityType="equip" entityId={e.id} />
-
-          {e.description ? (
-            <p className="whitespace-pre-line text-sm leading-relaxed">{e.description}</p>
-          ) : (
-            <p className="text-muted-foreground text-sm italic">No description available.</p>
-          )}
-
-          {features.hasMobs && (
-            <DetailListSection
-              icon={Skull}
-              title="Dropped by"
-              count={droppedByQ.data?.length}
-              isLoading={droppedByQ.isLoading}
-              isEmpty={droppedByQ.data?.length === 0}
-              loadingLabel="Loading mobs…"
-              action={
-                droppedByQ.data && droppedByQ.data.length > 0 ? (
-                  <ListSortControl
-                    fields={droppedBySort.fieldOptions}
-                    value={droppedBySort.sort}
-                    onChange={droppedBySort.setSort}
-                  />
-                ) : null
-              }
-            >
-              {droppedBySort.sorted.map((m) => (
-                <EntityRow
-                  key={m.mobId}
-                  entity="mob"
-                  id={m.mobId}
-                  name={m.name}
-                  meta={m.level !== null ? `Lv ${m.level}` : undefined}
-                />
-              ))}
-            </DetailListSection>
-          )}
-        </article>
-
-        <aside className="border-border bg-card text-card-foreground space-y-4 self-start rounded-md border p-4 text-sm">
-          <section>
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Info</h2>
-            <dl className="divide-border divide-y">
-              <Row label="ID" value={String(e.id)} mono />
-              <Row label="Slot" value={e.slot ? labelForEquipSlot(e.slot) : '—'} />
-              {e.equipType && <Row label="Type" value={labelForEquipType(e.equipType)} />}
-              <Row label="Source" value={e.cash ? 'Cash shop' : 'In-game'} />
-            </dl>
-          </section>
-
+          </div>
+        </header>
+      }
+      aside={
+        <>
+          <InfoSection title="Info">
+            <InfoRow label="ID" value={String(e.id)} mono />
+            <InfoRow label="Slot" value={e.slot ? labelForEquipSlot(e.slot) : '—'} />
+            {e.equipType && <InfoRow label="Type" value={labelForEquipType(e.equipType)} />}
+            <InfoRow label="Source" value={e.cash ? 'Cash shop' : 'In-game'} />
+          </InfoSection>
           {hasAnyRequirement && (
-            <section>
-              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Requirements</h2>
-              <dl className="divide-border divide-y">
-                <StatRow label="Level" value={e.requiredLevel} />
-                <StatRow label="STR" value={e.requiredStr} />
-                <StatRow label="DEX" value={e.requiredDex} />
-                <StatRow label="INT" value={e.requiredInt} />
-                <StatRow label="LUK" value={e.requiredLuk} />
-                {e.requiredJob !== null && (
-                  <Row label="Class" value={formatEquipJobs(parseReqJob(e.requiredJob))} />
-                )}
-              </dl>
-            </section>
+            <InfoSection title="Requirements">
+              <StatRow label="Level" value={e.requiredLevel} />
+              <StatRow label="STR" value={e.requiredStr} />
+              <StatRow label="DEX" value={e.requiredDex} />
+              <StatRow label="INT" value={e.requiredInt} />
+              <StatRow label="LUK" value={e.requiredLuk} />
+              {e.requiredJob !== null && (
+                <InfoRow label="Class" value={formatEquipJobs(parseReqJob(e.requiredJob))} />
+              )}
+            </InfoSection>
           )}
-
           {hasAnyStat && (
-            <section>
-              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Stats</h2>
-              <dl className="divide-border divide-y">
-                <StatRow label="Attack" value={e.attack} />
-                <StatRow label="Magic atk" value={e.magicAttack} />
-                <StatRow label="Defense" value={e.defense} />
-                <StatRow label="Magic def" value={e.magicDefense} />
-                <StatRow label="Accuracy" value={e.accuracy} />
-                <StatRow label="Avoidability" value={e.avoidability} />
-                <StatRow label="Upgrade slots" value={e.upgradeSlots} />
-              </dl>
-            </section>
+            <InfoSection title="Stats">
+              <StatRow label="Attack" value={e.attack} />
+              <StatRow label="Magic atk" value={e.magicAttack} />
+              <StatRow label="Defense" value={e.defense} />
+              <StatRow label="Magic def" value={e.magicDefense} />
+              <StatRow label="Accuracy" value={e.accuracy} />
+              <StatRow label="Avoidability" value={e.avoidability} />
+              <StatRow label="Upgrade slots" value={e.upgradeSlots} />
+            </InfoSection>
           )}
+          <SourceSection path={e.sourcePath} />
+        </>
+      }
+    >
+      <CollectionBadgeStrip entityType="equip" entityId={e.id} />
 
-          <section>
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Source</h2>
-            <p className="text-muted-foreground text-[10px] uppercase tracking-wide">WZ path</p>
-            <code className="text-muted-foreground break-all font-mono text-xs">
-              {e.sourcePath}
-            </code>
-          </section>
-        </aside>
-      </div>
-    </div>
-  );
-}
+      {e.description ? (
+        <p className="whitespace-pre-line text-sm leading-relaxed">{e.description}</p>
+      ) : (
+        <p className="text-muted-foreground text-sm italic">No description available.</p>
+      )}
 
-function Row({
-  label,
-  value,
-  mono = false,
-  capitalize = false,
-}: {
-  label: string;
-  value: string;
-  mono?: boolean;
-  capitalize?: boolean;
-}) {
-  return (
-    <div className="flex items-baseline justify-between gap-3 py-1.5">
-      <dt className="text-muted-foreground text-xs uppercase tracking-wide">{label}</dt>
-      <dd className={`${mono ? 'font-mono text-sm' : 'text-sm'} ${capitalize ? 'capitalize' : ''}`}>
-        {value}
-      </dd>
-    </div>
+      {features.hasMobs && (
+        <DetailListSection
+          icon={Skull}
+          title="Dropped by"
+          count={droppedByQ.data?.length}
+          isLoading={droppedByQ.isLoading}
+          isEmpty={droppedByQ.data?.length === 0}
+          loadingLabel="Loading mobs…"
+          action={
+            droppedByQ.data && droppedByQ.data.length > 0 ? (
+              <ListSortControl
+                fields={droppedBySort.fieldOptions}
+                value={droppedBySort.sort}
+                onChange={droppedBySort.setSort}
+              />
+            ) : null
+          }
+        >
+          {droppedBySort.sorted.map((m) => (
+            <EntityRow
+              key={m.mobId}
+              entity="mob"
+              id={m.mobId}
+              name={m.name}
+              meta={m.level !== null ? `Lv ${m.level}` : undefined}
+            />
+          ))}
+        </DetailListSection>
+      )}
+    </DetailPageLayout>
   );
 }
 
 function StatRow({ label, value }: { label: string; value: number | null }) {
   if (value === null || value === 0) return null;
-  return <Row label={label} value={String(value)} />;
+  return <InfoRow label={label} value={String(value)} />;
 }

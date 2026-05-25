@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { DataTable, useColumnFilters, useTableUrlState } from '@/components/data-table';
 import { CollectionsBulkAddMenu } from '@/components/collections';
+import { TablePageLayout } from '@/components/TablePageLayout';
 import { getDbClient } from '@/db';
 import {
   columns,
@@ -23,12 +23,6 @@ export default function Mobs() {
   });
   const { filters, setFilter, active: filtersActive } = useColumnFilters(columns);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-
-  // The "Bosses only" toolbar checkbox is a shortcut for the standard
-  // `boss` boolean column filter (?f_boss=1). Reading/writing here goes
-  // through the same column-filter state the popover uses.
-  const bossFilter = filters.boss;
-  const bossOnly = bossFilter?.kind === 'range' && bossFilter.min === 1 && bossFilter.max === 1;
 
   const mobsQ = useQuery({
     queryKey: [
@@ -58,83 +52,48 @@ export default function Mobs() {
   const isEmpty = mobsQ.data?.total === 0 && !state.q && !filtersActive;
 
   return (
-    <div className="max-w-6xl space-y-6">
-      <header>
-        <h1 className="text-3xl font-semibold tracking-tight">Mobs</h1>
-      </header>
-
-      <section className="space-y-3">
-        {isEmpty ? (
-          <div className="border-border bg-muted/40 rounded-md border p-6 text-center text-sm">
-            <p className="text-muted-foreground">
-              No mobs loaded yet.{' '}
-              <Link to="/setup" className="text-primary hover:underline">
-                Run setup
-              </Link>{' '}
-              to add them.
-            </p>
-          </div>
-        ) : (
-          <DataTable
-            data={mobsQ.data?.rows ?? []}
-            total={mobsQ.data?.total ?? 0}
-            columns={columns}
-            state={state}
-            setState={setState}
-            defaultSort={defaultSort}
-            visibleColumns={visibleColumns}
-            defaultVisible={defaultVisible}
-            pinnedColumns={pinnedColumns}
-            rowLinkTo={(m) => `/mobs/${m.id}`}
-            getRowId={(m) => String(m.id)}
-            emptyMessage="No mobs found."
-            loading={mobsQ.isLoading}
-            fetching={mobsQ.isFetching && !mobsQ.isLoading}
-            columnFilters={filters}
-            onColumnFilterChange={(id, v) => {
-              setFilter(id, v);
-              setState({ page: 1 });
-            }}
-            enumOptions={{
-              weakAgainst: ELEMENT_ENUM_OPTIONS,
-              strongAgainst: ELEMENT_ENUM_OPTIONS,
-              immuneTo: ELEMENT_ENUM_OPTIONS,
-            }}
-            searchValue={state.q}
-            onSearchChange={(v) => setState({ q: v, page: 1 })}
-            searchPlaceholder="Search mobs by name"
-            selectable
-            selectedIds={selectedIds}
-            onSelectionChange={setSelectedIds}
-            toolbarExtra={
-              <>
-                <label className="text-muted-foreground flex items-center gap-1.5 text-xs">
-                  <input
-                    type="checkbox"
-                    checked={bossOnly}
-                    onChange={(e) => {
-                      setFilter(
-                        'boss',
-                        e.target.checked ? { kind: 'range', min: 1, max: 1 } : null,
-                      );
-                      setState({ page: 1 });
-                    }}
-                    className="accent-primary h-3.5 w-3.5"
-                  />
-                  Bosses only
-                </label>
-                {selectedIds.size > 0 && (
-                  <CollectionsBulkAddMenu
-                    entityType="mob"
-                    selectedIds={selectedIds}
-                    onClear={() => setSelectedIds(new Set())}
-                  />
-                )}
-              </>
-            }
-          />
-        )}
-      </section>
-    </div>
+    <TablePageLayout title="Mobs" entityPlural="mobs" isEmpty={isEmpty}>
+      <DataTable
+        data={mobsQ.data?.rows ?? []}
+        total={mobsQ.data?.total ?? 0}
+        columns={columns}
+        state={state}
+        setState={setState}
+        defaultSort={defaultSort}
+        visibleColumns={visibleColumns}
+        defaultVisible={defaultVisible}
+        pinnedColumns={pinnedColumns}
+        rowLinkTo={(m) => `/mobs/${m.id}`}
+        getRowId={(m) => String(m.id)}
+        emptyMessage="No mobs found."
+        loading={mobsQ.isLoading}
+        fetching={mobsQ.isFetching && !mobsQ.isLoading}
+        columnFilters={filters}
+        onColumnFilterChange={(id, v) => {
+          setFilter(id, v);
+          setState({ page: 1 });
+        }}
+        enumOptions={{
+          weakAgainst: ELEMENT_ENUM_OPTIONS,
+          strongAgainst: ELEMENT_ENUM_OPTIONS,
+          immuneTo: ELEMENT_ENUM_OPTIONS,
+        }}
+        searchValue={state.q}
+        onSearchChange={(v) => setState({ q: v, page: 1 })}
+        searchPlaceholder="Search mobs by name"
+        selectable
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
+        toolbarExtra={
+          selectedIds.size > 0 && (
+            <CollectionsBulkAddMenu
+              entityType="mob"
+              selectedIds={selectedIds}
+              onClear={() => setSelectedIds(new Set())}
+            />
+          )
+        }
+      />
+    </TablePageLayout>
   );
 }

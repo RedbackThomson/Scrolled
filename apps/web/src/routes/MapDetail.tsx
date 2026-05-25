@@ -1,18 +1,16 @@
 import { useCallback, useMemo } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import {
-  ArrowLeft,
-  Copy,
-  DoorOpen,
-  Loader2,
-  Map as MapIcon,
-  MapPin,
-  Maximize,
-  Skull,
-  Users,
-} from 'lucide-react';
+import { Copy, DoorOpen, Map as MapIcon, MapPin, Maximize, Skull, Users } from 'lucide-react';
 import { DetailListSection } from '@/components/DetailListSection';
+import {
+  DetailPageLayout,
+  DetailPageLoading,
+  DetailPageNotFound,
+  InfoRow,
+  InfoSection,
+  SourceSection,
+} from '@/components/DetailPageLayout';
 import { EntityIcon } from '@/components/EntityIcon';
 import { EntityRow } from '@/components/EntityRow';
 import { ListSortControl } from '@/components/ListSortControl';
@@ -27,6 +25,8 @@ import { useListSort } from '@/lib/useListSort';
 
 // Sentinel value the WZ data uses to mean "no map" for return / target fields.
 const NO_TARGET = 999999999;
+
+const BACK = { to: '/maps', label: 'Back to maps' };
 
 export default function MapDetail() {
   const params = useParams<{ id: string }>();
@@ -154,47 +154,16 @@ export default function MapDetail() {
   );
   useDetailPalette({ entity: 'map', id, name: mapQ.data?.name, items: paletteItems });
 
-  if (mapQ.isLoading) {
-    return (
-      <p className="text-muted-foreground text-sm">
-        <Loader2 className="inline h-4 w-4 animate-spin" /> Loading map {id}…
-      </p>
-    );
-  }
-  if (!mapQ.data) {
-    return (
-      <div className="max-w-3xl">
-        <Link
-          to="/maps"
-          className="text-primary inline-flex items-center gap-1 text-sm hover:underline"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to maps
-        </Link>
-        <h1 className="mt-4 text-3xl font-semibold tracking-tight">Map not found</h1>
-        <p className="text-muted-foreground mt-2 text-sm">
-          Map <code className="font-mono">{id}</code> isn't in your library yet. It may not have
-          been loaded —{' '}
-          <Link to="/setup" className="text-primary hover:underline">
-            visit Setup
-          </Link>{' '}
-          to add more files.
-        </p>
-      </div>
-    );
-  }
+  if (mapQ.isLoading) return <DetailPageLoading entity="Map" id={id} />;
+  if (!mapQ.data) return <DetailPageNotFound entity="Map" id={id} back={BACK} />;
 
   const m = mapQ.data;
   return (
-    <div className="max-w-5xl space-y-6">
-      <Link
-        to="/maps"
-        className="text-primary inline-flex items-center gap-1 text-sm hover:underline"
-      >
-        <ArrowLeft className="h-4 w-4" /> Back to maps
-      </Link>
-
-      <div className="grid gap-6 sm:grid-cols-[1fr_18rem]">
-        <article className="space-y-6">
+    <>
+      <DetailPageLayout
+        back={BACK}
+        maxWidth="max-w-5xl"
+        header={
           <header className="flex items-center gap-3">
             <MapIcon className="text-muted-foreground h-12 w-12" />
             <div>
@@ -203,199 +172,15 @@ export default function MapDetail() {
               <p className="text-muted-foreground font-mono text-xs">{m.id}</p>
             </div>
           </header>
-
-          <CollectionBadgeStrip entityType="map" entityId={m.id} />
-
-          {m.minimapPath && (
-            <section>
-              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide">Minimap</h2>
-              <div className="flex flex-col items-start gap-2">
-                <button
-                  type="button"
-                  onClick={() => openViewer()}
-                  aria-label="Open map viewer"
-                  className="border-border bg-card hover:ring-primary/40 focus-visible:ring-primary/60 inline-flex max-w-full items-center justify-start rounded-md border p-3 transition hover:ring-2 focus-visible:outline-none focus-visible:ring-2"
-                >
-                  <EntityIcon
-                    entity="map-mini"
-                    id={m.id}
-                    placeholder={MapIcon}
-                    fit={{ maxWidth: 480, maxHeight: 360 }}
-                    alt={`Minimap for ${m.name ?? `Map ${m.id}`}`}
-                  />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openViewer()}
-                  className="text-primary inline-flex items-center gap-1 text-xs hover:underline"
-                >
-                  <MapPin className="h-3.5 w-3.5" /> Show map details
-                </button>
-              </div>
-            </section>
-          )}
-
-          {features.hasNpcs && (
-            <DetailListSection
-              icon={Users}
-              title="NPCs"
-              count={npcsQ.data?.length}
-              isEmpty={npcsQ.data?.length === 0}
-              action={
-                npcsQ.data && npcsQ.data.length > 0 ? (
-                  <ListSortControl
-                    fields={npcsSort.fieldOptions}
-                    value={npcsSort.sort}
-                    onChange={npcsSort.setSort}
-                  />
-                ) : null
-              }
-            >
-              {npcsSort.sorted.map((n) => (
-                <EntityRow
-                  key={`${n.npcId}-${n.x}-${n.y}`}
-                  entity="npc"
-                  id={n.npcId}
-                  name={n.name}
-                  meta={
-                    n.x !== null || n.y !== null ? (
-                      <span className="font-mono">
-                        ({n.x ?? '?'}, {n.y ?? '?'})
-                      </span>
-                    ) : undefined
-                  }
-                  trailing={
-                    m.minimapPath && (
-                      <button
-                        type="button"
-                        onClick={() => openViewer({ kind: 'npc', key: String(n.npcId) })}
-                        aria-label={`Show ${n.name ?? `NPC ${n.npcId}`} on map`}
-                        title="Show on map"
-                        className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition focus-visible:opacity-100 group-hover:opacity-100"
-                      >
-                        <MapPin className="h-4 w-4" />
-                      </button>
-                    )
-                  }
-                />
-              ))}
-            </DetailListSection>
-          )}
-
-          {features.hasMobs && (
-            <DetailListSection
-              icon={Skull}
-              title="Mobs"
-              count={mobsQ.data?.length}
-              isEmpty={mobsQ.data?.length === 0}
-              action={
-                mobsQ.data && mobsQ.data.length > 0 ? (
-                  <ListSortControl
-                    fields={mobsSort.fieldOptions}
-                    value={mobsSort.sort}
-                    onChange={mobsSort.setSort}
-                  />
-                ) : null
-              }
-            >
-              {mobsSort.sorted.map((mob) => (
-                <EntityRow
-                  key={mob.mobId}
-                  entity="mob"
-                  id={mob.mobId}
-                  name={mob.name}
-                  meta={
-                    (mob.level !== null || (mob.count !== null && mob.count > 1)) && (
-                      <span className="flex items-center gap-3">
-                        {mob.level !== null && <span>Lv {mob.level}</span>}
-                        {mob.count !== null && mob.count > 1 && <span>×{mob.count}</span>}
-                      </span>
-                    )
-                  }
-                  trailing={
-                    m.minimapPath && (
-                      <button
-                        type="button"
-                        onClick={() => openViewer({ kind: 'mob', key: String(mob.mobId) })}
-                        aria-label={`Show ${mob.name ?? `Mob ${mob.mobId}`} on map`}
-                        title="Show on map"
-                        className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition focus-visible:opacity-100 group-hover:opacity-100"
-                      >
-                        <MapPin className="h-4 w-4" />
-                      </button>
-                    )
-                  }
-                />
-              ))}
-            </DetailListSection>
-          )}
-
-          <DetailListSection
-            icon={DoorOpen}
-            title="Portals"
-            count={portalsQ.data?.length}
-            isEmpty={portalsQ.data?.length === 0}
-            action={
-              portalsQ.data && portalsQ.data.length > 0 ? (
-                <ListSortControl
-                  fields={portalsSort.fieldOptions}
-                  value={portalsSort.sort}
-                  onChange={portalsSort.setSort}
-                />
-              ) : null
-            }
-          >
-            {portalsSort.sorted.map((p) => (
-              <li
-                key={`${p.portalName}-${p.x ?? 0}-${p.y ?? 0}`}
-                className="flex items-center gap-3 px-3 py-1.5 text-sm"
-              >
-                <span className="font-mono text-xs">{p.portalName}</span>
-                <span className="text-muted-foreground">→</span>
-                {p.targetMapId && p.targetMapId !== NO_TARGET ? (
-                  <MapLink
-                    id={p.targetMapId}
-                    className="text-primary min-w-0 flex-1 truncate hover:underline"
-                  >
-                    {p.targetMapName ?? `Map ${p.targetMapId}`}
-                    {p.targetPortal && (
-                      <span className="text-muted-foreground"> · {p.targetPortal}</span>
-                    )}
-                  </MapLink>
-                ) : (
-                  <span className="text-muted-foreground italic">no target</span>
-                )}
-                {(p.x !== null || p.y !== null) && (
-                  <span className="text-muted-foreground ml-auto shrink-0 font-mono text-xs">
-                    ({p.x ?? '?'}, {p.y ?? '?'})
-                  </span>
-                )}
-              </li>
-            ))}
-          </DetailListSection>
-        </article>
-
-        <MapViewerModal
-          open={viewerState.open}
-          onClose={closeViewer}
-          mapId={m.id}
-          selection={viewerState.highlight}
-          onSelectionChange={setViewerSelection}
-        />
-
-        <aside className="border-border bg-card text-card-foreground space-y-4 self-start rounded-md border p-4 text-sm">
-          <section>
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Info</h2>
-            <dl className="divide-border divide-y">
-              <Row label="ID" value={String(m.id)} mono />
-              <Row label="Street" value={m.streetName ?? '—'} />
-            </dl>
-          </section>
-
-          {(m.returnMapId !== null || m.forcedReturnMapId !== null) && (
-            <section>
-              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Connections</h2>
-              <dl className="divide-border divide-y">
+        }
+        aside={
+          <>
+            <InfoSection title="Info">
+              <InfoRow label="ID" value={String(m.id)} mono />
+              <InfoRow label="Street" value={m.streetName ?? '—'} />
+            </InfoSection>
+            {(m.returnMapId !== null || m.forcedReturnMapId !== null) && (
+              <InfoSection title="Connections">
                 {m.returnMapId !== null && m.returnMapId !== NO_TARGET && (
                   <RowLink
                     label="Return map"
@@ -410,39 +195,199 @@ export default function MapDetail() {
                     name={returnNameById.get(m.forcedReturnMapId) ?? null}
                   />
                 )}
-              </dl>
-            </section>
-          )}
+              </InfoSection>
+            )}
+            {(m.fieldLimit !== null || m.mobRate !== null) && (
+              <InfoSection title="Stats">
+                {m.fieldLimit !== null && (
+                  <InfoRow label="Field limit" value={String(m.fieldLimit)} />
+                )}
+                {m.mobRate !== null && <InfoRow label="Mob rate" value={m.mobRate.toFixed(2)} />}
+              </InfoSection>
+            )}
+            <SourceSection path={m.sourcePath} />
+          </>
+        }
+      >
+        <CollectionBadgeStrip entityType="map" entityId={m.id} />
 
-          {(m.fieldLimit !== null || m.mobRate !== null) && (
-            <section>
-              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Stats</h2>
-              <dl className="divide-border divide-y">
-                {m.fieldLimit !== null && <Row label="Field limit" value={String(m.fieldLimit)} />}
-                {m.mobRate !== null && <Row label="Mob rate" value={m.mobRate.toFixed(2)} />}
-              </dl>
-            </section>
-          )}
-
+        {m.minimapPath && (
           <section>
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Source</h2>
-            <p className="text-muted-foreground text-[10px] uppercase tracking-wide">WZ path</p>
-            <code className="text-muted-foreground break-all font-mono text-xs">
-              {m.sourcePath}
-            </code>
+            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide">Minimap</h2>
+            <div className="flex flex-col items-start gap-2">
+              <button
+                type="button"
+                onClick={() => openViewer()}
+                aria-label="Open map viewer"
+                className="border-border bg-card hover:ring-primary/40 focus-visible:ring-primary/60 inline-flex max-w-full items-center justify-start rounded-md border p-3 transition hover:ring-2 focus-visible:outline-none focus-visible:ring-2"
+              >
+                <EntityIcon
+                  entity="map-mini"
+                  id={m.id}
+                  placeholder={MapIcon}
+                  fit={{ maxWidth: 480, maxHeight: 360 }}
+                  alt={`Minimap for ${m.name ?? `Map ${m.id}`}`}
+                />
+              </button>
+              <button
+                type="button"
+                onClick={() => openViewer()}
+                className="text-primary inline-flex items-center gap-1 text-xs hover:underline"
+              >
+                <MapPin className="h-3.5 w-3.5" /> Show map details
+              </button>
+            </div>
           </section>
-        </aside>
-      </div>
-    </div>
-  );
-}
+        )}
 
-function Row({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
-  return (
-    <div className="flex items-baseline justify-between gap-3 py-1.5">
-      <dt className="text-muted-foreground text-xs uppercase tracking-wide">{label}</dt>
-      <dd className={mono ? 'font-mono text-sm' : 'text-sm'}>{value}</dd>
-    </div>
+        {features.hasNpcs && (
+          <DetailListSection
+            icon={Users}
+            title="NPCs"
+            count={npcsQ.data?.length}
+            isEmpty={npcsQ.data?.length === 0}
+            action={
+              npcsQ.data && npcsQ.data.length > 0 ? (
+                <ListSortControl
+                  fields={npcsSort.fieldOptions}
+                  value={npcsSort.sort}
+                  onChange={npcsSort.setSort}
+                />
+              ) : null
+            }
+          >
+            {npcsSort.sorted.map((n) => (
+              <EntityRow
+                key={`${n.npcId}-${n.x}-${n.y}`}
+                entity="npc"
+                id={n.npcId}
+                name={n.name}
+                meta={
+                  n.x !== null || n.y !== null ? (
+                    <span className="font-mono">
+                      ({n.x ?? '?'}, {n.y ?? '?'})
+                    </span>
+                  ) : undefined
+                }
+                trailing={
+                  m.minimapPath && (
+                    <button
+                      type="button"
+                      onClick={() => openViewer({ kind: 'npc', key: String(n.npcId) })}
+                      aria-label={`Show ${n.name ?? `NPC ${n.npcId}`} on map`}
+                      title="Show on map"
+                      className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition focus-visible:opacity-100 group-hover:opacity-100"
+                    >
+                      <MapPin className="h-4 w-4" />
+                    </button>
+                  )
+                }
+              />
+            ))}
+          </DetailListSection>
+        )}
+
+        {features.hasMobs && (
+          <DetailListSection
+            icon={Skull}
+            title="Mobs"
+            count={mobsQ.data?.length}
+            isEmpty={mobsQ.data?.length === 0}
+            action={
+              mobsQ.data && mobsQ.data.length > 0 ? (
+                <ListSortControl
+                  fields={mobsSort.fieldOptions}
+                  value={mobsSort.sort}
+                  onChange={mobsSort.setSort}
+                />
+              ) : null
+            }
+          >
+            {mobsSort.sorted.map((mob) => (
+              <EntityRow
+                key={mob.mobId}
+                entity="mob"
+                id={mob.mobId}
+                name={mob.name}
+                meta={
+                  (mob.level !== null || (mob.count !== null && mob.count > 1)) && (
+                    <span className="flex items-center gap-3">
+                      {mob.level !== null && <span>Lv {mob.level}</span>}
+                      {mob.count !== null && mob.count > 1 && <span>×{mob.count}</span>}
+                    </span>
+                  )
+                }
+                trailing={
+                  m.minimapPath && (
+                    <button
+                      type="button"
+                      onClick={() => openViewer({ kind: 'mob', key: String(mob.mobId) })}
+                      aria-label={`Show ${mob.name ?? `Mob ${mob.mobId}`} on map`}
+                      title="Show on map"
+                      className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition focus-visible:opacity-100 group-hover:opacity-100"
+                    >
+                      <MapPin className="h-4 w-4" />
+                    </button>
+                  )
+                }
+              />
+            ))}
+          </DetailListSection>
+        )}
+
+        <DetailListSection
+          icon={DoorOpen}
+          title="Portals"
+          count={portalsQ.data?.length}
+          isEmpty={portalsQ.data?.length === 0}
+          action={
+            portalsQ.data && portalsQ.data.length > 0 ? (
+              <ListSortControl
+                fields={portalsSort.fieldOptions}
+                value={portalsSort.sort}
+                onChange={portalsSort.setSort}
+              />
+            ) : null
+          }
+        >
+          {portalsSort.sorted.map((p) => (
+            <li
+              key={`${p.portalName}-${p.x ?? 0}-${p.y ?? 0}`}
+              className="flex items-center gap-3 px-3 py-1.5 text-sm"
+            >
+              <span className="font-mono text-xs">{p.portalName}</span>
+              <span className="text-muted-foreground">→</span>
+              {p.targetMapId && p.targetMapId !== NO_TARGET ? (
+                <MapLink
+                  id={p.targetMapId}
+                  className="text-primary min-w-0 flex-1 truncate hover:underline"
+                >
+                  {p.targetMapName ?? `Map ${p.targetMapId}`}
+                  {p.targetPortal && (
+                    <span className="text-muted-foreground"> · {p.targetPortal}</span>
+                  )}
+                </MapLink>
+              ) : (
+                <span className="text-muted-foreground italic">no target</span>
+              )}
+              {(p.x !== null || p.y !== null) && (
+                <span className="text-muted-foreground ml-auto shrink-0 font-mono text-xs">
+                  ({p.x ?? '?'}, {p.y ?? '?'})
+                </span>
+              )}
+            </li>
+          ))}
+        </DetailListSection>
+      </DetailPageLayout>
+
+      <MapViewerModal
+        open={viewerState.open}
+        onClose={closeViewer}
+        mapId={m.id}
+        selection={viewerState.highlight}
+        onSelectionChange={setViewerSelection}
+      />
+    </>
   );
 }
 

@@ -1,19 +1,16 @@
 import { useMemo } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import {
-  ArrowLeft,
-  Award,
-  Coins,
-  Copy,
-  Loader2,
-  Package,
-  ScrollText,
-  Sparkles,
-  Target,
-  Users,
-} from 'lucide-react';
+import { Award, Coins, Copy, Package, ScrollText, Sparkles, Target, Users } from 'lucide-react';
 import { DetailListSection } from '@/components/DetailListSection';
+import {
+  DetailPageLayout,
+  DetailPageLoading,
+  DetailPageNotFound,
+  InfoRow,
+  InfoSection,
+  SourceSection,
+} from '@/components/DetailPageLayout';
 import { EntityAvatar } from '@/components/EntityAvatar';
 import { EntityRow } from '@/components/EntityRow';
 import { getDbClient } from '@/db';
@@ -23,6 +20,8 @@ import { CollectionBadgeStrip } from '@/components/collections';
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
 import type { CommandItem } from '@/components/command-palette/types';
 import { useFeatures } from '@/lib/useFeatures';
+
+const BACK = { to: '/quests', label: 'Back to quests' };
 
 export default function QuestDetail() {
   const params = useParams<{ id: string }>();
@@ -74,34 +73,8 @@ export default function QuestDetail() {
   );
   useDetailPalette({ entity: 'quest', id, name: questQ.data?.name, items: paletteItems });
 
-  if (questQ.isLoading) {
-    return (
-      <p className="text-muted-foreground text-sm">
-        <Loader2 className="inline h-4 w-4 animate-spin" /> Loading quest {id}…
-      </p>
-    );
-  }
-  if (!questQ.data) {
-    return (
-      <div className="max-w-3xl">
-        <Link
-          to="/quests"
-          className="text-primary inline-flex items-center gap-1 text-sm hover:underline"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to quests
-        </Link>
-        <h1 className="mt-4 text-3xl font-semibold tracking-tight">Quest not found</h1>
-        <p className="text-muted-foreground mt-2 text-sm">
-          Quest <code className="font-mono">{id}</code> isn't in your library yet. It may not have
-          been loaded —{' '}
-          <Link to="/setup" className="text-primary hover:underline">
-            visit Setup
-          </Link>{' '}
-          to add more files.
-        </p>
-      </div>
-    );
-  }
+  if (questQ.isLoading) return <DetailPageLoading entity="Quest" id={id} />;
+  if (!questQ.data) return <DetailPageNotFound entity="Quest" id={id} back={BACK} />;
 
   const q = questQ.data;
   const requirements = reqsQ.data ?? [];
@@ -114,142 +87,118 @@ export default function QuestDetail() {
   const mesoReward = rewards.find((r) => r.kind === 'meso');
 
   return (
-    <div className="max-w-5xl space-y-6">
-      <Link
-        to="/quests"
-        className="text-primary inline-flex items-center gap-1 text-sm hover:underline"
-      >
-        <ArrowLeft className="h-4 w-4" /> Back to quests
-      </Link>
-
-      <div className="grid gap-6 sm:grid-cols-[1fr_18rem]">
-        <article className="space-y-6">
-          <header className="flex items-center gap-3">
-            <ScrollText className="text-muted-foreground h-12 w-12" />
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight">{q.name}</h1>
-              {q.parent && <p className="text-muted-foreground text-sm">{q.parent}</p>}
-              <p className="text-muted-foreground font-mono text-xs">{q.id}</p>
-            </div>
-          </header>
-
-          <CollectionBadgeStrip entityType="quest" entityId={q.id} />
-
-          {q.description && (
-            <p className="whitespace-pre-line text-sm leading-relaxed">{q.description}</p>
-          )}
-
-          {(q.startNpcId !== null || q.endNpcId !== null) && (
-            <DetailListSection icon={Users} title="NPCs">
-              {q.startNpcId !== null && (
-                <NpcRow
-                  label="Start"
-                  id={q.startNpcId}
-                  name={startNpcQ.data?.name ?? null}
-                  linkable={features.hasNpcs}
-                />
-              )}
-              {q.endNpcId !== null && q.endNpcId !== q.startNpcId && (
-                <NpcRow
-                  label="End"
-                  id={q.endNpcId}
-                  name={endNpcQ.data?.name ?? null}
-                  linkable={features.hasNpcs}
-                />
-              )}
-            </DetailListSection>
-          )}
-
-          <DetailListSection
-            icon={Target}
-            title="Requirements"
-            count={requirements.length > 0 ? requirements.length : undefined}
-            isEmpty={requirements.length === 0}
-          >
-            {itemReqs.map((r) => (
-              <RequirementRow
-                key={`item-${r.targetId}`}
-                r={r}
-                entity="item"
-                linkable={features.hasItems}
-              />
-            ))}
-            {mobReqs.map((r) => (
-              <RequirementRow
-                key={`mob-${r.targetId}`}
-                r={r}
-                entity="mob"
-                linkable={features.hasMobs}
-              />
-            ))}
-            {questPreReqs.map((r) => (
-              <RequirementRow key={`questPre-${r.targetId}`} r={r} entity="quest" linkable />
-            ))}
-          </DetailListSection>
-
-          <DetailListSection
-            icon={Award}
-            title="Rewards"
-            count={rewards.length > 0 ? rewards.length : undefined}
-            isEmpty={rewards.length === 0}
-          >
-            {expReward && (
-              <li className="flex items-center gap-3 px-3 py-2 text-sm">
-                <Sparkles className="text-muted-foreground h-6 w-6 shrink-0" />
-                <span className="flex-1">Experience</span>
-                <span className="font-mono text-xs">
-                  {(expReward.amount ?? 0).toLocaleString()}
-                </span>
-              </li>
-            )}
-            {mesoReward && (
-              <li className="flex items-center gap-3 px-3 py-2 text-sm">
-                <Coins className="text-muted-foreground h-6 w-6 shrink-0" />
-                <span className="flex-1">Mesos</span>
-                <span className="font-mono text-xs">
-                  {(mesoReward.amount ?? 0).toLocaleString()}
-                </span>
-              </li>
-            )}
-            {itemRewards.map((r) => (
-              <RewardRow key={`item-${r.targetId}`} r={r} linkable={features.hasItems} />
-            ))}
-          </DetailListSection>
-        </article>
-
-        <aside className="border-border bg-card text-card-foreground space-y-4 self-start rounded-md border p-4 text-sm">
-          <section>
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Info</h2>
-            <dl className="divide-border divide-y">
-              <Row label="ID" value={String(q.id)} mono />
-              <Row label="Area" value={q.parent ?? '—'} />
-            </dl>
-          </section>
-
+    <DetailPageLayout
+      back={BACK}
+      maxWidth="max-w-5xl"
+      header={
+        <header className="flex items-center gap-3">
+          <ScrollText className="text-muted-foreground h-12 w-12" />
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight">{q.name}</h1>
+            {q.parent && <p className="text-muted-foreground text-sm">{q.parent}</p>}
+            <p className="text-muted-foreground font-mono text-xs">{q.id}</p>
+          </div>
+        </header>
+      }
+      aside={
+        <>
+          <InfoSection title="Info">
+            <InfoRow label="ID" value={String(q.id)} mono />
+            <InfoRow label="Area" value={q.parent ?? '—'} />
+          </InfoSection>
           {(q.requiredLevel !== null || q.requiredJob !== null) && (
-            <section>
-              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Requirements</h2>
-              <dl className="divide-border divide-y">
-                {q.requiredLevel !== null && (
-                  <Row label="Req. level" value={String(q.requiredLevel)} />
-                )}
-                {q.requiredJob !== null && (
-                  <Row label="Req. job" value={`bitfield ${q.requiredJob}`} />
-                )}
-              </dl>
-            </section>
+            <InfoSection title="Requirements">
+              {q.requiredLevel !== null && (
+                <InfoRow label="Req. level" value={String(q.requiredLevel)} />
+              )}
+              {q.requiredJob !== null && (
+                <InfoRow label="Req. job" value={`bitfield ${q.requiredJob}`} />
+              )}
+            </InfoSection>
           )}
+          <SourceSection path={q.sourcePath} />
+        </>
+      }
+    >
+      <CollectionBadgeStrip entityType="quest" entityId={q.id} />
 
-          <section>
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Source</h2>
-            <p className="text-muted-foreground text-[10px] uppercase tracking-wide">WZ path</p>
-            <code className="text-muted-foreground break-all font-mono text-xs">
-              {q.sourcePath}
-            </code>
-          </section>
-        </aside>
-      </div>
-    </div>
+      {q.description && (
+        <p className="whitespace-pre-line text-sm leading-relaxed">{q.description}</p>
+      )}
+
+      {(q.startNpcId !== null || q.endNpcId !== null) && (
+        <DetailListSection icon={Users} title="NPCs">
+          {q.startNpcId !== null && (
+            <NpcRow
+              label="Start"
+              id={q.startNpcId}
+              name={startNpcQ.data?.name ?? null}
+              linkable={features.hasNpcs}
+            />
+          )}
+          {q.endNpcId !== null && q.endNpcId !== q.startNpcId && (
+            <NpcRow
+              label="End"
+              id={q.endNpcId}
+              name={endNpcQ.data?.name ?? null}
+              linkable={features.hasNpcs}
+            />
+          )}
+        </DetailListSection>
+      )}
+
+      <DetailListSection
+        icon={Target}
+        title="Requirements"
+        count={requirements.length > 0 ? requirements.length : undefined}
+        isEmpty={requirements.length === 0}
+      >
+        {itemReqs.map((r) => (
+          <RequirementRow
+            key={`item-${r.targetId}`}
+            r={r}
+            entity="item"
+            linkable={features.hasItems}
+          />
+        ))}
+        {mobReqs.map((r) => (
+          <RequirementRow
+            key={`mob-${r.targetId}`}
+            r={r}
+            entity="mob"
+            linkable={features.hasMobs}
+          />
+        ))}
+        {questPreReqs.map((r) => (
+          <RequirementRow key={`questPre-${r.targetId}`} r={r} entity="quest" linkable />
+        ))}
+      </DetailListSection>
+
+      <DetailListSection
+        icon={Award}
+        title="Rewards"
+        count={rewards.length > 0 ? rewards.length : undefined}
+        isEmpty={rewards.length === 0}
+      >
+        {expReward && (
+          <li className="flex items-center gap-3 px-3 py-2 text-sm">
+            <Sparkles className="text-muted-foreground h-6 w-6 shrink-0" />
+            <span className="flex-1">Experience</span>
+            <span className="font-mono text-xs">{(expReward.amount ?? 0).toLocaleString()}</span>
+          </li>
+        )}
+        {mesoReward && (
+          <li className="flex items-center gap-3 px-3 py-2 text-sm">
+            <Coins className="text-muted-foreground h-6 w-6 shrink-0" />
+            <span className="flex-1">Mesos</span>
+            <span className="font-mono text-xs">{(mesoReward.amount ?? 0).toLocaleString()}</span>
+          </li>
+        )}
+        {itemRewards.map((r) => (
+          <RewardRow key={`item-${r.targetId}`} r={r} linkable={features.hasItems} />
+        ))}
+      </DetailListSection>
+    </DetailPageLayout>
   );
 }
 
@@ -318,9 +267,7 @@ function RequirementRow({
       id={r.targetId}
       name={r.targetName}
       meta={
-        r.amount !== null && r.amount > 1 ? (
-          <span className="font-mono">×{r.amount}</span>
-        ) : undefined
+        r.amount !== null && r.amount > 1 ? <span className="font-mono">×{r.amount}</span> : undefined
       }
       linkable={linkable}
     />
@@ -347,20 +294,9 @@ function RewardRow({ r, linkable }: { r: QuestRewardWithName; linkable: boolean 
       id={r.targetId}
       name={r.targetName}
       meta={
-        r.amount !== null && r.amount > 1 ? (
-          <span className="font-mono">×{r.amount}</span>
-        ) : undefined
+        r.amount !== null && r.amount > 1 ? <span className="font-mono">×{r.amount}</span> : undefined
       }
       linkable={linkable}
     />
-  );
-}
-
-function Row({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
-  return (
-    <div className="flex items-baseline justify-between gap-3 py-1.5">
-      <dt className="text-muted-foreground text-xs uppercase tracking-wide">{label}</dt>
-      <dd className={mono ? 'font-mono text-sm' : 'text-sm'}>{value}</dd>
-    </div>
   );
 }
