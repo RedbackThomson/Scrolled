@@ -6,7 +6,7 @@
 // gate the Start button.
 
 import type { DatasetFileRef } from '@/db';
-import { wzKey } from '@/lib/useExtractAll';
+import { wzKey } from '@/hooks/extraction/useExtractAll';
 import type { WizardFile } from './StepFiles';
 
 /**

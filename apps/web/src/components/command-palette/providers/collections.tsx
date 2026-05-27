@@ -1,7 +1,11 @@
 import { BookmarkPlus, FolderPlus, Folder } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { CommandGroup, CommandItem as CommandItemPrimitive } from '@/components/ui/command';
-import { useCollectionsList, useCreateCollection, useToggleMembership } from '@/lib/useCollections';
+import {
+  useCollectionsList,
+  useCreateCollection,
+  useToggleMembership,
+} from '@/hooks/useCollections';
 import { useCommandPalette } from '@/stores/useCommandPalette';
 import type { CollectionEntityType } from '@/db/user';
 

@@ -7,7 +7,7 @@
 import { Link } from 'react-router-dom';
 import { BookmarkPlus } from 'lucide-react';
 import { HoverPopover } from '@/components/HoverPopover';
-import { useMembership } from '@/lib/useCollections';
+import { useMembership } from '@/hooks/useCollections';
 import type { CollectionEntityType, MembershipBadge } from '@/db/user';
 import { cn } from '@/lib/utils';
 import { CollectionPicker } from './CollectionPicker';

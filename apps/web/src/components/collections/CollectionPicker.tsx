@@ -27,7 +27,7 @@ import {
   useMembership,
   useToggleMembership,
   useUpdateMember,
-} from '@/lib/useCollections';
+} from '@/hooks/useCollections';
 import type { CollectionEntityType, MembershipBadge } from '@/db/user';
 import { cn } from '@/lib/utils';
 

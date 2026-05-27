@@ -10,7 +10,7 @@ import {
   resolveCollectionIcon,
   todayStamp,
 } from '@/components/collections';
-import { useCollectionsList, useExportAllJson } from '@/lib/useCollections';
+import { useCollectionsList, useExportAllJson } from '@/hooks/useCollections';
 import type { CollectionRecord } from '@/db/user';
 import { cn } from '@/lib/utils';
 

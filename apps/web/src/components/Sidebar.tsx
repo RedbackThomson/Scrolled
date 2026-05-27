@@ -26,9 +26,9 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { WEAPON_TYPE_ORDER, labelForEquipSlot, labelForEquipType } from '@/domain/equipTypes';
-import { useFeatures } from '@/lib/useFeatures';
-import { useDataState } from '@/lib/useDataState';
-import { useOnlineStatus } from '@/lib/useOnlineStatus';
+import { useFeatures } from '@/hooks/useFeatures';
+import { useDataState } from '@/hooks/useDataState';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useSidebarLayout, useSidebarSections } from '@/stores/sidebarState';
 import { getDbClient } from '@/db';
 import { getUserDbClient } from '@/db/user';

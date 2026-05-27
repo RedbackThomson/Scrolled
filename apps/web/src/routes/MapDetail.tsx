@@ -20,8 +20,8 @@ import { MapViewerModal, type MapViewerHighlight } from '@/components/MapViewer'
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
 import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient } from '@/db';
-import { useFeatures } from '@/lib/useFeatures';
-import { useListSort } from '@/lib/useListSort';
+import { useFeatures } from '@/hooks/useFeatures';
+import { useListSort } from '@/hooks/useListSort';
 
 // Sentinel value the WZ data uses to mean "no map" for return / target fields.
 const NO_TARGET = 999999999;

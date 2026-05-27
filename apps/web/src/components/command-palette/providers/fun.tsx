@@ -5,7 +5,7 @@ import { CommandGroup, CommandItem as CommandItemPrimitive } from '@/components/
 import { getDbClient, type EntityKind } from '@/db';
 import { ENTITY_KINDS, labelForEntityKind, routeForEntity } from '@/lib/entityRoutes';
 import { useCommandPalette } from '@/stores/useCommandPalette';
-import { useFeatures } from '@/lib/useFeatures';
+import { useFeatures } from '@/hooks/useFeatures';
 
 function fuzzy(q: string, hay: string): boolean {
   const t = q.trim().toLowerCase();

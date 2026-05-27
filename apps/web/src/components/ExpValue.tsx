@@ -1,5 +1,5 @@
 import { HoverPopover } from '@/components/HoverPopover';
-import { useServerProfile } from '@/lib/useServerProfile';
+import { useServerProfile } from '@/hooks/useServerProfile';
 
 /**
  * Renders an EXP value adjusted by the active server profile's EXP rate. Pass

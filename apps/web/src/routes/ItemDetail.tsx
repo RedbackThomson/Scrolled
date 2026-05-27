@@ -20,8 +20,8 @@ import { CollectionBadgeStrip } from '@/components/collections';
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
 import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient } from '@/db';
-import { useFeatures } from '@/lib/useFeatures';
-import { useListSort } from '@/lib/useListSort';
+import { useFeatures } from '@/hooks/useFeatures';
+import { useListSort } from '@/hooks/useListSort';
 
 const BACK = { to: '/items', label: 'Back to items' };
 

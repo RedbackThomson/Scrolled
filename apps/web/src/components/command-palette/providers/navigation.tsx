@@ -9,7 +9,7 @@ import {
   listingRouteForEntity,
 } from '@/lib/entityRoutes';
 import { useCommandPalette } from '@/stores/useCommandPalette';
-import { useFeatures } from '@/lib/useFeatures';
+import { useFeatures } from '@/hooks/useFeatures';
 
 interface NavEntry {
   id: string;

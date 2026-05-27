@@ -26,7 +26,7 @@ import {
   useExportCollectionJson,
   useRemoveMember,
   useUpdateMember,
-} from '@/lib/useCollections';
+} from '@/hooks/useCollections';
 import type { CollectionEntityType, CollectionMember } from '@/db/user';
 import { COLLECTION_ENTITY_TYPES } from '@/db/user';
 import { cn } from '@/lib/utils';

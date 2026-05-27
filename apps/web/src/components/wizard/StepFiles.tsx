@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { getDbClient } from '@/db';
 import { sha256OfFile } from '@/lib/hashFile';
 import { createLogger, describeError } from '@/lib/logger';
-import type { Features } from '@/lib/useFeatures';
+import type { Features } from '@/hooks/useFeatures';
 import { cn } from '@/lib/utils';
 import { acceptForDesktop } from '@/lib/filePickerAccept';
 import type { WzMapleVersionName } from '@/parser';

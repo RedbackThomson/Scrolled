@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Database, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ProgressBar } from '@/components/ProgressBar';
-import { useExtractAll } from '@/lib/useExtractAll';
+import { useExtractAll } from '@/hooks/extraction/useExtractAll';
 
 /**
  * Ad-hoc bulk extraction trigger for the parser-debug page. Lifts the entire

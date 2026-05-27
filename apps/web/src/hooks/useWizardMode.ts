@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useFeatures, type Features } from '@/lib/useFeatures';
+import { useFeatures, type Features } from '@/hooks/useFeatures';
 
 export type WizardMode = 'first-run' | 'update' | 'restore';
 

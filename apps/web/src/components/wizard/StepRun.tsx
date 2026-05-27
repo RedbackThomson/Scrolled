@@ -9,7 +9,7 @@ import {
   useWizardExtract,
   type ExtractorKey,
   type ExtractorStatus,
-} from '@/lib/useWizardExtract';
+} from '@/hooks/extraction/useWizardExtract';
 import { cn } from '@/lib/utils';
 import { buildPlan } from './plan';
 import type { WizardFile } from './StepFiles';

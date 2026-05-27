@@ -20,7 +20,7 @@ import { NpcLink } from '@/components/entity-links';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
 import type { CommandItem } from '@/components/command-palette/types';
-import { useFeatures } from '@/lib/useFeatures';
+import { useFeatures } from '@/hooks/useFeatures';
 
 const BACK = { to: '/quests', label: 'Back to quests' };
 

@@ -20,12 +20,12 @@ import { CollectionBadgeStrip } from '@/components/collections';
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
 import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient } from '@/db';
-import { useFeatures } from '@/lib/useFeatures';
+import { useFeatures } from '@/hooks/useFeatures';
 import { ABILITY_STAT_FIELDS } from '@/domain/abilityStats';
 import { labelForEquipSlot, labelForEquipType } from '@/domain/equipTypes';
 import { formatEquipJobs, parseReqJob } from '@/domain/equipJobs';
-import { useListSort } from '@/lib/useListSort';
-import { useServerProfile } from '@/lib/useServerProfile';
+import { useListSort } from '@/hooks/useListSort';
+import { useServerProfile } from '@/hooks/useServerProfile';
 import type { EquipStatRange } from '@/serverProfiles';
 
 export default function EquipDetail() {

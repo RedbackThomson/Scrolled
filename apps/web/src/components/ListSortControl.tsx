@@ -1,6 +1,6 @@
 import { ArrowDown, ArrowDownUp, ArrowUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { SortDir, SortState } from '@/lib/useListSort';
+import type { SortDir, SortState } from '@/hooks/useListSort';
 
 interface ListSortControlProps {
   fields: { id: string; label: string }[];

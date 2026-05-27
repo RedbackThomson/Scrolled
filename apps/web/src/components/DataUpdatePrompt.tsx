@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useDataState } from '@/lib/useDataState';
+import { useDataState } from '@/hooks/useDataState';
 
 /**
  * Non-blocking nudge shown when the stored library is readable but older than

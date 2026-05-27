@@ -10,7 +10,7 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
-import { useFeatures } from '@/lib/useFeatures';
+import { useFeatures } from '@/hooks/useFeatures';
 
 export default function Home() {
   const features = useFeatures();

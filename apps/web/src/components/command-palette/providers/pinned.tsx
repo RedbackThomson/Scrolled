@@ -7,7 +7,7 @@ import {
   useCreatePinnedSearch,
   useDeletePinnedSearch,
   usePinnedSearches,
-} from '@/lib/usePinnedSearches';
+} from '@/hooks/usePinnedSearches';
 import type { CollectionEntityType } from '@/db/user';
 
 const LISTING_PATHS: Record<string, CollectionEntityType> = {

@@ -6,8 +6,8 @@ import { Palette } from '@/components/command-palette/Palette';
 import { DataUpdatePrompt } from '@/components/DataUpdatePrompt';
 import { Sidebar } from '@/components/Sidebar';
 import { TopBar } from '@/components/TopBar';
-import { useFeatures } from '@/lib/useFeatures';
-import { useDataState } from '@/lib/useDataState';
+import { useFeatures } from '@/hooks/useFeatures';
+import { useDataState } from '@/hooks/useDataState';
 import { useSidebarLayout } from '@/stores/sidebarState';
 
 export function AppShell() {

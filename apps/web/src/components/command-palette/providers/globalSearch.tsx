@@ -8,7 +8,7 @@ import { iconForEntity, labelForEntityKind, routeForEntity } from '@/lib/entityR
 import { labelForEquipSlot } from '@/domain/equipTypes';
 import { useRecentQueries } from '@/lib/recents';
 import { useCommandPalette } from '@/stores/useCommandPalette';
-import { useFeatures } from '@/lib/useFeatures';
+import { useFeatures } from '@/hooks/useFeatures';
 
 const PREFIX_TO_ENTITY: Record<string, EntityKind> = {
   m: 'mob',

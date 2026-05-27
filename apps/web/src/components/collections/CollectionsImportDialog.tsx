@@ -10,7 +10,7 @@
 import { useState, type ChangeEvent } from 'react';
 import { AlertCircle, FileJson, Loader2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useImportJson } from '@/lib/useCollections';
+import { useImportJson } from '@/hooks/useCollections';
 import {
   collectionsExportSchema,
   type CollectionsExportJson,
