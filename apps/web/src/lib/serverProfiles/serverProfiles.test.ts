@@ -215,6 +215,14 @@ describe('serverProfileSchema', () => {
     if (r.success) expect('future' in r.data).toBe(false);
   });
 
+  it('accepts an optional version string', () => {
+    const r = serverProfileSchema.safeParse({ id: 'x', name: 'X', version: '2026-05-26' });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.version).toBe('2026-05-26');
+    // empty version is rejected
+    expect(serverProfileSchema.safeParse({ id: 'x', name: 'X', version: '' }).success).toBe(false);
+  });
+
   it('accepts well-formed fingerprints and rejects malformed ones', () => {
     const ok = serverProfileSchema.safeParse({
       id: 'x',

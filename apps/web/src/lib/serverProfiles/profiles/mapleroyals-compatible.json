@@ -2,6 +2,7 @@
   "id": "mapleroyals-compatible",
   "name": "MapleRoyals-compatible",
   "description": "Community-built to match the popular private server — not official or endorsed, and subject to change.",
+  "version": "2026-05-26",
   "rates": { "exp": 3.2 },
   "systems": { "equipStatCalculation": "mapleroyals-v1" },
   "fingerprints": [

@@ -16,6 +16,7 @@ export const serverProfileSchema: z.ZodType<ServerProfile, z.ZodTypeDef, unknown
   id: z.string().min(1),
   name: z.string().min(1),
   description: z.string().optional(),
+  version: z.string().min(1).optional(),
   rates: z
     .object({
       exp: z.number().positive().optional(),

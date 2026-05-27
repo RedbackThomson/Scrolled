@@ -455,6 +455,11 @@ function ServerProfileSection() {
               >
                 <span className="flex w-full items-center gap-2 text-sm font-medium">
                   {p.name}
+                  {p.version && (
+                    <span className="text-muted-foreground font-mono text-[10px] font-normal">
+                      {p.version}
+                    </span>
+                  )}
                   {active && <span className="text-primary ml-auto text-xs">Active</span>}
                 </span>
                 {p.description && (

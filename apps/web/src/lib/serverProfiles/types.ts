@@ -23,6 +23,12 @@ export interface ServerProfile {
   id: string;
   name: string;
   description?: string;
+  /**
+   * Optional version stamp for tracking a profile as the server it models
+   * changes over time. By convention an ISO date (`YYYY-MM-DD`) marking when
+   * the profile's values were last confirmed accurate.
+   */
+  version?: string;
   /** Multipliers applied to canonical game values. */
   rates: {
     /** Multiplier applied to displayed EXP values. Defaults to 1 when absent. */
