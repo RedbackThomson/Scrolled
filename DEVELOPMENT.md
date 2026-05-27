@@ -59,7 +59,7 @@ packages/        Shared libraries (parser, extractors, db, search)
 docs/            Product and technical requirements
 ```
 
-The source of truth for product scope is [`docs/mapleroyals_wiki_clone_requirements.md`](docs/mapleroyals_wiki_clone_requirements.md). Technical decisions live in [`docs/technical_requirements.md`](docs/technical_requirements.md). Command palette extension is covered in [`docs/command_palette_extension_guide.md`](docs/command_palette_extension_guide.md).
+The source of truth for product scope is [`docs/mapleroyals_wiki_clone_requirements.md`](docs/mapleroyals_wiki_clone_requirements.md). Technical decisions live in [`docs/technical_requirements.md`](docs/technical_requirements.md). Command palette extension is covered in [`docs/command_palette_extension_guide.md`](docs/command_palette_extension_guide.md). The WZ format reference sources used to decode game files — for adding parser/extractor features — are collected in [`docs/format_sources.md`](docs/format_sources.md).
 
 ## Schema and data versioning
 

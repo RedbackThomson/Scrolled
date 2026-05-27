@@ -51,7 +51,7 @@ Don't switch these without updating `docs/technical_requirements.md` first.
 - Strict TS. `any` only at FFI boundaries, with a justification comment.
 - Path alias: a single `@/*` → `apps/web/src/*` (tsconfig + vite). Every top-level `src/` dir is therefore importable as `@/<dir>`; the list below is the source layout, not separate aliases.
 - Source layout under `apps/web/src/` — put a file where its kind belongs:
-  - `parser/` WZ parsing · `extractors/` raw-tree → domain records · `db/` schema/migrations/queries · `search/` MiniSearch · `workers/` comlink worker entries
+  - `parser/` WZ parsing · `extractors/` raw-tree → domain records · `db/` schema/migrations/queries · `search/` MiniSearch · `workers/` comlink worker entries — when decoding new WZ structures here, the reverse-engineering reference sources are collected in [`docs/format_sources.md`](docs/format_sources.md)
   - `serverProfiles/` server-config subsystem · `analytics/` §2.7 gated telemetry
   - `domain/` static game-domain constants/enums (no React) · `lib/` pure framework-agnostic utils/codecs (worker-safe `logger`/`progress` live here)
   - `hooks/` shared React hooks (`hooks/extraction/` = ingestion pipeline) · `stores/` Zustand client state
