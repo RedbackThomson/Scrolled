@@ -3,7 +3,8 @@
 // plus an inline "+ New collection". Clicking a collection bulk-adds the
 // selected ids into it and clears the selection.
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { usePopover } from '@/hooks/usePopover';
 import { createPortal } from 'react-dom';
 import { BookmarkPlus, ChevronDown, Loader2, Plus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -26,10 +27,10 @@ export function CollectionsBulkAddMenu({
   onAdded,
   onClear,
 }: CollectionsBulkAddMenuProps) {
-  const [open, setOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const popoverRef = useRef<HTMLDivElement>(null);
-  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
+  const { open, setOpen, coords, triggerRef, popoverRef } = usePopover<
+    HTMLButtonElement,
+    HTMLDivElement
+  >();
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<string | null>(null);
 
@@ -38,43 +39,6 @@ export function CollectionsBulkAddMenu({
   const createM = useCreateCollection();
 
   const count = selectedIds.size;
-
-  useLayoutEffect(() => {
-    if (!open) return;
-    const place = () => {
-      const t = triggerRef.current;
-      if (!t) return;
-      const r = t.getBoundingClientRect();
-      setCoords({ top: r.bottom + 4, left: r.left });
-    };
-    place();
-    window.addEventListener('resize', place);
-    window.addEventListener('scroll', place, true);
-    return () => {
-      window.removeEventListener('resize', place);
-      window.removeEventListener('scroll', place, true);
-    };
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      const target = e.target as Node | null;
-      if (!target) return;
-      if (triggerRef.current?.contains(target)) return;
-      if (popoverRef.current?.contains(target)) return;
-      setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
 
   // Auto-clear status after a short delay so it doesn't linger past the
   // next interaction.

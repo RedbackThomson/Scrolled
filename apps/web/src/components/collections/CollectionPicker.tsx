@@ -9,15 +9,8 @@
 // "need 5x — drops from Zakum" in one place without opening the collection
 // detail page.
 
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { usePopover } from '@/hooks/usePopover';
 import { createPortal } from 'react-dom';
 import { Check, Loader2, Plus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -39,10 +32,10 @@ interface CollectionPickerProps {
 }
 
 export function CollectionPicker({ entityType, entityId, children }: CollectionPickerProps) {
-  const [open, setOpen] = useState(false);
-  const triggerRef = useRef<HTMLSpanElement>(null);
-  const popoverRef = useRef<HTMLDivElement>(null);
-  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
+  const { open, setOpen, coords, triggerRef, popoverRef } = usePopover<
+    HTMLSpanElement,
+    HTMLDivElement
+  >();
 
   const collectionsQ = useCollectionsList();
   const membershipQ = useMembership(entityType, entityId);
@@ -63,46 +56,7 @@ export function CollectionPicker({ entityType, entityId, children }: CollectionP
     return list.filter((c) => c.name.toLowerCase().includes(q));
   }, [collectionsQ.data, query]);
 
-  // Position popover under trigger.
-  useLayoutEffect(() => {
-    if (!open) return;
-    const place = () => {
-      const t = triggerRef.current;
-      if (!t) return;
-      const r = t.getBoundingClientRect();
-      setCoords({ top: r.bottom + 4, left: r.left });
-    };
-    place();
-    window.addEventListener('resize', place);
-    window.addEventListener('scroll', place, true);
-    return () => {
-      window.removeEventListener('resize', place);
-      window.removeEventListener('scroll', place, true);
-    };
-  }, [open]);
-
-  // Outside click + Escape.
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      const target = e.target as Node | null;
-      if (!target) return;
-      if (triggerRef.current?.contains(target)) return;
-      if (popoverRef.current?.contains(target)) return;
-      setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
-
-  const toggle = useCallback(() => setOpen((o) => !o), []);
+  const toggle = useCallback(() => setOpen((o) => !o), [setOpen]);
 
   const onToggleMembership = useCallback(
     (collectionId: number) => {

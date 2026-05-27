@@ -11,7 +11,8 @@
 // vertical axis — a popover anchored inside a header cell would be cut off
 // on tables with few rows.
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { usePopover } from '@/hooks/usePopover';
 import { createPortal } from 'react-dom';
 import { Filter } from 'lucide-react';
 import type { ColumnFilter, StringFilterMode } from '@/db';
@@ -51,52 +52,10 @@ export function ColumnFilterPopover({
   booleanLabels,
 }: ColumnFilterPopoverProps) {
   const active = isActive(value);
-  const [open, setOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const popoverRef = useRef<HTMLDivElement>(null);
-  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
-
-  // Position the popover under the trigger. useLayoutEffect avoids a flash
-  // at (0, 0) on open. Recompute on resize so the popover follows.
-  useLayoutEffect(() => {
-    if (!open) return;
-    const place = () => {
-      const t = triggerRef.current;
-      if (!t) return;
-      const r = t.getBoundingClientRect();
-      setCoords({ top: r.bottom + 4, left: r.left });
-    };
-    place();
-    window.addEventListener('resize', place);
-    window.addEventListener('scroll', place, true);
-    return () => {
-      window.removeEventListener('resize', place);
-      window.removeEventListener('scroll', place, true);
-    };
-  }, [open]);
-
-  // Outside click + Escape close.
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      const target = e.target as Node | null;
-      if (!target) return;
-      if (triggerRef.current?.contains(target)) return;
-      if (popoverRef.current?.contains(target)) return;
-      setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
-
-  const close = useCallback(() => setOpen(false), []);
+  const { open, setOpen, close, coords, triggerRef, popoverRef } = usePopover<
+    HTMLButtonElement,
+    HTMLDivElement
+  >();
 
   return (
     <>
