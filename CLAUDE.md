@@ -70,7 +70,7 @@ independent versions. Know which one a change needs. Mechanics: `DEVELOPMENT.md`
 Two ways to bump, and prefer breaking:
 
 - **Breaking** (the data changes): raise **both** constants. The cache is
-  destructively cleared *before* migrations run, so your migration hits empty
+  destructively cleared _before_ migrations run, so your migration hits empty
   tables — write a clean schema (`ADD COLUMN … NOT NULL`, no nullable sentinels).
 - **Additive** (old data still renders): raise `CURRENT_DATA_REVISION` only. The
   migration hits populated tables, so new columns must tolerate existing rows

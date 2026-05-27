@@ -26,7 +26,7 @@ import { labelForEquipSlot, labelForEquipType } from '@/lib/equipTypes';
 import { formatEquipJobs, parseReqJob } from '@/lib/equipJobs';
 import { useListSort } from '@/lib/useListSort';
 import { useServerProfile } from '@/lib/useServerProfile';
-import type { EquipStatRange } from '@/lib/serverProfiles';
+import type { EquipStatRange } from '@/serverProfiles';
 
 export default function EquipDetail() {
   const params = useParams<{ id: string }>();

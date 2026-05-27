@@ -32,7 +32,8 @@ export default defineConfig({
       manifest: {
         name: 'Scrolled',
         short_name: 'Scrolled',
-        description: 'Browse items, mobs, NPCs, maps, and quests from your game data, fully on-device.',
+        description:
+          'Browse items, mobs, NPCs, maps, and quests from your game data, fully on-device.',
         theme_color: '#0f172a',
         background_color: '#0f172a',
         display: 'standalone',

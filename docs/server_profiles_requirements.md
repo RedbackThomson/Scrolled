@@ -90,17 +90,17 @@ Example:
 
 ```ts
 interface ServerProfile {
-  id: string
-  name: string
-  description?: string
-  inherits?: string
+  id: string;
+  name: string;
+  description?: string;
+  inherits?: string;
   rates: {
-    exp?: number
-  }
+    exp?: number;
+  };
   systems: {
-    equipStatCalculation?: string
-  }
-  fingerprints?: ServerFingerprint[]
+    equipStatCalculation?: string;
+  };
+  fingerprints?: ServerFingerprint[];
 }
 ```
 
@@ -133,14 +133,14 @@ Example:
 
 ```ts
 registerEquipStatCalculator({
-  id: "vanilla-v83",
-  calculate() {}
-})
+  id: 'vanilla-v83',
+  calculate() {},
+});
 
 registerEquipStatCalculator({
-  id: "mapleroyals-v1",
-  calculate() {}
-})
+  id: 'mapleroyals-v1',
+  calculate() {},
+});
 ```
 
 Profiles reference calculators by ID. This avoids embedding logic directly into profiles.
@@ -187,10 +187,10 @@ STR: 15 (13 ~ 17 or 22)
 
 **Initial Built-In Calculators**
 
-| ID               | Description                     |
-| ---------------- | ------------------------------- |
-| `vanilla-v83`    | Default GMS-like variance       |
-| `mapleroyals-v1` | MapleRoyals custom godly logic  |
+| ID               | Description                    |
+| ---------------- | ------------------------------ |
+| `vanilla-v83`    | Default GMS-like variance      |
+| `mapleroyals-v1` | MapleRoyals custom godly logic |
 
 ---
 
@@ -204,10 +204,10 @@ Reduce onboarding complexity by detecting likely server profiles automatically.
 
 ```ts
 interface ServerFingerprint {
-  file: string
-  path?: string
-  contains: string
-  weight: number
+  file: string;
+  path?: string;
+  contains: string;
+  weight: number;
 }
 ```
 
@@ -366,19 +366,19 @@ profiles/
 **Profile Resolution**
 
 ```ts
-resolveServerProfile(profileId)
+resolveServerProfile(profileId);
 ```
 
 **Equip Stat Calculation**
 
 ```ts
-calculateEquipRanges(profile, equip)
+calculateEquipRanges(profile, equip);
 ```
 
 **EXP Transformation**
 
 ```ts
-applyExpRate(profile, exp)
+applyExpRate(profile, exp);
 ```
 
 ---

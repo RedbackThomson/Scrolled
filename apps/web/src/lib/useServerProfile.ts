@@ -10,7 +10,7 @@ import {
   type EquipStatKey,
   type EquipStatRange,
   type ServerProfile,
-} from '@/lib/serverProfiles';
+} from '@/serverProfiles';
 
 const QUERY_KEY = ['db', 'server-profile'] as const;
 

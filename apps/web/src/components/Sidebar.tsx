@@ -499,7 +499,9 @@ function DbStatusIndicator({ collapsed }: { collapsed: boolean }) {
         className={cn('h-3.5 w-3.5 shrink-0', cfg.iconClass, cfg.spin && 'animate-spin')}
         aria-hidden
       />
-      <span className={cn('truncate', cfg.textClass ?? 'text-sidebar-foreground')}>{cfg.label}</span>
+      <span className={cn('truncate', cfg.textClass ?? 'text-sidebar-foreground')}>
+        {cfg.label}
+      </span>
     </div>
   );
 

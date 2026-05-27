@@ -37,7 +37,10 @@ export function useListSort<T>(
     dir: null,
   });
 
-  const sorted = useMemo(() => (items ? sortItems(items, fields, sort) : []), [items, fields, sort]);
+  const sorted = useMemo(
+    () => (items ? sortItems(items, fields, sort) : []),
+    [items, fields, sort],
+  );
   const fieldOptions = useMemo(() => fields.map((f) => ({ id: f.id, label: f.label })), [fields]);
 
   return { sorted, sort, setSort, fieldOptions };

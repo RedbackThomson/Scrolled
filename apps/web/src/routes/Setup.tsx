@@ -20,7 +20,7 @@ import { createLogger, describeError } from '@/lib/logger';
 import { cn } from '@/lib/utils';
 import { useWizardMode } from '@/lib/useWizardMode';
 import { acceptForDesktop } from '@/lib/filePickerAccept';
-import { detectServerProfile } from '@/lib/serverProfiles';
+import { detectServerProfile } from '@/serverProfiles';
 import { getParserClient, type WzMapleVersionName } from '@/parser';
 
 const log = createLogger('setup');
@@ -516,7 +516,7 @@ export default function Setup() {
       exitSlot={exitSlot}
     >
       {incompatibleLibrary && (
-        <div className="border-amber-500/40 bg-amber-500/10 text-foreground mb-4 flex items-start gap-2 rounded-md border p-3 text-sm">
+        <div className="text-foreground mb-4 flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
           <div>
             <p className="font-medium">Your library needs to be rebuilt</p>
@@ -557,7 +557,9 @@ function RestoreDropZone({
   const accept = (file: File | undefined) => {
     if (!file) return;
     if (!/\.scrolled-backup$/i.test(file.name) && !/\.(sqlite3?|db)$/i.test(file.name)) {
-      alert("That doesn't look like a backup. Pick a .scrolled-backup file (or a legacy .sqlite export).");
+      alert(
+        "That doesn't look like a backup. Pick a .scrolled-backup file (or a legacy .sqlite export).",
+      );
       return;
     }
     onPick(file);

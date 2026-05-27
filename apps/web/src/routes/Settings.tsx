@@ -27,8 +27,8 @@ import { useCollectionsList } from '@/lib/useCollections';
 import { useExportBackup, useImportBackup, type BackupScope } from '@/lib/useBackup';
 import { useTheme } from '@/lib/theme';
 import { useServerProfile, useSetServerProfile } from '@/lib/useServerProfile';
-import { BUILTIN_PROFILES } from '@/lib/serverProfiles';
-import { isAnalyticsAvailable, isAnalyticsOptedOut, setAnalyticsOptOut } from '@/lib/analytics';
+import { BUILTIN_PROFILES } from '@/serverProfiles';
+import { isAnalyticsAvailable, isAnalyticsOptedOut, setAnalyticsOptOut } from '@/analytics';
 import { shortHash } from '@/lib/hashFile';
 import { acceptForDesktop } from '@/lib/filePickerAccept';
 import { cn } from '@/lib/utils';
@@ -195,7 +195,6 @@ export default function Settings() {
             Re-running setup is additive — existing data stays, new files extend it.
           </p>
         </div>
-
       </section>
 
       {/* --- Backup --------------------------------------------------------- */}

@@ -22,7 +22,9 @@ const buffer: LogEntry[] = [];
 
 function debugEnabled(): boolean {
   try {
-    return (globalThis as { localStorage?: Storage }).localStorage?.getItem('scrolled.debug') === '1';
+    return (
+      (globalThis as { localStorage?: Storage }).localStorage?.getItem('scrolled.debug') === '1'
+    );
   } catch {
     return false;
   }

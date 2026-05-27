@@ -76,11 +76,11 @@ on import. Forward-only: never edit or reorder a shipped migration.
 compares it to `CURRENT_DATA_REVISION` (what this build produces) and
 `MINIMUM_SUPPORTED_DATA_REVISION` (the oldest it can read):
 
-| Stored revision          | `useDataState`          | Effect                                        |
-| ------------------------ | ----------------------- | --------------------------------------------- |
-| `< MINIMUM`              | `reinitialize-required` | Blocked; redirected to setup with an explainer |
-| `MINIMUM ≤ r < CURRENT`  | `update-recommended`    | Non-blocking toast + amber sidebar             |
-| `≥ CURRENT`              | `current`               | Nothing                                        |
+| Stored revision         | `useDataState`          | Effect                                         |
+| ----------------------- | ----------------------- | ---------------------------------------------- |
+| `< MINIMUM`             | `reinitialize-required` | Blocked; redirected to setup with an explainer |
+| `MINIMUM ≤ r < CURRENT` | `update-recommended`    | Non-blocking toast + amber sidebar             |
+| `≥ CURRENT`             | `current`               | Nothing                                        |
 
 A missing key reads as 0, so a pre-tracking library is flagged for rebuild.
 
@@ -105,7 +105,7 @@ column, reinterpreted field, changed extractor) — usually alongside a migratio
 - **Breaking** (preferred): raise **both** constants. The reset clears the cache
   before migrating, so write the clean schema directly — `ADD COLUMN … NOT NULL`,
   tightened constraints, no nullable "not-yet-extracted" sentinels, no throwaway
-  defaults. (The reset runs *before* migrations precisely so a `NOT NULL` add
+  defaults. (The reset runs _before_ migrations precisely so a `NOT NULL` add
   can't hit populated rows, throw, and brick `open()`.)
 - **Additive**: raise `CURRENT_DATA_REVISION` only. No reset happens, so the
   migration hits populated tables — new columns must tolerate existing rows

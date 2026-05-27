@@ -65,14 +65,19 @@ describe('evaluateBackupImport', () => {
 describe('backupManifestSchema', () => {
   it('rejects a wrong format tag', () => {
     expect(() =>
-      backupManifestSchema.parse({ ...manifest({ game: game(CURRENT_DATA_REVISION) }), format: 'nope' }),
+      backupManifestSchema.parse({
+        ...manifest({ game: game(CURRENT_DATA_REVISION) }),
+        format: 'nope',
+      }),
     ).toThrow();
   });
 
   it('rejects a malformed sha256', () => {
     expect(() =>
       backupManifestSchema.parse(
-        manifest({ user: { file: 'user.sqlite3', byteLength: 5, sha256: 'short', schemaVersion: 2 } }),
+        manifest({
+          user: { file: 'user.sqlite3', byteLength: 5, sha256: 'short', schemaVersion: 2 },
+        }),
       ),
     ).toThrow();
   });

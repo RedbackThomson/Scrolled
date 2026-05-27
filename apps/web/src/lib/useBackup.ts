@@ -81,11 +81,23 @@ export async function importBackupBytes(bytes: Uint8Array): Promise<ImportBackup
     const target = classifyRawSqlite(bytes);
     if (target === 'user') {
       const r = await userDb.importBytes(bytes);
-      return { imported: ['user'], warnings: [], legacy: true, backend: r.backend, schemaVersion: r.schemaVersion };
+      return {
+        imported: ['user'],
+        warnings: [],
+        legacy: true,
+        backend: r.backend,
+        schemaVersion: r.schemaVersion,
+      };
     }
     if (target === 'game') {
       const r = await db.importBytes(bytes);
-      return { imported: ['game'], warnings: [], legacy: true, backend: r.backend, schemaVersion: r.schemaVersion };
+      return {
+        imported: ['game'],
+        warnings: [],
+        legacy: true,
+        backend: r.backend,
+        schemaVersion: r.schemaVersion,
+      };
     }
     throw new Error("Couldn't tell whether this SQLite file is game data or collections.");
   }

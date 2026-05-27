@@ -1,5 +1,5 @@
 import type { EquipRecord } from '@/db';
-import type { EquipStatKey } from '@/lib/serverProfiles';
+import type { EquipStatKey } from '@/serverProfiles';
 
 /**
  * The four primary character ability stats, in their fixed canonical display

@@ -2,7 +2,7 @@ import { Gamepad2 } from 'lucide-react';
 import { CommandGroup, CommandItem as CommandItemPrimitive } from '@/components/ui/command';
 import { useCommandPalette } from '@/lib/useCommandPalette';
 import { useServerProfile, useSetServerProfile } from '@/lib/useServerProfile';
-import { BUILTIN_PROFILES } from '@/lib/serverProfiles';
+import { BUILTIN_PROFILES } from '@/serverProfiles';
 
 function fuzzy(q: string, hay: string): boolean {
   const t = q.trim().toLowerCase();

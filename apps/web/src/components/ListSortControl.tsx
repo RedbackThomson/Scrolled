@@ -14,7 +14,9 @@ export function ListSortControl({ fields, value, onChange }: ListSortControlProp
   const Icon = value.dir === 'asc' ? ArrowUp : value.dir === 'desc' ? ArrowDown : ArrowDownUp;
   const currentLabel = fields.find((f) => f.id === value.field)?.label ?? fields[0].label;
   const summaryTitle =
-    value.dir === null ? 'Sort' : `Sorted by ${currentLabel} (${value.dir === 'asc' ? 'A→Z' : 'Z→A'})`;
+    value.dir === null
+      ? 'Sort'
+      : `Sorted by ${currentLabel} (${value.dir === 'asc' ? 'A→Z' : 'Z→A'})`;
 
   return (
     <details className="relative">
@@ -49,9 +51,27 @@ export function ListSortControl({ fields, value, onChange }: ListSortControlProp
           Direction
         </div>
         <div className="grid grid-cols-3 gap-1">
-          <DirButton current={value.dir} dir="asc" onChange={(d) => onChange({ field: value.field, dir: d })} label="Asc" icon={ArrowUp} />
-          <DirButton current={value.dir} dir="desc" onChange={(d) => onChange({ field: value.field, dir: d })} label="Desc" icon={ArrowDown} />
-          <DirButton current={value.dir} dir={null} onChange={(d) => onChange({ field: value.field, dir: d })} label="None" icon={ArrowDownUp} />
+          <DirButton
+            current={value.dir}
+            dir="asc"
+            onChange={(d) => onChange({ field: value.field, dir: d })}
+            label="Asc"
+            icon={ArrowUp}
+          />
+          <DirButton
+            current={value.dir}
+            dir="desc"
+            onChange={(d) => onChange({ field: value.field, dir: d })}
+            label="Desc"
+            icon={ArrowDown}
+          />
+          <DirButton
+            current={value.dir}
+            dir={null}
+            onChange={(d) => onChange({ field: value.field, dir: d })}
+            label="None"
+            icon={ArrowDownUp}
+          />
         </div>
       </div>
     </details>

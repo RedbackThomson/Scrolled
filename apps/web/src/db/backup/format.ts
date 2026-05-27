@@ -105,7 +105,10 @@ export async function packBackup(parts: BackupParts): Promise<Uint8Array> {
     databases,
   };
 
-  entries.push({ name: MANIFEST_NAME, bytes: new TextEncoder().encode(JSON.stringify(manifest, null, 2)) });
+  entries.push({
+    name: MANIFEST_NAME,
+    bytes: new TextEncoder().encode(JSON.stringify(manifest, null, 2)),
+  });
   if (parts.game) entries.push({ name: GAME_FILE, bytes: parts.game });
   if (parts.user) entries.push({ name: USER_FILE, bytes: parts.user });
 

@@ -41,8 +41,7 @@ export function StepRestore({ file, state, onPickAgain, onSwitchBack, parentMode
   const sizeMb = (file.size / 1_000_000).toFixed(1);
 
   if (state.phase === 'success') {
-    const restored =
-      state.imported.map((k) => RESTORED_LABELS[k]).join(' and ') || 'your library';
+    const restored = state.imported.map((k) => RESTORED_LABELS[k]).join(' and ') || 'your library';
     return (
       <section className="space-y-4">
         <div className="flex items-center gap-3">

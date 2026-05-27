@@ -591,8 +591,9 @@ export function gameDataPreMigrateReset(ctx: PreMigrateContext): boolean {
   const hasMeta =
     ctx.selectValue("SELECT 1 FROM sqlite_master WHERE type='table' AND name='app_meta'") != null;
   const revision = hasMeta
-    ? Number(ctx.selectValue<string>("SELECT value FROM app_meta WHERE key = 'data_revision'") ?? 0) ||
-      0
+    ? Number(
+        ctx.selectValue<string>("SELECT value FROM app_meta WHERE key = 'data_revision'") ?? 0,
+      ) || 0
     : 0;
   if (revision >= MINIMUM_SUPPORTED_DATA_REVISION) return false;
   if (!ctx.hasAnyUserData()) return false;

@@ -17,7 +17,7 @@ import type { Features } from '@/lib/useFeatures';
 import { cn } from '@/lib/utils';
 import { acceptForDesktop } from '@/lib/filePickerAccept';
 import type { WzMapleVersionName } from '@/parser';
-import { BUILTIN_PROFILES } from '@/lib/serverProfiles';
+import { BUILTIN_PROFILES } from '@/serverProfiles';
 import { splitByKind } from './dropClassify';
 import { EntityStatus } from './EntityStatus';
 import { WelcomePanel } from './WelcomePanel';
