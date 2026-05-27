@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getDbClient, type GameDatabase } from '@/db';
 import type { Remote } from 'comlink';
 import { createLogger, describeError } from '@/lib/logger';
+import { bytesToUrl } from '@/lib/blob';
 
 const log = createLogger('icons-client');
 
@@ -61,11 +62,7 @@ async function fetchIcon(ref: IconRef): Promise<string | null> {
           log.debug('no icon bytes in db', { ...ref });
           return null;
         }
-        // Copy into a fresh ArrayBuffer so the Blob type matches BlobPart
-        // regardless of the underlying buffer kind.
-        const buf = new ArrayBuffer(bytes.byteLength);
-        new Uint8Array(buf).set(bytes);
-        const url = URL.createObjectURL(new Blob([buf], { type: 'image/png' }));
+        const url = bytesToUrl(bytes, 'image/png');
         cache.set(key, url);
         return url;
       } catch (e) {

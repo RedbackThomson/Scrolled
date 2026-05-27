@@ -1,4 +1,5 @@
 import type { SortDir } from '../../types';
+import { clamp } from '@/lib/math';
 
 /**
  * Per-entity allowlist mapping public column ids → SQL column names plus
@@ -95,7 +96,7 @@ export function resolveOrder(
 }
 
 export function clampLimit(limit: number | undefined): number {
-  return Math.min(Math.max(limit ?? 50, 1), 500);
+  return clamp(limit ?? 50, 1, 500);
 }
 
 export function clampOffset(offset: number | undefined): number {

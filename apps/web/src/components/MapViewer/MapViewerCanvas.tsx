@@ -5,6 +5,8 @@ import { MapHoverCard, MobHoverCard, NpcHoverCard } from '@/components/entity-li
 import { classifyPortal, gameToPixel, type PortalGraph } from '@/domain/portal-types';
 import type { LayerVisibility, MapViewerHighlight } from './types';
 import { MapViewerIcon } from './MapViewerIcon';
+import { clamp } from '@/lib/math';
+import { bytesToUrl } from '@/lib/blob';
 
 interface MapViewerCanvasProps {
   map: MapRecord;
@@ -28,7 +30,7 @@ function pickScale(width: number, height: number): number {
   const longer = Math.max(width, height);
   if (longer <= 0) return 1;
   const ratio = TARGET_MIN / longer;
-  return Math.max(1, Math.min(MAX_SCALE, Math.ceil(ratio)));
+  return clamp(Math.ceil(ratio), 1, MAX_SCALE);
 }
 
 // Very generous bounds — only reject icons that project to wildly off-canvas
@@ -73,11 +75,7 @@ export function MapViewerCanvas({
   // Uint8Array per query so the blob is keyed by reference, not content.
   const blobUrl = useMemo(() => {
     if (!map.minimapData) return null;
-    // Cast at the BlobPart boundary — see `routes/Settings.tsx` for the
-    // rationale (TS narrows BlobPart to `ArrayBufferView<ArrayBuffer>`).
-    return URL.createObjectURL(
-      new Blob([map.minimapData as Uint8Array<ArrayBuffer>], { type: 'image/png' }),
-    );
+    return bytesToUrl(map.minimapData, 'image/png');
   }, [map.minimapData]);
   useEffect(() => {
     if (!blobUrl) return;

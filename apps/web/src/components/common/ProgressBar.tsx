@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { clamp } from '@/lib/math';
 import type { ProgressUpdate } from '@/lib/progress';
 
 interface Props {
@@ -14,9 +15,7 @@ interface Props {
 export function ProgressBar({ progress, className }: Props) {
   if (!progress) return null;
   const determinate = typeof progress.total === 'number' && progress.total > 0;
-  const pct = determinate
-    ? Math.min(100, Math.max(0, (progress.current / progress.total!) * 100))
-    : null;
+  const pct = determinate ? clamp((progress.current / progress.total!) * 100, 0, 100) : null;
 
   return (
     <div className={cn('space-y-1.5', className)} aria-live="polite">
