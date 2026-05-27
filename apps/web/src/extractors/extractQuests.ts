@@ -1,4 +1,5 @@
 import type { GameDataSource } from '@/parser';
+import { pathToNumber, scalarToNumber } from './wzCoerce';
 import type { QuestRecord, QuestRequirementRecord, QuestRewardRecord } from '@/db';
 import { createLogger } from '@/lib/logger';
 import type { ProgressFn } from '@/lib/progress';
@@ -154,9 +155,9 @@ export async function extractQuests(
     // -- Check.img/<id>/0 (start) ---------------------------------------
     const startPath = `${entry.fullPath}/0`;
     const [startNpcN, lvMinN, jobN] = await Promise.all([
-      scalarNumber(source, `${startPath}/npc`),
-      scalarNumber(source, `${startPath}/lvmin`),
-      scalarNumber(source, `${startPath}/job`),
+      pathToNumber(source, `${startPath}/npc`),
+      pathToNumber(source, `${startPath}/lvmin`),
+      pathToNumber(source, `${startPath}/job`),
     ]);
     await collectQuestPrereqs(source, `${startPath}/quest`, id, requirements);
     if (lvMinN !== null) {
@@ -168,14 +169,14 @@ export async function extractQuests(
 
     // -- Check.img/<id>/1 (completion) ----------------------------------
     const endPath = `${entry.fullPath}/1`;
-    const endNpcN = await scalarNumber(source, `${endPath}/npc`);
+    const endNpcN = await pathToNumber(source, `${endPath}/npc`);
     await collectItemReqs(source, `${endPath}/item`, id, requirements);
     await collectMobReqs(source, `${endPath}/mob`, id, requirements);
 
     // -- Act.img/<id>/1 (completion rewards) ----------------------------
     const actEndPath = `Quest.wz/Act.img/${id}/1`;
     const [expN, mesoN] = await Promise.all([
-      scalarNumber(source, `${actEndPath}/exp`),
+      pathToNumber(source, `${actEndPath}/exp`),
       // The game files use either `money` or `meso` depending on era.
       pickFirstNumber(source, [`${actEndPath}/money`, `${actEndPath}/meso`]),
     ]);
@@ -318,24 +319,10 @@ async function collectItemRewards(
   }
 }
 
-async function scalarNumber(source: GameDataSource, path: string): Promise<number | null> {
-  const node = await source.getNode(path);
-  return scalarToNumber(node?.scalar);
-}
-
 async function pickFirstNumber(source: GameDataSource, paths: string[]): Promise<number | null> {
   for (const p of paths) {
-    const n = await scalarNumber(source, p);
+    const n = await pathToNumber(source, p);
     if (n !== null) return n;
-  }
-  return null;
-}
-
-function scalarToNumber(scalar: string | number | null | undefined): number | null {
-  if (typeof scalar === 'number') return scalar;
-  if (typeof scalar === 'string') {
-    const n = Number(scalar);
-    return Number.isFinite(n) ? n : null;
   }
   return null;
 }

@@ -1,4 +1,5 @@
 import type { GameDataSource, WzNodeInfo } from '@/parser';
+import { nodeToNumber } from './wzCoerce';
 import type { ItemRecord } from '@/db';
 import { createLogger } from '@/lib/logger';
 import type { ProgressFn } from '@/lib/progress';
@@ -174,30 +175,20 @@ async function readItem(
     subcategory: null,
     iconPath,
     iconData,
-    price: scalarInt(info.get('price')),
-    stackSize: scalarInt(info.get('slotMax')),
-    requiredLevel: scalarInt(info.get('reqLevel')),
-    cash: scalarInt(info.get('cash')) === 1,
-    tradeBlock: scalarInt(info.get('tradeBlock')) === 1,
-    accountSharable: scalarInt(info.get('accountSharable')) === 1,
-    only: scalarInt(info.get('only')) === 1,
-    quest: scalarInt(info.get('quest')) === 1,
-    timeLimited: scalarInt(info.get('timeLimited')) === 1,
-    expireOnLogout: scalarInt(info.get('expireOnLogout')) === 1,
-    pickupBlock: scalarInt(info.get('pickupBlock')) === 1,
-    notSale: scalarInt(info.get('notSale')) === 1,
-    dropBlock: scalarInt(info.get('dropBlock')) === 1,
-    tradeAvailable: scalarInt(info.get('tradeAvailable')) === 1,
+    price: nodeToNumber(info.get('price')),
+    stackSize: nodeToNumber(info.get('slotMax')),
+    requiredLevel: nodeToNumber(info.get('reqLevel')),
+    cash: nodeToNumber(info.get('cash')) === 1,
+    tradeBlock: nodeToNumber(info.get('tradeBlock')) === 1,
+    accountSharable: nodeToNumber(info.get('accountSharable')) === 1,
+    only: nodeToNumber(info.get('only')) === 1,
+    quest: nodeToNumber(info.get('quest')) === 1,
+    timeLimited: nodeToNumber(info.get('timeLimited')) === 1,
+    expireOnLogout: nodeToNumber(info.get('expireOnLogout')) === 1,
+    pickupBlock: nodeToNumber(info.get('pickupBlock')) === 1,
+    notSale: nodeToNumber(info.get('notSale')) === 1,
+    dropBlock: nodeToNumber(info.get('dropBlock')) === 1,
+    tradeAvailable: nodeToNumber(info.get('tradeAvailable')) === 1,
     sourcePath: itemPath,
   };
-}
-
-function scalarInt(node: WzNodeInfo | undefined): number | null {
-  if (!node) return null;
-  if (typeof node.scalar === 'number') return node.scalar;
-  if (typeof node.scalar === 'string') {
-    const n = Number(node.scalar);
-    return Number.isFinite(n) ? n : null;
-  }
-  return null;
 }

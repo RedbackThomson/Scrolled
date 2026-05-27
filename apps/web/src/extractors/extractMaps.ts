@@ -1,4 +1,5 @@
-import type { GameDataSource, WzNodeInfo, WzNodeTree } from '@/parser';
+import type { GameDataSource, WzNodeInfo } from '@/parser';
+import { childToNumber, childToString, indexChildrenByName } from './wzCoerce';
 import type {
   MapMobRecord,
   MapMobSpawnRecord,
@@ -118,7 +119,7 @@ export async function extractMaps(
       continue;
     }
 
-    const subs = indexByName(tree.children);
+    const subs = indexChildrenByName(tree.children);
 
     const infoTree = subs.get('info');
     const strs = nameLookup.get(id);
@@ -161,11 +162,11 @@ export async function extractMaps(
       // Geometry scalars live alongside the canvas in both layouts (A: on
       // the `miniMap` parent; B: as siblings of `canvas` on `miniMap`
       // itself). Either way they're direct children of `minimapTree`.
-      minimapCenterX = numberOf(minimapTree, 'centerX');
-      minimapCenterY = numberOf(minimapTree, 'centerY');
-      minimapWidth = numberOf(minimapTree, 'width');
-      minimapHeight = numberOf(minimapTree, 'height');
-      minimapMag = numberOf(minimapTree, 'mag');
+      minimapCenterX = childToNumber(minimapTree, 'centerX');
+      minimapCenterY = childToNumber(minimapTree, 'centerY');
+      minimapWidth = childToNumber(minimapTree, 'width');
+      minimapHeight = childToNumber(minimapTree, 'height');
+      minimapMag = childToNumber(minimapTree, 'mag');
     }
     if (processed < 3 && minimapTree) {
       // Log layout for the first few maps so we can confirm which case
@@ -182,10 +183,10 @@ export async function extractMaps(
       id,
       name: strs?.mapName ?? null,
       streetName: strs?.streetName ?? null,
-      returnMapId: numberOf(infoTree, 'returnMap'),
-      forcedReturnMapId: numberOf(infoTree, 'forcedReturn'),
-      fieldLimit: numberOf(infoTree, 'fieldLimit'),
-      mobRate: numberOf(infoTree, 'mobRate'),
+      returnMapId: childToNumber(infoTree, 'returnMap'),
+      forcedReturnMapId: childToNumber(infoTree, 'forcedReturn'),
+      fieldLimit: childToNumber(infoTree, 'fieldLimit'),
+      mobRate: childToNumber(infoTree, 'mobRate'),
       minimapPath,
       minimapData,
       minimapCenterX,
@@ -203,11 +204,11 @@ export async function extractMaps(
     if (lifeTree) {
       const mobCounts = new Map<number, number>();
       for (const life of lifeTree.children) {
-        const type = stringOf(life, 'type');
-        const entityId = numberOf(life, 'id');
+        const type = childToString(life, 'type');
+        const entityId = childToNumber(life, 'id');
         if (entityId === null) continue;
-        const x = numberOf(life, 'x');
-        const y = numberOf(life, 'y');
+        const x = childToNumber(life, 'x');
+        const y = childToNumber(life, 'y');
         if (type === 'n') {
           mapNpcs.push({ mapId: id, npcId: entityId, x, y });
         } else if (type === 'm') {
@@ -227,7 +228,7 @@ export async function extractMaps(
     const portalTree = subs.get('portal');
     if (portalTree) {
       for (const portal of portalTree.children) {
-        const portalName = stringOf(portal, 'pn') ?? portal.name;
+        const portalName = childToString(portal, 'pn') ?? portal.name;
         if (!portalName) continue;
         const idx = Number(portal.name);
         if (!Number.isFinite(idx)) continue;
@@ -235,12 +236,12 @@ export async function extractMaps(
           mapId: id,
           idx,
           portalName,
-          targetMapId: numberOf(portal, 'tm'),
-          targetPortal: stringOf(portal, 'tn'),
-          x: numberOf(portal, 'x'),
-          y: numberOf(portal, 'y'),
-          portalType: numberOf(portal, 'pt'),
-          script: stringOf(portal, 'script'),
+          targetMapId: childToNumber(portal, 'tm'),
+          targetPortal: childToString(portal, 'tn'),
+          x: childToNumber(portal, 'x'),
+          y: childToNumber(portal, 'y'),
+          portalType: childToNumber(portal, 'pt'),
+          script: childToString(portal, 'script'),
         });
       }
     }
@@ -287,39 +288,10 @@ async function buildMapNameLookup(source: GameDataSource): Promise<Map<number, M
       const m = entry.name.match(/^(\d+)$/);
       if (!m) continue;
       lookup.set(Number(m[1]), {
-        mapName: stringOf(entry, 'mapName'),
-        streetName: stringOf(entry, 'streetName'),
+        mapName: childToString(entry, 'mapName'),
+        streetName: childToString(entry, 'streetName'),
       });
     }
   }
   return lookup;
-}
-
-function indexByName(nodes: WzNodeTree[]): Map<string, WzNodeTree> {
-  const out = new Map<string, WzNodeTree>();
-  for (const n of nodes) out.set(n.name, n);
-  return out;
-}
-
-function scalarOf(parent: WzNodeTree | undefined, name: string): unknown {
-  if (!parent) return undefined;
-  for (const child of parent.children) {
-    if (child.name === name) return child.scalar;
-  }
-  return undefined;
-}
-
-function stringOf(parent: WzNodeTree | undefined, name: string): string | null {
-  const v = scalarOf(parent, name);
-  return typeof v === 'string' ? v : null;
-}
-
-function numberOf(parent: WzNodeTree | undefined, name: string): number | null {
-  const v = scalarOf(parent, name);
-  if (typeof v === 'number') return v;
-  if (typeof v === 'string') {
-    const n = Number(v);
-    return Number.isFinite(n) ? n : null;
-  }
-  return null;
 }

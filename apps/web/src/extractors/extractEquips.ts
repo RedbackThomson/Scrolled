@@ -1,4 +1,5 @@
 import type { GameDataSource, WzNodeTree } from '@/parser';
+import { nodeToNumber } from './wzCoerce';
 import type { EquipRecord } from '@/db';
 import { createLogger } from '@/lib/logger';
 import type { ProgressFn } from '@/lib/progress';
@@ -264,48 +265,38 @@ async function readInfo(source: GameDataSource, imagePath: string): Promise<Equi
   for (const child of info.children) map.set(child.name, child);
   return {
     hasIcon: map.has('icon'),
-    reqLevel: scalarInt(map.get('reqLevel')),
-    reqSTR: scalarInt(map.get('reqSTR')),
-    reqDEX: scalarInt(map.get('reqDEX')),
-    reqINT: scalarInt(map.get('reqINT')),
-    reqLUK: scalarInt(map.get('reqLUK')),
-    reqJob: scalarInt(map.get('reqJob')),
-    incPAD: scalarInt(map.get('incPAD')),
-    incMAD: scalarInt(map.get('incMAD')),
-    incPDD: scalarInt(map.get('incPDD')),
-    incMDD: scalarInt(map.get('incMDD')),
-    incACC: scalarInt(map.get('incACC')),
-    incEVA: scalarInt(map.get('incEVA')),
-    incSTR: scalarInt(map.get('incSTR')),
-    incDEX: scalarInt(map.get('incDEX')),
-    incINT: scalarInt(map.get('incINT')),
-    incLUK: scalarInt(map.get('incLUK')),
-    incMHP: scalarInt(map.get('incMHP')),
-    incMMP: scalarInt(map.get('incMMP')),
-    incSpeed: scalarInt(map.get('incSpeed')),
-    incJump: scalarInt(map.get('incJump')),
-    tuc: scalarInt(map.get('tuc')),
-    cash: scalarInt(map.get('cash')),
-    tradeBlock: scalarInt(map.get('tradeBlock')),
-    equipTradeBlock: scalarInt(map.get('equipTradeBlock')),
-    accountSharable: scalarInt(map.get('accountSharable')),
-    only: scalarInt(map.get('only')),
-    quest: scalarInt(map.get('quest')),
-    timeLimited: scalarInt(map.get('timeLimited')),
-    expireOnLogout: scalarInt(map.get('expireOnLogout')),
-    pickupBlock: scalarInt(map.get('pickupBlock')),
-    notSale: scalarInt(map.get('notSale')),
+    reqLevel: nodeToNumber(map.get('reqLevel')),
+    reqSTR: nodeToNumber(map.get('reqSTR')),
+    reqDEX: nodeToNumber(map.get('reqDEX')),
+    reqINT: nodeToNumber(map.get('reqINT')),
+    reqLUK: nodeToNumber(map.get('reqLUK')),
+    reqJob: nodeToNumber(map.get('reqJob')),
+    incPAD: nodeToNumber(map.get('incPAD')),
+    incMAD: nodeToNumber(map.get('incMAD')),
+    incPDD: nodeToNumber(map.get('incPDD')),
+    incMDD: nodeToNumber(map.get('incMDD')),
+    incACC: nodeToNumber(map.get('incACC')),
+    incEVA: nodeToNumber(map.get('incEVA')),
+    incSTR: nodeToNumber(map.get('incSTR')),
+    incDEX: nodeToNumber(map.get('incDEX')),
+    incINT: nodeToNumber(map.get('incINT')),
+    incLUK: nodeToNumber(map.get('incLUK')),
+    incMHP: nodeToNumber(map.get('incMHP')),
+    incMMP: nodeToNumber(map.get('incMMP')),
+    incSpeed: nodeToNumber(map.get('incSpeed')),
+    incJump: nodeToNumber(map.get('incJump')),
+    tuc: nodeToNumber(map.get('tuc')),
+    cash: nodeToNumber(map.get('cash')),
+    tradeBlock: nodeToNumber(map.get('tradeBlock')),
+    equipTradeBlock: nodeToNumber(map.get('equipTradeBlock')),
+    accountSharable: nodeToNumber(map.get('accountSharable')),
+    only: nodeToNumber(map.get('only')),
+    quest: nodeToNumber(map.get('quest')),
+    timeLimited: nodeToNumber(map.get('timeLimited')),
+    expireOnLogout: nodeToNumber(map.get('expireOnLogout')),
+    pickupBlock: nodeToNumber(map.get('pickupBlock')),
+    notSale: nodeToNumber(map.get('notSale')),
   };
-}
-
-function scalarInt(node: WzNodeTree | undefined): number | null {
-  if (!node) return null;
-  if (typeof node.scalar === 'number') return node.scalar;
-  if (typeof node.scalar === 'string') {
-    const n = Number(node.scalar);
-    return Number.isFinite(n) ? n : null;
-  }
-  return null;
 }
 
 async function readScalarString(source: GameDataSource, path: string): Promise<string | null> {

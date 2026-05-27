@@ -1,4 +1,5 @@
 import type { GameDataSource } from '@/parser';
+import { pathToNumber } from './wzCoerce';
 import type { MobDropRecord, MobRecord } from '@/db';
 import { createLogger } from '@/lib/logger';
 import type { ProgressFn } from '@/lib/progress';
@@ -62,11 +63,11 @@ export async function extractMobs(
 
     const infoPath = `${img.fullPath}/info`;
     const [levelN, hpN, mpN, expN, bossN, elemN, nameNode] = await Promise.all([
-      scalarNumber(source, `${infoPath}/level`),
-      scalarNumber(source, `${infoPath}/maxHP`),
-      scalarNumber(source, `${infoPath}/maxMP`),
-      scalarNumber(source, `${infoPath}/exp`),
-      scalarNumber(source, `${infoPath}/boss`),
+      pathToNumber(source, `${infoPath}/level`),
+      pathToNumber(source, `${infoPath}/maxHP`),
+      pathToNumber(source, `${infoPath}/maxMP`),
+      pathToNumber(source, `${infoPath}/exp`),
+      pathToNumber(source, `${infoPath}/boss`),
       source.getNode(`${infoPath}/elemAttr`),
       source.getNode(`String.wz/Mob.img/${id}/name`),
     ]);
@@ -117,15 +118,4 @@ export async function extractMobs(
     skipped: skipped.length,
   });
   return { mobs, drops, skipped };
-}
-
-async function scalarNumber(source: GameDataSource, path: string): Promise<number | null> {
-  const node = await source.getNode(path);
-  if (!node) return null;
-  if (typeof node.scalar === 'number') return node.scalar;
-  if (typeof node.scalar === 'string') {
-    const n = Number(node.scalar);
-    return Number.isFinite(n) ? n : null;
-  }
-  return null;
 }
