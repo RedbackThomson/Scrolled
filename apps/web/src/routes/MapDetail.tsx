@@ -17,6 +17,7 @@ import { ListSortControl } from '@/components/common/ListSortControl';
 import { MapLink } from '@/components/entity-links';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { MapViewerModal, type MapViewerHighlight } from '@/components/MapViewer';
+import { parseViewerParam, serializeViewerParam } from '@/components/MapViewer/viewerState';
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
 import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient } from '@/db';
@@ -393,32 +394,4 @@ function RowLink({ label, id, name }: { label: string; id: number; name: string 
       </dd>
     </div>
   );
-}
-
-// URL serialisation for the `viewer` search param:
-//   absent     → modal closed
-//   "1"        → modal open, no highlight
-//   "npc:1234" → modal open, NPC 1234 highlighted (likewise mob:, portal:)
-// Splits on the first `:` so portal names containing colons round-trip.
-function parseViewerParam(value: string | null): {
-  open: boolean;
-  highlight: MapViewerHighlight | null;
-} {
-  if (!value) return { open: false, highlight: null };
-  if (value === '1') return { open: true, highlight: null };
-  const idx = value.indexOf(':');
-  if (idx < 0) return { open: true, highlight: null };
-  const kind = value.slice(0, idx);
-  const key = value.slice(idx + 1);
-  if (!key) return { open: true, highlight: null };
-  if (kind === 'npc' || kind === 'mob' || kind === 'portal') {
-    return { open: true, highlight: { kind, key } };
-  }
-  return { open: true, highlight: null };
-}
-
-function serializeViewerParam(open: boolean, highlight: MapViewerHighlight | null): string | null {
-  if (!open) return null;
-  if (!highlight) return '1';
-  return `${highlight.kind}:${highlight.key}`;
 }
