@@ -22,6 +22,7 @@ import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/hooks/useFeatures';
 import { useListSort } from '@/hooks/useListSort';
+import { useEntitySummaryNames } from '@/hooks/useEntitySummaries';
 
 // Sentinel value the WZ data uses to mean "no map" for return / target fields.
 const NO_TARGET = 999999999;
@@ -67,17 +68,7 @@ export default function MapDetail() {
     }
     return [...ids].sort((a, b) => a - b);
   }, [mapQ.data]);
-  const returnNamesQ = useQuery({
-    queryKey: ['db', 'map-summaries', returnIds],
-    queryFn: () => client.getEntitySummariesByIds('map', returnIds),
-    enabled: returnIds.length > 0,
-    staleTime: 5 * 60_000,
-  });
-  const returnNameById = useMemo(() => {
-    const m = new Map<number, string>();
-    for (const s of returnNamesQ.data ?? []) m.set(s.id, s.name);
-    return m;
-  }, [returnNamesQ.data]);
+  const returnNameById = useEntitySummaryNames('map', returnIds);
 
   const npcsSort = useListSort(npcsQ.data, [
     { id: 'name', label: 'Name', get: (n) => n.name },

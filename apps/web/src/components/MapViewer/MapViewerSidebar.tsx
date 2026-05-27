@@ -1,8 +1,7 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { DoorOpen, Repeat, Skull, Sparkles, Users, X, type LucideIcon } from 'lucide-react';
-import { getDbClient } from '@/db';
 import type { MapMobSpawnWithName, MapNpcWithName, MapPortalRecord } from '@/db';
+import { useEntitySummaryNames } from '@/hooks/useEntitySummaries';
 import { MapHoverCard, MobHoverCard, NpcHoverCard } from '@/components/entity-links';
 import { HoverPopover } from '@/components/common/HoverPopover';
 import { classifyPortal, type PortalGraph, type PortalLayer } from '@/domain/portal-types';
@@ -113,7 +112,6 @@ export function MapViewerSidebar({
   // Batch-fetch display names for every target map referenced by an external
   // portal. Cached per (sorted) id-set so re-renders don't re-issue. The
   // sidebar row uses the map name as its primary label.
-  const client = useMemo(() => getDbClient(), []);
   const targetMapIds = useMemo(() => {
     const ids = new Set<number>();
     for (const r of portalRows) {
@@ -124,17 +122,7 @@ export function MapViewerSidebar({
     }
     return [...ids].sort((a, b) => a - b);
   }, [portalRows, mapId]);
-  const mapNamesQ = useQuery({
-    queryKey: ['db', 'map-summaries', targetMapIds],
-    queryFn: () => client.getEntitySummariesByIds('map', targetMapIds),
-    enabled: targetMapIds.length > 0,
-    staleTime: 5 * 60_000,
-  });
-  const mapNameById = useMemo(() => {
-    const m = new Map<number, string>();
-    for (const s of mapNamesQ.data ?? []) m.set(s.id, s.name);
-    return m;
-  }, [mapNamesQ.data]);
+  const mapNameById = useEntitySummaryNames('map', targetMapIds);
 
   const q = search.trim().toLowerCase();
 
