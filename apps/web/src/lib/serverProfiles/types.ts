@@ -4,6 +4,21 @@
 // carries no executable code: rates are plain numbers and systems reference
 // calculators by id, so importing a profile can never run arbitrary logic.
 
+/**
+ * A signal that identifies a server from its game files. A fingerprint matches
+ * when the string value at `<file>/<path>` contains `contains` (case-
+ * insensitive). Profiles carry their own fingerprints so detection is
+ * declarative data, not code.
+ */
+export interface ServerFingerprint {
+  /** Logical WZ file name, e.g. "String.wz". */
+  file: string;
+  /** Property path within the file, e.g. "EULA.img/EULA/Text00". */
+  path: string;
+  /** Substring to look for in the property's string value (case-insensitive). */
+  contains: string;
+}
+
 export interface ServerProfile {
   id: string;
   name: string;
@@ -18,6 +33,8 @@ export interface ServerProfile {
     /** Id of the equip-stat-range calculator this profile uses. */
     equipStatCalculation?: string;
   };
+  /** Optional signals used to auto-detect this profile from loaded game files. */
+  fingerprints?: ServerFingerprint[];
 }
 
 /**

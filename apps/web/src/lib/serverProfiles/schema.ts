@@ -6,6 +6,12 @@ import type { ServerProfile } from './types';
 // is inert data: it can only declare rates and reference calculators by id,
 // never carry executable code. Unknown keys are stripped rather than rejected
 // so a profile authored against a newer build still loads on an older one.
+const fingerprintSchema = z.object({
+  file: z.string().min(1),
+  path: z.string().min(1),
+  contains: z.string().min(1),
+});
+
 export const serverProfileSchema: z.ZodType<ServerProfile, z.ZodTypeDef, unknown> = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
@@ -20,4 +26,5 @@ export const serverProfileSchema: z.ZodType<ServerProfile, z.ZodTypeDef, unknown
       equipStatCalculation: z.string().optional(),
     })
     .default({}),
+  fingerprints: z.array(fingerprintSchema).optional(),
 });

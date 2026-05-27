@@ -4,12 +4,14 @@ import {
   BUILTIN_PROFILES,
   calculateEquipRanges,
   DEFAULT_PROFILE_ID,
+  detectServerProfile,
   listEquipStatCalculatorIds,
   profileExpRate,
   registerEquipStatCalculator,
   resolveServerProfile,
   serverProfileSchema,
   type EquipBaseStats,
+  type FingerprintReader,
   type ServerProfile,
 } from './index';
 
@@ -212,6 +214,67 @@ describe('serverProfileSchema', () => {
     expect(r.success).toBe(true);
     if (r.success) expect('future' in r.data).toBe(false);
   });
+
+  it('accepts well-formed fingerprints and rejects malformed ones', () => {
+    const ok = serverProfileSchema.safeParse({
+      id: 'x',
+      name: 'X',
+      fingerprints: [{ file: 'String.wz', path: 'EULA.img/EULA/Text00', contains: 'Foo' }],
+    });
+    expect(ok.success).toBe(true);
+    // missing `contains`
+    expect(
+      serverProfileSchema.safeParse({
+        id: 'x',
+        name: 'X',
+        fingerprints: [{ file: 'String.wz', path: 'EULA.img/EULA/Text00' }],
+      }).success,
+    ).toBe(false);
+    // empty `file`
+    expect(
+      serverProfileSchema.safeParse({
+        id: 'x',
+        name: 'X',
+        fingerprints: [{ file: '', path: 'p', contains: 'c' }],
+      }).success,
+    ).toBe(false);
+  });
+});
+
+// --- detectServerProfile (against the real shipped fingerprints) -----------
+
+describe('detectServerProfile', () => {
+  const EULA = 'EULA.img/EULA/Text00';
+  // Returns `value` only at the real fingerprint source; null elsewhere.
+  const readerReturning =
+    (value: string | null): FingerprintReader =>
+    async (file, path) =>
+      file === 'String.wz' && path === EULA ? value : null;
+
+  it('matches the MapleRoyals fingerprint in the EULA text', async () => {
+    const p = await detectServerProfile(readerReturning('…as governed by the MapleRoyals team…'));
+    expect(p?.id).toBe('mapleroyals-compatible');
+  });
+
+  it('matches case-insensitively', async () => {
+    const p = await detectServerProfile(readerReturning('welcome to mapleroyals'));
+    expect(p?.id).toBe('mapleroyals-compatible');
+  });
+
+  it('returns null when no fingerprint string matches', async () => {
+    expect(await detectServerProfile(readerReturning('Some other server EULA'))).toBeNull();
+  });
+
+  it('returns null when the value is absent', async () => {
+    expect(await detectServerProfile(async () => null)).toBeNull();
+  });
+
+  it('treats a throwing read as no match rather than propagating', async () => {
+    const p = await detectServerProfile(async () => {
+      throw new Error('parse failed');
+    });
+    expect(p).toBeNull();
+  });
 });
 
 // --- resolveServerProfile (resolves against the real registry) -------------
@@ -242,6 +305,17 @@ describe('shipped profile directory integrity (CI guard)', () => {
 
   it('includes the MapleRoyals-compatible profile loaded from JSON', () => {
     expect(BUILTIN_PROFILES.some((p) => p.id === 'mapleroyals-compatible')).toBe(true);
+  });
+
+  it('ships the MapleRoyals EULA fingerprint', () => {
+    const mr = BUILTIN_PROFILES.find((p) => p.id === 'mapleroyals-compatible');
+    const hit = mr?.fingerprints?.some(
+      (f) =>
+        f.file === 'String.wz' &&
+        f.path === 'EULA.img/EULA/Text00' &&
+        /mapleroyals/i.test(f.contains),
+    );
+    expect(hit).toBe(true);
   });
 
   it('every shipped profile passes schema validation', () => {

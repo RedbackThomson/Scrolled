@@ -13,11 +13,13 @@ export type {
   EquipStatCalculator,
   EquipStatKey,
   EquipStatRange,
+  ServerFingerprint,
   ServerProfile,
 } from './types';
 export { EQUIP_STAT_KEYS } from './types';
 export { BUILTIN_PROFILES, DEFAULT_PROFILE_ID, resolveServerProfile } from './registry';
 export { serverProfileSchema } from './schema';
+export { detectServerProfile, type FingerprintReader } from './fingerprints';
 export {
   getEquipStatCalculator,
   listEquipStatCalculatorIds,

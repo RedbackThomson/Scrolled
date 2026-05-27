@@ -5,7 +5,12 @@ import { ArrowLeft, ArrowRight, Info, Loader2 } from 'lucide-react';
 import { detectVersion } from '@mushex/wz';
 import { Button } from '@/components/ui/button';
 import { WizardLayout, type WizardStep } from '@/components/wizard/WizardLayout';
-import { StepFiles, type DetectionState, type WizardFile } from '@/components/wizard/StepFiles';
+import {
+  StepFiles,
+  type DetectionState,
+  type ProfileDetectionState,
+  type WizardFile,
+} from '@/components/wizard/StepFiles';
 import { StepRun } from '@/components/wizard/StepRun';
 import { StepRestore, type RestoreState } from '@/components/wizard/StepRestore';
 import { buildPlan } from '@/components/wizard/plan';
@@ -14,7 +19,8 @@ import { createLogger, describeError } from '@/lib/logger';
 import { cn } from '@/lib/utils';
 import { useWizardMode } from '@/lib/useWizardMode';
 import { acceptForDesktop } from '@/lib/filePickerAccept';
-import type { WzMapleVersionName } from '@/parser';
+import { detectServerProfile } from '@/lib/serverProfiles';
+import { getParserClient, type WzMapleVersionName } from '@/parser';
 
 const log = createLogger('setup');
 
@@ -31,6 +37,26 @@ const STEPS: WizardStep[] = [
  * names alone.
  */
 const DETECT_CHUNK_BYTES = 8 * 1024 * 1024;
+
+/**
+ * Parse String.wz with the singleton parser and run fingerprint detection
+ * against it. Returns the detected profile id, or null when nothing matched.
+ * Uses the detected/forced client variant so the parser decrypts the strings
+ * correctly — a wrong variant yields garbage that won't match a fingerprint.
+ */
+async function detectProfileFromString(
+  stringWz: File,
+  version: WzMapleVersionName,
+): Promise<string | null> {
+  const parser = getParserClient();
+  await parser.init(version);
+  await parser.load([{ name: 'String.wz', source: stringWz }]);
+  const profile = await detectServerProfile(async (file, path) => {
+    const node = await parser.getNode(`${file}/${path}`);
+    return typeof node?.scalar === 'string' ? node.scalar : null;
+  });
+  return profile?.id ?? null;
+}
 
 export default function Setup() {
   const { mode, isReady, features, setRestore } = useWizardMode();
@@ -50,6 +76,18 @@ export default function Setup() {
   });
   const [versionOverride, setVersionOverride] = useState<WzMapleVersionName | null>(null);
   const [runComplete, setRunComplete] = useState(false);
+
+  // Server-profile auto-detection from String.wz fingerprints. Runs after the
+  // client variant settles (the parser needs it to decrypt strings correctly),
+  // and re-runs if that variant changes. Advanced override takes precedence.
+  const [profileDetection, setProfileDetection] = useState<ProfileDetectionState>({
+    status: 'idle',
+    profileId: null,
+    sourceVersion: null,
+    error: null,
+  });
+  const [profileOverride, setProfileOverride] = useState<string | null>(null);
+  const profileDetectionInflightRef = useRef(false);
 
   /** SQLite file the user dropped, kept across the mode switch. */
   const [restoreFile, setRestoreFile] = useState<File | null>(null);
@@ -142,6 +180,61 @@ export default function Setup() {
       }
     })();
   }, [files, detection.status, detection.sourceFile]);
+
+  // Profile detection. Mirrors the version-detection state machine: a settled
+  // result is kept while String.wz is still present and the variant it ran
+  // under is unchanged; otherwise it drops back to idle and re-detects.
+  useEffect(() => {
+    const stringFile = files.find((f) => f.file.name === 'String.wz' && f.hashPhase === 'done');
+    const versionSettled = detection.status === 'done' || detection.status === 'failed';
+
+    if (profileDetection.status === 'done' || profileDetection.status === 'failed') {
+      const stillValid = !!stringFile && profileDetection.sourceVersion === effectiveVersion;
+      if (stillValid) return;
+      setProfileDetection({ status: 'idle', profileId: null, sourceVersion: null, error: null });
+      return;
+    }
+    if (profileDetectionInflightRef.current) return;
+    if (profileDetection.status === 'running') return;
+    if (!stringFile || !versionSettled) return;
+
+    profileDetectionInflightRef.current = true;
+    const usedVersion = effectiveVersion;
+    setProfileDetection({
+      status: 'running',
+      profileId: null,
+      sourceVersion: usedVersion,
+      error: null,
+    });
+
+    (async () => {
+      try {
+        const profileId = await detectProfileFromString(stringFile.file, usedVersion);
+        profileDetectionInflightRef.current = false;
+        setProfileDetection({
+          status: 'done',
+          profileId,
+          sourceVersion: usedVersion,
+          error: null,
+        });
+      } catch (e) {
+        profileDetectionInflightRef.current = false;
+        log.warn('server profile detection threw', describeError(e));
+        setProfileDetection({
+          status: 'failed',
+          profileId: null,
+          sourceVersion: usedVersion,
+          error: (e as Error).message ?? 'detection failed',
+        });
+      }
+    })();
+  }, [
+    files,
+    detection.status,
+    effectiveVersion,
+    profileDetection.status,
+    profileDetection.sourceVersion,
+  ]);
 
   const onRestoreFile = useCallback(
     (file: File, ignoredOthers: number) => {
@@ -304,6 +397,9 @@ export default function Setup() {
           detection={detection}
           versionOverride={versionOverride}
           onVersionOverrideChange={setVersionOverride}
+          profileDetection={profileDetection}
+          profileOverride={profileOverride}
+          onProfileOverrideChange={setProfileOverride}
           mode={stepMode}
           features={features}
           onRestoreFile={onRestoreFile}
@@ -317,7 +413,18 @@ export default function Setup() {
         files={files}
         forceAll={forceAll}
         mode={stepMode}
-        onComplete={() => setRunComplete(true)}
+        onComplete={() => {
+          setRunComplete(true);
+          // Persist the chosen profile only when one was explicitly picked or
+          // detected. Leaving it null preserves any existing selection, so a
+          // re-run without String.wz doesn't reset the user back to Classic.
+          const profileId = profileOverride ?? profileDetection.profileId;
+          if (profileId) {
+            db.setServerProfile(profileId)
+              .then(() => queryClient.invalidateQueries({ queryKey: ['db', 'server-profile'] }))
+              .catch((e) => log.warn('failed to persist server profile', describeError(e)));
+          }
+        }}
       />
     );
 

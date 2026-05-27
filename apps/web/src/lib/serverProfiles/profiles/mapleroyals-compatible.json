@@ -1,7 +1,10 @@
 {
   "id": "mapleroyals-compatible",
   "name": "MapleRoyals-compatible",
-  "description": "Classic rates plus a godly equip-stat tier. Community-built to match a popular private server — not official or endorsed, and subject to change.",
-  "rates": { "exp": 1 },
-  "systems": { "equipStatCalculation": "mapleroyals-v1" }
+  "description": "Community-built to match the popular private server — not official or endorsed, and subject to change.",
+  "rates": { "exp": 3.2 },
+  "systems": { "equipStatCalculation": "mapleroyals-v1" },
+  "fingerprints": [
+    { "file": "String.wz", "path": "EULA.img/EULA/Text00", "contains": "MapleRoyals" }
+  ]
 }
