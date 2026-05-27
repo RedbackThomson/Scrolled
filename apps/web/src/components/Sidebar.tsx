@@ -349,9 +349,13 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
 }
 
 // `VITE_APP_VERSION` is injected by the GitHub Pages deploy workflow on tag
-// pushes (`v1.2.3`). Untagged builds (local dev, main-branch deploys) fall
-// back to the pre-release marker.
-const APP_VERSION_LABEL = (import.meta.env.VITE_APP_VERSION as string | undefined) || 'Pre-alpha';
+// pushes (`v1.2.3`). Untagged builds fall back to the pre-release marker, with
+// the short commit hash (`VITE_APP_COMMIT`) appended when the deploy workflow
+// stamps it. Local dev has neither and shows the bare marker.
+const APP_VERSION_TAG = import.meta.env.VITE_APP_VERSION as string | undefined;
+const APP_VERSION_COMMIT = import.meta.env.VITE_APP_COMMIT as string | undefined;
+const APP_VERSION_LABEL =
+  APP_VERSION_TAG || (APP_VERSION_COMMIT ? `Pre-alpha · ${APP_VERSION_COMMIT}` : 'Pre-alpha');
 
 type DbHealth = 'pending' | 'healthy' | 'warning' | 'error' | 'reinitialize' | 'update';
 

@@ -36,11 +36,17 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Compute short commit hash
+        run: echo "VITE_APP_COMMIT=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+
       - name: Build
         env:
           # Only tag pushes get a stamped version; main-branch builds keep the
           # "Pre-alpha" fallback the sidebar uses by default.
           VITE_APP_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+          # Short commit hash, appended to the "Pre-alpha" label on untagged
+          # builds so a deployed page identifies the exact build it came from.
+          VITE_APP_COMMIT: ${{ env.VITE_APP_COMMIT }}
           # Pageview analytics activate only when all three are non-empty
           # AND the deployed hostname matches the allowlist at runtime. Forks
           # don't inherit repo variables on their own Pages deploys, so they
