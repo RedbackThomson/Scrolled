@@ -22,13 +22,33 @@ export function listEquipStatCalculatorIds(): string[] {
 }
 
 /**
- * Classic dropped-equip stat variance is roughly ±10% of the base value,
- * with a floor of 1 so small stats still wobble. This is an approximation:
- * the WZ data carries only the base value, and the exact roll tables are
- * server-side and unavailable to us.
+ * Per-stat hard cap on the variance modifier. Defenses and HP/MP cap at +10;
+ * combat and primary stats cap at +5.
  */
-function vanillaVariance(base: number): number {
-  return Math.max(1, Math.round(Math.abs(base) * 0.1));
+const VARIANCE_CAP: Record<EquipStatKey, number> = {
+  attack: 5,
+  magicAttack: 5,
+  defense: 10,
+  magicDefense: 10,
+  accuracy: 5,
+  avoidability: 5,
+  incStr: 5,
+  incDex: 5,
+  incInt: 5,
+  incLuk: 5,
+  incHp: 10,
+  incMp: 10,
+};
+
+/**
+ * Dropped-equip stat variance: the stat rolls within base ± M, where M is 10%
+ * of the base value rounded up, or the stat's hard cap, whichever is smaller.
+ * The WZ data carries only the base value, so this models the range; the exact
+ * per-roll outcome is server-side and unavailable to us.
+ */
+function variance(stat: EquipStatKey, base: number): number {
+  const tenPercent = Math.ceil(Math.abs(base) * 0.1);
+  return Math.min(tenPercent, VARIANCE_CAP[stat]);
 }
 
 /** A server "godly" roll can push a stat this far above its normal maximum. */
@@ -36,18 +56,18 @@ const GODLY_BONUS = 5;
 
 registerEquipStatCalculator({
   id: 'vanilla-v83',
-  range(_stat: EquipStatKey, base: number): EquipStatRange | null {
+  range(stat: EquipStatKey, base: number): EquipStatRange | null {
     if (base === 0) return null;
-    const v = vanillaVariance(base);
+    const v = variance(stat, base);
     return { base, min: base - v, max: base + v };
   },
 });
 
 registerEquipStatCalculator({
   id: 'mapleroyals-v1',
-  range(_stat: EquipStatKey, base: number): EquipStatRange | null {
+  range(stat: EquipStatKey, base: number): EquipStatRange | null {
     if (base === 0) return null;
-    const v = vanillaVariance(base);
+    const v = variance(stat, base);
     return { base, min: base - v, max: base + v, godlyMax: base + v + GODLY_BONUS };
   },
 });

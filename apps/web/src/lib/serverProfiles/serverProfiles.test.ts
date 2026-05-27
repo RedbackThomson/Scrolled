@@ -153,23 +153,29 @@ describe('calculateEquipRanges — built-in calculators', () => {
   const vanilla = mockProfile({ systems: { equipStatCalculation: 'vanilla-v83' } });
   const royals = mockProfile({ systems: { equipStatCalculation: 'mapleroyals-v1' } });
 
-  it('vanilla: symmetric ±10% range with a floor of 1, no godly tier', () => {
+  it('vanilla: base ± 10% rounded up, capped per stat, no godly tier', () => {
     expect(calculateEquipRanges(vanilla, stats({ attack: 15 })).attack).toEqual({
       base: 15,
       min: 13,
       max: 17,
     });
-    // 10% of 3 rounds to 0, so the variance floor of 1 kicks in.
+    // 10% of 3 rounds up to 1.
     expect(calculateEquipRanges(vanilla, stats({ defense: 3 })).defense).toEqual({
       base: 3,
       min: 2,
       max: 4,
     });
-    // 10% of 200 = 20.
+    // 10% of 200 = 20, but defense caps the modifier at +10.
     expect(calculateEquipRanges(vanilla, stats({ defense: 200 })).defense).toEqual({
       base: 200,
-      min: 180,
-      max: 220,
+      min: 190,
+      max: 210,
+    });
+    // Attack caps the modifier at +5: 10% of 100 = 10 → capped to 5.
+    expect(calculateEquipRanges(vanilla, stats({ attack: 100 })).attack).toEqual({
+      base: 100,
+      min: 95,
+      max: 105,
     });
   });
 
@@ -179,6 +185,13 @@ describe('calculateEquipRanges — built-in calculators', () => {
       min: 13,
       max: 17,
       godlyMax: 22,
+    });
+    // Zakum Helmet: defense 150, capped at +10 → 140 ~ 160, godly 165.
+    expect(calculateEquipRanges(royals, stats({ defense: 150 })).defense).toEqual({
+      base: 150,
+      min: 140,
+      max: 160,
+      godlyMax: 165,
     });
   });
 
