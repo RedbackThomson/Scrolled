@@ -47,4 +47,4 @@ Development setup, project layout, scripts, and debugging guidance live in [DEVE
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+Apache-2.0 — see [LICENSE](LICENSE).

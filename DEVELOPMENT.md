@@ -2,6 +2,15 @@
 
 Guidance for working on Scrolled itself. For a user-facing overview, see [README.md](README.md). For the rules every change must follow, see [CLAUDE.md](CLAUDE.md).
 
+## Core tenets
+
+Four principles shape every decision here. They're philosophical; [CLAUDE.md](CLAUDE.md) turns them into the binding rules that enforce them. When a choice isn't covered by a rule, let these guide it.
+
+- **Open source first.** Open, permissively licensed, and free to fork from day one. It's a community tool, not a proprietary product — nothing essential should live behind private data, assets, or credentials.
+- **Self-hostable.** Anyone can run their own instance with no dependency on us — no privileged central server the app needs, no account, no paid service. A self-hoster can do everything the canonical deployment can.
+- **Nothing proprietary.** Ship our own code and nothing else — no game data, assets, or third-party content, and no trademarked names or branding in what users see. Users bring their own content and own the rights to it.
+- **Support offline mode.** The app runs on the user's device and their data stays with them. It keeps working with no network connection; connectivity may enhance the experience but is never required.
+
 ## Requirements
 
 - Node.js 20+ and [pnpm](https://pnpm.io/) 9+

@@ -6,6 +6,15 @@ When you add an entity type, a route, or a user-facing feature, follow `docs/com
 
 **Any time you write or touch user-visible copy** (UI strings, page descriptions, empty states, confirmations, error messages, button labels), follow `docs/writing_conventions.md`. That doc is the source of truth for tone, vocabulary, and — most importantly — the absolute prohibition on referencing trademarked or copyrighted properties (MapleStory, Nexon, MapleRoyals, MapleLegends, etc.) in shipped strings.
 
+## Core tenets
+
+Four principles motivate the hard and architectural rules below. They're philosophical, not procedural — the tie-breakers when no specific rule covers a decision. If a change would weaken one of these, that's a signal to stop and reconsider.
+
+1. **Open source first.** The project is open from day one — permissively licensed, developed in the open, and free to fork. It's a community tool, not a proprietary product. Nothing essential may live behind private data, assets, or credentials; what's published is the whole thing.
+2. **Self-hostable.** Anyone can run their own instance, on their own infrastructure, with no dependency on us. There is no privileged central server the app needs to function, no account to create, no service to pay for. Whatever the canonical deployment can do, a self-hoster can do too.
+3. **Nothing proprietary.** We ship our own code and nothing else — no game data, assets, or third-party content in the project, and no trademarked names or branding in what users see. The app is a generic tool that reads a file format; the user brings their own content and owns the rights to it.
+4. **Support offline mode.** The app belongs to the user and runs on their device. Their data stays with them — it is never required to leave the machine — and the app keeps working without a network connection. Connectivity may enhance the experience, but it is never a precondition for using it.
+
 ## Hard rules
 
 1. **Never commit proprietary game data.** No `.wz`, no extracted `.img`, no PNG sprites or icons, no JSON snapshots derived from MapleStory/MapleRoyals files, no pre-generated databases. This applies to test fixtures and CI too. Tests use synthetic raw-tree fixtures only.

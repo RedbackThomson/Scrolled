@@ -47,6 +47,10 @@ jobs:
           # Short commit hash, appended to the "Pre-alpha" label on untagged
           # builds so a deployed page identifies the exact build it came from.
           VITE_APP_COMMIT: ${{ env.VITE_APP_COMMIT }}
+          # Canonical origin for absolute SEO/social URLs (og:image, canonical).
+          # Set the SITE_URL repo variable to e.g. https://scrolled.dev. Forks
+          # that don't set it ship root-relative URLs (no rich embeds).
+          VITE_SITE_URL: ${{ vars.SITE_URL }}
           # Pageview analytics activate only when all three are non-empty
           # AND the deployed hostname matches the allowlist at runtime. Forks
           # don't inherit repo variables on their own Pages deploys, so they

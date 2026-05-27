@@ -9,9 +9,21 @@ import path from 'node:path';
 // the deploy workflow; local dev/builds default to `/`.
 const basePath = process.env.BASE_PATH ?? '/';
 
+// Absolute origin (optionally with a sub-path) of the canonical deployment,
+// e.g. `https://scrolled.dev`. Drives the absolute URLs that social/SEO
+// crawlers require (og:image, canonical). Self-hosters and forks that don't
+// set it ship root-relative URLs — fine for the app, just no rich embeds.
+const siteUrl = (process.env.VITE_SITE_URL ?? '').replace(/\/+$/, '');
+
 export default defineConfig({
   base: basePath,
   plugins: [
+    {
+      name: 'inject-site-url',
+      transformIndexHtml(html) {
+        return html.replaceAll('__SITE_URL__', siteUrl);
+      },
+    },
     react(),
     VitePWA({
       registerType: 'prompt',
