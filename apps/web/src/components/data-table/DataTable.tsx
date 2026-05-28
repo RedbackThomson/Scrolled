@@ -11,7 +11,7 @@ import {
   type SortingState,
   type VisibilityState,
 } from '@tanstack/react-table';
-import { ChevronDown, ChevronUp, ChevronsUpDown, Loader2, Search } from 'lucide-react';
+import { ChevronDown, ChevronUp, ChevronsUpDown, Loader2, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -247,8 +247,25 @@ export function DataTable<TData>({
                 value={searchValue ?? ''}
                 onChange={(e) => onSearchChange(e.target.value)}
                 placeholder={searchPlaceholder}
-                className="border-input bg-background focus-visible:ring-ring h-9 w-full rounded-md border pl-9 pr-3 text-sm focus-visible:outline-none focus-visible:ring-2"
+                // Right padding makes room for the clear button so a long
+                // query doesn't slide under it. `type="search"` ships its
+                // own native clear in some browsers, but it's inconsistent
+                // and uses the OS chrome rather than our token palette —
+                // override it with `appearance-none` is overkill; the
+                // explicit button below is what the user sees.
+                className="border-input bg-background focus-visible:ring-ring h-9 w-full rounded-md border pl-9 pr-8 text-sm focus-visible:outline-none focus-visible:ring-2"
               />
+              {(searchValue ?? '').length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => onSearchChange('')}
+                  aria-label="Clear search"
+                  title="Clear search"
+                  className="text-muted-foreground hover:bg-muted hover:text-foreground absolute right-1.5 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md transition-colors"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
           )}
           {toolbarExtra}
