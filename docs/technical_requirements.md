@@ -80,7 +80,11 @@ Schema and join-table inventory follow §8.4 of the MVP doc.
 
 - **Recharts** (v3) for the home-page widgets that summarize the user's loaded library — mob level histogram and equip job breakdown. Picked over hand-rolled SVG because it ships theme-aware tooltips, responsive sizing, and accessible labels for free, and the cost (~250 KB minified, tree-shakeable) is acceptable for a single page. Restricted to `components/home/`; do not reach for it elsewhere without a similarly clear need — the rest of the UI stays a plain Tailwind + shadcn stack.
 
-### 2.8 Other
+### 2.8 Drag and drop
+
+- **`@dnd-kit`** (`core`, `sortable`, `utilities`) for the home-page edit mode that lets users reorder dashboard sections. Picked over `react-beautiful-dnd` (unmaintained) and HTML5 native DnD (poor touch + a11y). Keyboard-accessible and touch-friendly out of the box. Restricted to `components/home/` for the same reason as recharts; any other reorder UI in the app should re-evaluate before pulling it in.
+
+### 2.9 Other
 
 - Asset decoding pipeline: `URL.createObjectURL` for sprites, LRU memoization for decoded thumbnails, IndexedDB cache for repeat sessions, explicit "clear cache" control.
 - **Pageview analytics — narrow carve-out from local-first.** The canonical hosted deployment loads an external pageview-analytics beacon (currently Cloudflare Web Analytics). Every other deployment, including local dev and forks, ships with no analytics. Constraints:

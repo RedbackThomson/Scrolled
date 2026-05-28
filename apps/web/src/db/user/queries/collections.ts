@@ -21,6 +21,7 @@ import type {
 } from '../types';
 import { rowToCollection, rowToMember } from './rowMappers';
 import { listPinnedSearches } from './pinnedSearches';
+import { listUiPrefs, setUiPref } from './uiPrefs';
 
 export function listCollections(db: Sqlite): CollectionRecord[] {
   // Pinned collections come first in the order chosen on the home page; the
@@ -347,6 +348,7 @@ export function exportAllJson(db: Sqlite): CollectionsExportJson {
     if (b) bundles.push(b);
   }
   const pinned = listPinnedSearches(db);
+  const prefs = listUiPrefs(db);
   return {
     version: COLLECTIONS_JSON_VERSION,
     kind: 'all',
@@ -356,6 +358,7 @@ export function exportAllJson(db: Sqlite): CollectionsExportJson {
       entity: p.entity,
       params: p.params,
     })),
+    uiPrefs: prefs.map((p) => ({ key: p.key, value: p.value })),
   };
 }
 
@@ -378,6 +381,7 @@ export function importJson(
     importedNames: [],
     importedPinnedSearches: 0,
     skippedPinnedSearches: 0,
+    importedUiPrefs: 0,
   };
 
   db.transaction(() => {
@@ -429,6 +433,16 @@ export function importJson(
           [pinned.name, pinned.entity, JSON.stringify(pinned.params), now, now],
         );
         report.importedPinnedSearches++;
+      }
+    }
+
+    if (parsed.kind === 'all' && parsed.uiPrefs) {
+      // UI prefs overwrite on key collision — the import file represents
+      // the user's most recently-snapshotted desktop, and a partial
+      // backup is more useful than refusing to apply settings.
+      for (const pref of parsed.uiPrefs) {
+        setUiPref(db, pref.key, pref.value);
+        report.importedUiPrefs++;
       }
     }
   });

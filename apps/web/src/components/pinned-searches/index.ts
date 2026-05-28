@@ -1,0 +1,1 @@
+export { PinnedSearchesMenu } from './PinnedSearchesMenu';

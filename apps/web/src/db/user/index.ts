@@ -15,6 +15,7 @@ export type {
   EntityRef,
   MembershipBadge,
   PinnedSearchRecord,
+  UiPrefRecord,
   UpdateCollectionPatch,
   UpdateMemberPatch,
   UpdatePinnedSearchPatch,

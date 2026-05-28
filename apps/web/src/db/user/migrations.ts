@@ -75,4 +75,21 @@ export const USER_MIGRATIONS: readonly Migration[] = [
         ON collections (pinned, pinned_position);
     `,
   },
+  {
+    version: 4,
+    name: 'ui prefs v1',
+    // Generic key-value table for UI chrome preferences that belong to
+    // the user (so they survive WZ re-imports and ride backup/restore).
+    // First consumer is the home-page layout (`home.layout`); other
+    // future prefs go here too rather than spawning one table each.
+    // Values are JSON-encoded strings — keeps the schema flat and lets
+    // each consumer own its own validation via zod.
+    sql: `
+      CREATE TABLE ui_prefs (
+        key        TEXT    PRIMARY KEY,
+        value      TEXT    NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+    `,
+  },
 ];

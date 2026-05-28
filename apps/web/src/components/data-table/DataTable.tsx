@@ -60,8 +60,14 @@ export interface DataTableProps<TData> {
   searchValue?: string;
   onSearchChange?: (next: string) => void;
   searchPlaceholder?: string;
-  /** Extra controls rendered in the toolbar between search and Columns. */
+  /** Extra controls rendered on the left side of the toolbar, immediately
+   *  after the search input. Use for selection-contextual controls (e.g.
+   *  bulk add). */
   toolbarExtra?: ReactNode;
+  /** Extra controls rendered on the right side of the toolbar, before
+   *  the Columns visibility button. Use for page-level global controls
+   *  (e.g. saved searches). */
+  toolbarRightExtra?: ReactNode;
   /** Render a sticky checkbox column for bulk selection. Selection is
    *  scoped to the current page — paging / sorting / resizing clears it
    *  via the effect below. */
@@ -95,6 +101,7 @@ export function DataTable<TData>({
   onSearchChange,
   searchPlaceholder = 'Search',
   toolbarExtra,
+  toolbarRightExtra,
   selectable = false,
   selectedIds,
   onSelectionChange,
@@ -246,7 +253,10 @@ export function DataTable<TData>({
           )}
           {toolbarExtra}
         </div>
-        <ColumnVisibility table={table} />
+        <div className="flex flex-wrap items-center gap-2">
+          {toolbarRightExtra}
+          <ColumnVisibility table={table} />
+        </div>
       </div>
 
       <Table>

@@ -19,6 +19,7 @@ import type {
   EntityRef,
   MembershipBadge,
   PinnedSearchRecord,
+  UiPrefRecord,
   UpdateCollectionPatch,
   UpdateMemberPatch,
   UpdatePinnedSearchPatch,
@@ -27,6 +28,7 @@ import type {
 } from '../types';
 import * as collections from './collections';
 import * as pinned from './pinnedSearches';
+import * as uiPrefs from './uiPrefs';
 
 const USER_OPFS_FILENAME = '/user.sqlite3';
 const USER_POOL_NAME = 'scrolled-user-db-pool';
@@ -165,6 +167,24 @@ export class UserDbApi implements UserDatabase {
 
   async deletePinnedSearch(id: number): Promise<void> {
     pinned.deletePinnedSearch(this.db, id);
+  }
+
+  // -- ui prefs ---------------------------------------------------------------
+
+  async getUiPref(key: string): Promise<UiPrefRecord | null> {
+    return uiPrefs.getUiPref(this.db, key);
+  }
+
+  async setUiPref(key: string, value: string): Promise<UiPrefRecord> {
+    return uiPrefs.setUiPref(this.db, key, value);
+  }
+
+  async listUiPrefs(): Promise<UiPrefRecord[]> {
+    return uiPrefs.listUiPrefs(this.db);
+  }
+
+  async deleteUiPref(key: string): Promise<void> {
+    uiPrefs.deleteUiPref(this.db, key);
   }
 
   // -- raw bytes --------------------------------------------------------------

@@ -5,10 +5,12 @@ import type {
   AddMemberOptions,
   CollectionEntityType,
   CreateCollectionInput,
+  CreatePinnedSearchInput,
   EntityRef,
   ImportConflictMode,
   UpdateCollectionPatch,
   UpdateMemberPatch,
+  UpdatePinnedSearchPatch,
 } from '@/db/user';
 import { createLogger, describeError } from '@/lib/logger';
 
@@ -122,6 +124,42 @@ class WorkerUserDb {
   async importBytes(bytes: Uint8Array) {
     await this.ensureOpen();
     return this.api.importBytes(bytes);
+  }
+  async listPinnedSearches() {
+    await this.ensureOpen();
+    return this.api.listPinnedSearches();
+  }
+  async getPinnedSearch(id: number) {
+    await this.ensureOpen();
+    return this.api.getPinnedSearch(id);
+  }
+  async createPinnedSearch(input: CreatePinnedSearchInput) {
+    await this.ensureOpen();
+    return this.api.createPinnedSearch(input);
+  }
+  async updatePinnedSearch(id: number, patch: UpdatePinnedSearchPatch) {
+    await this.ensureOpen();
+    return this.api.updatePinnedSearch(id, patch);
+  }
+  async deletePinnedSearch(id: number) {
+    await this.ensureOpen();
+    return this.api.deletePinnedSearch(id);
+  }
+  async getUiPref(key: string) {
+    await this.ensureOpen();
+    return this.api.getUiPref(key);
+  }
+  async setUiPref(key: string, value: string) {
+    await this.ensureOpen();
+    return this.api.setUiPref(key, value);
+  }
+  async listUiPrefs() {
+    await this.ensureOpen();
+    return this.api.listUiPrefs();
+  }
+  async deleteUiPref(key: string) {
+    await this.ensureOpen();
+    return this.api.deleteUiPref(key);
   }
 }
 

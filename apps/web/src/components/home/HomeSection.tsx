@@ -5,8 +5,29 @@
 // each other's Tailwind classes. Widgets render `null` when they have
 // nothing to show; this component shouldn't be wrapped around an empty
 // state — let the parent skip the section entirely.
+//
+// In edit mode the title + action are suppressed because the parent
+// `SortableSection` renders its own header (drag handle, hide button,
+// and the section label). Widgets opt in transparently by reading
+// `HomeSectionContext` — they don't have to know about edit mode.
 
-import type { ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
+
+interface HomeSectionCtx {
+  editing: boolean;
+}
+
+const HomeSectionContext = createContext<HomeSectionCtx>({ editing: false });
+
+export function HomeSectionProvider({
+  editing,
+  children,
+}: {
+  editing: boolean;
+  children: ReactNode;
+}) {
+  return <HomeSectionContext.Provider value={{ editing }}>{children}</HomeSectionContext.Provider>;
+}
 
 export function HomeSection({
   title,
@@ -19,12 +40,17 @@ export function HomeSection({
   children: ReactNode;
   className?: string;
 }) {
+  const { editing } = useContext(HomeSectionContext);
   return (
     <section className={className}>
-      <header className="mb-3 flex items-baseline justify-between gap-3">
-        <h2 className="text-foreground text-sm font-semibold uppercase tracking-wide">{title}</h2>
-        {action}
-      </header>
+      {!editing && (
+        <header className="mb-3 flex items-baseline justify-between gap-3">
+          <h2 className="text-foreground text-sm font-semibold uppercase tracking-wide">
+            {title}
+          </h2>
+          {action}
+        </header>
+      )}
       {children}
     </section>
   );

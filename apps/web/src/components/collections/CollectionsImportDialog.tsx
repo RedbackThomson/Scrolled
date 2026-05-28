@@ -226,6 +226,12 @@ function ReportPanel({ report }: { report: ImportReport }) {
         <ReportRow label="Skipped" value={report.skippedCollections} />
         <ReportRow label="Members added" value={report.addedMembers} />
         <ReportRow label="Members already present" value={report.skippedMembers} />
+        {report.importedPinnedSearches > 0 && (
+          <ReportRow label="Saved searches" value={report.importedPinnedSearches} />
+        )}
+        {report.importedUiPrefs > 0 && (
+          <ReportRow label="Settings restored" value={report.importedUiPrefs} />
+        )}
       </dl>
       {report.importedNames.length > 0 && (
         <div className="border-border bg-muted/40 rounded-md border p-2 text-xs">

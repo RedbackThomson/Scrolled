@@ -127,6 +127,14 @@ export interface UpdatePinnedSearchPatch {
   params?: Record<string, string>;
 }
 
+/** A row in the `ui_prefs` key-value table. Value is an opaque JSON
+ *  string; the consumer parses + validates it with its own schema. */
+export interface UiPrefRecord {
+  key: string;
+  value: string;
+  updatedAt: number;
+}
+
 export interface UserDbStatus {
   schemaVersion: number;
   backend: 'opfs' | 'memory';
@@ -195,6 +203,15 @@ export interface UserDatabase {
   createPinnedSearch(input: CreatePinnedSearchInput): Promise<PinnedSearchRecord>;
   updatePinnedSearch(id: number, patch: UpdatePinnedSearchPatch): Promise<PinnedSearchRecord>;
   deletePinnedSearch(id: number): Promise<void>;
+
+  /** UI preference read; null when the key has never been written. */
+  getUiPref(key: string): Promise<UiPrefRecord | null>;
+  /** Insert or update a UI preference. Value is the consumer's already-
+   *  serialized JSON string. */
+  setUiPref(key: string, value: string): Promise<UiPrefRecord>;
+  /** All rows — used by the JSON export. */
+  listUiPrefs(): Promise<UiPrefRecord[]>;
+  deleteUiPref(key: string): Promise<void>;
 
   /** Serialize the live user.sqlite3 to a Uint8Array. */
   exportBytes(): Promise<Uint8Array>;
