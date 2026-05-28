@@ -10,6 +10,8 @@ import {
 import { CommandGroup, CommandItem as CommandItemPrimitive } from '@/components/ui/command';
 import { useCommandPalette } from '@/stores/useCommandPalette';
 import { useTheme, type ThemeMode } from '@/stores/theme';
+import { useAccent } from '@/stores/accent';
+import { ACCENTS } from '@/lib/accents';
 import { useSidebarLayout } from '@/stores/sidebarState';
 
 function fuzzy(q: string, hay: string): boolean {
@@ -76,11 +78,14 @@ export function TogglesProvider() {
   const query = useCommandPalette((s) => s.query);
   const current = useTheme((s) => s.mode);
   const setMode = useTheme((s) => s.setMode);
+  const currentAccent = useAccent((s) => s.accent);
+  const setAccent = useAccent((s) => s.setAccent);
   const collapsed = useSidebarLayout((s) => s.collapsed);
   const setCollapsed = useSidebarLayout((s) => s.setCollapsed);
   const toggleCollapsed = useSidebarLayout((s) => s.toggleCollapsed);
 
   const themeItems = THEME_CHOICES.filter((c) => fuzzy(query, c.label));
+  const accentItems = ACCENTS.filter((a) => fuzzy(query, `Accent: ${a.label}`));
   // Sidebar commands are intentionally hidden on an empty query — they're
   // utilities most users won't reach for, and we'd rather not crowd the
   // cold-open palette. They surface as soon as the user types something
@@ -92,7 +97,8 @@ export function TogglesProvider() {
       )
     : [];
 
-  if (themeItems.length === 0 && sidebarItems.length === 0) return null;
+  if (themeItems.length === 0 && accentItems.length === 0 && sidebarItems.length === 0)
+    return null;
 
   return (
     <CommandGroup heading="Toggles">
@@ -116,6 +122,26 @@ export function TogglesProvider() {
           </CommandItemPrimitive>
         );
       })}
+      {accentItems.map((a) => (
+        <CommandItemPrimitive
+          key={`accent-${a.name}`}
+          value={`accent-${a.name}`}
+          keywords={['accent', 'color', a.label, a.name]}
+          onSelect={() => {
+            setAccent(a.name);
+            setOpen(false);
+          }}
+        >
+          <span
+            className="h-4 w-4 shrink-0 rounded-full"
+            style={{ backgroundColor: a.swatch }}
+          />
+          <span className="min-w-0 flex-1 truncate">Accent: {a.label}</span>
+          {currentAccent === a.name && (
+            <span className="text-muted-foreground shrink-0 text-xs">Active</span>
+          )}
+        </CommandItemPrimitive>
+      ))}
       {sidebarItems.map((c) => {
         const Icon = c.icon;
         return (

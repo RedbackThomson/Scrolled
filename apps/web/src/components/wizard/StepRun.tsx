@@ -13,6 +13,7 @@ import {
   Map as MapIcon,
   type LucideIcon,
 } from 'lucide-react';
+import { AccentPicker } from '@/components/common/AccentPicker';
 import { ProgressBar } from '@/components/common/ProgressBar';
 import type { WzMapleVersionName } from '@/parser';
 import {
@@ -164,6 +165,16 @@ export function StepRun({ version, files, onComplete, mode }: Props) {
             {stats.skipped.toLocaleString()} entries were skipped because they had no name.
           </p>
         )}
+
+        <div className="border-border flex flex-wrap items-center justify-between gap-3 rounded-md border p-4">
+          <div>
+            <div className="text-sm font-medium">Accent color</div>
+            <p className="text-muted-foreground mt-0.5 text-xs">
+              Pick a highlight color. You can change it later in Settings.
+            </p>
+          </div>
+          <AccentPicker />
+        </div>
 
         {failedExtractors.length > 0 && (
           <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-4 text-amber-900 dark:text-amber-100">

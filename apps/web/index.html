@@ -38,7 +38,7 @@
     />
     <meta name="twitter:image" content="__SITE_URL__/icon-512.png" />
     <script>
-      // Apply persisted theme before paint to avoid flash.
+      // Apply persisted theme + accent before paint to avoid flash.
       (function () {
         try {
           var stored = localStorage.getItem('scrolled.theme');
@@ -46,6 +46,8 @@
             stored === 'dark' ||
             (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches);
           if (dark) document.documentElement.classList.add('dark');
+          var accent = localStorage.getItem('scrolled.accent');
+          document.documentElement.setAttribute('data-accent', accent || 'green');
         } catch {}
       })();
     </script>

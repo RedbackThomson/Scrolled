@@ -21,6 +21,7 @@ import {
   Upload,
   XCircle,
 } from 'lucide-react';
+import { AccentPicker } from '@/components/common/AccentPicker';
 import { Button } from '@/components/ui/button';
 import { getDbClient, type DatasetRecord } from '@/db';
 import { useCollectionsList } from '@/hooks/useCollections';
@@ -212,7 +213,7 @@ export default function Settings() {
           {theme === 'dark' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
           <h2 className="text-lg font-semibold">Appearance</h2>
         </div>
-        <div className="border-border bg-card text-card-foreground rounded-md border p-4">
+        <div className="border-border bg-card text-card-foreground space-y-4 rounded-md border p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-sm font-medium">Theme</div>
@@ -236,6 +237,15 @@ export default function Settings() {
                 </button>
               ))}
             </div>
+          </div>
+          <div className="border-border flex items-center justify-between gap-3 border-t pt-4">
+            <div>
+              <div className="text-sm font-medium">Accent</div>
+              <p className="text-muted-foreground mt-0.5 text-xs">
+                The highlight color for buttons, links, and selections.
+              </p>
+            </div>
+            <AccentPicker />
           </div>
         </div>
       </section>

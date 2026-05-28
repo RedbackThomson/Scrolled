@@ -6,34 +6,39 @@
   :root {
     color-scheme: light;
 
+    /* Hue shared by every neutral surface, so grays carry a faint wash of the
+       accent. Overridden per accent in the [data-accent] blocks below; the
+       base value here is green (the default). */
+    --tint: 142;
+
     --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    --foreground: var(--tint) 47% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: var(--tint) 47% 11%;
 
-    --primary: 221 83% 53%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 142 72% 36%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary: var(--tint) 40% 96%;
+    --secondary-foreground: var(--tint) 47% 11%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: var(--tint) 40% 96%;
+    --muted-foreground: var(--tint) 16% 47%;
 
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
+    --accent: var(--tint) 40% 96%;
+    --accent-foreground: var(--tint) 47% 11%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 221 83% 53%;
+    --border: var(--tint) 32% 91%;
+    --input: var(--tint) 32% 91%;
+    --ring: 142 72% 36%;
 
-    --sidebar: 210 40% 98%;
-    --sidebar-foreground: 222 47% 11%;
-    --sidebar-muted: 215 16% 47%;
+    --sidebar: var(--tint) 40% 98%;
+    --sidebar-foreground: var(--tint) 47% 11%;
+    --sidebar-muted: var(--tint) 16% 47%;
 
     --radius: 0.5rem;
   }
@@ -41,34 +46,119 @@
   .dark {
     color-scheme: dark;
 
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
+    --tint: 142;
 
-    --card: 222 47% 8%;
-    --card-foreground: 210 40% 98%;
+    --background: var(--tint) 47% 6%;
+    --foreground: var(--tint) 40% 98%;
 
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 11%;
+    --card: var(--tint) 47% 8%;
+    --card-foreground: var(--tint) 40% 98%;
 
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
+    --primary: 142 69% 45%;
+    --primary-foreground: 144 80% 10%;
 
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --secondary: var(--tint) 33% 17%;
+    --secondary-foreground: var(--tint) 40% 98%;
 
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
+    --muted: var(--tint) 33% 17%;
+    --muted-foreground: var(--tint) 20% 65%;
+
+    --accent: var(--tint) 33% 17%;
+    --accent-foreground: var(--tint) 40% 98%;
 
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 217 91% 60%;
+    --border: var(--tint) 33% 17%;
+    --input: var(--tint) 33% 17%;
+    --ring: 142 69% 45%;
 
-    --sidebar: 222 47% 8%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-muted: 215 20% 65%;
+    --sidebar: var(--tint) 47% 8%;
+    --sidebar-foreground: var(--tint) 40% 98%;
+    --sidebar-muted: var(--tint) 20% 65%;
+  }
+
+  /* Accent overrides. The base :root/.dark blocks above are green (the
+     default); these redefine --primary / --primary-foreground / --ring per
+     accent, plus --tint (the hue every neutral surface borrows), for both
+     light and dark. JS only toggles the data-accent attribute — CSS owns the
+     values. Light --primary here must match the `swatch` in lib/accents.ts. */
+  :root[data-accent='green'] {
+    --tint: 142;
+    --primary: 142 72% 36%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 142 72% 36%;
+  }
+  .dark[data-accent='green'] {
+    --tint: 142;
+    --primary: 142 69% 45%;
+    --primary-foreground: 144 80% 10%;
+    --ring: 142 69% 45%;
+  }
+
+  :root[data-accent='blue'] {
+    --tint: 221;
+    --primary: 221 83% 53%;
+    --primary-foreground: 210 40% 98%;
+    --ring: 221 83% 53%;
+  }
+  .dark[data-accent='blue'] {
+    --tint: 221;
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 47% 11%;
+    --ring: 217 91% 60%;
+  }
+
+  :root[data-accent='violet'] {
+    --tint: 262;
+    --primary: 262 83% 58%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 262 83% 58%;
+  }
+  .dark[data-accent='violet'] {
+    --tint: 262;
+    --primary: 263 70% 65%;
+    --primary-foreground: 260 30% 12%;
+    --ring: 263 70% 65%;
+  }
+
+  :root[data-accent='rose'] {
+    --tint: 347;
+    --primary: 347 77% 50%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 347 77% 50%;
+  }
+  .dark[data-accent='rose'] {
+    --tint: 347;
+    --primary: 350 80% 62%;
+    --primary-foreground: 345 40% 12%;
+    --ring: 350 80% 62%;
+  }
+
+  :root[data-accent='amber'] {
+    --tint: 30;
+    --primary: 25 95% 45%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 25 95% 45%;
+  }
+  .dark[data-accent='amber'] {
+    --tint: 30;
+    --primary: 32 95% 55%;
+    --primary-foreground: 30 50% 10%;
+    --ring: 32 95% 55%;
+  }
+
+  :root[data-accent='teal'] {
+    --tint: 175;
+    --primary: 175 84% 32%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 175 84% 32%;
+  }
+  .dark[data-accent='teal'] {
+    --tint: 175;
+    --primary: 172 66% 50%;
+    --primary-foreground: 175 60% 10%;
+    --ring: 172 66% 50%;
   }
 
   * {
