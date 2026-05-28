@@ -76,7 +76,11 @@ Schema and join-table inventory follow §8.4 of the MVP doc.
 - **MiniSearch** for full-text + fuzzy across items, equips, mobs, NPCs, maps, quests.
 - Index lives in memory after build; serialized form persisted via `idb-keyval` and rehydrated on startup.
 
-### 2.7 Other
+### 2.7 Visualization
+
+- **Recharts** (v3) for the home-page widgets that summarize the user's loaded library — mob level histogram and equip job breakdown. Picked over hand-rolled SVG because it ships theme-aware tooltips, responsive sizing, and accessible labels for free, and the cost (~250 KB minified, tree-shakeable) is acceptable for a single page. Restricted to `components/home/`; do not reach for it elsewhere without a similarly clear need — the rest of the UI stays a plain Tailwind + shadcn stack.
+
+### 2.8 Other
 
 - Asset decoding pipeline: `URL.createObjectURL` for sprites, LRU memoization for decoded thumbnails, IndexedDB cache for repeat sessions, explicit "clear cache" control.
 - **Pageview analytics — narrow carve-out from local-first.** The canonical hosted deployment loads an external pageview-analytics beacon (currently Cloudflare Web Analytics). Every other deployment, including local dev and forks, ships with no analytics. Constraints:

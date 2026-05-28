@@ -23,6 +23,11 @@ export const collectionBundleSchema = z.object({
   description: z.string().nullable().optional(),
   color: z.string().nullable().optional(),
   icon: z.string().nullable().optional(),
+  /** Pinned on import. Optional so pre-pin export files still validate. */
+  pinned: z.boolean().optional(),
+  /** Relative position within the pinned grid at export time. Optional;
+   *  the importer re-derives a contiguous order. */
+  pinnedPosition: z.number().int().nullable().optional(),
   members: z.array(collectionMemberJsonSchema),
 });
 

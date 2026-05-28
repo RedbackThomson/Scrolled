@@ -1,15 +1,24 @@
+// Home page — the launching pad a returning user lands on.
+//
+// First-run users see a single "Welcome" tile that points them at /setup;
+// once they've loaded data the page becomes a hub composed of small
+// self-gating widgets defined under `components/home/`. Each widget
+// owns its own loading, empty-state, and feature-flag gating, which
+// keeps this file a flat list of components rather than a tangle of
+// conditional blocks.
+
 import { Link } from 'react-router-dom';
+import { ArrowRight, Sparkles } from 'lucide-react';
 import {
-  ArrowRight,
-  Map as MapIcon,
-  Package,
-  ScrollText,
-  Shield,
-  Skull,
-  Sparkles,
-  Users,
-  type LucideIcon,
-} from 'lucide-react';
+  BrowseTiles,
+  ContinueStrip,
+  EquipJobBreakdown,
+  LibraryStats,
+  MapsByRegion,
+  MobLevelHistogram,
+  PinnedCollectionsPanel,
+  PinnedSearchesRow,
+} from '@/components/home';
 import { useFeatures } from '@/hooks/useFeatures';
 
 export default function Home() {
@@ -28,7 +37,27 @@ export default function Home() {
     return <Welcome />;
   }
 
-  return <Dashboard features={features} />;
+  return (
+    <div className="max-w-5xl space-y-8">
+      <header>
+        <h1 className="text-3xl font-semibold tracking-tight">Scrolled</h1>
+      </header>
+
+      <ContinueStrip />
+      <PinnedCollectionsPanel />
+      <PinnedSearchesRow />
+      <BrowseTiles features={features} />
+      <MapsByRegion features={features} />
+      <LibraryStats features={features} />
+
+      {(features.hasMobs || features.hasEquips) && (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <MobLevelHistogram features={features} />
+          <EquipJobBreakdown features={features} />
+        </div>
+      )}
+    </div>
+  );
 }
 
 function Welcome() {
@@ -49,92 +78,6 @@ function Welcome() {
         Get started
         <ArrowRight className="h-4 w-4" />
       </Link>
-    </div>
-  );
-}
-
-interface Tile {
-  label: string;
-  to: string;
-  icon: LucideIcon;
-  enabled: boolean;
-  count: number;
-}
-
-function Dashboard({ features }: { features: ReturnType<typeof useFeatures> }) {
-  const counts = features.counts ?? {
-    items: 0,
-    equips: 0,
-    mobs: 0,
-    npcs: 0,
-    maps: 0,
-    quests: 0,
-    datasets: 0,
-  };
-  const tiles: Tile[] = [
-    {
-      label: 'Items',
-      to: '/items',
-      icon: Package,
-      enabled: features.hasItems,
-      count: counts.items,
-    },
-    {
-      label: 'Equips',
-      to: '/equips',
-      icon: Shield,
-      enabled: features.hasEquips,
-      count: counts.equips,
-    },
-    { label: 'Mobs', to: '/mobs', icon: Skull, enabled: features.hasMobs, count: counts.mobs },
-    { label: 'NPCs', to: '/npcs', icon: Users, enabled: features.hasNpcs, count: counts.npcs },
-    { label: 'Maps', to: '/maps', icon: MapIcon, enabled: features.hasMaps, count: counts.maps },
-    {
-      label: 'Quests',
-      to: '/quests',
-      icon: ScrollText,
-      enabled: features.hasQuests,
-      count: counts.quests,
-    },
-  ];
-  const enabled = tiles.filter((t) => t.enabled);
-  const missingAny = enabled.length < tiles.length;
-
-  return (
-    <div className="max-w-4xl space-y-6">
-      <header>
-        <h1 className="text-3xl font-semibold tracking-tight">Scrolled</h1>
-      </header>
-
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {enabled.map((t) => (
-          <Link
-            key={t.label}
-            to={t.to}
-            className="border-border bg-card text-card-foreground hover:border-foreground/30 group flex items-center gap-3 rounded-md border p-4 transition-colors"
-          >
-            <t.icon className="text-muted-foreground group-hover:text-foreground h-5 w-5 shrink-0 transition-colors" />
-            <div className="min-w-0">
-              <div className="text-sm font-semibold">{t.label}</div>
-              <div className="text-muted-foreground font-mono text-xs">
-                {t.count.toLocaleString()}
-              </div>
-            </div>
-          </Link>
-        ))}
-      </div>
-
-      {missingAny && (
-        <div className="border-border bg-muted/40 rounded-md border p-4 text-sm">
-          <p className="font-medium">Want more sections?</p>
-          <p className="text-muted-foreground mt-1 text-xs">
-            More categories appear here once you load more game files.{' '}
-            <Link to="/setup" className="text-primary hover:underline">
-              Add files in Setup →
-            </Link>
-          </p>
-        </div>
-      )}
     </div>
   );
 }

@@ -4,17 +4,21 @@
 // worker. The worker owns the SQLite-WASM engine and OPFS persistence.
 
 export type {
+  CategoryCount,
   ColumnFilter,
   StringFilterMode,
   DatasetFileRef,
   DatasetRecord,
   DbStatus,
+  EquipJobBucket,
+  EquipJobCount,
   ExtractorResultRecord,
   EntityKind,
   EntitySummary,
   EquipRecord,
   GameDatabase,
   ItemRecord,
+  LevelBandCount,
   ListOptsBase,
   MapMobRecord,
   MapMobSpawnRecord,

@@ -1,5 +1,5 @@
 import type { Sqlite } from '../sqlite';
-import type { ItemRecord, ListOptsBase, PageResult } from '../types';
+import type { CategoryCount, ItemRecord, ListOptsBase, PageResult } from '../types';
 import {
   ITEM_ORDER,
   ITEM_ORDER_DEFAULT,
@@ -147,4 +147,17 @@ export function listItemCategories(sql: Sqlite): string[] {
     )
     .map((r) => r.category!)
     .filter((c): c is string => !!c);
+}
+
+export function listItemCategoryCounts(sql: Sqlite, limit = 6): CategoryCount[] {
+  const rows = sql.selectObjects<{ key: string; count: number }>(
+    `SELECT category AS key, COUNT(*) AS count
+       FROM items
+      WHERE category IS NOT NULL AND category <> ''
+      GROUP BY category
+      ORDER BY count DESC, category ASC
+      LIMIT ?`,
+    [Math.max(1, limit)],
+  );
+  return rows.map((r) => ({ key: String(r.key), count: Number(r.count) }));
 }

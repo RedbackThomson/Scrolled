@@ -6,7 +6,7 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Download, Loader2, Pencil, Trash2 } from 'lucide-react';
+import { ArrowLeft, Download, Loader2, Pencil, Pin, PinOff, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   CollectionFormDialog,
@@ -23,6 +23,7 @@ import {
   useCollectionMembers,
   useDeleteCollection,
   useExportCollectionJson,
+  useSetCollectionPinned,
 } from '@/hooks/useCollections';
 import type { CollectionEntityType, CollectionMember } from '@/db/user';
 import { COLLECTION_ENTITY_TYPES } from '@/db/user';
@@ -49,6 +50,7 @@ export default function CollectionDetail() {
   const [editOpen, setEditOpen] = useState(false);
   const deleteM = useDeleteCollection();
   const exportM = useExportCollectionJson();
+  const pinM = useSetCollectionPinned();
 
   const members = membersQ.data ?? EMPTY_MEMBERS;
 
@@ -178,6 +180,20 @@ export default function CollectionDetail() {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => pinM.mutate({ id: collection.id, pinned: !collection.pinned })}
+              disabled={pinM.isPending}
+              title={collection.pinned ? 'Unpin from home page' : 'Pin to home page'}
+            >
+              {collection.pinned ? (
+                <PinOff className="h-3.5 w-3.5" />
+              ) : (
+                <Pin className="h-3.5 w-3.5" />
+              )}
+              {collection.pinned ? 'Unpin' : 'Pin'}
+            </Button>
             <Button
               variant="outline"
               size="sm"

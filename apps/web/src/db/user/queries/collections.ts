@@ -23,6 +23,10 @@ import { rowToCollection, rowToMember } from './rowMappers';
 import { listPinnedSearches } from './pinnedSearches';
 
 export function listCollections(db: Sqlite): CollectionRecord[] {
+  // Pinned collections come first in the order chosen on the home page; the
+  // rest sort by name. `pinned_position` NULLs are placed last so re-pinning
+  // a collection with no position assigned (shouldn't happen, but guard
+  // against it) still lands at the end of the pinned grid.
   const rows = db.selectObjects<Row>(`
     SELECT
       c.id,
@@ -30,13 +34,18 @@ export function listCollections(db: Sqlite): CollectionRecord[] {
       c.description,
       c.color,
       c.icon,
+      c.pinned,
+      c.pinned_position,
       c.created_at,
       c.updated_at,
       COUNT(m.entity_id) AS member_count
     FROM collections c
     LEFT JOIN collection_members m ON m.collection_id = c.id
     GROUP BY c.id
-    ORDER BY c.name COLLATE NOCASE ASC
+    ORDER BY c.pinned DESC,
+             CASE WHEN c.pinned_position IS NULL THEN 1 ELSE 0 END,
+             c.pinned_position ASC,
+             c.name COLLATE NOCASE ASC
   `);
   return rows.map(rowToCollection);
 }
@@ -54,7 +63,9 @@ export function createCollection(db: Sqlite, input: CreateCollectionInput): Coll
     return db.selectValue<number>('SELECT last_insert_rowid()') ?? 0;
   });
   const created = db.selectObject<Row>(
-    `SELECT c.id, c.name, c.description, c.color, c.icon, c.created_at, c.updated_at,
+    `SELECT c.id, c.name, c.description, c.color, c.icon,
+            c.pinned, c.pinned_position,
+            c.created_at, c.updated_at,
             0 AS member_count
      FROM collections c WHERE c.id = ?`,
     [id],
@@ -65,12 +76,54 @@ export function createCollection(db: Sqlite, input: CreateCollectionInput): Coll
 
 export function getCollection(db: Sqlite, id: number): CollectionRecord | null {
   const row = db.selectObject<Row>(
-    `SELECT c.id, c.name, c.description, c.color, c.icon, c.created_at, c.updated_at,
+    `SELECT c.id, c.name, c.description, c.color, c.icon,
+            c.pinned, c.pinned_position,
+            c.created_at, c.updated_at,
             (SELECT COUNT(*) FROM collection_members m WHERE m.collection_id = c.id) AS member_count
      FROM collections c WHERE c.id = ?`,
     [id],
   );
   return row ? rowToCollection(row) : null;
+}
+
+/**
+ * Pin or unpin a collection. Pinning appends to the end of the pinned grid
+ * (max(pinned_position) + 1). Unpinning sets pinned = 0 and clears the
+ * position so the next pin starts fresh.
+ *
+ * Wrapped in a transaction because the MAX(...) read and the UPDATE must
+ * see the same snapshot — otherwise two concurrent pin operations could
+ * end up with the same position.
+ */
+export function setCollectionPinned(
+  db: Sqlite,
+  id: number,
+  pinned: boolean,
+): CollectionRecord {
+  db.transaction(() => {
+    if (pinned) {
+      const nextPos =
+        (db.selectValue<number>(
+          'SELECT COALESCE(MAX(pinned_position), -1) + 1 FROM collections WHERE pinned = 1',
+        ) ?? 0);
+      db.exec(
+        `UPDATE collections
+            SET pinned = 1, pinned_position = ?, updated_at = ?
+          WHERE id = ?`,
+        [nextPos, Date.now(), id],
+      );
+    } else {
+      db.exec(
+        `UPDATE collections
+            SET pinned = 0, pinned_position = NULL, updated_at = ?
+          WHERE id = ?`,
+        [Date.now(), id],
+      );
+    }
+  });
+  const updated = getCollection(db, id);
+  if (!updated) throw new Error(`Collection ${id} not found after pin update`);
+  return updated;
 }
 
 export function updateCollection(
@@ -387,7 +440,8 @@ export function importJson(
 
 function buildBundle(db: Sqlite, id: number): CollectionBundleJson | null {
   const c = db.selectObject<Row>(
-    'SELECT name, description, color, icon FROM collections WHERE id = ?',
+    `SELECT name, description, color, icon, pinned, pinned_position
+     FROM collections WHERE id = ?`,
     [id],
   );
   if (!c) return null;
@@ -402,6 +456,8 @@ function buildBundle(db: Sqlite, id: number): CollectionBundleJson | null {
     description: c.description == null ? null : String(c.description),
     color: c.color == null ? null : String(c.color),
     icon: c.icon == null ? null : String(c.icon),
+    pinned: Number(c.pinned ?? 0) === 1,
+    pinnedPosition: c.pinned_position == null ? null : Number(c.pinned_position),
     members: members.map((m) => ({
       entityType: String(m.entity_type) as CollectionEntityType,
       entityId: Number(m.entity_id),
@@ -435,10 +491,30 @@ function uniqueImportedName(db: Sqlite, name: string): string {
 
 function insertCollection(db: Sqlite, bundle: CollectionBundleJson): number {
   const now = Date.now();
+  // The bundle carries its own pinned flag, but we derive a fresh
+  // `pinned_position` from the live DB so an import always appends to the
+  // end of the pinned grid rather than colliding with positions already
+  // taken by existing collections.
+  const pinned = bundle.pinned ? 1 : 0;
+  const nextPos = pinned
+    ? (db.selectValue<number>(
+        'SELECT COALESCE(MAX(pinned_position), -1) + 1 FROM collections WHERE pinned = 1',
+      ) ?? 0)
+    : null;
   db.exec(
-    `INSERT INTO collections (name, description, color, icon, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [bundle.name, bundle.description ?? null, bundle.color ?? null, bundle.icon ?? null, now, now],
+    `INSERT INTO collections
+       (name, description, color, icon, pinned, pinned_position, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      bundle.name,
+      bundle.description ?? null,
+      bundle.color ?? null,
+      bundle.icon ?? null,
+      pinned,
+      nextPos,
+      now,
+      now,
+    ],
   );
   const id = db.selectValue<number>('SELECT last_insert_rowid()');
   if (id == null) throw new Error('Failed to read inserted collection id');

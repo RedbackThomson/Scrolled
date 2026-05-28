@@ -8,14 +8,17 @@
 
 import type { Sqlite } from '../sqlite';
 import type {
+  CategoryCount,
   DatasetFileRef,
   DatasetRecord,
   DbStatus,
   EntityKind,
   EntitySummary,
+  EquipJobCount,
   ExtractorResultRecord,
   EquipRecord,
   ItemRecord,
+  LevelBandCount,
   ListOptsBase,
   MapMobRecord,
   MapMobSpawnRecord,
@@ -124,6 +127,10 @@ export class DbApi implements GameDatabase {
     return items.listItemCategories(this.sql);
   }
 
+  async listItemCategoryCounts(limit?: number): Promise<CategoryCount[]> {
+    return items.listItemCategoryCounts(this.sql, limit);
+  }
+
   // -- equips -----------------------------------------------------------------
 
   async upsertEquip(equip: EquipRecord): Promise<void> {
@@ -156,6 +163,14 @@ export class DbApi implements GameDatabase {
     return equips.listEquipTypes(this.sql);
   }
 
+  async listEquipSlotCounts(limit?: number): Promise<CategoryCount[]> {
+    return equips.listEquipSlotCounts(this.sql, limit);
+  }
+
+  async listEquipJobCounts(): Promise<EquipJobCount[]> {
+    return equips.listEquipJobCounts(this.sql);
+  }
+
   // -- mobs -------------------------------------------------------------------
 
   async upsertMobs(list: MobRecord[]): Promise<number> {
@@ -172,6 +187,14 @@ export class DbApi implements GameDatabase {
 
   async listMobs(opts: ListOptsBase = {}): Promise<PageResult<MobRecord>> {
     return mobs.listMobs(this.sql, opts);
+  }
+
+  async listMobLevelBandCounts(bandSize?: number): Promise<LevelBandCount[]> {
+    return mobs.listMobLevelBandCounts(this.sql, bandSize);
+  }
+
+  async listMobLevelBucketCounts(): Promise<CategoryCount[]> {
+    return mobs.listMobLevelBucketCounts(this.sql);
   }
 
   async getMobDrops(mobId: number): Promise<MobDropWithName[]> {
@@ -232,6 +255,10 @@ export class DbApi implements GameDatabase {
     return maps.listMaps(this.sql, opts);
   }
 
+  async listMapStreetCounts(limit?: number): Promise<CategoryCount[]> {
+    return maps.listMapStreetCounts(this.sql, limit);
+  }
+
   async getMapNpcs(mapId: number): Promise<MapNpcWithName[]> {
     return maps.getMapNpcs(this.sql, mapId);
   }
@@ -275,6 +302,10 @@ export class DbApi implements GameDatabase {
 
   async listQuestParents(): Promise<string[]> {
     return quests.listQuestParents(this.sql);
+  }
+
+  async listQuestLevelBandCounts(bandSize?: number): Promise<LevelBandCount[]> {
+    return quests.listQuestLevelBandCounts(this.sql, bandSize);
   }
 
   async getQuestRequirements(questId: number): Promise<QuestRequirementWithName[]> {

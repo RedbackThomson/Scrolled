@@ -53,6 +53,10 @@ class WorkerDb {
     await this.ensureOpen();
     return this.api.listItemCategories();
   }
+  async listItemCategoryCounts(limit?: number) {
+    await this.ensureOpen();
+    return this.api.listItemCategoryCounts(limit);
+  }
   async getItemIcon(id: number) {
     await this.ensureOpen();
     return this.api.getItemIcon(id);
@@ -81,6 +85,14 @@ class WorkerDb {
     await this.ensureOpen();
     return this.api.listEquipTypes();
   }
+  async listEquipSlotCounts(limit?: number) {
+    await this.ensureOpen();
+    return this.api.listEquipSlotCounts(limit);
+  }
+  async listEquipJobCounts() {
+    await this.ensureOpen();
+    return this.api.listEquipJobCounts();
+  }
   async getEquipIcon(id: number) {
     await this.ensureOpen();
     return this.api.getEquipIcon(id);
@@ -100,6 +112,14 @@ class WorkerDb {
   async listMobs(opts?: Parameters<DbApi['listMobs']>[0]) {
     await this.ensureOpen();
     return this.api.listMobs(opts);
+  }
+  async listMobLevelBandCounts(bandSize?: number) {
+    await this.ensureOpen();
+    return this.api.listMobLevelBandCounts(bandSize);
+  }
+  async listMobLevelBucketCounts() {
+    await this.ensureOpen();
+    return this.api.listMobLevelBucketCounts();
   }
   async getMobDrops(mobId: number) {
     await this.ensureOpen();
@@ -153,6 +173,10 @@ class WorkerDb {
     await this.ensureOpen();
     return this.api.listMaps(opts);
   }
+  async listMapStreetCounts(limit?: number) {
+    await this.ensureOpen();
+    return this.api.listMapStreetCounts(limit);
+  }
   async getMapNpcs(mapId: number) {
     await this.ensureOpen();
     return this.api.getMapNpcs(mapId);
@@ -199,6 +223,10 @@ class WorkerDb {
   async listQuestParents() {
     await this.ensureOpen();
     return this.api.listQuestParents();
+  }
+  async listQuestLevelBandCounts(bandSize?: number) {
+    await this.ensureOpen();
+    return this.api.listQuestLevelBandCounts(bandSize);
   }
   async getQuestRequirements(questId: number) {
     await this.ensureOpen();

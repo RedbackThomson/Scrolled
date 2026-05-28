@@ -443,6 +443,8 @@ export interface GameDatabase {
   listItems(opts?: ListOptsBase & { category?: string }): Promise<PageResult<ItemRecord>>;
   /** Distinct non-null `category` values for filter UIs / sidebar nav. */
   listItemCategories(): Promise<string[]>;
+  /** Top item categories by member count for the home-page browse tile. */
+  listItemCategoryCounts(limit?: number): Promise<CategoryCount[]>;
   /** Just the persisted icon bytes for an item, or null. */
   getItemIcon(id: number): Promise<Uint8Array | null>;
 
@@ -463,11 +465,21 @@ export interface GameDatabase {
   listEquipSlots(): Promise<string[]>;
   /** Distinct non-null `equip_type` values, for the Weapons sidebar nav. */
   listEquipTypes(): Promise<string[]>;
+  /** Top equip slots (e.g. Overall, Cap) by member count. */
+  listEquipSlotCounts(limit?: number): Promise<CategoryCount[]>;
+  /** Equip count grouped into exclusive class buckets (see EquipJobBucket). */
+  listEquipJobCounts(): Promise<EquipJobCount[]>;
   getEquipIcon(id: number): Promise<Uint8Array | null>;
 
   upsertMobs(mobs: MobRecord[]): Promise<number>;
   getMob(id: number): Promise<MobRecord | null>;
   listMobs(opts?: ListOptsBase): Promise<PageResult<MobRecord>>;
+  /** Mob count grouped into level bands of `bandSize` (default 10). */
+  listMobLevelBandCounts(bandSize?: number): Promise<LevelBandCount[]>;
+  /** Mob count for the home page's three "browse by level" buckets
+   *  (30-70 / 70-120 / 120+). Bounds are inclusive; see implementation
+   *  note in the query for why edge mobs overlap two buckets. */
+  listMobLevelBucketCounts(): Promise<CategoryCount[]>;
   /** Decoded PNG bytes for the mob's stand sprite, or null. */
   getMobIcon(id: number): Promise<Uint8Array | null>;
   /** Items this mob can drop (from MonsterBook.img), joined to the target's name. */
@@ -492,6 +504,9 @@ export interface GameDatabase {
   upsertMaps(maps: MapRecord[]): Promise<number>;
   getMap(id: number): Promise<MapRecord | null>;
   listMaps(opts?: ListOptsBase): Promise<PageResult<MapRecord>>;
+  /** Top map regions (street_name) by map count for the home-page browse
+   *  tile. NULL/empty street names are dropped. */
+  listMapStreetCounts(limit?: number): Promise<CategoryCount[]>;
   /** Decoded PNG bytes for the map minimap, or null. */
   getMapMinimap(id: number): Promise<Uint8Array | null>;
   /** NPCs + mobs + portals attached to a single map. */
@@ -506,6 +521,8 @@ export interface GameDatabase {
   listQuests(opts?: ListOptsBase & { parent?: string }): Promise<PageResult<QuestRecord>>;
   /** Distinct quest `parent` values for filter UIs. */
   listQuestParents(): Promise<string[]>;
+  /** Quest count grouped into required-level bands of `bandSize` (default 10). */
+  listQuestLevelBandCounts(bandSize?: number): Promise<LevelBandCount[]>;
   /** Requirements / rewards joined to the target's display name. */
   getQuestRequirements(questId: number): Promise<QuestRequirementWithName[]>;
   getQuestRewards(questId: number): Promise<QuestRewardWithName[]>;
@@ -602,4 +619,37 @@ export interface SearchEntry {
 export interface EntitySummary {
   id: number;
   name: string;
+}
+
+/** Aggregate row used by the home-page "browse by …" widgets. `key` is the
+ *  filter value (a category, slug, or street_name) and `count` is the row
+ *  total for that key. */
+export interface CategoryCount {
+  key: string;
+  count: number;
+}
+
+/** Aggregate row for level-banded histograms. `band` is the lower bound of
+ *  the band; e.g. `band: 10` with `bandSize: 10` covers levels 10..19. */
+export interface LevelBandCount {
+  band: number;
+  count: number;
+}
+
+/** Exclusive job bucket for the equip-by-class donut. Buckets sum to the
+ *  total equip count: an equip with no restriction lands in `any`, an equip
+ *  restricted to exactly one class lands in that class's bucket, and an
+ *  equip restricted to more than one class lands in `multi`. */
+export type EquipJobBucket =
+  | 'any'
+  | 'warrior'
+  | 'magician'
+  | 'bowman'
+  | 'thief'
+  | 'pirate'
+  | 'multi';
+
+export interface EquipJobCount {
+  job: EquipJobBucket;
+  count: number;
 }

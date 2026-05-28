@@ -59,4 +59,20 @@ export const USER_MIGRATIONS: readonly Migration[] = [
       );
     `,
   },
+  {
+    version: 3,
+    name: 'collections pinned v1',
+    // Pin metadata for the home page. `pinned_position` orders the pinned
+    // grid (lower = earlier); NULL means unpinned. `pinned` is the boolean
+    // we sort + filter on so the index is small and the predicate is cheap.
+    sql: `
+      ALTER TABLE collections
+        ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0 CHECK (pinned IN (0,1));
+      ALTER TABLE collections
+        ADD COLUMN pinned_position INTEGER;
+
+      CREATE INDEX collections_pinned_idx
+        ON collections (pinned, pinned_position);
+    `,
+  },
 ];

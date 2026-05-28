@@ -1,5 +1,6 @@
 import type { Sqlite } from '../sqlite';
 import type {
+  LevelBandCount,
   ListOptsBase,
   PageResult,
   QuestRecord,
@@ -104,6 +105,27 @@ export function listQuestParents(sql: Sqlite): string[] {
       `SELECT DISTINCT parent FROM quests WHERE parent IS NOT NULL AND parent <> '' ORDER BY parent`,
     )
     .map((r) => r.parent);
+}
+
+/**
+ * Quest count grouped into required-level bands of `bandSize` (default 10).
+ * Quests with `required_level <= 0` or NULL are dropped; the home-page
+ * histogram is about the level-gated portion of the quest log.
+ */
+export function listQuestLevelBandCounts(
+  sql: Sqlite,
+  bandSize = 10,
+): LevelBandCount[] {
+  const size = Math.max(1, Math.floor(bandSize));
+  const rows = sql.selectObjects<{ band: number; count: number }>(
+    `SELECT (required_level / ?) * ? AS band, COUNT(*) AS count
+       FROM quests
+      WHERE required_level IS NOT NULL AND required_level > 0
+      GROUP BY band
+      ORDER BY band ASC`,
+    [size, size],
+  );
+  return rows.map((r) => ({ band: Number(r.band), count: Number(r.count) }));
 }
 
 export function getQuestRequirements(sql: Sqlite, questId: number): QuestRequirementWithName[] {

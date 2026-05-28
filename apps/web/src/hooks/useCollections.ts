@@ -126,6 +126,19 @@ export function useDeleteCollection(): UseMutationResult<void, Error, number> {
   });
 }
 
+export function useSetCollectionPinned(): UseMutationResult<
+  CollectionRecord,
+  Error,
+  { id: number; pinned: boolean }
+> {
+  const db = useUserDb();
+  const invalidate = useInvalidateAll();
+  return useMutation({
+    mutationFn: ({ id, pinned }) => db.setCollectionPinned(id, pinned),
+    onSuccess: () => invalidate(),
+  });
+}
+
 export interface ToggleMembershipArgs {
   collectionId: number;
   entityType: CollectionEntityType;

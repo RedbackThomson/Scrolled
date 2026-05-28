@@ -61,6 +61,10 @@ class WorkerUserDb {
     await this.ensureOpen();
     return this.api.deleteCollection(id);
   }
+  async setCollectionPinned(id: number, pinned: boolean) {
+    await this.ensureOpen();
+    return this.api.setCollectionPinned(id, pinned);
+  }
   async listMembers(collectionId: number) {
     await this.ensureOpen();
     return this.api.listMembers(collectionId);

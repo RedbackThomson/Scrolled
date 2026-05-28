@@ -81,6 +81,10 @@ export class UserDbApi implements UserDatabase {
     collections.deleteCollection(this.db, id);
   }
 
+  async setCollectionPinned(id: number, pinned: boolean): Promise<CollectionRecord> {
+    return collections.setCollectionPinned(this.db, id, pinned);
+  }
+
   async listMembers(collectionId: number): Promise<CollectionMember[]> {
     return collections.listMembers(this.db, collectionId);
   }

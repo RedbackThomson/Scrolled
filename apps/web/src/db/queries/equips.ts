@@ -1,5 +1,11 @@
 import type { Sqlite } from '../sqlite';
-import type { EquipRecord, ListOptsBase, PageResult } from '../types';
+import type {
+  CategoryCount,
+  EquipJobCount,
+  EquipRecord,
+  ListOptsBase,
+  PageResult,
+} from '../types';
 import {
   EQUIP_ORDER,
   EQUIP_ORDER_DEFAULT,
@@ -200,4 +206,60 @@ export function listEquipTypes(sql: Sqlite): string[] {
     )
     .map((r) => r.equip_type!)
     .filter((s): s is string => !!s);
+}
+
+export function listEquipSlotCounts(sql: Sqlite, limit = 6): CategoryCount[] {
+  const rows = sql.selectObjects<{ key: string; count: number }>(
+    `SELECT slot AS key, COUNT(*) AS count
+       FROM equips
+      WHERE slot IS NOT NULL AND slot <> ''
+      GROUP BY slot
+      ORDER BY count DESC, slot ASC
+      LIMIT ?`,
+    [Math.max(1, limit)],
+  );
+  return rows.map((r) => ({ key: String(r.key), count: Number(r.count) }));
+}
+
+/**
+ * Equip count grouped into exclusive class buckets — mirrors EquipJobBucket.
+ *
+ * Bit layout in `required_job`:
+ *   Warrior=1, Magician=2, Bowman=4, Thief=8, Pirate=16.
+ *   0 or NULL = no class restriction ("any").
+ *
+ * The buckets are mutually exclusive so the donut sums to the total equip
+ * count: an equip restricted to exactly one class lands in that class's
+ * bucket; an equip restricted to more than one class lands in `multi`.
+ */
+export function listEquipJobCounts(sql: Sqlite): EquipJobCount[] {
+  const row = sql.selectObject<{
+    any_n: number;
+    warrior_n: number;
+    magician_n: number;
+    bowman_n: number;
+    thief_n: number;
+    pirate_n: number;
+    multi_n: number;
+  }>(`
+    SELECT
+      SUM(CASE WHEN required_job IS NULL OR required_job = 0 THEN 1 ELSE 0 END) AS any_n,
+      SUM(CASE WHEN required_job = 1  THEN 1 ELSE 0 END) AS warrior_n,
+      SUM(CASE WHEN required_job = 2  THEN 1 ELSE 0 END) AS magician_n,
+      SUM(CASE WHEN required_job = 4  THEN 1 ELSE 0 END) AS bowman_n,
+      SUM(CASE WHEN required_job = 8  THEN 1 ELSE 0 END) AS thief_n,
+      SUM(CASE WHEN required_job = 16 THEN 1 ELSE 0 END) AS pirate_n,
+      SUM(CASE WHEN required_job IS NOT NULL
+                AND required_job NOT IN (0, 1, 2, 4, 8, 16) THEN 1 ELSE 0 END) AS multi_n
+    FROM equips
+  `);
+  return [
+    { job: 'any', count: Number(row?.any_n ?? 0) },
+    { job: 'warrior', count: Number(row?.warrior_n ?? 0) },
+    { job: 'magician', count: Number(row?.magician_n ?? 0) },
+    { job: 'bowman', count: Number(row?.bowman_n ?? 0) },
+    { job: 'thief', count: Number(row?.thief_n ?? 0) },
+    { job: 'pirate', count: Number(row?.pirate_n ?? 0) },
+    { job: 'multi', count: Number(row?.multi_n ?? 0) },
+  ];
 }

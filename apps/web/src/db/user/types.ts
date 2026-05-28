@@ -33,6 +33,10 @@ export interface CollectionRecord {
   updatedAt: number;
   /** Surfaced by `listCollections` for the sidebar / index page. */
   memberCount: number;
+  /** Pinned to the home page. */
+  pinned: boolean;
+  /** Sort key within the pinned grid; null when unpinned. */
+  pinnedPosition: number | null;
 }
 
 export interface CollectionMember {
@@ -151,6 +155,9 @@ export interface UserDatabase {
   createCollection(input: CreateCollectionInput): Promise<CollectionRecord>;
   updateCollection(id: number, patch: UpdateCollectionPatch): Promise<CollectionRecord>;
   deleteCollection(id: number): Promise<void>;
+  /** Pin or unpin a collection. Pinning appends to the end of the pinned
+   *  grid; unpinning clears the position. */
+  setCollectionPinned(id: number, pinned: boolean): Promise<CollectionRecord>;
 
   listMembers(collectionId: number): Promise<CollectionMember[]>;
   addMember(

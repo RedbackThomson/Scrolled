@@ -1,5 +1,6 @@
 import type { Sqlite, Row } from '../sqlite';
 import type {
+  CategoryCount,
   ListOptsBase,
   MapMobRecord,
   MapMobSpawnRecord,
@@ -117,6 +118,24 @@ export function listMaps(sql: Sqlite, opts: ListOptsBase = {}): PageResult<MapRe
       .map(rowToMap);
     return { rows, total };
   });
+}
+
+/**
+ * Top map regions (the `street_name` field) by map count. Used by the
+ * home-page "Browse by region" widget. NULL/empty streets are dropped so
+ * the widget never advertises an unfilterable bucket.
+ */
+export function listMapStreetCounts(sql: Sqlite, limit = 8): CategoryCount[] {
+  const rows = sql.selectObjects<{ key: string; count: number }>(
+    `SELECT street_name AS key, COUNT(*) AS count
+       FROM maps
+      WHERE street_name IS NOT NULL AND street_name <> ''
+      GROUP BY street_name
+      ORDER BY count DESC, street_name ASC
+      LIMIT ?`,
+    [Math.max(1, limit)],
+  );
+  return rows.map((r) => ({ key: String(r.key), count: Number(r.count) }));
 }
 
 export function getMapNpcs(sql: Sqlite, mapId: number): MapNpcWithName[] {

@@ -53,5 +53,7 @@ export function rowToCollection(row: Row): CollectionRecord {
     createdAt: Number(row.created_at),
     updatedAt: Number(row.updated_at),
     memberCount: Number(row.member_count ?? 0),
+    pinned: Number(row.pinned ?? 0) === 1,
+    pinnedPosition: row.pinned_position == null ? null : Number(row.pinned_position),
   };
 }

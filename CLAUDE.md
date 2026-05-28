@@ -55,7 +55,7 @@ Don't switch these without updating `docs/technical_requirements.md` first.
   - `serverProfiles/` server-config subsystem · `analytics/` §2.7 gated telemetry
   - `domain/` static game-domain constants/enums (no React) · `lib/` pure framework-agnostic utils/codecs (worker-safe `logger`/`progress` live here)
   - `hooks/` shared React hooks (`hooks/extraction/` = ingestion pipeline) · `stores/` Zustand client state
-  - `routes/` page components · `components/` UI grouped by concern (`ui/`, `layout/`, `common/`, `entity-display/`, `entity-links/`, `data/`, `collections/`, `command-palette/`, `data-table/`, `wizard/`, `MapViewer/`)
+  - `routes/` page components · `components/` UI grouped by concern (`ui/`, `layout/`, `common/`, `entity-display/`, `entity-links/`, `data/`, `collections/`, `command-palette/`, `data-table/`, `wizard/`, `home/`, `MapViewer/`)
 - Named exports by default; one default export per route component.
 - Tests colocated as `*.test.ts`.
 - Comments only for non-obvious _why_. Don't describe _what_ the code does.
