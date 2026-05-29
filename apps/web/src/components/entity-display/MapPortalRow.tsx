@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { DoorOpen } from 'lucide-react';
 import type { MapPortalWithName } from '@/db';
 import { MapLink } from '@/components/entity-links';
@@ -6,23 +7,27 @@ interface Props {
   portal: MapPortalWithName;
   /** Sentinel value the WZ data uses to mean "no map" for target fields. */
   noTargetId: number;
+  /** Sibling content rendered to the right of the row (e.g. a "show on map" pin button). */
+  trailing?: ReactNode;
 }
 
 /**
- * One row in the Portals section on a map detail page. Desktop keeps the
- * compact single-line layout (portalName → MapName · TargetPortal · coords);
+ * One row in the Portals section on a map detail page. Mirrors EntityRow's
+ * three-slot structure (body → trailing → right block) so the optional pin
+ * button lands to the left of the coords, like NPC/mob rows. Desktop keeps the
+ * compact single-line layout (portalName → MapName · TargetPortal | coords);
  * below `md` the row becomes a card with the destination map on top and the
- * portal's own name on a secondary line, so users hunting for a destination
- * find the map name first.
+ * portal's own name + coords on a secondary line.
  */
-export function MapPortalRow({ portal, noTargetId }: Props) {
+export function MapPortalRow({ portal, noTargetId, trailing }: Props) {
   const hasTarget = portal.targetMapId !== null && portal.targetMapId !== noTargetId;
   const coords =
     portal.x !== null || portal.y !== null ? `(${portal.x ?? '?'}, ${portal.y ?? '?'})` : null;
 
   return (
     <li className="group flex min-h-[44px] items-center gap-3 px-3 py-2 text-sm md:min-h-0 md:py-1.5">
-      {/* Desktop layout (md+): inline single-line. Hidden on mobile. */}
+      {/* Desktop body (md+). Coords are pulled out into the right block below
+       *  so `trailing` can sit between them, matching EntityRow. */}
       <div className="hidden min-w-0 flex-1 items-center gap-3 md:flex">
         <span className="font-mono text-xs">{portal.portalName}</span>
         <span className="text-muted-foreground">→</span>
@@ -39,13 +44,11 @@ export function MapPortalRow({ portal, noTargetId }: Props) {
         ) : (
           <span className="text-muted-foreground italic">no target</span>
         )}
-        {coords && (
-          <span className="text-muted-foreground ml-auto shrink-0 font-mono text-xs">{coords}</span>
-        )}
       </div>
 
-      {/* Mobile layout: stacked card. Map name on top (primary, linked when
-       *  there's a destination), portal name on a secondary line. Hidden at md+. */}
+      {/* Mobile body. Stacked card with map name on top (primary, linked when
+       *  there's a destination), portal name + coords on a secondary line —
+       *  same shape EntityRow uses when meta is shown on mobile. */}
       <div className="flex min-w-0 flex-1 items-center gap-3 md:hidden">
         <DoorOpen className="text-muted-foreground h-5 w-5 shrink-0" aria-hidden />
         <div className="min-w-0 flex-1">
@@ -67,6 +70,14 @@ export function MapPortalRow({ portal, noTargetId }: Props) {
           </div>
         </div>
       </div>
+
+      {trailing && <div className="flex shrink-0 items-center gap-2">{trailing}</div>}
+
+      {coords && (
+        <div className="text-muted-foreground ml-auto hidden shrink-0 items-center gap-3 font-mono text-xs md:flex">
+          {coords}
+        </div>
+      )}
     </li>
   );
 }

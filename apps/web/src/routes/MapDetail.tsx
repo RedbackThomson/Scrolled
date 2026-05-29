@@ -22,6 +22,7 @@ import { parseViewerParam, serializeViewerParam } from '@/components/MapViewer/v
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
 import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient } from '@/db';
+import { classifyPortal, type PortalLayer } from '@/domain/portal-types';
 import { useFeatures } from '@/hooks/useFeatures';
 import { useListSort } from '@/hooks/useListSort';
 import { useEntitySummaryNames } from '@/hooks/useEntitySummaries';
@@ -29,6 +30,15 @@ import { useShowEntityIds } from '@/stores/showEntityIds';
 
 // Sentinel value the WZ data uses to mean "no map" for return / target fields.
 const NO_TARGET = 999999999;
+
+// Default ordering for the Portals section: inter-map first, then intra-map
+// teleports, then anything unclassified, then spawn points.
+const PORTAL_LAYER_RANK: Record<PortalLayer, number> = {
+  portal: 0,
+  internalTeleport: 1,
+  unknown: 2,
+  spawn: 3,
+};
 
 export default function MapDetail() {
   const params = useParams<{ id: string }>();
@@ -81,7 +91,19 @@ export default function MapDetail() {
     { id: 'level', label: 'Level', get: (m) => m.level },
     { id: 'count', label: 'Count', get: (m) => m.count },
   ]);
-  const portalsSort = useListSort(portalsQ.data, [
+  // Default portal order groups by purpose so users see how to leave the map
+  // first, then teleports within it, then anything ambiguous, then spawn
+  // points. The query returns rows in WZ `idx` order, which we preserve as the
+  // intra-bucket tiebreaker.
+  const portalsOrdered = useMemo(() => {
+    if (!portalsQ.data) return undefined;
+    return [...portalsQ.data].sort((a, b) => {
+      const ra = PORTAL_LAYER_RANK[classifyPortal(a, id)];
+      const rb = PORTAL_LAYER_RANK[classifyPortal(b, id)];
+      return ra !== rb ? ra - rb : a.idx - b.idx;
+    });
+  }, [portalsQ.data, id]);
+  const portalsSort = useListSort(portalsOrdered, [
     { id: 'portal', label: 'Portal name', get: (p) => p.portalName },
     {
       id: 'target',
@@ -349,6 +371,19 @@ export default function MapDetail() {
               key={`${p.portalName}-${p.x ?? 0}-${p.y ?? 0}`}
               portal={p}
               noTargetId={NO_TARGET}
+              trailing={
+                m.minimapPath && (
+                  <button
+                    type="button"
+                    onClick={() => openViewer({ kind: 'portal', key: String(p.idx) })}
+                    aria-label={`Show portal ${p.portalName} on map`}
+                    title="Show on map"
+                    className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition focus-visible:opacity-100 group-hover:opacity-100 max-md:opacity-100"
+                  >
+                    <MapPin className="h-4 w-4" />
+                  </button>
+                )
+              }
             />
           ))}
         </DetailListSection>
