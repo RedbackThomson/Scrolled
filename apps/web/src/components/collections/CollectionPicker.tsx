@@ -99,7 +99,7 @@ export function CollectionPicker({ entityType, entityId, children }: CollectionP
             role="dialog"
             aria-label="Add to collection"
             style={{ position: 'fixed', top: coords.top, left: coords.left }}
-            className="border-border bg-card text-card-foreground z-50 w-72 rounded-md border shadow-md"
+            className="border-border bg-card text-card-foreground z-50 w-72 max-w-[calc(100vw-1rem)] rounded-md border shadow-md"
             onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="border-border border-b p-2">

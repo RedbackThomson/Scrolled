@@ -37,6 +37,14 @@ interface HoverPopoverProps {
   triggerStyle?: CSSProperties;
   /** Extra attributes for the trigger span — typically `data-*` or `aria-*`. */
   triggerProps?: Record<string, string | undefined>;
+  /**
+   * Horizontal alignment of the popover relative to the trigger. `start`
+   * (default) anchors the popover's left edge to the trigger's left; `end`
+   * anchors the popover's right edge to the trigger's right, so the card
+   * extends leftward — useful for triggers that sit near the right edge of
+   * the viewport (e.g. infobox values in a right-side aside).
+   */
+  align?: 'start' | 'end';
 }
 
 const POPOVER_HEIGHT_GUESS = 240;
@@ -50,6 +58,7 @@ export function HoverPopover({
   triggerClassName,
   triggerStyle,
   triggerProps,
+  align = 'start',
 }: HoverPopoverProps) {
   const triggerRef = useRef<HTMLSpanElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -58,6 +67,7 @@ export function HoverPopover({
     top: number;
     left: number;
     placement: 'top' | 'bottom';
+    align: 'start' | 'end';
   } | null>(null);
   const showTimer = useRef<number | null>(null);
   const hideTimer = useRef<number | null>(null);
@@ -95,10 +105,15 @@ export function HoverPopover({
       fitsBelow || r.top < POPOVER_HEIGHT_GUESS ? 'bottom' : 'top';
     setCoords({
       top: placement === 'bottom' ? r.bottom + 4 : r.top - 4,
-      left: r.left,
+      // `align="end"` switches to right-edge anchoring — the popover is
+      // then translated by -100% on X so it extends leftward from the
+      // trigger's right edge. Stored separately so the translate logic can
+      // combine with the existing `top`/`bottom` flip on Y.
+      left: align === 'end' ? r.right : r.left,
       placement,
+      align,
     });
-  }, []);
+  }, [align]);
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -145,7 +160,12 @@ export function HoverPopover({
               position: 'fixed',
               top: coords.top,
               left: coords.left,
-              transform: coords.placement === 'top' ? 'translateY(-100%)' : undefined,
+              transform: [
+                coords.align === 'end' ? 'translateX(-100%)' : null,
+                coords.placement === 'top' ? 'translateY(-100%)' : null,
+              ]
+                .filter(Boolean)
+                .join(' ') || undefined,
             }}
             className={cn(
               'border-border bg-card text-card-foreground z-50 rounded-md border p-3 shadow-md',

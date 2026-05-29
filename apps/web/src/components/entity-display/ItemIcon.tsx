@@ -62,7 +62,11 @@ export function ItemIcon({ entity, id, size = 32, className, alt }: Props) {
       width={size}
       height={size}
       alt={alt ?? ''}
-      className={cn('inline-block shrink-0 rounded', className)}
+      // `object-contain` preserves aspect ratio inside the square box; without
+      // it equip sprites — which aren't square — get stretched horizontally to
+      // fill the 28×28 cell. The `width`/`height` attributes still drive the
+      // CSS box dimensions; `object-fit` just controls how the bitmap fills it.
+      className={cn('inline-block shrink-0 rounded object-contain', className)}
       style={{ width: dim, height: dim }}
       onError={(e) => {
         log.warn('img onError', { entity, id, event: e.type });

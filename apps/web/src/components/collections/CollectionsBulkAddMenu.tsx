@@ -103,7 +103,7 @@ export function CollectionsBulkAddMenu({
         disabled={count === 0}
       >
         <BookmarkPlus className="h-3.5 w-3.5" />
-        Add to collection
+        <span className="hidden sm:inline">Add to collection</span>
         <ChevronDown className="h-3.5 w-3.5" />
       </Button>
       <Button type="button" variant="ghost" size="sm" onClick={onClear} disabled={count === 0}>
@@ -122,7 +122,7 @@ export function CollectionsBulkAddMenu({
             role="dialog"
             aria-label="Add to collection"
             style={{ position: 'fixed', top: coords.top, left: coords.left }}
-            className="border-border bg-card text-card-foreground z-50 w-64 rounded-md border shadow-md"
+            className="border-border bg-card text-card-foreground z-50 w-64 max-w-[calc(100vw-1rem)] rounded-md border shadow-md"
           >
             <div className="border-border border-b p-2">
               <div className="relative">

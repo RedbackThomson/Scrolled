@@ -118,7 +118,7 @@ export function PinnedSearchesMenu({ entity, filtersActive }: Props) {
         title="Saved searches for this page"
       >
         <Bookmark className="h-3.5 w-3.5" />
-        Saved Searches
+        <span className="hidden sm:inline">Saved Searches</span>
         {scoped.length > 0 && (
           <span className="text-muted-foreground font-mono text-[10px]">{scoped.length}</span>
         )}
@@ -132,7 +132,7 @@ export function PinnedSearchesMenu({ entity, filtersActive }: Props) {
             role="dialog"
             aria-label="Saved searches"
             style={{ position: 'fixed', top: coords.top, left: coords.left }}
-            className="border-border bg-card text-card-foreground z-50 w-80 rounded-md border shadow-md"
+            className="border-border bg-card text-card-foreground z-50 w-80 max-w-[calc(100vw-1rem)] rounded-md border shadow-md"
             onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="border-border border-b p-2">

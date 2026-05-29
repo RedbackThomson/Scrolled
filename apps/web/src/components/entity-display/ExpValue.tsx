@@ -21,6 +21,9 @@ export function ExpValue({ exp }: { exp: number | null }) {
 
   return (
     <HoverPopover
+      // The EXP value most often sits in a right-side infobox aside, so the
+      // tooltip is right-edge-anchored (extending leftward) to keep it on screen.
+      align="end"
       triggerClassName="decoration-muted-foreground/40 cursor-help underline decoration-dotted underline-offset-2"
       triggerProps={{ tabIndex: '0' }}
       content={

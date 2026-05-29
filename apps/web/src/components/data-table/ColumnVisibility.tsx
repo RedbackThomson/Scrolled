@@ -22,7 +22,7 @@ export function ColumnVisibility<TData>({ table }: ColumnVisibilityProps<TData>)
         style={{ listStyle: 'none' }}
       >
         <Columns3 className="h-4 w-4" />
-        Columns
+        <span className="hidden sm:inline">Columns</span>
       </summary>
       <div className="border-border bg-card text-card-foreground absolute right-0 z-20 mt-1 min-w-[12rem] rounded-md border p-2 shadow-md">
         <div className="text-muted-foreground px-1 pb-1 text-xs uppercase tracking-wide">

@@ -51,3 +51,20 @@ export const defaultSort = { id: 'name', dir: 'asc' } as const satisfies {
   id: string;
   dir: 'asc' | 'desc';
 };
+
+export function mobileCard(row: QuestRecord) {
+  const meta: string[] = [];
+  if (row.parent) meta.push(row.parent);
+  if (row.requiredLevel !== null) meta.push(`req Lv ${row.requiredLevel}`);
+  return (
+    <div className="flex items-center gap-3">
+      <ScrollText className="text-muted-foreground h-8 w-8 shrink-0" aria-hidden />
+      <div className="min-w-0 flex-1">
+        <div className="truncate font-medium">{row.name}</div>
+        {meta.length > 0 && (
+          <div className="text-muted-foreground truncate text-xs">{meta.join(' · ')}</div>
+        )}
+      </div>
+    </div>
+  );
+}

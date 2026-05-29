@@ -5,7 +5,7 @@ import { CollectionsBulkAddMenu } from '@/components/collections';
 import { PinnedSearchesMenu } from '@/components/pinned-searches';
 import { TablePageLayout } from '@/components/layout/TablePageLayout';
 import { getDbClient } from '@/db';
-import { columns, defaultSort, defaultVisible, pinnedColumns } from './QuestsColumns';
+import { columns, defaultSort, defaultVisible, mobileCard, pinnedColumns } from './QuestsColumns';
 
 const DEFAULT_PAGE_SIZE = 50;
 
@@ -65,6 +65,7 @@ export default function Quests() {
         pinnedColumns={pinnedColumns}
         rowLinkTo={(q) => `/quests/${q.id}`}
         getRowId={(q) => String(q.id)}
+        mobileCard={mobileCard}
         emptyMessage="No quests found."
         loading={questsQ.isLoading}
         fetching={questsQ.isFetching && !questsQ.isLoading}

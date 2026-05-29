@@ -13,6 +13,7 @@ import {
 } from '@/components/layout/DetailPageLayout';
 import { EntityIcon } from '@/components/entity-display/EntityIcon';
 import { EntityRow } from '@/components/entity-display/EntityRow';
+import { MapPortalRow } from '@/components/entity-display/MapPortalRow';
 import { ListSortControl } from '@/components/common/ListSortControl';
 import { MapLink } from '@/components/entity-links';
 import { CollectionBadgeStrip } from '@/components/collections';
@@ -345,31 +346,11 @@ export default function MapDetail() {
           }
         >
           {portalsSort.sorted.map((p) => (
-            <li
+            <MapPortalRow
               key={`${p.portalName}-${p.x ?? 0}-${p.y ?? 0}`}
-              className="flex items-center gap-3 px-3 py-1.5 text-sm"
-            >
-              <span className="font-mono text-xs">{p.portalName}</span>
-              <span className="text-muted-foreground">→</span>
-              {p.targetMapId && p.targetMapId !== NO_TARGET ? (
-                <MapLink
-                  id={p.targetMapId}
-                  className="text-primary min-w-0 flex-1 truncate hover:underline"
-                >
-                  {p.targetMapName ?? `Map ${p.targetMapId}`}
-                  {p.targetPortal && (
-                    <span className="text-muted-foreground"> · {p.targetPortal}</span>
-                  )}
-                </MapLink>
-              ) : (
-                <span className="text-muted-foreground italic">no target</span>
-              )}
-              {(p.x !== null || p.y !== null) && (
-                <span className="text-muted-foreground ml-auto shrink-0 font-mono text-xs">
-                  ({p.x ?? '?'}, {p.y ?? '?'})
-                </span>
-              )}
-            </li>
+              portal={p}
+              noTargetId={NO_TARGET}
+            />
           ))}
         </DetailListSection>
       </DetailPageLayout>

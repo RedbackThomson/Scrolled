@@ -262,39 +262,42 @@ export function DataTable<TData>({
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          {onSearchChange && (
-            <div className="relative w-72 max-w-full">
-              <Search className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
-              <input
-                type="search"
-                value={searchValue ?? ''}
-                onChange={(e) => onSearchChange(e.target.value)}
-                placeholder={searchPlaceholder}
-                // Right padding makes room for the clear button so a long
-                // query doesn't slide under it. `type="search"` ships its
-                // own native clear in some browsers, but it's inconsistent
-                // and uses the OS chrome rather than our token palette —
-                // override it with `appearance-none` is overkill; the
-                // explicit button below is what the user sees.
-                className="border-input bg-background focus-visible:ring-ring h-9 w-full rounded-md border pl-9 pr-8 text-base focus-visible:outline-none focus-visible:ring-2 sm:text-sm"
-              />
-              {(searchValue ?? '').length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => onSearchChange('')}
-                  aria-label="Clear search"
-                  title="Clear search"
-                  className="text-muted-foreground hover:bg-muted hover:text-foreground absolute right-1.5 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md transition-colors"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
-          )}
-          {toolbarExtra}
-        </div>
+      {/* Selection-active row sits above the search/controls when present so
+       *  bulk-add affordances don't push the main toolbar to wrap. */}
+      {toolbarExtra && <div className="flex flex-wrap items-center gap-2">{toolbarExtra}</div>}
+      <div className="flex flex-wrap items-center gap-2">
+        {onSearchChange && (
+          // `flex-1 min-w-0` lets the search share the row with the right-hand
+          // controls on narrow viewports (shrinking to whatever space remains
+          // after them) while `sm:max-w-xs` keeps it from sprawling on desktop.
+          <div className="relative min-w-0 flex-1 sm:max-w-xs">
+            <Search className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+            <input
+              type="search"
+              value={searchValue ?? ''}
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder={searchPlaceholder}
+              // Right padding makes room for the clear button so a long
+              // query doesn't slide under it. `type="search"` ships its
+              // own native clear in some browsers, but it's inconsistent
+              // and uses the OS chrome rather than our token palette —
+              // override it with `appearance-none` is overkill; the
+              // explicit button below is what the user sees.
+              className="border-input bg-background focus-visible:ring-ring h-9 w-full rounded-md border pl-9 pr-8 text-base focus-visible:outline-none focus-visible:ring-2 sm:text-sm"
+            />
+            {(searchValue ?? '').length > 0 && (
+              <button
+                type="button"
+                onClick={() => onSearchChange('')}
+                aria-label="Clear search"
+                title="Clear search"
+                className="text-muted-foreground hover:bg-muted hover:text-foreground absolute right-1.5 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md transition-colors"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        )}
         <div className="flex flex-wrap items-center gap-2">
           {toolbarRightExtra}
           {isMobile && mobileCard && (

@@ -438,7 +438,7 @@ function RunCard({ dataset: d }: { dataset: DatasetRecord }) {
   return (
     <li className="border-border rounded-md border">
       <details className="group">
-        <summary className="hover:bg-accent/40 flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm">
+        <summary className="hover:bg-accent/40 flex cursor-pointer flex-wrap items-center gap-2 rounded-md px-3 py-2 text-sm">
           <ChevronRight className="text-muted-foreground h-3.5 w-3.5 shrink-0 transition-transform group-open:rotate-90" />
           <span className="font-medium">{d.label}</span>
           <span
@@ -450,7 +450,10 @@ function RunCard({ dataset: d }: { dataset: DatasetRecord }) {
             <BadgeIcon className="h-3 w-3" />
             {summary.badge.label}
           </span>
-          <span className="text-muted-foreground ml-auto shrink-0 text-xs">
+          {/* On mobile `basis-full` drops the meta to its own wrapped flex
+           *  line where it has the full row to wrap text across; from md up
+           *  it returns to the right-aligned inline placement. */}
+          <span className="text-muted-foreground basis-full text-xs md:ml-auto md:basis-auto md:text-right">
             {new Date(d.loadedAt).toLocaleString()}
             {d.totalMs !== null && <> · {(d.totalMs / 1000).toFixed(1)}s</>}
             {' · '}
