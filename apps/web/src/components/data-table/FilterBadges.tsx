@@ -16,8 +16,10 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type { ColumnFilter } from '@/db';
 import type { CollectionEntityType } from '@/db/user';
 import { cn } from '@/lib/utils';
-import { collectFilterable, FilterMenu, ValueEditorBody, type FilterableCol } from './FilterMenu';
+import { FilterMenu, ValueEditorBody } from './FilterMenu';
 import { SaveSearchPrompt } from './SaveSearchPrompt';
+import type { FilterableCol } from './Filterable';
+import { collectFilterable } from './Filterable';
 
 interface FilterBadgesProps<TData> {
   columns: ColumnDef<TData>[];
@@ -55,12 +57,7 @@ export function FilterBadges<TData>({
     <div className="flex flex-wrap items-center gap-2">
       <div className="flex flex-wrap items-center gap-1.5">
         {active.map(({ col, filter }) => (
-          <Badge
-            key={col.id}
-            col={col}
-            filter={filter!}
-            onChange={onChange}
-          />
+          <Badge key={col.id} col={col} filter={filter!} onChange={onChange} />
         ))}
         <FilterMenu
           columns={columns}
@@ -173,7 +170,10 @@ function badgeSummary(col: FilterableCol, filter: ColumnFilter): Summary {
   if (filter.kind === 'enum') {
     const labels = filter.values.map((v) => col.enumLabel?.(v) ?? v);
     if (labels.length <= MAX_BADGE_VALUES) {
-      return { connector: filter.values.length === 1 ? 'is' : 'is any of', value: labels.join(', ') };
+      return {
+        connector: filter.values.length === 1 ? 'is' : 'is any of',
+        value: labels.join(', '),
+      };
     }
     const shown = labels.slice(0, MAX_BADGE_VALUES).join(', ');
     return { connector: 'is any of', value: `${shown}, +${labels.length - MAX_BADGE_VALUES} more` };

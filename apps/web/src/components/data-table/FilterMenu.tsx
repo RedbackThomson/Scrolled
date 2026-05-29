@@ -23,12 +23,19 @@ import { createPortal } from 'react-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useHotkey } from '@tanstack/react-hotkeys';
 import { ArrowLeft, Check, Filter, ListFilter, Plus } from 'lucide-react';
-import { Command, CommandInput, CommandList, CommandItem, CommandEmpty } from '@/components/ui/command';
+import {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandItem,
+  CommandEmpty,
+} from '@/components/ui/command';
 import { Button } from '@/components/ui/button';
 import { usePopover } from '@/hooks/usePopover';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import type { ColumnFilter } from '@/db';
 import { cn } from '@/lib/utils';
+import { collectFilterable, type FilterableCol } from './Filterable';
 
 type Variant = 'button' | 'plus';
 
@@ -43,40 +50,6 @@ interface FilterMenuProps<TData> {
   /** Per-enum-column display label for option values. */
   enumLabels?: Record<string, (value: string) => string>;
   variant?: Variant;
-}
-
-interface FilterableCol {
-  id: string;
-  label: string;
-  type: 'string' | 'number' | 'enum' | 'boolean';
-  icon?: React.ComponentType<{ className?: string }>;
-  enumOptions?: readonly string[];
-  enumLabel?: (value: string) => string;
-  booleanLabels?: { trueLabel: string; falseLabel: string };
-}
-
-function collectFilterable<TData>(
-  columns: ColumnDef<TData>[],
-  enumOptions?: Record<string, readonly string[]>,
-  enumLabels?: Record<string, (value: string) => string>,
-): FilterableCol[] {
-  const out: FilterableCol[] = [];
-  for (const col of columns) {
-    const id = col.id;
-    const ftype = col.meta?.filter;
-    if (!id || !ftype) continue;
-    const label = typeof col.header === 'string' && col.header.length > 0 ? col.header : id;
-    out.push({
-      id,
-      label,
-      type: ftype,
-      icon: col.meta?.icon,
-      enumOptions: ftype === 'enum' ? enumOptions?.[id] : undefined,
-      enumLabel: ftype === 'enum' ? enumLabels?.[id] : undefined,
-      booleanLabels: ftype === 'boolean' ? col.meta?.booleanLabels : undefined,
-    });
-  }
-  return out;
 }
 
 export function FilterMenu<TData>({
@@ -232,9 +205,7 @@ function ColumnStage({
   const applyShortcut = (col: FilterableCol, value: string) => {
     const existing = filters[col.id];
     const current = existing?.kind === 'enum' ? existing.values : [];
-    const next = current.includes(value)
-      ? current.filter((v) => v !== value)
-      : [...current, value];
+    const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
     onChange(col.id, next.length === 0 ? null : { kind: 'enum', values: next });
     onClose();
   };
@@ -325,7 +296,13 @@ function ValueStage({ col, filter, onChange, onBack, onClose }: ValueStageProps)
         )}
         <span className="text-sm font-medium">{col.label}</span>
       </div>
-      <ValueEditorBody col={col} filter={filter} onChange={onChange} onClose={onClose} onBack={onBack} />
+      <ValueEditorBody
+        col={col}
+        filter={filter}
+        onChange={onChange}
+        onClose={onClose}
+        onBack={onBack}
+      />
     </div>
   );
 }
@@ -691,6 +668,3 @@ function FilterHotkey({ onTrigger }: { onTrigger: () => void }) {
   useHotkey('F', () => onTrigger());
   return null;
 }
-
-/** Re-export so FilterBadges can reach into it for inline edit popovers. */
-export { collectFilterable, type FilterableCol };
