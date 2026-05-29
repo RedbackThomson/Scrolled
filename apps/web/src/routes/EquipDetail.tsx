@@ -24,7 +24,7 @@ import { getDbClient } from '@/db';
 import { useFeatures } from '@/hooks/useFeatures';
 import { ABILITY_STAT_FIELDS } from '@/domain/abilityStats';
 import { labelForEquipSlot, labelForEquipType } from '@/domain/equipTypes';
-import { formatEquipJobs, parseReqJob } from '@/domain/equipJobs';
+import { formatEquipJobs, parseEquipReqJob } from '@/domain/equipJobs';
 import { useListSort } from '@/hooks/useListSort';
 import { useServerProfile } from '@/hooks/useServerProfile';
 import { useShowEntityIds } from '@/stores/showEntityIds';
@@ -147,7 +147,7 @@ export default function EquipDetail() {
                 <StatRow key={s.label} label={s.label} value={e[s.required]} />
               ))}
               {e.requiredJob !== null && (
-                <InfoRow label="Class" value={formatEquipJobs(parseReqJob(e.requiredJob))} />
+                <InfoRow label="Class" value={formatEquipJobs(parseEquipReqJob(e.requiredJob))} />
               )}
             </InfoSection>
           )}

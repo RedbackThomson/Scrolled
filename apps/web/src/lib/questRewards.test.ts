@@ -67,9 +67,10 @@ describe('rewardMatchesCharacter', () => {
     ).toBe(true);
   });
 
-  it('respects job bitfield restrictions', () => {
-    // job bitfield 1 = Warrior only.
-    const reward = item(0, 100, { job: 1 });
+  it('respects job bitfield restrictions (Beginner=1, Pirate=32 reward scheme)', () => {
+    // job bitfield 2 = Warrior only in the reward encoding (shifted left of
+    // the equip 1=Warrior). See parseRewardJob in domain/equipJobs.ts.
+    const reward = item(0, 100, { job: 2 });
     expect(rewardMatchesCharacter(reward, { job: 'Warrior', gender: null })).toBe(true);
     expect(rewardMatchesCharacter(reward, { job: 'Magician', gender: null })).toBe(false);
   });
@@ -81,8 +82,22 @@ describe('rewardMatchesCharacter', () => {
     expect(rewardMatchesCharacter(b, { job: 'Pirate', gender: null })).toBe(true);
   });
 
-  it('excludes Beginner from any restricted job-set', () => {
-    const reward = item(0, 100, { job: 1 | 2 | 4 | 8 | 16 });
+  it('matches Beginner only when bit 1 is set; bit 32 is Pirate in this scheme', () => {
+    const beginnerOnly = item(0, 100, { job: 1 });
+    expect(rewardMatchesCharacter(beginnerOnly, { job: 'Beginner', gender: null })).toBe(true);
+    expect(rewardMatchesCharacter(beginnerOnly, { job: 'Warrior', gender: null })).toBe(false);
+
+    // 32 is Pirate (King Pirate accessory, etc.), not Beginner.
+    const pirateOnly = item(1, 200, { job: 32 });
+    expect(rewardMatchesCharacter(pirateOnly, { job: 'Pirate', gender: null })).toBe(true);
+    expect(rewardMatchesCharacter(pirateOnly, { job: 'Beginner', gender: null })).toBe(false);
+  });
+
+  it('matches a multi-class reward for every class whose bit is set', () => {
+    // 2|4|8|16|32 = Warrior+Magician+Bowman+Thief+Pirate (everyone but Beginner).
+    const reward = item(0, 100, { job: 2 | 4 | 8 | 16 | 32 });
+    expect(rewardMatchesCharacter(reward, { job: 'Warrior', gender: null })).toBe(true);
+    expect(rewardMatchesCharacter(reward, { job: 'Pirate', gender: null })).toBe(true);
     expect(rewardMatchesCharacter(reward, { job: 'Beginner', gender: null })).toBe(false);
   });
 
@@ -115,18 +130,18 @@ describe('filterGroupedRewards', () => {
   });
 
   it('drops a pool entirely when no member matches the filter', () => {
-    // job 1 = Warrior. Filtering as Magician should empty the pool.
+    // job 2 = Warrior in the reward scheme.
     const groups = groupItemRewards([
-      item(0, 100, { prop: 50, job: 1 }),
-      item(1, 101, { prop: 50, job: 1 }),
+      item(0, 100, { prop: 50, job: 2 }),
+      item(1, 101, { prop: 50, job: 2 }),
     ]);
     expect(filterGroupedRewards(groups, { job: 'Magician', gender: null })).toEqual([]);
   });
 
   it('recomputes pool weights after filtering survivors', () => {
     const groups = groupItemRewards([
-      item(0, 100, { prop: 25, job: 1 }), // Warrior only
-      item(1, 101, { prop: 75, job: 2 }), // Magician only
+      item(0, 100, { prop: 25, job: 2 }), // Warrior only
+      item(1, 101, { prop: 75, job: 4 }), // Magician only
     ]);
     const filtered = filterGroupedRewards(groups, { job: 'Warrior', gender: null });
     expect(filtered).toHaveLength(1);
@@ -138,7 +153,7 @@ describe('filterGroupedRewards', () => {
 
   it('removes guaranteed items that fail the filter', () => {
     const groups = groupItemRewards([
-      item(0, 100, { job: 1 }), // Warrior only
+      item(0, 100, { job: 2 }), // Warrior only
       item(1, 101), // any
     ]);
     const filtered = filterGroupedRewards(groups, { job: 'Bowman', gender: null });

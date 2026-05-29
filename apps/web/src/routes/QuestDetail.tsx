@@ -42,7 +42,7 @@ import { useFeatures } from '@/hooks/useFeatures';
 import { useShowEntityIds } from '@/stores/showEntityIds';
 import { useCharacterPreferences } from '@/stores/characterPreferences';
 import { formatDurationSeconds } from '@/lib/duration';
-import { parseReqJob, formatEquipJobs, isAnyClass } from '@/domain/equipJobs';
+import { parseRewardJob, formatEquipJobs, isAnyClass } from '@/domain/equipJobs';
 import {
   filterGroupedRewards,
   groupItemRewards,
@@ -600,7 +600,7 @@ function RewardBadges({
 }) {
   const badges: React.ReactNode[] = [];
   if (reward.job !== null && reward.job !== 0) {
-    const classes = parseReqJob(reward.job);
+    const classes = parseRewardJob(reward.job);
     if (!omitJobIfImpliedByAny || !isAnyClass(classes)) {
       badges.push(
         <Badge key="job" tone="emerald" title={`Restricted to ${formatEquipJobs(classes)}`}>

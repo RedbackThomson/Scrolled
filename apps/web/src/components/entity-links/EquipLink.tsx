@@ -7,7 +7,7 @@ import { HoverCardSaveFooter } from '@/components/collections';
 import { getDbClient } from '@/db';
 import { useShowEntityIds } from '@/stores/showEntityIds';
 import { labelForEquipSlot, labelForEquipType } from '@/domain/equipTypes';
-import { formatEquipJobs, isAnyClass, parseReqJob } from '@/domain/equipJobs';
+import { formatEquipJobs, isAnyClass, parseEquipReqJob } from '@/domain/equipJobs';
 
 interface EquipLinkProps {
   id: number;
@@ -60,7 +60,7 @@ function EquipHoverCard({ id }: { id: number }) {
     { label: 'Def', value: e.defense },
     { label: 'M.Def', value: e.magicDefense },
   ].filter((s) => s.value !== null && s.value !== 0) as { label: string; value: number }[];
-  const jobs = e.requiredJob !== null ? parseReqJob(e.requiredJob) : null;
+  const jobs = e.requiredJob !== null ? parseEquipReqJob(e.requiredJob) : null;
 
   return (
     <div className="w-72 max-w-[calc(100vw-1rem)] space-y-1.5">

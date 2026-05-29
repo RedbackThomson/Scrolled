@@ -16,7 +16,7 @@ import { EquipLink } from '@/components/entity-links';
 import type { EquipRecord } from '@/db';
 import { ABILITY_STAT_FIELDS } from '@/domain/abilityStats';
 import { labelForEquipSlot } from '@/domain/equipTypes';
-import { isAnyClass, parseReqJob } from '@/domain/equipJobs';
+import { isAnyClass, parseEquipReqJob } from '@/domain/equipJobs';
 
 const num = (v: number | null) => (v === null ? '—' : v.toLocaleString());
 
@@ -109,7 +109,7 @@ export const columns: ColumnDef<EquipRecord>[] = [
     enableSorting: false,
     meta: { filter: 'enum', icon: Users },
     cell: ({ row }) => {
-      const jobs = parseReqJob(row.original.requiredJob);
+      const jobs = parseEquipReqJob(row.original.requiredJob);
       if (isAnyClass(jobs)) {
         return <span className="text-muted-foreground text-xs">Any</span>;
       }

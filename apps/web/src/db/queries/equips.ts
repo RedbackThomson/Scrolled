@@ -224,9 +224,10 @@ export function listEquipSlotCounts(sql: Sqlite, limit = 6): CategoryCount[] {
 /**
  * Equip count grouped into exclusive class buckets — mirrors EquipJobBucket.
  *
- * Bit layout in `required_job`:
+ * Layout in `required_job`:
  *   Warrior=1, Magician=2, Bowman=4, Thief=8, Pirate=16.
  *   0 or NULL = no class restriction ("any").
+ *   -1        = Beginner-only sentinel (no dedicated bit).
  *
  * The buckets are mutually exclusive so the donut sums to the total equip
  * count: an equip restricted to exactly one class lands in that class's
@@ -240,6 +241,7 @@ export function listEquipJobCounts(sql: Sqlite): EquipJobCount[] {
     bowman_n: number;
     thief_n: number;
     pirate_n: number;
+    beginner_n: number;
     multi_n: number;
   }>(`
     SELECT
@@ -249,8 +251,9 @@ export function listEquipJobCounts(sql: Sqlite): EquipJobCount[] {
       SUM(CASE WHEN required_job = 4  THEN 1 ELSE 0 END) AS bowman_n,
       SUM(CASE WHEN required_job = 8  THEN 1 ELSE 0 END) AS thief_n,
       SUM(CASE WHEN required_job = 16 THEN 1 ELSE 0 END) AS pirate_n,
+      SUM(CASE WHEN required_job = -1 THEN 1 ELSE 0 END) AS beginner_n,
       SUM(CASE WHEN required_job IS NOT NULL
-                AND required_job NOT IN (0, 1, 2, 4, 8, 16) THEN 1 ELSE 0 END) AS multi_n
+                AND required_job NOT IN (-1, 0, 1, 2, 4, 8, 16) THEN 1 ELSE 0 END) AS multi_n
     FROM equips
   `);
   return [
@@ -260,6 +263,7 @@ export function listEquipJobCounts(sql: Sqlite): EquipJobCount[] {
     { job: 'bowman', count: Number(row?.bowman_n ?? 0) },
     { job: 'thief', count: Number(row?.thief_n ?? 0) },
     { job: 'pirate', count: Number(row?.pirate_n ?? 0) },
+    { job: 'beginner', count: Number(row?.beginner_n ?? 0) },
     { job: 'multi', count: Number(row?.multi_n ?? 0) },
   ];
 }

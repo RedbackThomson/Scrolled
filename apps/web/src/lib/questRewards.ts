@@ -15,14 +15,17 @@
 // whatever the WZ author wanted (often but not always 100).
 //
 // Filtering by character preference happens at the *item* level. A scalar
-// reward isn't class- or gender-locked, so it always passes. An item is
-// kept when:
-//   - job  is null/0           (no restriction), OR the user's class bit is set
-//   - gender is null/2         (no restriction), OR matches the user's gender
+// reward isn't class- or gender-locked, so it always passes. Class matching
+// runs through `parseRewardJob` — the reward `job` field uses the shifted
+// bit scheme (Beginner=1, Pirate=32), distinct from the equip side; routing
+// through the parser keeps the call site agnostic to that detail.
+//   - job    null/0          → any class; user always matches
+//   - gender null/2          → any gender; user always matches
+//   - gender 0/1             → must match the user's gender code
 // If filtering removes every item from a random pool, the pool itself
 // disappears too — the user would never see any of those rewards.
 
-import { EQUIP_CLASS_BIT, type EquipClass } from '@/domain/equipJobs';
+import { parseRewardJob, type EquipClass } from '@/domain/equipJobs';
 import type { Gender } from '@/stores/characterPreferences';
 import type { QuestRewardWithName } from '@/db';
 
@@ -89,13 +92,11 @@ export function rewardMatchesCharacter(
   filter: CharacterFilter,
 ): boolean {
   if (filter.job !== null) {
-    const requiredBitfield = reward.job ?? 0;
-    if (requiredBitfield !== 0) {
-      const userBit = EQUIP_CLASS_BIT[filter.job];
-      // Beginner has bit 0; only matches "no restriction", which the
-      // outer guard already accepts. With a bitfield set, Beginner is out.
-      if (userBit === 0 || (requiredBitfield & userBit) === 0) return false;
-    }
+    // parseRewardJob returns every class for an unrestricted reward (job
+    // null/0) and the matching subset otherwise. The filter accepts the
+    // reward iff the user's class is in that subset.
+    const allowed = parseRewardJob(reward.job);
+    if (!allowed.includes(filter.job)) return false;
   }
   if (filter.gender !== null) {
     const g = reward.gender;

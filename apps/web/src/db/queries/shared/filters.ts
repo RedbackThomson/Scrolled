@@ -1,4 +1,8 @@
-import { EQUIP_CLASS_BIT, type EquipClass } from '@/domain/equipJobs';
+import {
+  BEGINNER_EQUIP_REQ_JOB,
+  EQUIP_REQ_JOB_BIT,
+  type EquipClass,
+} from '@/domain/equipJobs';
 import { ELEMENT_CODE_BY_NAME, LEVEL_BY_STATUS, type ElementStatus } from '@/domain/mobElements';
 import type { ColumnFilter } from '../../types';
 
@@ -206,39 +210,41 @@ export function applyFilters(
       where.push(`${spec.col} LIKE ? ESCAPE '\\'`);
       params.push(`%${esc}%`);
     } else if (spec.type === 'classMask' && filter.kind === 'enum' && filter.values.length > 0) {
-      // OR the per-value class bits. Beginner has no dedicated reqJob
-      // bit — Beginner-wearable means "unrestricted" — so it pulls in
-      // the IS NULL / = 0 patterns. Every other class requires its bit
-      // to be explicitly set; unrestricted gear is technically wearable
-      // by everyone but treating it that way drowns the filter in
-      // generic items, so the filter UX scopes to class-locked gear.
+      // Beginner-only equips use the sentinel value -1 (Frozen Tuna et al.);
+      // the other five classes are positive bits in EQUIP_REQ_JOB_BIT. We OR
+      // those positive bits into one mask and, if Beginner was picked too,
+      // add the sentinel check as an alternate condition. Unrestricted gear
+      // (reqJob IS NULL / = 0) is intentionally excluded — the filter UX
+      // scopes to class-locked gear so generic items don't drown the result.
       let combined = 0;
-      let allowUnrestricted = false;
+      let includeBeginner = false;
       for (const v of filter.values) {
-        const bit = EQUIP_CLASS_BIT[v as EquipClass];
+        if (v === 'Beginner') {
+          includeBeginner = true;
+          continue;
+        }
+        const bit = EQUIP_REQ_JOB_BIT[v as Exclude<EquipClass, 'Beginner'>];
         if (bit === undefined) continue;
-        if (bit === 0) allowUnrestricted = true;
-        else combined |= bit;
+        combined |= bit;
       }
       const parts: string[] = [];
-      if (allowUnrestricted) {
-        parts.push(`${spec.col} IS NULL`, `${spec.col} = 0`);
-      }
       if (combined !== 0) {
         parts.push(`(${spec.col} & ?) != 0`);
         params.push(combined);
       }
+      if (includeBeginner) {
+        parts.push(`${spec.col} = ?`);
+        params.push(BEGINNER_EQUIP_REQ_JOB);
+      }
       if (parts.length === 0) continue;
       where.push(`(${parts.join(' OR ')})`);
     } else if (spec.type === 'classMask' && filter.kind === 'string' && filter.value) {
-      const bit = EQUIP_CLASS_BIT[filter.value as EquipClass];
-      if (bit === undefined) continue;
-      // Beginner-wearable means unrestricted (no Beginner bit); for any
-      // other class the filter restricts to gear with that class bit
-      // explicitly set. See the enum branch above for the rationale.
-      if (bit === 0) {
-        where.push(`(${spec.col} IS NULL OR ${spec.col} = 0)`);
+      if (filter.value === 'Beginner') {
+        where.push(`${spec.col} = ?`);
+        params.push(BEGINNER_EQUIP_REQ_JOB);
       } else {
+        const bit = EQUIP_REQ_JOB_BIT[filter.value as Exclude<EquipClass, 'Beginner'>];
+        if (bit === undefined) continue;
         where.push(`(${spec.col} & ?) != 0`);
         params.push(bit);
       }

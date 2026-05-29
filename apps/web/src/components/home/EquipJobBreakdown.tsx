@@ -24,6 +24,7 @@ const BUCKET_LABEL: Record<EquipJobBucket, string> = {
   bowman: 'Bowman only',
   thief: 'Thief only',
   pirate: 'Pirate only',
+  beginner: 'Beginner only',
   multi: 'Multi-class',
 };
 
@@ -36,6 +37,7 @@ const BUCKET_COLOR: Record<EquipJobBucket, string> = {
   bowman: '#16a34a', // green-600
   thief: '#a16207', // amber-700
   pirate: '#0891b2', // cyan-600
+  beginner: '#64748b', // slate-500
   multi: 'hsl(var(--primary))',
 };
 
@@ -113,7 +115,7 @@ export function EquipJobBreakdown({ features }: { features: Features }) {
         <div className="border-border mt-3 border-t pt-3">
           <p className="text-muted-foreground mb-1.5 text-xs">Browse equips by class:</p>
           <ul className="flex flex-wrap gap-1.5">
-            {ALL_EQUIP_CLASSES.filter((c) => c !== 'Beginner').map((cls) => (
+            {ALL_EQUIP_CLASSES.map((cls) => (
               <li key={cls}>
                 <Link
                   to={`/equips?f_requiredJob=${cls}`}

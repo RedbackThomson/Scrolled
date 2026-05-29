@@ -778,6 +778,7 @@ export type EquipJobBucket =
   | 'bowman'
   | 'thief'
   | 'pirate'
+  | 'beginner'
   | 'multi';
 
 export interface EquipJobCount {
