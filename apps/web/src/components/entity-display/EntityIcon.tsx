@@ -41,8 +41,11 @@ export function EntityIcon({
   const url = useIcon({ entity, id });
   const [imgError, setImgError] = useState(false);
   const dim = `${size}px`;
+  // `min(N, 100%)` keeps the icon's max width clamped to its parent on narrow
+  // viewports — minimaps with a 480px cap on the map detail page would
+  // otherwise push the page wider than a phone viewport.
   const boxStyle = fit
-    ? { maxWidth: `${fit.maxWidth}px`, maxHeight: `${fit.maxHeight}px` }
+    ? { maxWidth: `min(${fit.maxWidth}px, 100%)`, maxHeight: `${fit.maxHeight}px` }
     : { width: dim, height: dim };
 
   // `fit` containers stretch to fill their parent up to a cap, so they should

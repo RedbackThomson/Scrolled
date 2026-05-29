@@ -39,23 +39,38 @@ export function EntityRow({
   className,
 }: Props) {
   const displayName = name ?? `${ENTITY_LABEL[entity]} #${id}`;
-  const linkClass = 'flex min-w-0 items-center gap-3';
+  const linkClass = 'flex min-w-0 flex-1 items-center gap-3';
+  const showRightBlock = meta != null || !hideId;
   const body = (
     <>
       <EntityAvatar entity={entity} id={id} alt={typeof name === 'string' ? name : undefined} />
-      <span className="min-w-0 truncate">
-        {name ? displayName : <span className="text-muted-foreground italic">{displayName}</span>}
-        {subtitle && <span className="text-muted-foreground"> · {subtitle}</span>}
-      </span>
+      <div className="min-w-0 flex-1">
+        <div className="truncate">
+          {name ? (
+            displayName
+          ) : (
+            <span className="text-muted-foreground italic">{displayName}</span>
+          )}
+          {subtitle && <span className="text-muted-foreground"> · {subtitle}</span>}
+        </div>
+        {/* Phone viewports don't have room for a right-aligned meta block, so
+         *  stack meta + id under the name. Hidden from md up — the desktop
+         *  right block below renders them inline instead. */}
+        {showRightBlock && (
+          <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-2 text-xs md:hidden">
+            {meta != null && <span>{meta}</span>}
+            {!hideId && <span className="font-mono">{id}</span>}
+          </div>
+        )}
+      </div>
     </>
   );
-
-  const showRightBlock = meta != null || !hideId;
 
   return (
     <li
       className={cn(
-        'group flex items-center gap-3 px-3 py-1.5 text-sm',
+        // Slightly taller hit area on touch so rows meet the iOS 44 px guideline.
+        'group flex min-h-[44px] items-center gap-3 px-3 py-2 text-sm md:min-h-0 md:py-1.5',
         linkable && 'hover:bg-accent',
         className,
       )}
@@ -69,7 +84,7 @@ export function EntityRow({
       )}
       {trailing && <div className="flex shrink-0 items-center gap-2">{trailing}</div>}
       {showRightBlock && (
-        <div className="text-muted-foreground ml-auto flex shrink-0 items-center gap-3 text-xs">
+        <div className="text-muted-foreground ml-auto hidden shrink-0 items-center gap-3 text-xs md:flex">
           {meta != null && <span>{meta}</span>}
           {!hideId && <span className="font-mono">{id}</span>}
         </div>
