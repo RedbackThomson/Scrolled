@@ -656,4 +656,40 @@ export const MIGRATIONS: readonly Migration[] = [
       ALTER TABLE quests ADD COLUMN repeat_wait INTEGER;
     `,
   },
+  {
+    version: 23,
+    name: 'quest reward variants (prop / job / gender / period)',
+    sql: `
+      -- The WZ Act.img reward node carries per-entry metadata we previously
+      -- collapsed into (kind, target_id, amount):
+      --   prop    weighted-random pool entry (absent = guaranteed)
+      --   job     job-restriction bitfield, same convention as equips.reqJob
+      --   gender  0 = male, 1 = female, 2 = any (absent = any)
+      --   period  expiration in minutes (absent = permanent)
+      -- The kind set also widens from {item,exp,meso} to include sp, fame,
+      -- buff (buffItemID), and skill so non-item rewards stop disappearing.
+      --
+      -- The old PK (quest_id, kind, target_id) lost ordering and couldn't
+      -- distinguish job-locked variants that share a target_id, so the
+      -- table is rebuilt with an explicit child-index column. For non-item
+      -- kinds (exp/meso/sp/fame) there's only one row per kind and idx=0.
+      --
+      -- Ships as a breaking data-revision bump; the destructive reset
+      -- empties the table before this runs, so the schema is written clean.
+      DROP TABLE quest_rewards;
+      CREATE TABLE quest_rewards (
+        quest_id  INTEGER NOT NULL,
+        kind      TEXT NOT NULL,
+        idx       INTEGER NOT NULL,
+        target_id INTEGER,
+        amount    INTEGER,
+        prop      INTEGER,
+        job       INTEGER,
+        gender    INTEGER,
+        period    INTEGER,
+        PRIMARY KEY (quest_id, kind, idx)
+      );
+      CREATE INDEX quest_rewards_target_idx ON quest_rewards (kind, target_id);
+    `,
+  },
 ];

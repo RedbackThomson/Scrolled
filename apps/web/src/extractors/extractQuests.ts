@@ -178,16 +178,33 @@ export async function extractQuests(
 
     // -- Act.img/<id>/1 (completion rewards) ----------------------------
     const actEndPath = `Quest.wz/Act.img/${id}/1`;
-    const [expN, mesoN] = await Promise.all([
+    const [expN, mesoN, spN, fameN, buffN, skillN] = await Promise.all([
       pathToNumber(source, `${actEndPath}/exp`),
       // The game files use either `money` or `meso` depending on era.
       pickFirstNumber(source, [`${actEndPath}/money`, `${actEndPath}/meso`]),
+      pathToNumber(source, `${actEndPath}/sp`),
+      // `pop` is the WZ key for fame.
+      pathToNumber(source, `${actEndPath}/pop`),
+      pathToNumber(source, `${actEndPath}/buffItemID`),
+      pathToNumber(source, `${actEndPath}/skill`),
     ]);
     if (expN !== null && expN !== 0) {
-      rewards.push({ questId: id, kind: 'exp', targetId: null, amount: expN });
+      rewards.push(scalarReward(id, 'exp', expN));
     }
     if (mesoN !== null && mesoN !== 0) {
-      rewards.push({ questId: id, kind: 'meso', targetId: null, amount: mesoN });
+      rewards.push(scalarReward(id, 'meso', mesoN));
+    }
+    if (spN !== null && spN !== 0) {
+      rewards.push(scalarReward(id, 'sp', spN));
+    }
+    if (fameN !== null && fameN !== 0) {
+      rewards.push(scalarReward(id, 'fame', fameN));
+    }
+    if (buffN !== null) {
+      rewards.push(targetReward(id, 'buff', buffN));
+    }
+    if (skillN !== null) {
+      rewards.push(targetReward(id, 'skill', skillN));
     }
     await collectItemRewards(source, `${actEndPath}/item`, id, rewards);
 
@@ -308,9 +325,18 @@ async function collectItemRewards(
 ): Promise<void> {
   const children = await source.listChildren(basePath);
   for (const c of children) {
-    const [idNode, countNode] = await Promise.all([
+    // The WZ child name is a numeric index; preserve it so the UI can
+    // group consecutive prop-bearing siblings into one random-reward pool
+    // in the same order they appear in the game files.
+    const idx = Number(c.name);
+    if (!Number.isFinite(idx)) continue;
+    const [idNode, countNode, propNode, jobNode, genderNode, periodNode] = await Promise.all([
       source.getNode(`${c.fullPath}/id`),
       source.getNode(`${c.fullPath}/count`),
+      source.getNode(`${c.fullPath}/prop`),
+      source.getNode(`${c.fullPath}/job`),
+      source.getNode(`${c.fullPath}/gender`),
+      source.getNode(`${c.fullPath}/period`),
     ]);
     const targetId = scalarToNumber(idNode?.scalar);
     if (targetId === null) continue;
@@ -319,8 +345,56 @@ async function collectItemRewards(
     // requirements expressed in reward shape; skip here since the Check.img
     // pass already covered consumable requirements.
     if (amount !== null && amount < 0) continue;
-    out.push({ questId, kind: 'item', targetId, amount });
+    out.push({
+      questId,
+      kind: 'item',
+      idx,
+      targetId,
+      amount,
+      prop: scalarToNumber(propNode?.scalar),
+      job: scalarToNumber(jobNode?.scalar),
+      gender: scalarToNumber(genderNode?.scalar),
+      period: scalarToNumber(periodNode?.scalar),
+    });
   }
+}
+
+/** Build a scalar reward row (exp, meso, sp, fame). targetId is null. */
+function scalarReward(
+  questId: number,
+  kind: 'exp' | 'meso' | 'sp' | 'fame',
+  amount: number,
+): QuestRewardRecord {
+  return {
+    questId,
+    kind,
+    idx: 0,
+    targetId: null,
+    amount,
+    prop: null,
+    job: null,
+    gender: null,
+    period: null,
+  };
+}
+
+/** Build a reward row whose payload is a target id (buff itemId, skill id). */
+function targetReward(
+  questId: number,
+  kind: 'buff' | 'skill',
+  targetId: number,
+): QuestRewardRecord {
+  return {
+    questId,
+    kind,
+    idx: 0,
+    targetId,
+    amount: null,
+    prop: null,
+    job: null,
+    gender: null,
+    period: null,
+  };
 }
 
 async function pickFirstNumber(source: GameDataSource, paths: string[]): Promise<number | null> {

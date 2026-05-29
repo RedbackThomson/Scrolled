@@ -271,15 +271,35 @@ export interface QuestRequirementRecord {
 /**
  * One reward row attached to a quest. `kind`:
  *
- *   - `item` — give `amount` of item `targetId`
- *   - `exp`  — `amount` exp (targetId null)
- *   - `meso` — `amount` mesos (targetId null)
+ *   - `item`  — give `amount` of item `targetId`
+ *   - `exp`   — `amount` exp (targetId null)
+ *   - `meso`  — `amount` mesos (targetId null)
+ *   - `sp`    — `amount` skill points (targetId null)
+ *   - `fame`  — `amount` fame, aka "pop" (targetId null)
+ *   - `buff`  — apply buff itemId (targetId = buff itemId, amount null)
+ *   - `skill` — grant skill (targetId = skill id, amount null)
+ *
+ * `idx` is the WZ child index for `item` rows (so two job-locked variants
+ * sharing a `targetId` can both persist and stable-sort by position). For
+ * non-item kinds there's only one row per kind and idx is 0.
+ *
+ * `prop`, `job`, `gender`, `period` only ever populate on `item` rows.
+ * They mirror the WZ fields verbatim:
+ *   - `prop`    weight in a random-reward pool (null = guaranteed)
+ *   - `job`     job-restriction bitfield (null/0 = any job)
+ *   - `gender`  0 = male, 1 = female (null or 2 = any)
+ *   - `period`  expiration in minutes (null = permanent)
  */
 export interface QuestRewardRecord {
   questId: number;
-  kind: 'item' | 'exp' | 'meso';
+  kind: 'item' | 'exp' | 'meso' | 'sp' | 'fame' | 'buff' | 'skill';
+  idx: number;
   targetId: number | null;
   amount: number | null;
+  prop: number | null;
+  job: number | null;
+  gender: number | null;
+  period: number | null;
 }
 
 /** A row from `quest_requirements` joined to the target item/mob/quest's

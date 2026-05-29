@@ -173,12 +173,18 @@ export function getQuestRewards(sql: Sqlite, questId: number): QuestRewardWithNa
     .selectObjects<{
       quest_id: number;
       kind: QuestRewardRecord['kind'];
+      idx: number;
       target_id: number | null;
       amount: number | null;
+      prop: number | null;
+      job: number | null;
+      gender: number | null;
+      period: number | null;
       target_name: string | null;
     }>(
       `SELECT
-         qr.quest_id, qr.kind, qr.target_id, qr.amount,
+         qr.quest_id, qr.kind, qr.idx, qr.target_id, qr.amount,
+         qr.prop, qr.job, qr.gender, qr.period,
          CASE qr.kind
            WHEN 'item' THEN COALESCE(i.name, e.name)
            ELSE NULL
@@ -187,14 +193,19 @@ export function getQuestRewards(sql: Sqlite, questId: number): QuestRewardWithNa
        LEFT JOIN items  i ON qr.kind = 'item' AND i.id = qr.target_id
        LEFT JOIN equips e ON qr.kind = 'item' AND e.id = qr.target_id
        WHERE qr.quest_id = ?
-       ORDER BY qr.kind, qr.target_id`,
+       ORDER BY qr.kind, qr.idx, qr.target_id`,
       [questId],
     )
     .map((r) => ({
       questId: r.quest_id,
       kind: r.kind,
+      idx: r.idx,
       targetId: r.target_id,
       amount: r.amount,
+      prop: r.prop,
+      job: r.job,
+      gender: r.gender,
+      period: r.period,
       targetName: r.target_name,
     }));
 }
@@ -262,9 +273,20 @@ export function replaceQuestRelations(
     }
     for (const r of rows.rewards) {
       sql.exec(
-        `INSERT OR REPLACE INTO quest_rewards (quest_id, kind, target_id, amount)
-         VALUES (?, ?, ?, ?)`,
-        [r.questId, r.kind, r.targetId, r.amount],
+        `INSERT OR REPLACE INTO quest_rewards
+           (quest_id, kind, idx, target_id, amount, prop, job, gender, period)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          r.questId,
+          r.kind,
+          r.idx,
+          r.targetId,
+          r.amount,
+          r.prop,
+          r.job,
+          r.gender,
+          r.period,
+        ],
       );
     }
   });

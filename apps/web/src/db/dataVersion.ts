@@ -13,7 +13,7 @@
 // touching them — they gate data integrity for every existing user.
 
 /** Revision the current build produces when extraction runs. */
-export const CURRENT_DATA_REVISION: number = 4;
+export const CURRENT_DATA_REVISION: number = 5;
 
 /**
  * Lowest revision the current build can still read. Data below this is treated
@@ -21,7 +21,7 @@ export const CURRENT_DATA_REVISION: number = 4;
  * raise this to equal CURRENT_DATA_REVISION; for an additive feature that only
  * needs a refresh, leave it and bump CURRENT_DATA_REVISION alone.
  */
-export const MINIMUM_SUPPORTED_DATA_REVISION: number = 2;
+export const MINIMUM_SUPPORTED_DATA_REVISION: number = 5;
 
 export type DataState =
   /** Cache matches the current build — nothing to do. */
