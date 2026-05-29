@@ -185,9 +185,12 @@ export function applyFilters(
       where.push(`${spec.col} LIKE ? ESCAPE '\\'`);
       params.push(`%${esc}%`);
     } else if (spec.type === 'classMask' && filter.kind === 'enum' && filter.values.length > 0) {
-      // OR the per-value class bits. Bit-0 classes (Beginner) only match
-      // unrestricted equips; non-zero bits also match equips whose bit
-      // is set. Collapse the non-zero bits into a single mask.
+      // OR the per-value class bits. Beginner has no dedicated reqJob
+      // bit — Beginner-wearable means "unrestricted" — so it pulls in
+      // the IS NULL / = 0 patterns. Every other class requires its bit
+      // to be explicitly set; unrestricted gear is technically wearable
+      // by everyone but treating it that way drowns the filter in
+      // generic items, so the filter UX scopes to class-locked gear.
       let combined = 0;
       let allowUnrestricted = false;
       for (const v of filter.values) {
@@ -201,11 +204,6 @@ export function applyFilters(
         parts.push(`${spec.col} IS NULL`, `${spec.col} = 0`);
       }
       if (combined !== 0) {
-        // Equips with no class restriction also match any class request —
-        // mirrors the single-value branch.
-        if (!allowUnrestricted) {
-          parts.push(`${spec.col} IS NULL`, `${spec.col} = 0`);
-        }
         parts.push(`(${spec.col} & ?) != 0`);
         params.push(combined);
       }
@@ -214,13 +212,13 @@ export function applyFilters(
     } else if (spec.type === 'classMask' && filter.kind === 'string' && filter.value) {
       const bit = EQUIP_CLASS_BIT[filter.value as EquipClass];
       if (bit === undefined) continue;
-      // Bit-0 classes (Beginner) have no dedicated reqJob bit; only equips
-      // with no class restriction match them. Non-zero bits match either
-      // an unrestricted equip OR one whose bit is set.
+      // Beginner-wearable means unrestricted (no Beginner bit); for any
+      // other class the filter restricts to gear with that class bit
+      // explicitly set. See the enum branch above for the rationale.
       if (bit === 0) {
         where.push(`(${spec.col} IS NULL OR ${spec.col} = 0)`);
       } else {
-        where.push(`(${spec.col} IS NULL OR ${spec.col} = 0 OR (${spec.col} & ?) != 0)`);
+        where.push(`(${spec.col} & ?) != 0`);
         params.push(bit);
       }
     }
