@@ -3,6 +3,7 @@ import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 import { EntityLink } from '@/components/entity-links';
 import type { EntityKind } from '@/db/types';
 import { cn } from '@/lib/utils';
+import { useShowEntityIds } from '@/stores/showEntityIds';
 
 interface Props {
   entity: EntityKind;
@@ -15,7 +16,9 @@ interface Props {
   meta?: ReactNode;
   /** Sibling content rendered outside the row link (e.g. a "show on map" pin button). */
   trailing?: ReactNode;
-  /** Hide the trailing id badge (default false). */
+  /** Force-hide the trailing id badge regardless of the global preference
+   *  (e.g. on rows whose name already encodes the id). The badge is also
+   *  hidden globally when the user has IDs turned off in Settings. */
   hideId?: boolean;
   /** Render the row as a non-link (e.g. when the matching feature is disabled). Default true. */
   linkable?: boolean;
@@ -38,9 +41,11 @@ export function EntityRow({
   linkable = true,
   className,
 }: Props) {
+  const showIds = useShowEntityIds((s) => s.enabled);
   const displayName = name ?? `${ENTITY_LABEL[entity]} #${id}`;
   const linkClass = 'flex min-w-0 flex-1 items-center gap-3';
-  const showRightBlock = meta != null || !hideId;
+  const idVisible = !hideId && showIds;
+  const showRightBlock = meta != null || idVisible;
   const body = (
     <>
       <EntityAvatar entity={entity} id={id} alt={typeof name === 'string' ? name : undefined} />
@@ -59,7 +64,7 @@ export function EntityRow({
         {showRightBlock && (
           <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-2 text-xs md:hidden">
             {meta != null && <span>{meta}</span>}
-            {!hideId && <span className="font-mono">{id}</span>}
+            {idVisible && <span className="font-mono">{id}</span>}
           </div>
         )}
       </div>
@@ -86,7 +91,7 @@ export function EntityRow({
       {showRightBlock && (
         <div className="text-muted-foreground ml-auto hidden shrink-0 items-center gap-3 text-xs md:flex">
           {meta != null && <span>{meta}</span>}
-          {!hideId && <span className="font-mono">{id}</span>}
+          {idVisible && <span className="font-mono">{id}</span>}
         </div>
       )}
     </li>

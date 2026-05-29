@@ -6,6 +6,7 @@ import { MobHoverCard, NpcHoverCard } from '@/components/entity-links';
 import { HoverPopover } from '@/components/common/HoverPopover';
 import { classifyPortal, type PortalGraph } from '@/domain/portal-types';
 import { cn } from '@/lib/utils';
+import { useShowEntityIds } from '@/stores/showEntityIds';
 import type { LayerVisibility, MapViewerHighlight } from './types';
 import { PortalRow } from './PortalRow';
 import { NO_TARGET, PORTAL_LAYER_LABEL } from './portalDisplay';
@@ -48,6 +49,7 @@ export function MapViewerSidebar({
     return 'npcs';
   });
   const [search, setSearch] = useState('');
+  const showIds = useShowEntityIds((s) => s.enabled);
 
   // Dedupe NPCs / mobs by id, with spawn-position counts.
   const npcRows = useMemo(() => {
@@ -223,7 +225,7 @@ export function MapViewerSidebar({
                 onClick={() => handleSelectNpc(r.id)}
                 onHoverEnter={() => onHover({ kind: 'npc', key: String(r.id) })}
                 onHoverLeave={() => onHover(null)}
-                meta={`#${r.id}`}
+                meta={showIds ? `#${r.id}` : undefined}
                 hoverCard={<NpcHoverCard id={r.id} />}
               />
             ))
@@ -242,7 +244,9 @@ export function MapViewerSidebar({
                 onClick={() => handleSelectMob(r.id)}
                 onHoverEnter={() => onHover({ kind: 'mob', key: String(r.id) })}
                 onHoverLeave={() => onHover(null)}
-                meta={r.level !== null ? `Lv ${r.level}` : `#${r.id}`}
+                meta={
+                  r.level !== null ? `Lv ${r.level}` : showIds ? `#${r.id}` : undefined
+                }
                 hoverCard={<MobHoverCard id={r.id} />}
               />
             ))

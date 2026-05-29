@@ -25,6 +25,7 @@ import { getDbClient } from '@/db';
 import { useFeatures } from '@/hooks/useFeatures';
 import { useListSort } from '@/hooks/useListSort';
 import { useEntitySummaryNames } from '@/hooks/useEntitySummaries';
+import { useShowEntityIds } from '@/stores/showEntityIds';
 
 // Sentinel value the WZ data uses to mean "no map" for return / target fields.
 const NO_TARGET = 999999999;
@@ -36,6 +37,7 @@ export default function MapDetail() {
   const id = Number(params.id);
   const client = useMemo(() => getDbClient(), []);
   const features = useFeatures();
+  const showIds = useShowEntityIds((s) => s.enabled);
 
   const mapQ = useQuery({
     queryKey: ['db', 'map', id],
@@ -164,14 +166,14 @@ export default function MapDetail() {
                 {m.name ?? `Map ${m.id}`}
               </h1>
               {m.streetName && <p className="text-muted-foreground text-sm">{m.streetName}</p>}
-              <p className="text-muted-foreground font-mono text-xs">{m.id}</p>
+              {showIds && <p className="text-muted-foreground font-mono text-xs">{m.id}</p>}
             </div>
           </header>
         }
         aside={
           <>
             <InfoSection title="Info">
-              <InfoRow label="ID" value={String(m.id)} mono />
+              {showIds && <InfoRow label="ID" value={String(m.id)} mono />}
               <InfoRow label="Street" value={m.streetName ?? '—'} />
             </InfoSection>
             {(m.returnMapId !== null || m.forcedReturnMapId !== null) && (

@@ -5,6 +5,7 @@ import { ScrollText } from 'lucide-react';
 import { HoverPopover } from '@/components/common/HoverPopover';
 import { HoverCardSaveFooter } from '@/components/collections';
 import { getDbClient } from '@/db';
+import { useShowEntityIds } from '@/stores/showEntityIds';
 
 interface QuestLinkProps {
   id: number;
@@ -36,6 +37,7 @@ export function QuestLink({
 
 function QuestHoverCard({ id }: { id: number }) {
   const client = useMemo(() => getDbClient(), []);
+  const showIds = useShowEntityIds((s) => s.enabled);
   const questQ = useQuery({
     queryKey: ['db', 'quest', id],
     queryFn: () => client.getQuest(id),
@@ -59,7 +61,9 @@ function QuestHoverCard({ id }: { id: number }) {
         <div className="min-w-0 flex-1 space-y-1.5">
           <div>
             <div className="truncate text-sm font-semibold">{q.name}</div>
-            <div className="text-muted-foreground font-mono text-[10px]">Quest #{id}</div>
+            {showIds && (
+              <div className="text-muted-foreground font-mono text-[10px]">Quest #{id}</div>
+            )}
           </div>
           {(q.parent || q.requiredLevel !== null) && (
             <div className="text-muted-foreground text-[11px]">

@@ -6,6 +6,7 @@ import { EntityIcon } from '@/components/entity-display/EntityIcon';
 import { HoverPopover } from '@/components/common/HoverPopover';
 import { HoverCardSaveFooter } from '@/components/collections';
 import { getDbClient } from '@/db';
+import { useShowEntityIds } from '@/stores/showEntityIds';
 import {
   ELEMENT_GROUP_LABELS,
   ELEMENT_STATUS_CLASSES,
@@ -38,6 +39,7 @@ export function MobLink({ id, children, className, noPreview, triggerClassName }
 
 export function MobHoverCard({ id }: { id: number }) {
   const client = useMemo(() => getDbClient(), []);
+  const showIds = useShowEntityIds((s) => s.enabled);
   const mobQ = useQuery({
     queryKey: ['db', 'mob', id],
     queryFn: () => client.getMob(id),
@@ -75,7 +77,9 @@ export function MobHoverCard({ id }: { id: number }) {
               </span>
             )}
           </div>
-          <div className="text-muted-foreground font-mono text-[10px]">Mob #{id}</div>
+          {showIds && (
+            <div className="text-muted-foreground font-mono text-[10px]">Mob #{id}</div>
+          )}
           <dl className="text-muted-foreground grid grid-cols-3 gap-1 text-[11px]">
             <div>
               <dt className="uppercase tracking-wide">Lv</dt>

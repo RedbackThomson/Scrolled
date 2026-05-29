@@ -9,6 +9,7 @@ import { labelForEquipSlot } from '@/domain/equipTypes';
 import { useRecentQueries } from '@/lib/recents';
 import { useCommandPalette } from '@/stores/useCommandPalette';
 import { useFeatures } from '@/hooks/useFeatures';
+import { useShowEntityIds } from '@/stores/showEntityIds';
 
 const PREFIX_TO_ENTITY: Record<string, EntityKind> = {
   m: 'mob',
@@ -41,6 +42,7 @@ export function GlobalSearchProvider() {
   const features = useFeatures();
   const db = useMemo(() => getDbClient(), []);
   const recentQueries = useRecentQueries();
+  const showIds = useShowEntityIds((s) => s.enabled);
 
   const counts = features.counts;
   const epoch = counts
@@ -121,7 +123,9 @@ export function GlobalSearchProvider() {
           >
             <Icon className="text-muted-foreground h-4 w-4" />
             <span className="min-w-0 flex-1 truncate">{hit.name}</span>
-            <span className="text-muted-foreground shrink-0 font-mono text-xs">{hit.id}</span>
+            {showIds && (
+              <span className="text-muted-foreground shrink-0 font-mono text-xs">{hit.id}</span>
+            )}
             {subtitle && <span className="text-muted-foreground shrink-0 text-xs">{subtitle}</span>}
           </CommandItemPrimitive>
         );

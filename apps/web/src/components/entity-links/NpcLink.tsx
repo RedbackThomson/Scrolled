@@ -7,6 +7,7 @@ import { HoverPopover } from '@/components/common/HoverPopover';
 import { HoverCardSaveFooter } from '@/components/collections';
 import { MapLink } from '@/components/entity-links/MapLink';
 import { getDbClient } from '@/db';
+import { useShowEntityIds } from '@/stores/showEntityIds';
 
 interface NpcLinkProps {
   id: number;
@@ -34,6 +35,7 @@ export function NpcLink({ id, children, className, noPreview, triggerClassName }
 
 export function NpcHoverCard({ id }: { id: number }) {
   const client = useMemo(() => getDbClient(), []);
+  const showIds = useShowEntityIds((s) => s.enabled);
   const npcQ = useQuery({
     queryKey: ['db', 'npc', id],
     queryFn: () => client.getNpc(id),
@@ -66,7 +68,9 @@ export function NpcHoverCard({ id }: { id: number }) {
             >
               {npc.name}
             </Link>
-            <div className="text-muted-foreground font-mono text-[10px]">NPC #{id}</div>
+            {showIds && (
+              <div className="text-muted-foreground font-mono text-[10px]">NPC #{id}</div>
+            )}
           </div>
           {npc.description && (
             <p className="text-muted-foreground line-clamp-2 text-xs">{npc.description}</p>

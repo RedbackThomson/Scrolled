@@ -3,6 +3,7 @@ import { List, Loader2 } from 'lucide-react';
 import { Modal } from '@/components/collections';
 import { buildPortalGraph, classifyPortal } from '@/domain/portal-types';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { useShowEntityIds } from '@/stores/showEntityIds';
 import { MapViewerCanvas } from './MapViewerCanvas';
 import { MapViewerLayerControls } from './MapViewerLayerControls';
 import { MapViewerMobileSheet } from './MapViewerMobileSheet';
@@ -37,6 +38,7 @@ export function MapViewerModal({
 }: MapViewerModalProps) {
   const { map, npcs, portals, mobSpawns, isLoading } = useMapViewerData(mapId, open);
   const isMobile = useIsMobile();
+  const showIds = useShowEntityIds((s) => s.enabled);
 
   const [visible, setVisible] = useState<LayerVisibility>(DEFAULT_VISIBLE);
   // Hover highlight is transient UI state — intentionally NOT in the URL.
@@ -86,7 +88,13 @@ export function MapViewerModal({
     setVisible((v) => (v[key] ? v : { ...v, [key]: true }));
   };
 
-  const title = map ? (map.name ? `${map.name} · ${map.id}` : `Map ${map.id}`) : `Map ${mapId}`;
+  const title = map
+    ? map.name
+      ? showIds
+        ? `${map.name} · ${map.id}`
+        : map.name
+      : `Map ${map.id}`
+    : `Map ${mapId}`;
 
   return (
     <Modal

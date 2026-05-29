@@ -25,6 +25,7 @@ import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/hooks/useFeatures';
 import { useListSort } from '@/hooks/useListSort';
+import { useShowEntityIds } from '@/stores/showEntityIds';
 
 const BACK = { to: '/items', label: 'Back to items' };
 
@@ -33,6 +34,7 @@ export default function ItemDetail() {
   const id = Number(params.id);
   const client = useMemo(() => getDbClient(), []);
   const features = useFeatures();
+  const showIds = useShowEntityIds((s) => s.enabled);
 
   const itemQ = useQuery({
     queryKey: ['db', 'item', id],
@@ -91,7 +93,7 @@ export default function ItemDetail() {
               {item.name}
             </h1>
             <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-1.5 text-xs">
-              <span className="font-mono">{item.id}</span>
+              {showIds && <span className="font-mono">{item.id}</span>}
               {item.subcategory && <Badge tone="slate">{item.subcategory}</Badge>}
               <MetadataFlagBadges flags={item} order={ITEM_FLAG_ORDER} />
             </div>
@@ -101,7 +103,7 @@ export default function ItemDetail() {
       aside={
         <>
           <InfoSection title="Info">
-            <InfoRow label="ID" value={String(item.id)} mono />
+            {showIds && <InfoRow label="ID" value={String(item.id)} mono />}
             <InfoRow label="Category" value={item.category ?? '—'} />
             {item.subcategory && <InfoRow label="Subcategory" value={item.subcategory} />}
           </InfoSection>

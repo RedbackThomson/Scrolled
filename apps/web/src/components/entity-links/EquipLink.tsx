@@ -5,6 +5,7 @@ import { ItemIcon } from '@/components/entity-display/ItemIcon';
 import { HoverPopover } from '@/components/common/HoverPopover';
 import { HoverCardSaveFooter } from '@/components/collections';
 import { getDbClient } from '@/db';
+import { useShowEntityIds } from '@/stores/showEntityIds';
 import { labelForEquipSlot, labelForEquipType } from '@/domain/equipTypes';
 import { formatEquipJobs, isAnyClass, parseReqJob } from '@/domain/equipJobs';
 
@@ -38,6 +39,7 @@ export function EquipLink({
 
 function EquipHoverCard({ id }: { id: number }) {
   const client = useMemo(() => getDbClient(), []);
+  const showIds = useShowEntityIds((s) => s.enabled);
   const equipQ = useQuery({
     queryKey: ['db', 'equip', id],
     queryFn: () => client.getEquip(id),
@@ -67,7 +69,9 @@ function EquipHoverCard({ id }: { id: number }) {
         <div className="min-w-0 flex-1 space-y-1.5">
           <div>
             <div className="truncate text-sm font-semibold">{e.name}</div>
-            <div className="text-muted-foreground font-mono text-[10px]">Equip #{id}</div>
+            {showIds && (
+              <div className="text-muted-foreground font-mono text-[10px]">Equip #{id}</div>
+            )}
           </div>
           {(e.equipType || e.slot || e.requiredLevel !== null) && (
             <div className="text-muted-foreground text-[11px]">

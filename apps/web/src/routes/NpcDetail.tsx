@@ -20,6 +20,7 @@ import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/hooks/useFeatures';
 import { useListSort } from '@/hooks/useListSort';
+import { useShowEntityIds } from '@/stores/showEntityIds';
 
 const BACK = { to: '/npcs', label: 'Back to NPCs' };
 
@@ -28,6 +29,7 @@ export default function NpcDetail() {
   const id = Number(params.id);
   const client = useMemo(() => getDbClient(), []);
   const features = useFeatures();
+  const showIds = useShowEntityIds((s) => s.enabled);
 
   const npcQ = useQuery({
     queryKey: ['db', 'npc', id],
@@ -82,15 +84,17 @@ export default function NpcDetail() {
             <h1 className="break-words text-xl font-semibold tracking-tight md:text-3xl">
               {n.name}
             </h1>
-            <p className="text-muted-foreground font-mono text-xs">{n.id}</p>
+            {showIds && <p className="text-muted-foreground font-mono text-xs">{n.id}</p>}
           </div>
         </header>
       }
       aside={
         <>
-          <InfoSection title="Info">
-            <InfoRow label="ID" value={n.id} mono />
-          </InfoSection>
+          {showIds && (
+            <InfoSection title="Info">
+              <InfoRow label="ID" value={n.id} mono />
+            </InfoSection>
+          )}
           <SourceSection path={n.sourcePath} />
         </>
       }

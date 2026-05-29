@@ -29,6 +29,7 @@ import { labelForEquipSlot, labelForEquipType } from '@/domain/equipTypes';
 import { formatEquipJobs, parseReqJob } from '@/domain/equipJobs';
 import { useListSort } from '@/hooks/useListSort';
 import { useServerProfile } from '@/hooks/useServerProfile';
+import { useShowEntityIds } from '@/stores/showEntityIds';
 import { StatRangeRow, StatRow } from '@/components/entity-display/EquipStatDisplay';
 
 export default function EquipDetail() {
@@ -37,6 +38,7 @@ export default function EquipDetail() {
   const client = useMemo(() => getDbClient(), []);
   const features = useFeatures();
   const serverProfile = useServerProfile();
+  const showIds = useShowEntityIds((s) => s.enabled);
 
   const equipQ = useQuery({
     queryKey: ['db', 'equip', id],
@@ -132,7 +134,7 @@ export default function EquipDetail() {
               {e.name}
             </h1>
             <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-1.5 text-xs">
-              <span className="font-mono">{e.id}</span>
+              {showIds && <span className="font-mono">{e.id}</span>}
               {e.cash && <Badge tone="pink">Cash Shop (cosmetic)</Badge>}
               {e.equipType && <Badge tone="slate">{labelForEquipType(e.equipType)}</Badge>}
               <MetadataFlagBadges flags={e} order={EQUIP_FLAG_ORDER} />
@@ -143,7 +145,7 @@ export default function EquipDetail() {
       aside={
         <>
           <InfoSection title="Info">
-            <InfoRow label="ID" value={String(e.id)} mono />
+            {showIds && <InfoRow label="ID" value={String(e.id)} mono />}
             <InfoRow label="Slot" value={e.slot ? labelForEquipSlot(e.slot) : '—'} />
             {e.equipType && <InfoRow label="Type" value={labelForEquipType(e.equipType)} />}
             <InfoRow label="Source" value={e.cash ? 'Cash shop' : 'In-game'} />

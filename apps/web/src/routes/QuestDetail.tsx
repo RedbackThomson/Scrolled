@@ -21,6 +21,7 @@ import { CollectionBadgeStrip } from '@/components/collections';
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
 import type { CommandItem } from '@/components/command-palette/types';
 import { useFeatures } from '@/hooks/useFeatures';
+import { useShowEntityIds } from '@/stores/showEntityIds';
 
 const BACK = { to: '/quests', label: 'Back to quests' };
 
@@ -29,6 +30,7 @@ export default function QuestDetail() {
   const id = Number(params.id);
   const client = useMemo(() => getDbClient(), []);
   const features = useFeatures();
+  const showIds = useShowEntityIds((s) => s.enabled);
 
   const questQ = useQuery({
     queryKey: ['db', 'quest', id],
@@ -99,14 +101,14 @@ export default function QuestDetail() {
               {q.name}
             </h1>
             {q.parent && <p className="text-muted-foreground text-sm">{q.parent}</p>}
-            <p className="text-muted-foreground font-mono text-xs">{q.id}</p>
+            {showIds && <p className="text-muted-foreground font-mono text-xs">{q.id}</p>}
           </div>
         </header>
       }
       aside={
         <>
           <InfoSection title="Info">
-            <InfoRow label="ID" value={String(q.id)} mono />
+            {showIds && <InfoRow label="ID" value={String(q.id)} mono />}
             <InfoRow label="Area" value={q.parent ?? '—'} />
           </InfoSection>
           {(q.requiredLevel !== null || q.requiredJob !== null) && (
@@ -218,6 +220,7 @@ function NpcRow({
   name: string | null;
   linkable: boolean;
 }) {
+  const showIds = useShowEntityIds((s) => s.enabled);
   const display = name ?? `NPC ${id}`;
   const rowContent = (
     <>
@@ -226,7 +229,9 @@ function NpcRow({
         {label}
       </span>
       <span className="min-w-0 flex-1 truncate">{display}</span>
-      <span className="text-muted-foreground shrink-0 font-mono text-xs">{id}</span>
+      {showIds && (
+        <span className="text-muted-foreground shrink-0 font-mono text-xs">{id}</span>
+      )}
     </>
   );
   return (

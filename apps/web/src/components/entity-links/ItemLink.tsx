@@ -5,6 +5,7 @@ import { ItemIcon } from '@/components/entity-display/ItemIcon';
 import { HoverPopover } from '@/components/common/HoverPopover';
 import { HoverCardSaveFooter } from '@/components/collections';
 import { getDbClient } from '@/db';
+import { useShowEntityIds } from '@/stores/showEntityIds';
 
 interface ItemLinkProps {
   id: number;
@@ -32,6 +33,7 @@ export function ItemLink({ id, children, className, noPreview, triggerClassName 
 
 function ItemHoverCard({ id }: { id: number }) {
   const client = useMemo(() => getDbClient(), []);
+  const showIds = useShowEntityIds((s) => s.enabled);
   const itemQ = useQuery({
     queryKey: ['db', 'item', id],
     queryFn: () => client.getItem(id),
@@ -53,7 +55,9 @@ function ItemHoverCard({ id }: { id: number }) {
         <div className="min-w-0 flex-1 space-y-1.5">
           <div>
             <div className="truncate text-sm font-semibold">{item.name}</div>
-            <div className="text-muted-foreground font-mono text-[10px]">Item #{id}</div>
+            {showIds && (
+              <div className="text-muted-foreground font-mono text-[10px]">Item #{id}</div>
+            )}
           </div>
           {(item.category || item.subcategory) && (
             <div className="text-muted-foreground text-[11px] capitalize">

@@ -22,6 +22,7 @@ import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/hooks/useFeatures';
 import { useListSort } from '@/hooks/useListSort';
+import { useShowEntityIds } from '@/stores/showEntityIds';
 import { MobElementsSection } from '@/components/entity-display/MobElementsSection';
 
 const BACK = { to: '/mobs', label: 'Back to mobs' };
@@ -31,6 +32,7 @@ export default function MobDetail() {
   const id = Number(params.id);
   const client = useMemo(() => getDbClient(), []);
   const features = useFeatures();
+  const showIds = useShowEntityIds((s) => s.enabled);
 
   const mobQ = useQuery({
     queryKey: ['db', 'mob', id],
@@ -105,16 +107,18 @@ export default function MobDetail() {
                 </span>
               )}
             </div>
-            <p className="text-muted-foreground font-mono text-xs">{m.id}</p>
+            {showIds && <p className="text-muted-foreground font-mono text-xs">{m.id}</p>}
           </div>
         </header>
       }
       aside={
         <>
-          <InfoSection title="Info">
-            <InfoRow label="ID" value={String(m.id)} mono />
-            {m.isBoss && <InfoRow label="Boss" value="Yes" />}
-          </InfoSection>
+          {(showIds || m.isBoss) && (
+            <InfoSection title="Info">
+              {showIds && <InfoRow label="ID" value={String(m.id)} mono />}
+              {m.isBoss && <InfoRow label="Boss" value="Yes" />}
+            </InfoSection>
+          )}
           <InfoSection title="Stats">
             <InfoRow label="Level" value={m.level !== null ? String(m.level) : '—'} />
             <InfoRow label="HP" value={m.hp !== null ? m.hp.toLocaleString() : '—'} />
@@ -151,7 +155,9 @@ export default function MobDetail() {
               <span className="text-muted-foreground min-w-0 flex-1 truncate italic">
                 {d.itemName ?? `Item #${d.itemId}`}
               </span>
-              <span className="text-muted-foreground shrink-0 font-mono text-xs">{d.itemId}</span>
+              {showIds && (
+                <span className="text-muted-foreground shrink-0 font-mono text-xs">{d.itemId}</span>
+              )}
             </li>
           ) : (
             <EntityRow key={d.itemId} entity={d.entity} id={d.itemId} name={d.itemName} />

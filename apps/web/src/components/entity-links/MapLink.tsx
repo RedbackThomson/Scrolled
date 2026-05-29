@@ -6,6 +6,7 @@ import { EntityIcon } from '@/components/entity-display/EntityIcon';
 import { HoverPopover } from '@/components/common/HoverPopover';
 import { HoverCardSaveFooter } from '@/components/collections';
 import { getDbClient } from '@/db';
+import { useShowEntityIds } from '@/stores/showEntityIds';
 
 interface MapLinkProps {
   id: number;
@@ -31,6 +32,7 @@ export function MapLink({ id, children, className, noPreview, triggerClassName }
 
 export function MapHoverCard({ id }: { id: number }) {
   const client = useMemo(() => getDbClient(), []);
+  const showIds = useShowEntityIds((s) => s.enabled);
   const mapQ = useQuery({
     queryKey: ['db', 'map', id],
     queryFn: () => client.getMap(id),
@@ -64,7 +66,9 @@ export function MapHoverCard({ id }: { id: number }) {
             >
               {display}
             </Link>
-            <div className="text-muted-foreground font-mono text-[10px]">Map #{id}</div>
+            {showIds && (
+              <div className="text-muted-foreground font-mono text-[10px]">Map #{id}</div>
+            )}
           </div>
           {m.streetName && (
             <div className="text-muted-foreground truncate text-[11px]">{m.streetName}</div>
