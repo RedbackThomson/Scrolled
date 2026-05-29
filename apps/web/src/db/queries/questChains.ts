@@ -133,10 +133,12 @@ export function getQuestChain(sql: Sqlite, id: number): QuestChainDetail | null 
       is_critical: number;
       quest_name: string;
       quest_parent: string | null;
+      quest_required_level: number | null;
     }>(
       `SELECT m.chain_id, m.quest_id, m.depth, m.scc_id, m.is_root, m.is_critical,
-              q.name   AS quest_name,
-              q.parent AS quest_parent
+              q.name           AS quest_name,
+              q.parent         AS quest_parent,
+              q.required_level AS quest_required_level
          FROM quest_chain_members m
          JOIN quests q ON q.id = m.quest_id
         WHERE m.chain_id = ?
@@ -152,6 +154,7 @@ export function getQuestChain(sql: Sqlite, id: number): QuestChainDetail | null 
       isCritical: r.is_critical === 1,
       questName: r.quest_name,
       questParent: r.quest_parent,
+      questRequiredLevel: r.quest_required_level,
     }));
   const edges = sql
     .selectObjects<{

@@ -222,7 +222,7 @@ export default function EquipDetail() {
               entity="mob"
               id={m.mobId}
               name={m.name}
-              meta={m.level !== null ? `Lv ${m.level}` : undefined}
+              meta={m.level !== null ? `Lvl ${m.level}` : undefined}
             />
           ))}
         </DetailListSection>

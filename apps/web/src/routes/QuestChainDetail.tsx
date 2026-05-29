@@ -82,6 +82,27 @@ export default function QuestChainDetail() {
   const criticalCount = members.filter((m) => m.isCritical).length;
   const optionalCount = members.length - criticalCount;
 
+  // Level barriers for the aside's Requirements section.
+  //   * Start = the lowest required_level across the chain's starting
+  //     quests. Multi-root chains pick the easiest entry. Fully-cyclic
+  //     chains have no real start, so we leave it null.
+  //   * End = the required_level of the chain's final quest — same
+  //     "lowest-id critical quest at max stage" rule that picks chains.id,
+  //     so the value is stable across re-derivations.
+  // Quests with no recorded required_level (NULL) are skipped in both
+  // aggregates; a chain whose only data is NULL renders as "—".
+  const requiredToStart =
+    roots.length === 0
+      ? null
+      : roots
+          .map((m) => m.questRequiredLevel)
+          .filter((lv): lv is number => lv !== null && lv > 0)
+          .reduce<number | null>((acc, lv) => (acc === null || lv < acc ? lv : acc), null);
+  const finalQuest = members
+    .filter((m) => m.isCritical && m.depth === chain.maxDepth)
+    .sort((a, b) => a.questId - b.questId)[0];
+  const requiredToEnd = finalQuest?.questRequiredLevel ?? null;
+
   // When the toggle is on, drop optional quests from both the list and the
   // graph. Persisted stages are preserved by construction (an optional
   // quest can never sit on a shorter path to the final, so removing it
@@ -161,8 +182,7 @@ export default function QuestChainDetail() {
           <InfoSection title="Info">
             {showIds && <InfoRow label="ID" value={String(chain.id)} mono />}
             <InfoRow label="Quests" value={String(chain.size)} />
-            <InfoRow label="Max stage" value={String(chain.maxDepth)} />
-            <InfoRow label="Starting quests" value={String(chain.rootCount)} />
+            <InfoRow label="Total Stages" value={String(chain.maxDepth)} />
             {optionalCount > 0 && (
               <>
                 <InfoRow label="Critical" value={String(criticalCount)} />
@@ -173,6 +193,18 @@ export default function QuestChainDetail() {
             {chain.cycleCount > 1 && <InfoRow label="Loops" value={String(chain.cycleCount)} />}
             {chain.parent && <InfoRow label="Area" value={chain.parent} />}
           </InfoSection>
+          {(requiredToStart !== null || requiredToEnd !== null) && (
+            <InfoSection title="Requirements">
+              <InfoRow
+                label="Required to start"
+                value={requiredToStart !== null ? `Lvl ${requiredToStart}` : '—'}
+              />
+              <InfoRow
+                label="Required to end"
+                value={requiredToEnd !== null ? `Lvl ${requiredToEnd}` : '—'}
+              />
+            </InfoSection>
+          )}
         </>
       }
     >

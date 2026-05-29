@@ -81,7 +81,7 @@ function QuestHoverCard({ id }: { id: number }) {
             <div className="text-muted-foreground text-[11px]">
               {q.parent && <>{q.parent}</>}
               {q.parent && q.requiredLevel !== null && ' · '}
-              {q.requiredLevel !== null && <>Lv {q.requiredLevel}+</>}
+              {q.requiredLevel !== null && <>Lvl {q.requiredLevel}+</>}
             </div>
           )}
           {chain && (

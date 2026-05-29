@@ -330,11 +330,14 @@ export interface QuestChainMemberRecord {
   isCritical: boolean;
 }
 
-/** Member row joined to the underlying quest's display name and parent —
- *  the shape the detail page consumes. */
+/** Member row joined to the underlying quest's display name, parent, and
+ *  required level — the shape the detail page consumes. `requiredLevel` is
+ *  carried so the aside can derive the chain's start/end level barriers
+ *  without N follow-up quest queries. */
 export interface QuestChainMemberWithName extends QuestChainMemberRecord {
   questName: string;
   questParent: string | null;
+  questRequiredLevel: number | null;
 }
 
 /** One row of `quest_chain_edges`. */

@@ -151,7 +151,7 @@ export const defaultSort = { id: 'level', dir: 'asc' } as const satisfies {
 
 export function mobileCard(row: MobRecord) {
   const meta: string[] = [];
-  if (row.level !== null) meta.push(`Lv ${row.level}`);
+  if (row.level !== null) meta.push(`Lvl ${row.level}`);
   if (row.hp !== null) meta.push(`${row.hp.toLocaleString()} HP`);
   return (
     <div className="flex items-center gap-3">

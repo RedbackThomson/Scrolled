@@ -27,7 +27,7 @@ export function listSearchEntries(sql: Sqlite): SearchEntry[] {
       id: r.id,
       name: r.name,
       entity: 'mob',
-      category: r.level !== null ? `Lv ${r.level}` : null,
+      category: r.level !== null ? `Lvl ${r.level}` : null,
     });
   }
   for (const r of sql.selectObjects<{ id: number; name: string }>(

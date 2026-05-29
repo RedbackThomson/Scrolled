@@ -12,7 +12,7 @@ interface Props {
   name: string | null | undefined;
   /** Optional second line shown inline as " · {subtitle}" muted (e.g. street name, quest parent). */
   subtitle?: string | null;
-  /** Right-aligned content inside the row link (e.g. "Lv 47", "×3"). */
+  /** Right-aligned content inside the row link (e.g. "Lvl 47", "×3"). */
   meta?: ReactNode;
   /** Sibling content rendered outside the row link (e.g. a "show on map" pin button). */
   trailing?: ReactNode;

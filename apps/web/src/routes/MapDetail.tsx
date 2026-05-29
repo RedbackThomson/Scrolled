@@ -328,7 +328,7 @@ export default function MapDetail() {
                 meta={
                   (mob.level !== null || (mob.count !== null && mob.count > 1)) && (
                     <span className="flex items-center gap-3">
-                      {mob.level !== null && <span>Lv {mob.level}</span>}
+                      {mob.level !== null && <span>Lvl {mob.level}</span>}
                       {mob.count !== null && mob.count > 1 && <span>×{mob.count}</span>}
                     </span>
                   )
