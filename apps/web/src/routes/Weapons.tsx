@@ -7,7 +7,13 @@ import { TablePageLayout } from '@/components/layout/TablePageLayout';
 import { getDbClient } from '@/db';
 import { labelForEquipType } from '@/domain/equipTypes';
 import { ALL_EQUIP_CLASSES } from '@/domain/equipJobs';
-import { columns, defaultSort, defaultVisibleForType, pinnedColumns } from './WeaponsColumns';
+import {
+  columns,
+  defaultSort,
+  defaultVisibleForType,
+  mobileCard,
+  pinnedColumns,
+} from './WeaponsColumns';
 
 const DEFAULT_PAGE_SIZE = 50;
 
@@ -86,6 +92,7 @@ export default function Weapons() {
         pinnedColumns={pinnedColumns}
         rowLinkTo={(e) => `/equips/${e.id}`}
         getRowId={(e) => String(e.id)}
+        mobileCard={mobileCard}
         emptyMessage="No weapons found."
         loading={weaponsQ.isLoading}
         fetching={weaponsQ.isFetching && !weaponsQ.isLoading}

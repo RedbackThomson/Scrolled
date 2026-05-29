@@ -5,7 +5,7 @@ import { CollectionsBulkAddMenu } from '@/components/collections';
 import { PinnedSearchesMenu } from '@/components/pinned-searches';
 import { TablePageLayout } from '@/components/layout/TablePageLayout';
 import { getDbClient } from '@/db';
-import { columns, defaultSort, defaultVisible, pinnedColumns } from './NpcsColumns';
+import { columns, defaultSort, defaultVisible, mobileCard, pinnedColumns } from './NpcsColumns';
 
 const DEFAULT_PAGE_SIZE = 50;
 
@@ -53,6 +53,7 @@ export default function Npcs() {
         pinnedColumns={pinnedColumns}
         rowLinkTo={(n) => `/npcs/${n.id}`}
         getRowId={(n) => String(n.id)}
+        mobileCard={mobileCard}
         emptyMessage="No NPCs found."
         loading={npcsQ.isLoading}
         fetching={npcsQ.isFetching && !npcsQ.isLoading}

@@ -69,7 +69,7 @@ export const columns: ColumnDef<EquipRecord>[] = [
   {
     id: 'requiredLevel',
     accessorFn: (e) => e.requiredLevel,
-    header: 'Req Lv',
+    header: 'Req Lvl',
     meta: { filter: 'number' },
     cell: ({ row }) => row.original.requiredLevel ?? '—',
   },
@@ -131,3 +131,27 @@ export const defaultSort = { id: 'name', dir: 'asc' } as const satisfies {
   id: string;
   dir: 'asc' | 'desc';
 };
+
+export function mobileCard(row: EquipRecord) {
+  const meta: string[] = [];
+  if (row.slot) meta.push(labelForEquipSlot(row.slot));
+  if (row.requiredLevel !== null) meta.push(`Lvl ${row.requiredLevel}`);
+  return (
+    <div className="flex items-center gap-3">
+      <ItemIcon entity="equip" id={row.id} size={40} alt={row.name} />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5">
+          <span className="truncate font-medium">{row.name}</span>
+          {row.cash && (
+            <span className="inline-flex shrink-0 items-center rounded bg-pink-500/15 px-1.5 py-0.5 text-[10px] font-medium text-pink-700 dark:text-pink-300">
+              Cash
+            </span>
+          )}
+        </div>
+        {meta.length > 0 && (
+          <div className="text-muted-foreground truncate text-xs">{meta.join(' · ')}</div>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -65,7 +65,7 @@ function ItemHoverCard({ id }: { id: number }) {
           )}
           {(item.requiredLevel !== null || item.price !== null) && (
             <div className="text-muted-foreground text-[11px]">
-              {item.requiredLevel !== null && <>Req Lv {item.requiredLevel}</>}
+              {item.requiredLevel !== null && <>Req Lvl {item.requiredLevel}</>}
               {item.requiredLevel !== null && item.price !== null && ' · '}
               {item.price !== null && <>{item.price.toLocaleString()} mesos</>}
             </div>

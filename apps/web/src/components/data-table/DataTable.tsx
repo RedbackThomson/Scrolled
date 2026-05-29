@@ -11,16 +11,7 @@ import {
   type SortingState,
   type VisibilityState,
 } from '@tanstack/react-table';
-import {
-  ChevronDown,
-  ChevronUp,
-  ChevronsUpDown,
-  LayoutGrid,
-  Loader2,
-  Rows3,
-  Search,
-  X,
-} from 'lucide-react';
+import { ChevronDown, ChevronUp, ChevronsUpDown, Loader2, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -36,7 +27,6 @@ import { MobileCards } from './MobileCards';
 import type { TableUrlState, TableUrlStatePatch, TableSortDir } from './useTableUrlState';
 import type { ColumnFilter } from '@/db';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { useDataTableMobileLayout } from '@/stores/dataTableLayout';
 
 const DEFAULT_PAGE_SIZES = [25, 50, 100] as const;
 
@@ -89,9 +79,10 @@ export interface DataTableProps<TData> {
   onSelectionChange?: (next: Set<string>) => void;
   /**
    * Render a row as a tappable card on viewports below `md`. When supplied,
-   * a toggle appears in the mobile toolbar so users can switch back to the
-   * (horizontally-scrollable) table. Tables that don't supply this fall
-   * through to the table layout — they're not broken, just denser.
+   * mobile viewports always render cards — the table layout (with its
+   * horizontal scroll and absolute-overlay row links) is desktop-only.
+   * Callers that don't supply a card fall through to the table layout as a
+   * last resort; all production entity tables provide one.
    */
   mobileCard?: (row: TData) => ReactNode;
 }
@@ -127,9 +118,7 @@ export function DataTable<TData>({
   mobileCard,
 }: DataTableProps<TData>) {
   const isMobile = useIsMobile();
-  const mobileLayout = useDataTableMobileLayout((s) => s.layout);
-  const toggleMobileLayout = useDataTableMobileLayout((s) => s.toggle);
-  const showCards = isMobile && !!mobileCard && mobileLayout === 'cards';
+  const showCards = isMobile && !!mobileCard;
 
   const pinned = useMemo(() => new Set(pinnedColumns ?? []), [pinnedColumns]);
   const defaultVisibleKey = useMemo(() => [...defaultVisible].sort().join(','), [defaultVisible]);
@@ -300,25 +289,6 @@ export function DataTable<TData>({
         )}
         <div className="flex flex-wrap items-center gap-2">
           {toolbarRightExtra}
-          {isMobile && mobileCard && (
-            <button
-              type="button"
-              onClick={toggleMobileLayout}
-              aria-label={
-                mobileLayout === 'cards' ? 'Switch to table layout' : 'Switch to card layout'
-              }
-              title={
-                mobileLayout === 'cards' ? 'Switch to table layout' : 'Switch to card layout'
-              }
-              className="border-input bg-background hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring inline-flex h-8 w-8 items-center justify-center rounded-md border focus-visible:outline-none focus-visible:ring-2"
-            >
-              {mobileLayout === 'cards' ? (
-                <Rows3 className="h-4 w-4" />
-              ) : (
-                <LayoutGrid className="h-4 w-4" />
-              )}
-            </button>
-          )}
           {!showCards && <ColumnVisibility table={table} />}
         </div>
       </div>

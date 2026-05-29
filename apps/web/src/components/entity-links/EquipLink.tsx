@@ -77,7 +77,7 @@ function EquipHoverCard({ id }: { id: number }) {
                 e.slot && <span>{labelForEquipSlot(e.slot)}</span>
               )}
               {(e.equipType || e.slot) && e.requiredLevel !== null && ' · '}
-              {e.requiredLevel !== null && <>Req Lv {e.requiredLevel}</>}
+              {e.requiredLevel !== null && <>Req Lvl {e.requiredLevel}</>}
               {e.cash && (
                 <span className="ml-1 inline-flex items-center rounded bg-pink-500/15 px-1 py-0.5 text-[9px] font-medium text-pink-700 dark:text-pink-300">
                   Cash

@@ -8,7 +8,7 @@ import { TablePageLayout } from '@/components/layout/TablePageLayout';
 import { getDbClient } from '@/db';
 import { labelForEquipSlot } from '@/domain/equipTypes';
 import { ALL_EQUIP_CLASSES } from '@/domain/equipJobs';
-import { columns, defaultSort, defaultVisible, pinnedColumns } from './EquipsColumns';
+import { columns, defaultSort, defaultVisible, mobileCard, pinnedColumns } from './EquipsColumns';
 
 const DEFAULT_PAGE_SIZE = 50;
 
@@ -85,6 +85,7 @@ export default function Equips() {
         pinnedColumns={pinnedColumns}
         rowLinkTo={(e) => `/equips/${e.id}`}
         getRowId={(e) => String(e.id)}
+        mobileCard={mobileCard}
         emptyMessage="No equips found."
         loading={equipsQ.isLoading}
         fetching={equipsQ.isFetching && !equipsQ.isLoading}

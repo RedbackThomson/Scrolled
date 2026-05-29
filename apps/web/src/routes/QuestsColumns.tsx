@@ -32,7 +32,7 @@ export const columns: ColumnDef<QuestRecord>[] = [
   {
     id: 'requiredLevel',
     accessorFn: (q) => q.requiredLevel,
-    header: 'Req Lv',
+    header: 'Req Lvl',
     meta: { filter: 'number' },
     cell: ({ row }) => row.original.requiredLevel ?? '—',
   },
@@ -55,7 +55,7 @@ export const defaultSort = { id: 'name', dir: 'asc' } as const satisfies {
 export function mobileCard(row: QuestRecord) {
   const meta: string[] = [];
   if (row.parent) meta.push(row.parent);
-  if (row.requiredLevel !== null) meta.push(`req Lv ${row.requiredLevel}`);
+  if (row.requiredLevel !== null) meta.push(`Lvl ${row.requiredLevel}`);
   return (
     <div className="flex items-center gap-3">
       <ScrollText className="text-muted-foreground h-8 w-8 shrink-0" aria-hidden />

@@ -67,7 +67,7 @@ export const columns: ColumnDef<EquipRecord>[] = [
   {
     id: 'requiredLevel',
     accessorFn: (e) => e.requiredLevel,
-    header: 'Req Lv',
+    header: 'Req Lvl',
     meta: { filter: 'number' },
     cell: ({ row }) => row.original.requiredLevel ?? '—',
   },
@@ -162,4 +162,33 @@ export function defaultVisibleForType(type: string | null): readonly string[] {
   if (type === 'cash-weapon') return CASH_DEFAULT;
   if (type && MAGIC_WEAPON_TYPES.has(type)) return MAGIC_DEFAULT;
   return PHYSICAL_DEFAULT;
+}
+
+export function mobileCard(row: EquipRecord) {
+  const meta: string[] = [];
+  if (row.equipType) meta.push(labelForEquipType(row.equipType));
+  if (row.requiredLevel !== null) meta.push(`Lvl ${row.requiredLevel}`);
+  // Magic weapons advertise M.Atk; everything else uses Atk. Cash weapons
+  // have neither — the badge is what identifies them.
+  const isMagic = row.equipType !== null && MAGIC_WEAPON_TYPES.has(row.equipType);
+  const atk = isMagic ? row.magicAttack : row.attack;
+  if (atk !== null) meta.push(`${isMagic ? 'M.Atk' : 'Atk'} ${atk.toLocaleString()}`);
+  return (
+    <div className="flex items-center gap-3">
+      <ItemIcon entity="equip" id={row.id} size={40} alt={row.name} />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5">
+          <span className="truncate font-medium">{row.name}</span>
+          {row.cash && (
+            <span className="inline-flex shrink-0 items-center rounded bg-pink-500/15 px-1.5 py-0.5 text-[10px] font-medium text-pink-700 dark:text-pink-300">
+              Cash
+            </span>
+          )}
+        </div>
+        {meta.length > 0 && (
+          <div className="text-muted-foreground truncate text-xs">{meta.join(' · ')}</div>
+        )}
+      </div>
+    </div>
+  );
 }

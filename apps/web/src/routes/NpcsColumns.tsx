@@ -46,3 +46,15 @@ export const defaultSort = { id: 'name', dir: 'asc' } as const satisfies {
   id: string;
   dir: 'asc' | 'desc';
 };
+
+export function mobileCard(row: NpcRecord) {
+  return (
+    <div className="flex items-center gap-3">
+      <EntityIcon entity="npc" id={row.id} size={40} placeholder={Users} alt={row.name} />
+      <div className="min-w-0 flex-1">
+        <div className="truncate font-medium">{row.name}</div>
+        <div className="text-muted-foreground truncate font-mono text-xs">{row.id}</div>
+      </div>
+    </div>
+  );
+}
