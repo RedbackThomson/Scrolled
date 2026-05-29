@@ -330,6 +330,9 @@ export function DataTable<TData>({
           rowLinkTo={rowLinkTo}
           getRowId={getRowId}
           mobileCard={mobileCard!}
+          columns={columns}
+          visibleColumns={visibleColumns}
+          defaultVisible={defaultVisible}
           emptyMessage={emptyMessage}
           loading={loading}
           fetching={fetching}

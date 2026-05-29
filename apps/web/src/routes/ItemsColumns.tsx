@@ -1,4 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
+import { Coins, Gauge, Hash, Tag } from 'lucide-react';
 import { ItemIcon } from '@/components/entity-display/ItemIcon';
 import { ItemLink } from '@/components/entity-links';
 import type { ItemRecord } from '@/db';
@@ -28,35 +29,54 @@ export const columns: ColumnDef<ItemRecord>[] = [
     id: 'category',
     accessorFn: (i) => i.category,
     header: 'Category',
-    meta: { filter: 'enum' },
+    meta: { filter: 'enum', icon: Tag },
     cell: ({ row }) => <span className="capitalize">{row.original.category ?? '—'}</span>,
   },
   {
     id: 'subcategory',
     accessorFn: (i) => i.subcategory,
     header: 'Subcategory',
-    meta: { filter: 'string' },
+    meta: {
+      filter: 'string',
+      icon: Tag,
+      card: { label: 'Subcategory', render: (row) => row.subcategory ?? '—' },
+    },
     cell: ({ row }) => row.original.subcategory ?? '—',
   },
   {
     id: 'requiredLevel',
     accessorFn: (i) => i.requiredLevel,
     header: 'Req Lvl',
-    meta: { filter: 'number' },
+    meta: {
+      filter: 'number',
+      icon: Gauge,
+      card: { label: 'Req Lvl', render: (row) => row.requiredLevel ?? '—' },
+    },
     cell: ({ row }) => row.original.requiredLevel ?? '—',
   },
   {
     id: 'price',
     accessorFn: (i) => i.price,
     header: 'Price',
-    meta: { filter: 'number' },
+    meta: {
+      filter: 'number',
+      icon: Coins,
+      card: {
+        label: 'Price',
+        render: (row) => (row.price === null ? '—' : row.price.toLocaleString()),
+      },
+    },
     cell: ({ row }) => (row.original.price === null ? '—' : row.original.price.toLocaleString()),
   },
   {
     id: 'id',
     accessorFn: (i) => i.id,
     header: 'ID',
-    meta: { filter: 'string' },
+    meta: {
+      filter: 'string',
+      icon: Hash,
+      card: { label: 'ID', render: (row) => row.id },
+    },
     cell: ({ row }) => <span className="font-mono text-xs">{row.original.id}</span>,
   },
 ];

@@ -1,4 +1,15 @@
 import type { ColumnDef } from '@tanstack/react-table';
+import {
+  BadgeDollarSign,
+  Gauge,
+  Hash,
+  Heart,
+  type LucideIcon,
+  Shield,
+  Sparkles,
+  Sword,
+  Users,
+} from 'lucide-react';
 import { ItemIcon } from '@/components/entity-display/ItemIcon';
 import { EquipLink } from '@/components/entity-links';
 import type { EquipRecord } from '@/db';
@@ -13,12 +24,22 @@ type NumericEquipKey = {
   [K in keyof EquipRecord]: EquipRecord[K] extends number | null ? K : never;
 }[keyof EquipRecord];
 
-/** A right-aligned, number-filterable column for one numeric equip stat. */
-const statColumn = (id: NumericEquipKey, header: string): ColumnDef<EquipRecord> => ({
+/** A right-aligned, number-filterable column for one numeric equip stat.
+ *  Each stat carries a `meta.card` config so toggling it on also surfaces
+ *  the value as a labeled row on the mobile card. */
+const statColumn = (
+  id: NumericEquipKey,
+  header: string,
+  icon?: LucideIcon,
+): ColumnDef<EquipRecord> => ({
   id,
   accessorFn: (e) => e[id],
   header,
-  meta: { filter: 'number' },
+  meta: {
+    filter: 'number',
+    icon,
+    card: { label: header, render: (row) => num(row[id]) },
+  },
   cell: ({ row }) => num(row.original[id]),
 });
 
@@ -47,14 +68,18 @@ export const columns: ColumnDef<EquipRecord>[] = [
     id: 'equipType',
     accessorFn: (e) => e.equipType,
     header: 'Type',
-    meta: { filter: 'enum' },
+    meta: { filter: 'enum', icon: Sword },
     cell: ({ row }) => (row.original.equipType ? labelForEquipType(row.original.equipType) : '—'),
   },
   {
     id: 'cash',
     accessorFn: (e) => e.cash,
     header: 'Cash',
-    meta: { filter: 'boolean', booleanLabels: { trueLabel: 'Cash', falseLabel: 'Regular' } },
+    meta: {
+      filter: 'boolean',
+      booleanLabels: { trueLabel: 'Cash', falseLabel: 'Regular' },
+      icon: BadgeDollarSign,
+    },
     cell: ({ row }) =>
       row.original.cash ? (
         <span className="inline-flex items-center rounded bg-pink-500/15 px-1.5 py-0.5 text-[10px] font-medium text-pink-700 dark:text-pink-300">
@@ -68,7 +93,7 @@ export const columns: ColumnDef<EquipRecord>[] = [
     id: 'requiredLevel',
     accessorFn: (e) => e.requiredLevel,
     header: 'Req Lvl',
-    meta: { filter: 'number' },
+    meta: { filter: 'number', icon: Gauge },
     cell: ({ row }) => row.original.requiredLevel ?? '—',
   },
   ...ABILITY_STAT_FIELDS.map((s) => statColumn(s.required, `Req ${s.label}`)),
@@ -77,7 +102,7 @@ export const columns: ColumnDef<EquipRecord>[] = [
     accessorFn: (e) => e.requiredJob,
     header: 'Class',
     enableSorting: false,
-    meta: { filter: 'enum' },
+    meta: { filter: 'enum', icon: Users },
     cell: ({ row }) => {
       const jobs = parseReqJob(row.original.requiredJob);
       if (isAnyClass(jobs)) {
@@ -86,13 +111,13 @@ export const columns: ColumnDef<EquipRecord>[] = [
       return <span className="text-xs">{jobs.join(', ')}</span>;
     },
   },
-  statColumn('attack', 'Atk'),
-  statColumn('magicAttack', 'M.Atk'),
+  statColumn('attack', 'Atk', Sword),
+  statColumn('magicAttack', 'M.Atk', Sword),
   ...ABILITY_STAT_FIELDS.map((s) => statColumn(s.inc, s.label)),
-  statColumn('incHp', 'HP'),
-  statColumn('incMp', 'MP'),
-  statColumn('defense', 'Def'),
-  statColumn('magicDefense', 'M.Def'),
+  statColumn('incHp', 'HP', Heart),
+  statColumn('incMp', 'MP', Sparkles),
+  statColumn('defense', 'Def', Shield),
+  statColumn('magicDefense', 'M.Def', Shield),
   statColumn('accuracy', 'Acc'),
   statColumn('avoidability', 'Avoid'),
   statColumn('incSpeed', 'Speed'),
@@ -108,7 +133,11 @@ export const columns: ColumnDef<EquipRecord>[] = [
     id: 'id',
     accessorFn: (e) => e.id,
     header: 'ID',
-    meta: { filter: 'string' },
+    meta: {
+      filter: 'string',
+      icon: Hash,
+      card: { label: 'ID', render: (row) => row.id },
+    },
     cell: ({ row }) => <span className="font-mono text-xs">{row.original.id}</span>,
   },
 ];

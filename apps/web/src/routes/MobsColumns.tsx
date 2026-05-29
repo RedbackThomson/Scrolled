@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { Crown, Skull } from 'lucide-react';
+import { Crown, Flame, Gauge, Hash, Heart, Skull, Sparkles, TrendingUp } from 'lucide-react';
 import { EntityIcon } from '@/components/entity-display/EntityIcon';
 import { ExpValue } from '@/components/entity-display/ExpValue';
 import { MobLink } from '@/components/entity-links';
@@ -23,7 +23,17 @@ const elementColumns: ColumnDef<MobRecord>[] = COLUMN_STATUSES.map(({ id, status
   id,
   header: ELEMENT_GROUP_LABELS[status],
   enableSorting: false,
-  meta: { filter: 'enum' },
+  meta: {
+    filter: 'enum',
+    icon: Flame,
+    card: {
+      label: ELEMENT_GROUP_LABELS[status],
+      render: (row: MobRecord) => {
+        const values = elementsByStatus(row.elementAttack, status);
+        return values.length === 0 ? '—' : values.join(', ');
+      },
+    },
+  },
   cell: ({ row }) => {
     const values = elementsByStatus(row.original.elementAttack, status);
     if (values.length === 0) return <span className="text-muted-foreground">—</span>;
@@ -68,28 +78,32 @@ export const columns: ColumnDef<MobRecord>[] = [
     id: 'level',
     accessorFn: (m) => m.level,
     header: 'Level',
-    meta: { filter: 'number' },
+    meta: { filter: 'number', icon: Gauge },
     cell: ({ row }) => row.original.level ?? '—',
   },
   {
     id: 'hp',
     accessorFn: (m) => m.hp,
     header: 'HP',
-    meta: { filter: 'number' },
+    meta: { filter: 'number', icon: Heart },
     cell: ({ row }) => row.original.hp?.toLocaleString() ?? '—',
   },
   {
     id: 'mp',
     accessorFn: (m) => m.mp,
     header: 'MP',
-    meta: { filter: 'number' },
+    meta: {
+      filter: 'number',
+      icon: Sparkles,
+      card: { label: 'MP', render: (row) => row.mp?.toLocaleString() ?? '—' },
+    },
     cell: ({ row }) => row.original.mp?.toLocaleString() ?? '—',
   },
   {
     id: 'exp',
     accessorFn: (m) => m.exp,
     header: 'EXP',
-    meta: { filter: 'number' },
+    meta: { filter: 'number', icon: TrendingUp },
     cell: ({ row }) => <ExpValue exp={row.original.exp} />,
   },
   ...elementColumns,
@@ -97,7 +111,11 @@ export const columns: ColumnDef<MobRecord>[] = [
     id: 'boss',
     accessorFn: (m) => m.isBoss,
     header: 'Boss',
-    meta: { filter: 'boolean', booleanLabels: { trueLabel: 'Boss', falseLabel: 'Non-boss' } },
+    meta: {
+      filter: 'boolean',
+      booleanLabels: { trueLabel: 'Boss', falseLabel: 'Non-boss' },
+      icon: Crown,
+    },
     cell: ({ row }) =>
       row.original.isBoss ? (
         <span className="inline-flex items-center gap-0.5 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
@@ -115,7 +133,11 @@ export const columns: ColumnDef<MobRecord>[] = [
     // IDs are integers in the DB but the user-facing search is "does the
     // ID contain these digits" — range filters never apply. SQLite's LIKE
     // auto-coerces the integer to text for the match.
-    meta: { filter: 'string' },
+    meta: {
+      filter: 'string',
+      icon: Hash,
+      card: { label: 'ID', render: (row) => row.id },
+    },
     cell: ({ row }) => <span className="font-mono text-xs">{row.original.id}</span>,
   },
 ];

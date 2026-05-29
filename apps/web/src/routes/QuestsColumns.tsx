@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { ScrollText } from 'lucide-react';
+import { Folder, Gauge, Hash, ScrollText } from 'lucide-react';
 import { QuestLink } from '@/components/entity-links';
 import type { QuestRecord } from '@/db';
 
@@ -26,21 +26,25 @@ export const columns: ColumnDef<QuestRecord>[] = [
     id: 'parent',
     accessorFn: (q) => q.parent,
     header: 'Area',
-    meta: { filter: 'enum' },
+    meta: { filter: 'enum', icon: Folder },
     cell: ({ row }) => row.original.parent ?? '—',
   },
   {
     id: 'requiredLevel',
     accessorFn: (q) => q.requiredLevel,
     header: 'Req Lvl',
-    meta: { filter: 'number' },
+    meta: { filter: 'number', icon: Gauge },
     cell: ({ row }) => row.original.requiredLevel ?? '—',
   },
   {
     id: 'id',
     accessorFn: (q) => q.id,
     header: 'ID',
-    meta: { filter: 'string' },
+    meta: {
+      filter: 'string',
+      icon: Hash,
+      card: { label: 'ID', render: (row) => row.id },
+    },
     cell: ({ row }) => <span className="font-mono text-xs">{row.original.id}</span>,
   },
 ];

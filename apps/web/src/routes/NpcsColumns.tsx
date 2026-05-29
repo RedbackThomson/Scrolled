@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { Users } from 'lucide-react';
+import { Hash, Users } from 'lucide-react';
 import { EntityIcon } from '@/components/entity-display/EntityIcon';
 import { NpcLink } from '@/components/entity-links';
 import type { NpcRecord } from '@/db';
@@ -35,7 +35,11 @@ export const columns: ColumnDef<NpcRecord>[] = [
     id: 'id',
     accessorFn: (n) => n.id,
     header: 'ID',
-    meta: { filter: 'string' },
+    meta: {
+      filter: 'string',
+      icon: Hash,
+      card: { label: 'ID', render: (row) => row.id },
+    },
     cell: ({ row }) => <span className="font-mono text-xs">{row.original.id}</span>,
   },
 ];

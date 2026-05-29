@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { Map as MapIcon } from 'lucide-react';
+import { Activity, Hash, Map as MapIcon, MapPin, RotateCcw } from 'lucide-react';
 import { EntityIcon } from '@/components/entity-display/EntityIcon';
 import { MapLink } from '@/components/entity-links';
 import type { MapRecord } from '@/db';
@@ -35,21 +35,32 @@ export const columns: ColumnDef<MapRecord>[] = [
     id: 'streetName',
     accessorFn: (m) => m.streetName,
     header: 'Street',
-    meta: { filter: 'string' },
+    meta: { filter: 'string', icon: MapPin },
     cell: ({ row }) => row.original.streetName ?? '—',
   },
   {
     id: 'mobRate',
     accessorFn: (m) => m.mobRate,
     header: 'Mob Rate',
-    meta: { filter: 'number' },
+    meta: {
+      filter: 'number',
+      icon: Activity,
+      card: {
+        label: 'Mob Rate',
+        render: (row) => (row.mobRate === null ? '—' : row.mobRate.toFixed(2)),
+      },
+    },
     cell: ({ row }) => (row.original.mobRate === null ? '—' : row.original.mobRate.toFixed(2)),
   },
   {
     id: 'returnMapId',
     accessorFn: (m) => m.returnMapId,
     header: 'Return',
-    meta: { filter: 'number' },
+    meta: {
+      filter: 'number',
+      icon: RotateCcw,
+      card: { label: 'Return', render: (row) => row.returnMapId ?? '—' },
+    },
     cell: ({ row }) =>
       row.original.returnMapId === null ? (
         '—'
@@ -61,7 +72,11 @@ export const columns: ColumnDef<MapRecord>[] = [
     id: 'id',
     accessorFn: (m) => m.id,
     header: 'ID',
-    meta: { filter: 'string' },
+    meta: {
+      filter: 'string',
+      icon: Hash,
+      card: { label: 'ID', render: (row) => row.id },
+    },
     cell: ({ row }) => <span className="font-mono text-xs">{row.original.id}</span>,
   },
 ];
