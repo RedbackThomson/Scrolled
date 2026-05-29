@@ -71,12 +71,12 @@ export function DetailPageLayout({
     <div className={cn(maxWidth, 'space-y-6')}>
       <BackLinkButton back={back} />
       <div className={cn('grid gap-6', aside !== undefined && 'sm:grid-cols-[1fr_18rem]')}>
-        <article className="space-y-6">
+        <article className="min-w-0 space-y-6">
           {header}
           {children}
         </article>
         {aside !== undefined && (
-          <aside className="border-border bg-card text-card-foreground space-y-4 self-start rounded-md border p-4 text-sm">
+          <aside className="border-border bg-card text-card-foreground min-w-0 space-y-4 self-start rounded-md border p-4 text-sm">
             {aside}
           </aside>
         )}

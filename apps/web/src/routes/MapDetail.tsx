@@ -159,7 +159,7 @@ export default function MapDetail() {
           <header className="flex items-center gap-3">
             <MapIcon className="text-muted-foreground h-12 w-12 shrink-0" />
             <div className="min-w-0 flex-1">
-              <h1 className="text-3xl font-semibold tracking-tight break-words">
+              <h1 className="break-words text-3xl font-semibold tracking-tight">
                 {m.name ?? `Map ${m.id}`}
               </h1>
               {m.streetName && <p className="text-muted-foreground text-sm">{m.streetName}</p>}
@@ -208,12 +208,12 @@ export default function MapDetail() {
         {m.minimapPath && (
           <section>
             <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide">Minimap</h2>
-            <div className="flex flex-col items-start gap-2">
+            <div className="flex flex-col items-start gap-2 sm:max-w-full">
               <button
                 type="button"
                 onClick={() => openViewer()}
                 aria-label="Open map viewer"
-                className="border-border bg-card hover:ring-primary/40 focus-visible:ring-primary/60 inline-flex max-w-full items-center justify-start rounded-md border p-3 transition hover:ring-2 focus-visible:outline-none focus-visible:ring-2"
+                className="border-border bg-card hover:ring-primary/40 focus-visible:ring-primary/60 sm:width-full inline-flex max-w-full items-center justify-start rounded-md border p-3 transition hover:ring-2 focus-visible:outline-none focus-visible:ring-2"
               >
                 <EntityIcon
                   entity="map-mini"
