@@ -1,10 +1,11 @@
 import { useMemo, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ScrollText } from 'lucide-react';
+import { GitBranch, ScrollText } from 'lucide-react';
 import { HoverPopover } from '@/components/common/HoverPopover';
 import { HoverCardSaveFooter } from '@/components/collections';
 import { getDbClient } from '@/db';
+import { useFeatures } from '@/hooks/useFeatures';
 import { useShowEntityIds } from '@/stores/showEntityIds';
 
 interface QuestLinkProps {
@@ -38,9 +39,19 @@ export function QuestLink({
 function QuestHoverCard({ id }: { id: number }) {
   const client = useMemo(() => getDbClient(), []);
   const showIds = useShowEntityIds((s) => s.enabled);
+  const features = useFeatures();
   const questQ = useQuery({
     queryKey: ['db', 'quest', id],
     queryFn: () => client.getQuest(id),
+    staleTime: 5 * 60_000,
+  });
+  // Same gating as QuestDetail: only fire when chains exist in the
+  // library, and reuse the same query key so the network hit is shared
+  // with anything else on the page that already asked.
+  const chainQ = useQuery({
+    queryKey: ['db', 'quest', id, 'chain'],
+    queryFn: () => client.getChainForQuest(id),
+    enabled: features.hasQuestChains,
     staleTime: 5 * 60_000,
   });
 
@@ -51,6 +62,7 @@ function QuestHoverCard({ id }: { id: number }) {
     return <p className="text-muted-foreground text-xs">Quest {id} not found.</p>;
   }
   const q = questQ.data;
+  const chain = chainQ.data;
 
   return (
     <div className="w-72 max-w-[calc(100vw-1rem)] space-y-1.5">
@@ -70,6 +82,14 @@ function QuestHoverCard({ id }: { id: number }) {
               {q.parent && <>{q.parent}</>}
               {q.parent && q.requiredLevel !== null && ' · '}
               {q.requiredLevel !== null && <>Lv {q.requiredLevel}+</>}
+            </div>
+          )}
+          {chain && (
+            <div className="text-muted-foreground flex items-center gap-1 text-[11px]">
+              <GitBranch className="h-3 w-3 shrink-0" aria-hidden />
+              <span className="truncate">
+                Part of {chain.name} ({chain.size} quests)
+              </span>
             </div>
           )}
           {q.description && (

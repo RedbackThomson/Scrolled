@@ -41,6 +41,7 @@ import { createLogger, describeError } from '@/lib/logger';
 import type { ProgressUpdate } from '@/lib/progress';
 import {
   ALL_EXTRACTOR_KEYS,
+  POST_EXTRACTOR_KEYS,
   buildExtractStats,
   mergeFileStatuses,
   type ExtractorKey,
@@ -261,10 +262,38 @@ export function useWizardExtract(opts: UseWizardExtractOptions) {
         }),
       );
 
+      // Quest chains are a pure DB derivation — always run after the
+      // pool finishes so they're populated even when Quest.wz was hash-
+      // skipped (e.g. first run on a build that ships chains). Errors here
+      // are logged, not fatal: the rest of the dataset record persists.
+      try {
+        const chainCount = await db.computeAndStoreQuestChains();
+        perExtractor.push({
+          extractor: 'questChain',
+          status: 'ran',
+          rows: chainCount,
+          skippedRows: 0,
+          placeholderNames: 0,
+          error: null,
+        });
+      } catch (err) {
+        log.error('quest-chain derivation failed', describeError(err));
+        perExtractor.push({
+          extractor: 'questChain',
+          status: 'ran',
+          rows: 0,
+          skippedRows: 0,
+          placeholderNames: 0,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+
       // Add 'skipped' entries for extractors that didn't run at all so
-      // the dataset record carries the full picture.
+      // the dataset record carries the full picture. Post-pass keys are
+      // always pushed above (chain compute runs unconditionally), so
+      // they're already in `ranKeys` here.
       const ranKeys = new Set(perExtractor.map((e) => e.extractor));
-      for (const k of ALL_EXTRACTOR_KEYS) {
+      for (const k of [...ALL_EXTRACTOR_KEYS, ...POST_EXTRACTOR_KEYS]) {
         if (!ranKeys.has(k)) {
           perExtractor.push({
             extractor: k,

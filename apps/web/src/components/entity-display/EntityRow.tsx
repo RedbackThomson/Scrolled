@@ -105,4 +105,5 @@ const ENTITY_LABEL: Record<EntityKind, string> = {
   npc: 'NPC',
   map: 'Map',
   quest: 'Quest',
+  questChain: 'Chain',
 };

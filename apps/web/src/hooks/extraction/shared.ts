@@ -11,6 +11,13 @@ import type { DatasetFileRef, ExtractorResultRecord } from '@/db';
 export const ALL_EXTRACTOR_KEYS = ['item', 'equip', 'mob', 'npc', 'map', 'quest'] as const;
 export type ExtractorKey = (typeof ALL_EXTRACTOR_KEYS)[number];
 
+/** Post-pass keys that run after the parser workers but get persisted in
+ *  the same `extraction_extractors` table for the Settings report. They're
+ *  separate from `ExtractorKey` because they don't belong to a parser
+ *  worker and don't take part in the worker-routing tables. */
+export const POST_EXTRACTOR_KEYS = ['questChain'] as const;
+export type PostExtractorKey = (typeof POST_EXTRACTOR_KEYS)[number];
+
 export interface ExtractStats {
   items: number;
   equips: number;
@@ -18,6 +25,7 @@ export interface ExtractStats {
   npcs: number;
   maps: number;
   quests: number;
+  questChains: number;
   skipped: number;
   ms: number;
   /** Per-extractor outcome rows persisted into `extraction_extractors`. */
@@ -41,6 +49,7 @@ export function buildExtractStats(
     npcs: rowsFor(perExtractor, 'npc'),
     maps: rowsFor(perExtractor, 'map'),
     quests: rowsFor(perExtractor, 'quest'),
+    questChains: rowsFor(perExtractor, 'questChain'),
     skipped,
     ms,
     perExtractor,
@@ -82,6 +91,18 @@ export class ExtractorTracker {
       this.map.set(k, {
         extractor: k,
         status: shouldSkip(skipWz, equivWzKey(k)) ? 'skipped' : 'skipped',
+        rows: 0,
+        skippedRows: 0,
+        placeholderNames: 0,
+        error: null,
+      });
+    }
+    // Post-pass keys default to `skipped` like everything else — `ran`
+    // upgrades them after their stage executes.
+    for (const k of POST_EXTRACTOR_KEYS) {
+      this.map.set(k, {
+        extractor: k,
+        status: 'skipped',
         rows: 0,
         skippedRows: 0,
         placeholderNames: 0,

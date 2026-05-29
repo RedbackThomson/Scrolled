@@ -85,6 +85,17 @@ export const QUEST_ORDER: Record<string, OrderSpec> = {
 };
 export const QUEST_ORDER_DEFAULT = 'name';
 
+export const QUEST_CHAIN_ORDER: Record<string, OrderSpec> = {
+  name: { col: 'name', defaultDir: 'asc' },
+  parent: { col: 'parent', defaultDir: 'asc' },
+  size: { col: 'size', defaultDir: 'desc' },
+  maxDepth: { col: 'max_depth', defaultDir: 'desc' },
+  rootCount: { col: 'root_count', defaultDir: 'desc' },
+  hasCycles: { col: 'has_cycles', defaultDir: 'desc' },
+  id: { col: 'id', defaultDir: 'asc' },
+};
+export const QUEST_CHAIN_ORDER_DEFAULT = 'size';
+
 export function resolveOrder(
   allow: Record<string, OrderSpec>,
   fallbackKey: string,

@@ -5,6 +5,7 @@ import { MapLink } from './MapLink';
 import { MobLink } from './MobLink';
 import { NpcLink } from './NpcLink';
 import { QuestLink } from './QuestLink';
+import { QuestChainLink } from './QuestChainLink';
 import type { EntityKind } from '@/db/types';
 
 interface Props {
@@ -98,6 +99,17 @@ export function EntityLink({
         >
           {children}
         </QuestLink>
+      );
+    case 'questChain':
+      return (
+        <QuestChainLink
+          id={id}
+          className={className}
+          triggerClassName={triggerClassName}
+          noPreview={noPreview}
+        >
+          {children}
+        </QuestChainLink>
       );
   }
 }

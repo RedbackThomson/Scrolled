@@ -1,7 +1,17 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Award, Coins, Copy, Package, ScrollText, Sparkles, Target, Users } from 'lucide-react';
+import {
+  Award,
+  Coins,
+  Copy,
+  GitBranch,
+  Package,
+  ScrollText,
+  Sparkles,
+  Target,
+  Users,
+} from 'lucide-react';
 import { DetailListSection } from '@/components/layout/DetailListSection';
 import {
   DetailPageLayout,
@@ -16,7 +26,7 @@ import { EntityRow } from '@/components/entity-display/EntityRow';
 import { ExpValue } from '@/components/entity-display/ExpValue';
 import { getDbClient } from '@/db';
 import type { QuestRequirementWithName, QuestRewardWithName } from '@/db';
-import { NpcLink } from '@/components/entity-links';
+import { NpcLink, QuestChainLink } from '@/components/entity-links';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
 import type { CommandItem } from '@/components/command-palette/types';
@@ -57,6 +67,14 @@ export default function QuestDetail() {
       features.hasNpcs &&
       !!questQ.data?.endNpcId &&
       questQ.data.endNpcId !== questQ.data.startNpcId,
+  });
+  // The chain a quest belongs to (or null when its WCC was size 1). Only
+  // fired once the quest data has loaded so the row is real, and gated on
+  // chains being a populated feature for this library.
+  const chainQ = useQuery({
+    queryKey: ['db', 'quest', id, 'chain'],
+    queryFn: () => client.getChainForQuest(id),
+    enabled: Number.isFinite(id) && features.hasQuestChains,
   });
 
   const paletteItems = useMemo<CommandItem[]>(
@@ -123,6 +141,17 @@ export default function QuestDetail() {
       }
     >
       <CollectionBadgeStrip entityType="quest" entityId={q.id} />
+
+      {chainQ.data && (
+        <p className="text-muted-foreground flex items-center gap-2 text-sm">
+          <GitBranch className="h-4 w-4 shrink-0" />
+          Part of{' '}
+          <QuestChainLink id={chainQ.data.id} className="text-foreground hover:underline">
+            {chainQ.data.name}
+          </QuestChainLink>
+          <span>({chainQ.data.size} quests)</span>
+        </p>
+      )}
 
       {q.description && (
         <p className="whitespace-pre-line text-sm leading-relaxed">{q.description}</p>

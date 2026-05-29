@@ -24,6 +24,8 @@ export interface FeatureFlags {
   hasNpcs: boolean;
   hasMaps: boolean;
   hasQuests: boolean;
+  /** Derived from quest prerequisites; gated on quests being present. */
+  hasQuestChains: boolean;
 }
 
 export interface Features extends FeatureFlags {
@@ -87,18 +89,23 @@ export function useFeatures(): Features {
       hasNpcs: false,
       hasMaps: false,
       hasQuests: false,
+      hasQuestChains: false,
     };
     for (const file of loadedFiles) {
       const keys = WZ_FILE_FEATURE[file];
       if (keys) for (const k of keys) fileFlags[k] = true;
     }
+    // Chains are derived from quest prerequisites, so the "file present"
+    // gate is the same as quests — Quest.wz unlocks both.
+    const hasQuests = fileFlags.hasQuests && (counts?.quests ?? 0) > 0;
     return {
       hasItems: fileFlags.hasItems && (counts?.items ?? 0) > 0,
       hasEquips: fileFlags.hasEquips && (counts?.equips ?? 0) > 0,
       hasMobs: fileFlags.hasMobs && (counts?.mobs ?? 0) > 0,
       hasNpcs: fileFlags.hasNpcs && (counts?.npcs ?? 0) > 0,
       hasMaps: fileFlags.hasMaps && (counts?.maps ?? 0) > 0,
-      hasQuests: fileFlags.hasQuests && (counts?.quests ?? 0) > 0,
+      hasQuests,
+      hasQuestChains: hasQuests && (counts?.questChains ?? 0) > 0,
     };
   }, [loadedFiles, counts]);
 
@@ -108,7 +115,8 @@ export function useFeatures(): Features {
     flags.hasMobs ||
     flags.hasNpcs ||
     flags.hasMaps ||
-    flags.hasQuests;
+    flags.hasQuests ||
+    flags.hasQuestChains;
 
   // First run: no datasets have ever been recorded *and* every entity table
   // is empty. The first condition alone would already imply "no setup", but

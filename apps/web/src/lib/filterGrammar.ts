@@ -45,6 +45,10 @@ const ENTITY_ALIAS: Record<string, EntityScope> = {
   map: 'map',
   quests: 'quest',
   quest: 'quest',
+  chains: 'questChain',
+  chain: 'questChain',
+  questchains: 'questChain',
+  questchain: 'questChain',
 };
 
 const FILTER_KEYS: Record<EntityScope, FilterMap> = {
@@ -84,6 +88,15 @@ const FILTER_KEYS: Record<EntityScope, FilterMap> = {
   quest: {
     level: { kind: 'number', param: 'level' },
   },
+  questChain: {
+    // Tokens match the user-facing labels (Quests / Stage / Starts / Loop)
+    // so a palette query reads the same way the chain index does.
+    count: { kind: 'number', param: 'size' },
+    stage: { kind: 'number', param: 'maxDepth' },
+    starts: { kind: 'number', param: 'rootCount' },
+    loop: { kind: 'boolean', param: 'hasCycles' },
+    parent: { kind: 'string', param: 'parent' },
+  },
 };
 
 const NAME_COLUMN: Record<EntityScope, string> = {
@@ -93,6 +106,7 @@ const NAME_COLUMN: Record<EntityScope, string> = {
   npc: 'name',
   map: 'name',
   quest: 'name',
+  questChain: 'name',
 };
 
 export interface ParsedFilterQuery {
@@ -250,6 +264,7 @@ export function buildFilterUrl(entity: EntityScope, params: Record<string, strin
     npc: '/npcs',
     map: '/maps',
     quest: '/quests',
+    questChain: '/quest-chains',
   }[entity];
   const sp = new URLSearchParams(params);
   return sp.toString() ? `${base}?${sp.toString()}` : base;

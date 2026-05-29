@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   AlertTriangle,
   CheckCircle2,
+  GitBranch,
   Loader2,
   Package,
   ScrollText,
@@ -37,7 +38,7 @@ interface Props {
 /** Per-category summary tiles, keyed by the count field on `ExtractStats`.
  *  Icons mirror the sidebar so the summary reads like the app it built. */
 const SUMMARY_CARDS: {
-  key: 'items' | 'equips' | 'mobs' | 'npcs' | 'maps' | 'quests';
+  key: 'items' | 'equips' | 'mobs' | 'npcs' | 'maps' | 'quests' | 'questChains';
   label: string;
   Icon: LucideIcon;
 }[] = [
@@ -47,6 +48,7 @@ const SUMMARY_CARDS: {
   { key: 'npcs', label: 'NPCs', Icon: Users },
   { key: 'maps', label: 'Maps', Icon: MapIcon },
   { key: 'quests', label: 'Quests', Icon: ScrollText },
+  { key: 'questChains', label: 'Quest Chains', Icon: GitBranch },
 ];
 
 /**
@@ -67,9 +69,7 @@ export function StepRun({ version, files, onComplete, mode }: Props) {
   // a logical root).
   const droppedFiles = useMemo(
     () =>
-      plan.filesToLoad.flatMap((f) =>
-        f.members.map((m) => ({ name: m.relPath, source: m.file })),
-      ),
+      plan.filesToLoad.flatMap((f) => f.members.map((m) => ({ name: m.relPath, source: m.file }))),
     [plan.filesToLoad],
   );
   const willRunKeys = useMemo(() => new Set(plan.willRun.map((r) => r.key)), [plan.willRun]);
@@ -133,8 +133,8 @@ export function StepRun({ version, files, onComplete, mode }: Props) {
               {mode === 'update' ? 'Update complete' : 'Your wiki is ready'}
             </h2>
             <p className="text-muted-foreground text-sm">
-              {total.toLocaleString()} entries indexed in {(stats.ms / 1000).toFixed(1)}s. Everything
-              is stored on this device and ready to explore.
+              {total.toLocaleString()} entries indexed in {(stats.ms / 1000).toFixed(1)}s.
+              Everything is stored on this device and ready to explore.
             </p>
           </div>
         </div>

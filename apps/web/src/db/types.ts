@@ -298,6 +298,67 @@ export interface QuestSummary {
   parent: string | null;
 }
 
+/**
+ * One row of the `quest_chains` table. A chain is a weakly-connected
+ * component of the prerequisite graph with >= 2 quests; trivial isolated
+ * quests are not persisted. See lib/questChains/graph.ts for derivation.
+ */
+export interface QuestChainRecord {
+  id: number;
+  name: string;
+  representativeRootId: number;
+  rootCount: number;
+  size: number;
+  maxDepth: number;
+  hasCycles: boolean;
+  cycleCount: number;
+  parent: string | null;
+}
+
+/** One row of `quest_chain_members`. `sccId` is non-null iff the quest sits
+ *  in a cycle within this chain (local index, 1..cycle_count). */
+export interface QuestChainMemberRecord {
+  chainId: number;
+  questId: number;
+  depth: number;
+  sccId: number | null;
+  isRoot: boolean;
+  /** True iff this quest is on a path from a starting quest to the chain's
+   *  final (deepest) quest. False marks it as optional — visible in the
+   *  chain but skippable when racing toward the final. See
+   *  `lib/questChains/graph.ts` for the derivation. */
+  isCritical: boolean;
+}
+
+/** Member row joined to the underlying quest's display name and parent —
+ *  the shape the detail page consumes. */
+export interface QuestChainMemberWithName extends QuestChainMemberRecord {
+  questName: string;
+  questParent: string | null;
+}
+
+/** One row of `quest_chain_edges`. */
+export interface QuestChainEdgeRecord {
+  chainId: number;
+  fromQuestId: number;
+  toQuestId: number;
+  inCycle: boolean;
+}
+
+/** Hydrated chain shape used by the detail route + graph viewer. */
+export interface QuestChainDetail {
+  chain: QuestChainRecord;
+  members: QuestChainMemberWithName[];
+  edges: QuestChainEdgeRecord[];
+}
+
+/** Listing row + a small preview of members for the index. */
+export interface QuestChainListRow extends QuestChainRecord {
+  /** First few members in depth/name order — used for the index's "starts
+   *  with …" hint column. Length <= 3. */
+  preview: QuestSummary[];
+}
+
 export interface DatasetFileRef {
   name: string;
   size: number | null;
@@ -382,6 +443,7 @@ export interface DbStatus {
     npcs: number;
     maps: number;
     quests: number;
+    questChains: number;
     datasets: number;
   };
 }
@@ -543,6 +605,24 @@ export interface GameDatabase {
     rewards: QuestRewardRecord[];
   }): Promise<void>;
 
+  /**
+   * Derive quest chains from the current `quest_requirements` rows and
+   * overwrite the chain tables. Idempotent — re-runs after every
+   * extraction. Returns the number of chains persisted (size >= 2).
+   */
+  computeAndStoreQuestChains(): Promise<number>;
+  /** Hydrated chain shape for the detail page + graph viewer. */
+  getQuestChain(id: number): Promise<QuestChainDetail | null>;
+  /** Paged listing for the chain index. `preview` carries the first few
+   *  member quests so the index can show a "starts with …" hint. */
+  listQuestChains(
+    opts?: ListOptsBase & { parent?: string },
+  ): Promise<PageResult<QuestChainListRow>>;
+  /** Distinct chain `parent` values for the index filter dropdown. */
+  listQuestChainParents(): Promise<string[]>;
+  /** Chain a given quest belongs to, or null. A quest is in at most one. */
+  getChainForQuest(questId: number): Promise<QuestChainRecord | null>;
+
   /** Replace all rows of a join table for the given map IDs. Used by the
    *  map extractor to keep join data consistent with re-extractions. */
   replaceMapLife(rows: {
@@ -605,7 +685,7 @@ export interface GameDatabase {
   importBytes(bytes: Uint8Array): Promise<{ backend: 'opfs' | 'memory'; schemaVersion: number }>;
 }
 
-export type EntityKind = 'item' | 'equip' | 'mob' | 'npc' | 'map' | 'quest';
+export type EntityKind = 'item' | 'equip' | 'mob' | 'npc' | 'map' | 'quest' | 'questChain';
 
 export interface SearchEntry {
   id: number;

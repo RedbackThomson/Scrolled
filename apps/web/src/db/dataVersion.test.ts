@@ -28,15 +28,18 @@ describe('evaluateDataState', () => {
   });
 
   it('recommends an update for readable-but-stale revisions', () => {
-    // Only meaningful once a release widens the gap (current > minimum). Drive
-    // the function directly so the case is covered regardless of today's values.
-    const between = 5;
-    expect(
-      evaluateDataState(between) === 'update-recommended' ||
-        // Degenerate band (minimum === current): no "stale but readable" range
-        // exists, so this revision is simply current.
-        MINIMUM_SUPPORTED_DATA_REVISION === CURRENT_DATA_REVISION,
-    ).toBe(true);
+    // Only meaningful once a release widens the gap (current > minimum). Pick
+    // a revision inside the [minimum, current) band so the assertion holds
+    // for any current configuration; fall back to the degenerate case below.
+    if (MINIMUM_SUPPORTED_DATA_REVISION === CURRENT_DATA_REVISION) {
+      // Degenerate band: no "stale but readable" range exists, so anything
+      // below the minimum is reinitialize-required and the assertion is
+      // trivially satisfied.
+      expect(true).toBe(true);
+      return;
+    }
+    const between = MINIMUM_SUPPORTED_DATA_REVISION;
+    expect(evaluateDataState(between)).toBe('update-recommended');
   });
 
   it('places exactly the [minimum, current) band in update-recommended', () => {

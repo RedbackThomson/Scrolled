@@ -36,6 +36,9 @@ import type {
   NpcRecord,
   GameDatabase,
   PageResult,
+  QuestChainDetail,
+  QuestChainListRow,
+  QuestChainRecord,
   QuestRecord,
   QuestRequirementRecord,
   QuestRequirementWithName,
@@ -50,6 +53,7 @@ import * as mobs from './mobs';
 import * as npcs from './npcs';
 import * as maps from './maps';
 import * as quests from './quests';
+import * as questChains from './questChains';
 import * as search from './search';
 import * as datasets from './datasets';
 import {
@@ -94,6 +98,7 @@ export class DbApi implements GameDatabase {
         npcs: countOf(this.sql, 'npcs'),
         maps: countOf(this.sql, 'maps'),
         quests: countOf(this.sql, 'quests'),
+        questChains: countOf(this.sql, 'quest_chains'),
         datasets: countOf(this.sql, 'datasets'),
       },
     };
@@ -333,6 +338,30 @@ export class DbApi implements GameDatabase {
     rewards: QuestRewardRecord[];
   }): Promise<void> {
     quests.replaceQuestRelations(this.sql, rows);
+  }
+
+  // -- quest chains -----------------------------------------------------------
+
+  async computeAndStoreQuestChains(): Promise<number> {
+    return questChains.computeAndStoreQuestChains(this.sql);
+  }
+
+  async getQuestChain(id: number): Promise<QuestChainDetail | null> {
+    return questChains.getQuestChain(this.sql, id);
+  }
+
+  async listQuestChains(
+    opts: ListOptsBase & { parent?: string } = {},
+  ): Promise<PageResult<QuestChainListRow>> {
+    return questChains.listQuestChains(this.sql, opts);
+  }
+
+  async listQuestChainParents(): Promise<string[]> {
+    return questChains.listQuestChainParents(this.sql);
+  }
+
+  async getChainForQuest(questId: number): Promise<QuestChainRecord | null> {
+    return questChains.getChainForQuest(this.sql, questId);
   }
 
   // -- search / datasets ------------------------------------------------------

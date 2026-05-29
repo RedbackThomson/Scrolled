@@ -252,6 +252,26 @@ class WorkerDb {
     await this.ensureOpen();
     return this.api.replaceQuestRelations(rows);
   }
+  async computeAndStoreQuestChains() {
+    await this.ensureOpen();
+    return this.api.computeAndStoreQuestChains();
+  }
+  async getQuestChain(id: number) {
+    await this.ensureOpen();
+    return this.api.getQuestChain(id);
+  }
+  async listQuestChains(opts?: Parameters<DbApi['listQuestChains']>[0]) {
+    await this.ensureOpen();
+    return this.api.listQuestChains(opts);
+  }
+  async listQuestChainParents() {
+    await this.ensureOpen();
+    return this.api.listQuestChainParents();
+  }
+  async getChainForQuest(questId: number) {
+    await this.ensureOpen();
+    return this.api.getChainForQuest(questId);
+  }
   async recordDataset(input: Parameters<DbApi['recordDataset']>[0]) {
     await this.ensureOpen();
     return this.api.recordDataset(input);

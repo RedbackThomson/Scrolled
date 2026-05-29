@@ -103,6 +103,19 @@ export const QUEST_FILTER: Record<string, FilterSpec> = {
   id: { col: 'id', type: 'string' },
 };
 
+export const QUEST_CHAIN_FILTER: Record<string, FilterSpec> = {
+  name: { col: 'name', type: 'string' },
+  parent: { col: 'parent', type: 'string' },
+  size: { col: 'size', type: 'number' },
+  maxDepth: { col: 'max_depth', type: 'number' },
+  rootCount: { col: 'root_count', type: 'number' },
+  // INTEGER 0/1; the UI sends `{ kind: 'range', min: 1 }` to filter to
+  // chains that contain at least one cycle, and clears the filter to
+  // include everything. No separate "no cycles" filter today.
+  hasCycles: { col: 'has_cycles', type: 'number' },
+  id: { col: 'id', type: 'string' },
+};
+
 /**
  * Append WHERE fragments + bind params for each known filter. Unknown
  * filter keys, blank-string values, and ranges with neither bound set

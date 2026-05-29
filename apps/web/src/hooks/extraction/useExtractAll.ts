@@ -201,6 +201,20 @@ export function useExtractAll(opts: UseExtractAllOptions = {}) {
         log.info('skipping quests (Quest.wz hash unchanged)');
       }
 
+      // Quest chains are a pure DB derivation, not an extraction. Always run
+      // — when WZ files are hash-skipped we still want chains populated on
+      // the first run of a build that ships them.
+      try {
+        setProgress({ phase: 'Deriving quest chains', current: 0 });
+        const chainCount = await db.computeAndStoreQuestChains();
+        tracker.ran('questChain', chainCount, 0);
+      } catch (err) {
+        tracker.failed('questChain', err);
+        // Non-fatal: the chain pages will read empty, but the rest of the
+        // library is fine. Log and move on.
+        log.error('quest-chain derivation failed', describeError(err));
+      }
+
       const ms = Math.round(performance.now() - started);
       const perExtractor = tracker.records();
 

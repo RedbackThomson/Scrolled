@@ -533,4 +533,86 @@ export const MIGRATIONS: readonly Migration[] = [
       ALTER TABLE datasets ADD COLUMN source_kind TEXT NOT NULL DEFAULT 'wz';
     `,
   },
+  {
+    version: 19,
+    name: 'quest chains (derived from quest prerequisites)',
+    sql: `
+      -- Quest chains are a derivation, not an extraction. The post-pass walks
+      -- the directed graph of quest_requirements rows where kind='questPre'
+      -- and groups quests into weakly-connected components (a chain is one
+      -- WCC of size >= 2). Cycles in the source data are detected via
+      -- Tarjan SCC and surfaced rather than papered over. See
+      -- lib/questChains/graph.ts for the algorithm and
+      -- db/queries/questChains.ts for the persistence.
+      --
+      -- Each quest belongs to at most one chain, so listing the chains a
+      -- quest is in is a 1:0..1 lookup. The chain's id is the minimum
+      -- quest_id among its roots (quests with no prerequisites), or — for
+      -- fully-cyclic chains where no quest is enterable — the minimum
+      -- quest_id overall. That makes the id stable across re-extractions
+      -- as long as the representative quest persists.
+      CREATE TABLE quest_chains (
+        id                     INTEGER PRIMARY KEY,
+        name                   TEXT NOT NULL,
+        representative_root_id INTEGER NOT NULL,
+        root_count             INTEGER NOT NULL,
+        size                   INTEGER NOT NULL,
+        max_depth              INTEGER NOT NULL,
+        has_cycles             INTEGER NOT NULL,
+        cycle_count            INTEGER NOT NULL,
+        parent                 TEXT
+      );
+      CREATE INDEX quest_chains_parent_idx     ON quest_chains (parent);
+      CREATE INDEX quest_chains_has_cycles_idx ON quest_chains (has_cycles);
+      CREATE INDEX quest_chains_size_idx       ON quest_chains (size);
+
+      -- One row per (chain, quest). depth is the BFS distance from the chain's
+      -- condensation root SCC(s); for fully-cyclic chains it's 0 everywhere.
+      -- scc_id is non-null iff the quest sits in a multi-quest SCC or a
+      -- singleton SCC with a self-loop — i.e. it's involved in a cycle.
+      -- Local to the chain (1..cycle_count), not global.
+      CREATE TABLE quest_chain_members (
+        chain_id INTEGER NOT NULL,
+        quest_id INTEGER NOT NULL,
+        depth    INTEGER NOT NULL,
+        scc_id   INTEGER,
+        is_root  INTEGER NOT NULL,
+        PRIMARY KEY (chain_id, quest_id)
+      );
+      CREATE INDEX quest_chain_members_quest_idx      ON quest_chain_members (quest_id);
+      CREATE INDEX quest_chain_members_chain_root_idx ON quest_chain_members (chain_id, is_root);
+
+      -- Persisted edges so the graph viewer never has to re-join against
+      -- quest_requirements. in_cycle = 1 iff both endpoints share a cyclic
+      -- SCC (or it's a self-loop).
+      CREATE TABLE quest_chain_edges (
+        chain_id      INTEGER NOT NULL,
+        from_quest_id INTEGER NOT NULL,
+        to_quest_id   INTEGER NOT NULL,
+        in_cycle      INTEGER NOT NULL,
+        PRIMARY KEY (chain_id, from_quest_id, to_quest_id)
+      );
+    `,
+  },
+  {
+    version: 20,
+    name: 'quest chain critical-path flag',
+    sql: `
+      -- Marks quests that sit on a path from any starting quest to the
+      -- chain's deepest leaf — i.e. the "must do" subset needed to reach
+      -- the final quest. Computed at chain-derivation time alongside the
+      -- stage/SCC fields (see lib/questChains/graph.ts). The "Critical
+      -- path only" toggle on the detail page filters members and edges
+      -- to is_critical = 1; the default view leaves optional quests in
+      -- place with reduced emphasis.
+      --
+      -- DEFAULT 0 means rows surviving from before this migration look
+      -- like "all optional" until a re-derivation runs — paired with the
+      -- CURRENT_DATA_REVISION bump that nudges the user to re-run setup.
+      ALTER TABLE quest_chain_members
+        ADD COLUMN is_critical INTEGER NOT NULL DEFAULT 0;
+      CREATE INDEX quest_chain_members_chain_critical_idx
+        ON quest_chain_members (chain_id, is_critical);
+    `,
+  },
 ];

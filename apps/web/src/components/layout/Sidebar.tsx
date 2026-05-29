@@ -7,6 +7,7 @@ import {
   Bookmark,
   CheckCircle2,
   ChevronRight,
+  GitBranch,
   Loader2,
   Package,
   PanelLeftClose,
@@ -51,7 +52,14 @@ interface SidebarSection {
   children?: SidebarChild[];
   /** Which feature flag must be true for this entry to render. Always-visible
    *  entries (Home, Settings, Debug) omit this. */
-  feature?: 'hasItems' | 'hasEquips' | 'hasMobs' | 'hasNpcs' | 'hasMaps' | 'hasQuests';
+  feature?:
+    | 'hasItems'
+    | 'hasEquips'
+    | 'hasMobs'
+    | 'hasNpcs'
+    | 'hasMaps'
+    | 'hasQuests'
+    | 'hasQuestChains';
 }
 
 const ITEM_CATEGORY_CHILDREN = [
@@ -141,6 +149,15 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
     });
   }, [collectionsQ.data]);
 
+  // Chains hang off the Quests section as a sibling listing (similar to how
+  // weapon-type subitems hang off Equips). Only surfaced once the chain
+  // pass has populated the cache; if quests are present but no chains were
+  // derived, the parent listing still works without a stray subitem.
+  const questChildren = useMemo<SidebarChild[] | undefined>(() => {
+    if (!features.hasQuestChains) return undefined;
+    return [{ label: 'Chains', to: '/quest-chains', icon: GitBranch }];
+  }, [features.hasQuestChains]);
+
   const allSections: SidebarSection[] = [
     {
       label: 'Items',
@@ -170,7 +187,13 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
     { label: 'Mobs', to: '/mobs', icon: Skull, feature: 'hasMobs' },
     { label: 'NPCs', to: '/npcs', icon: Users, feature: 'hasNpcs' },
     { label: 'Maps', to: '/maps', icon: MapIcon, feature: 'hasMaps' },
-    { label: 'Quests', to: '/quests', icon: ScrollText, feature: 'hasQuests' },
+    {
+      label: 'Quests',
+      to: '/quests',
+      icon: ScrollText,
+      feature: 'hasQuests',
+      children: questChildren,
+    },
   ];
   const entitySections = allSections.filter((s) => !s.feature || features[s.feature]);
   const collectionsSection: SidebarSection = {

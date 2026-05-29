@@ -39,6 +39,7 @@ export function NavigationProvider() {
     npc: features.hasNpcs,
     map: features.hasMaps,
     quest: features.hasQuests,
+    questChain: features.hasQuestChains,
   };
 
   const entries: NavEntry[] = [

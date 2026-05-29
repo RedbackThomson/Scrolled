@@ -7,4 +7,5 @@ export const ENTITY_TABLES: Record<EntityKind, string> = {
   npc: 'npcs',
   map: 'maps',
   quest: 'quests',
+  questChain: 'quest_chains',
 };

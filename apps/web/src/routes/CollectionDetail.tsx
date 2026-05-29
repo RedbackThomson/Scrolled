@@ -38,6 +38,7 @@ const TYPE_LABELS: Record<CollectionEntityType, string> = {
   npc: 'NPCs',
   map: 'Maps',
   quest: 'Quests',
+  questChain: 'Quest Chains',
 };
 
 export default function CollectionDetail() {
@@ -101,6 +102,7 @@ export default function CollectionDetail() {
         npc: new Map(),
         map: new Map(),
         quest: new Map(),
+        questChain: new Map(),
       };
       for (const [t, map] of entries) lookup[t] = map;
       return lookup;
