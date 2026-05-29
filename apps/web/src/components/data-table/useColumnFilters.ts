@@ -4,8 +4,8 @@
 //   - string columns: `f_<col>=foo`, optional `f_<col>_mode=prefix|suffix|equals`
 //                     (`contains` is the default and clears from the URL)
 //                                                → { kind: 'string', mode, value }
-//   - enum columns:   `f_<col>=value` (server treats as equals)
-//                                                → { kind: 'string', mode: 'equals', value }
+//   - enum columns:   `f_<col>=Fire,Ice` (comma-joined; server treats as IN)
+//                                                → { kind: 'enum', values }
 //   - number columns: `f_<col>_min=10`, `f_<col>_max=50`
 //                                                → { kind: 'range', min, max }
 //
@@ -15,6 +15,7 @@
 
 import { useCallback, useMemo } from 'react';
 import {
+  parseAsArrayOf,
   parseAsFloat,
   parseAsString,
   parseAsStringLiteral,
@@ -69,6 +70,7 @@ function buildParsers(
 ): Record<
   string,
   | ParserBuilder<string>
+  | ParserBuilder<string[]>
   | ParserBuilder<number>
   | ParserBuilder<StringFilterMode>
   | ParserBuilder<(typeof BOOLEAN_VALUES)[number]>
@@ -76,6 +78,7 @@ function buildParsers(
   const map: Record<
     string,
     | ParserBuilder<string>
+    | ParserBuilder<string[]>
     | ParserBuilder<number>
     | ParserBuilder<StringFilterMode>
     | ParserBuilder<(typeof BOOLEAN_VALUES)[number]>
@@ -89,9 +92,10 @@ function buildParsers(
         .withDefault(DEFAULT_STRING_MODE)
         .withOptions({ clearOnDefault: true });
     } else if (type === 'enum') {
-      // Enum has no mode picker — the user is choosing from a known set
-      // and the server treats it as equality.
-      map[`f_${id}`] = parseAsString.withDefault('').withOptions({ clearOnDefault: true });
+      // Enum is comma-joined: `f_weakAgainst=Fire,Ice` round-trips as
+      // ['Fire', 'Ice']. Single-value URLs from older saved searches
+      // come through as a one-element array.
+      map[`f_${id}`] = parseAsArrayOf(parseAsString, ',').withOptions({ clearOnDefault: true });
     } else if (type === 'boolean') {
       // Boolean filters are tristate (any / true / false) and surface as
       // a range filter with min=max=1 or 0, so the server's number-column
@@ -136,9 +140,9 @@ export function useColumnFilters<TData>(
           out[id] = { kind: 'string', mode: m, value: v };
         }
       } else if (type === 'enum') {
-        const v = (state[`f_${id}`] as string | null | undefined) ?? '';
-        if (v.length > 0) {
-          out[id] = { kind: 'string', mode: 'equals', value: v };
+        const v = state[`f_${id}`] as string[] | null | undefined;
+        if (v && v.length > 0) {
+          out[id] = { kind: 'enum', values: v };
         }
       } else if (type === 'boolean') {
         const v = state[`f_${id}`] as '1' | '0' | null | undefined;
@@ -166,7 +170,11 @@ export function useColumnFilters<TData>(
   const active = useMemo(
     () =>
       Object.values(filters).some((f) =>
-        f.kind === 'string' ? f.value.length > 0 : f.min !== undefined || f.max !== undefined,
+        f.kind === 'string'
+          ? f.value.length > 0
+          : f.kind === 'enum'
+            ? f.values.length > 0
+            : f.min !== undefined || f.max !== undefined,
       ),
     [filters],
   );
@@ -187,7 +195,11 @@ export function useColumnFilters<TData>(
           [`f_${columnId}_mode`]: nextMode,
         });
       } else if (spec.type === 'enum') {
-        const next = value !== null && value.kind === 'string' ? value.value : '';
+        // null clears; an `enum` patch writes the value list (a one-element
+        // array round-trips to the same single-value URL old saved searches
+        // produced).
+        const next =
+          value !== null && value.kind === 'enum' && value.values.length > 0 ? value.values : null;
         void setState({ [`f_${columnId}`]: next });
       } else if (spec.type === 'boolean') {
         const n = value && value.kind === 'range' ? (value.min ?? value.max) : null;
@@ -206,13 +218,13 @@ export function useColumnFilters<TData>(
   );
 
   const clearAll = useCallback(() => {
-    const patch: Record<string, string | number | null | StringFilterMode> = {};
+    const patch: Record<string, string | string[] | number | null | StringFilterMode> = {};
     for (const { id, type } of filterable) {
       if (type === 'string') {
         patch[`f_${id}`] = '';
         patch[`f_${id}_mode`] = DEFAULT_STRING_MODE;
       } else if (type === 'enum') {
-        patch[`f_${id}`] = '';
+        patch[`f_${id}`] = null;
       } else if (type === 'boolean') {
         patch[`f_${id}`] = null;
       } else {

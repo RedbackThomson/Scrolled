@@ -19,7 +19,7 @@ export default function Mobs() {
     defaultSize: DEFAULT_PAGE_SIZE,
     defaultVisible,
   });
-  const { filters, setFilter, active: filtersActive } = useColumnFilters(columns);
+  const { filters, setFilter, clearAll, active: filtersActive } = useColumnFilters(columns);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const mobsQ = useQuery({
@@ -27,7 +27,6 @@ export default function Mobs() {
       'db',
       'mobs',
       {
-        q: state.q,
         sort: state.sort,
         dir: state.dir,
         page: state.page,
@@ -37,7 +36,6 @@ export default function Mobs() {
     ],
     queryFn: () =>
       client.listMobs({
-        search: state.q || undefined,
         orderBy: state.sort,
         dir: state.dir,
         limit: state.size,
@@ -47,7 +45,7 @@ export default function Mobs() {
     placeholderData: keepPreviousData,
   });
 
-  const isEmpty = mobsQ.data?.total === 0 && !state.q && !filtersActive;
+  const isEmpty = mobsQ.data?.total === 0 && !filtersActive;
 
   return (
     <TablePageLayout title="Mobs" entityPlural="mobs" isEmpty={isEmpty}>
@@ -72,14 +70,16 @@ export default function Mobs() {
           setFilter(id, v);
           setState({ page: 1 });
         }}
+        onClearFilters={() => {
+          clearAll();
+          setState({ page: 1 });
+        }}
+        entity="mob"
         enumOptions={{
           weakAgainst: ELEMENT_ENUM_OPTIONS,
           strongAgainst: ELEMENT_ENUM_OPTIONS,
           immuneTo: ELEMENT_ENUM_OPTIONS,
         }}
-        searchValue={state.q}
-        onSearchChange={(v) => setState({ q: v, page: 1 })}
-        searchPlaceholder="Search mobs by name"
         selectable
         selectedIds={selectedIds}
         onSelectionChange={setSelectedIds}
@@ -92,12 +92,7 @@ export default function Mobs() {
             />
           ) : undefined
         }
-        toolbarRightExtra={
-          <PinnedSearchesMenu
-            entity="mob"
-            filtersActive={filtersActive || !!state.q.trim()}
-          />
-        }
+        toolbarRightExtra={<PinnedSearchesMenu entity="mob" />}
       />
     </TablePageLayout>
   );

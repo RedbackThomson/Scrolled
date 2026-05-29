@@ -19,7 +19,7 @@ export default function Equips() {
     defaultSize: DEFAULT_PAGE_SIZE,
     defaultVisible,
   });
-  const { filters, setFilter, active: filtersActive } = useColumnFilters(columns);
+  const { filters, setFilter, clearAll, active: filtersActive } = useColumnFilters(columns);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const slotsQ = useQuery({
@@ -33,7 +33,6 @@ export default function Equips() {
       'equips',
       'non-weapon',
       {
-        q: state.q,
         sort: state.sort,
         dir: state.dir,
         page: state.page,
@@ -44,7 +43,6 @@ export default function Equips() {
     queryFn: () =>
       client.listEquips({
         kind: 'equip',
-        search: state.q || undefined,
         orderBy: state.sort,
         dir: state.dir,
         limit: state.size,
@@ -56,7 +54,7 @@ export default function Equips() {
 
   // "No data at all" path — only show the load-WZ prompt when there are
   // genuinely zero rows AND the user hasn't narrowed the result themselves.
-  const isEmpty = equipsQ.data?.total === 0 && !state.q && !filtersActive;
+  const isEmpty = equipsQ.data?.total === 0 && !filtersActive;
 
   return (
     <TablePageLayout
@@ -94,14 +92,16 @@ export default function Equips() {
           setFilter(id, v);
           setState({ page: 1 });
         }}
+        onClearFilters={() => {
+          clearAll();
+          setState({ page: 1 });
+        }}
+        entity="equip"
         enumOptions={{
           slot: (slotsQ.data ?? []).filter((s) => s !== 'weapon'),
           requiredJob: ALL_EQUIP_CLASSES,
         }}
         enumLabels={{ slot: labelForEquipSlot }}
-        searchValue={state.q}
-        onSearchChange={(v) => setState({ q: v, page: 1 })}
-        searchPlaceholder="Search equips by name"
         selectable
         selectedIds={selectedIds}
         onSelectionChange={setSelectedIds}
@@ -114,12 +114,7 @@ export default function Equips() {
             />
           ) : undefined
         }
-        toolbarRightExtra={
-          <PinnedSearchesMenu
-            entity="equip"
-            filtersActive={filtersActive || !!state.q.trim()}
-          />
-        }
+        toolbarRightExtra={<PinnedSearchesMenu entity="equip" />}
       />
     </TablePageLayout>
   );

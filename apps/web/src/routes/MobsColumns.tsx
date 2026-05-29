@@ -112,7 +112,10 @@ export const columns: ColumnDef<MobRecord>[] = [
     id: 'id',
     accessorFn: (m) => m.id,
     header: 'ID',
-    meta: { filter: 'number' },
+    // IDs are integers in the DB but the user-facing search is "does the
+    // ID contain these digits" — range filters never apply. SQLite's LIKE
+    // auto-coerces the integer to text for the match.
+    meta: { filter: 'string' },
     cell: ({ row }) => <span className="font-mono text-xs">{row.original.id}</span>,
   },
 ];

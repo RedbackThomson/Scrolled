@@ -34,8 +34,6 @@ const TEST_COLUMNS: ColumnDef<Row>[] = [
     accessorFn: (r) => r.level,
     header: 'Level',
     meta: { filter: 'number' },
-    // Default for numeric columns would be desc-first; force asc-first
-    // so the test's toggle sequence is deterministic.
     sortDescFirst: false,
     cell: ({ row }) => <span>{row.original.level}</span>,
   },
@@ -62,7 +60,7 @@ function Harness({ data, total }: HarnessProps) {
     defaultSize: 50,
     defaultVisible: DEFAULT_VISIBLE,
   });
-  const { filters, setFilter } = useColumnFilters(TEST_COLUMNS);
+  const { filters, setFilter, clearAll } = useColumnFilters(TEST_COLUMNS);
   return (
     <DataTable
       data={data}
@@ -79,6 +77,8 @@ function Harness({ data, total }: HarnessProps) {
       emptyMessage="No things match."
       columnFilters={filters}
       onColumnFilterChange={setFilter}
+      onClearFilters={clearAll}
+      entity="mob"
     />
   );
 }
@@ -107,73 +107,63 @@ describe('DataTable', () => {
   it('renders default-visible columns and the total in the footer', () => {
     renderHarness({ data: ROWS, total: 47 });
 
-    // Visible default columns — match exact header label so the filter
-    // trigger (aria-label "Filter Name") doesn't collide.
+    // Headers are plain text (sort moved into the Display Options menu);
+    // scope to <thead> so they don't collide with cell text.
     const head = document.querySelector('thead')!;
-    expect(within(head).getByRole('button', { name: 'Name' })).toBeInTheDocument();
-    expect(within(head).getByRole('button', { name: 'Level' })).toBeInTheDocument();
+    expect(within(head).getByText('Name')).toBeInTheDocument();
+    expect(within(head).getByText('Level')).toBeInTheDocument();
 
-    // Rows rendered
     expect(screen.getByText('Alpha')).toBeInTheDocument();
     expect(screen.getByText('Gamma')).toBeInTheDocument();
 
-    // Footer reflects server `total`, not data.length
     expect(screen.getByText(/Showing 1–3 of 47/)).toBeInTheDocument();
   });
 
-  it('clicking a sortable header writes sort + dir to the URL and resets page', async () => {
+  it('changing Ordering in Display Options writes sort + dir to the URL and resets page', async () => {
     const user = userEvent.setup();
     const onUrlUpdate = vi.fn<(e: UrlUpdateEvent) => void>();
     renderHarness({ data: ROWS, total: 3, onUrlUpdate });
 
-    const head = document.querySelector('thead')!;
-    await user.click(within(head).getByRole('button', { name: 'Level' }));
+    await user.click(screen.getByRole('button', { name: 'Display options' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Display options' });
 
-    // First click sets sort=level (ascending — the default dir, so cleared).
+    // Switch the sort column to "level". Default dir is 'asc' for level so
+    // `dir` clears from the URL but `sort` shows up.
+    await user.selectOptions(within(dialog).getByLabelText('Sort column'), 'level');
     await waitFor(() => {
       const params = onUrlUpdate.mock.calls.at(-1)?.[0].searchParams;
       expect(params?.get('sort')).toBe('level');
-      expect(params?.get('dir')).toBeNull();
       expect(params?.get('page')).toBeNull();
     });
 
-    await user.click(within(head).getByRole('button', { name: 'Level' }));
-
+    // Flip direction to descending via the ASC/DESC toggle.
+    await user.click(within(dialog).getByRole('button', { name: 'Descending' }));
     await waitFor(() => {
       const params = onUrlUpdate.mock.calls.at(-1)?.[0].searchParams;
       expect(params?.get('sort')).toBe('level');
       expect(params?.get('dir')).toBe('desc');
     });
-
-    // Third click snaps back to the entity default — both params clear.
-    await user.click(within(head).getByRole('button', { name: 'Level' }));
-
-    await waitFor(() => {
-      const params = onUrlUpdate.mock.calls.at(-1)?.[0].searchParams;
-      expect(params?.get('sort')).toBeNull();
-      expect(params?.get('dir')).toBeNull();
-    });
   });
 
-  it('typing in a string column filter writes f_<col> to the URL', async () => {
+  it('applying a string filter via the Filter menu writes f_<col> to the URL', async () => {
     const user = userEvent.setup();
     const onUrlUpdate = vi.fn<(e: UrlUpdateEvent) => void>();
     renderHarness({ data: ROWS, total: 3, onUrlUpdate });
 
-    // The filter icon is a <summary> with aria-label="Filter Name". <summary>
-    // doesn't have an implicit ARIA role, so query by label.
-    await user.click(screen.getByLabelText('Filter Name'));
-    // Default mode is `contains`, placeholder reflects it.
-    await user.type(screen.getByPlaceholderText('Contains…'), 'Alp');
+    await user.click(screen.getByRole('button', { name: 'Filter (F)' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Filter' });
+
+    // Pick the Name column from the cmdk list, then type a value and Apply.
+    await user.click(within(dialog).getByText('Name'));
+    await user.type(within(dialog).getByPlaceholderText(/^Name…/), 'Alp');
+    await user.click(within(dialog).getByRole('button', { name: 'Apply' }));
 
     await waitFor(() => {
       const params = onUrlUpdate.mock.calls.at(-1)?.[0].searchParams;
       expect(params?.get('f_name')).toBe('Alp');
-      // Default mode clears from URL.
-      expect(params?.get('f_name_mode')).toBeNull();
     });
 
-    // Clear via the Clear button — URL key drops out.
+    // Active filter surfaces a badge row with a Clear button.
     await user.click(screen.getByRole('button', { name: 'Clear' }));
     await waitFor(() => {
       const params = onUrlUpdate.mock.calls.at(-1)?.[0].searchParams;
@@ -181,42 +171,18 @@ describe('DataTable', () => {
     });
   });
 
-  it('switching string filter mode writes f_<col>_mode and keeps value', async () => {
+  it('applying a number range via the Filter menu writes f_<col>_min and f_<col>_max', async () => {
     const user = userEvent.setup();
     const onUrlUpdate = vi.fn<(e: UrlUpdateEvent) => void>();
     renderHarness({ data: ROWS, total: 3, onUrlUpdate });
 
-    await user.click(screen.getByLabelText('Filter Name'));
-    await user.type(screen.getByPlaceholderText('Contains…'), 'Alp');
-    await user.click(screen.getByRole('button', { name: 'Starts with' }));
+    await user.click(screen.getByRole('button', { name: 'Filter (F)' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Filter' });
 
-    await waitFor(() => {
-      const params = onUrlUpdate.mock.calls.at(-1)?.[0].searchParams;
-      expect(params?.get('f_name')).toBe('Alp');
-      expect(params?.get('f_name_mode')).toBe('prefix');
-    });
-
-    // Switching back to "Contains" (the default) clears the mode key.
-    await user.click(screen.getByRole('button', { name: 'Contains' }));
-    await waitFor(() => {
-      const params = onUrlUpdate.mock.calls.at(-1)?.[0].searchParams;
-      expect(params?.get('f_name')).toBe('Alp');
-      expect(params?.get('f_name_mode')).toBeNull();
-    });
-  });
-
-  it('committing a number column range writes f_<col>_min and f_<col>_max', async () => {
-    const user = userEvent.setup();
-    const onUrlUpdate = vi.fn<(e: UrlUpdateEvent) => void>();
-    renderHarness({ data: ROWS, total: 3, onUrlUpdate });
-
-    await user.click(screen.getByLabelText('Filter Level'));
-    const minInput = screen.getByLabelText('Minimum');
-    const maxInput = screen.getByLabelText('Maximum');
-    await user.type(minInput, '10');
-    await user.tab(); // blur commits
-    await user.type(maxInput, '50');
-    await user.tab();
+    await user.click(within(dialog).getByText('Level'));
+    await user.type(within(dialog).getByLabelText('Minimum'), '10');
+    await user.type(within(dialog).getByLabelText('Maximum'), '50');
+    await user.click(within(dialog).getByRole('button', { name: 'Apply' }));
 
     await waitFor(() => {
       const params = onUrlUpdate.mock.calls.at(-1)?.[0].searchParams;
@@ -230,24 +196,19 @@ describe('DataTable', () => {
     const onUrlUpdate = vi.fn<(e: UrlUpdateEvent) => void>();
     renderHarness({ data: ROWS, total: 3, onUrlUpdate });
 
-    // Open the disclosure by clicking the summary
-    await user.click(document.querySelector('summary')!);
+    await user.click(screen.getByRole('button', { name: 'Display options' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Display options' });
+    await user.click(within(dialog).getByRole('button', { name: 'Level' }));
 
-    // Uncheck the "Level" column (exact match — "ID" and "Name" don't collide).
-    await user.click(screen.getByRole('checkbox', { name: 'Level' }));
-
-    // The Level header should be gone from the table head
     const head = document.querySelector('thead')!;
     await waitFor(() => {
-      expect(within(head).queryByRole('button', { name: 'Level' })).toBeNull();
+      expect(within(head).queryByText('Level')).toBeNull();
     });
 
-    // URL should now have a `cols=` param with the remaining columns sorted.
     await waitFor(() => {
       const params = onUrlUpdate.mock.calls.at(-1)?.[0].searchParams;
       const cols = params?.get('cols');
       expect(cols).not.toBeNull();
-      // pinned `icon` plus name + id, sorted alphabetically. `level` is omitted.
       expect(cols!.split(',').sort()).toEqual(['icon', 'id', 'name']);
     });
   });

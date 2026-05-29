@@ -11,9 +11,8 @@ interface Props {
 
 /**
  * Demotes Import / Export all to a single overflow trigger so the primary
- * "New collection" CTA stands on its own. Matches the `<details>`-based
- * dropdown pattern used by ColumnVisibility — no portal, no outside-click
- * handler, just native disclosure.
+ * "New collection" CTA stands on its own. Uses a `<details>`-based native
+ * disclosure — no portal, no outside-click handler.
  */
 export function CollectionsOverflowMenu({ hasAny }: Props) {
   const [importOpen, setImportOpen] = useState(false);

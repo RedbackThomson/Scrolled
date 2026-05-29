@@ -40,7 +40,7 @@ export const columns: ColumnDef<QuestRecord>[] = [
     id: 'id',
     accessorFn: (q) => q.id,
     header: 'ID',
-    meta: { filter: 'number' },
+    meta: { filter: 'string' },
     cell: ({ row }) => <span className="font-mono text-xs">{row.original.id}</span>,
   },
 ];

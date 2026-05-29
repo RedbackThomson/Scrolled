@@ -16,18 +16,17 @@ export default function Maps() {
     defaultSize: DEFAULT_PAGE_SIZE,
     defaultVisible,
   });
-  const { filters, setFilter, active: filtersActive } = useColumnFilters(columns);
+  const { filters, setFilter, clearAll, active: filtersActive } = useColumnFilters(columns);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const mapsQ = useQuery({
     queryKey: [
       'db',
       'maps',
-      { q: state.q, sort: state.sort, dir: state.dir, page: state.page, size: state.size, filters },
+      { sort: state.sort, dir: state.dir, page: state.page, size: state.size, filters },
     ],
     queryFn: () =>
       client.listMaps({
-        search: state.q || undefined,
         orderBy: state.sort,
         dir: state.dir,
         limit: state.size,
@@ -37,7 +36,7 @@ export default function Maps() {
     placeholderData: keepPreviousData,
   });
 
-  const isEmpty = mapsQ.data?.total === 0 && !state.q && !filtersActive;
+  const isEmpty = mapsQ.data?.total === 0 && !filtersActive;
 
   return (
     <TablePageLayout title="Maps" entityPlural="maps" isEmpty={isEmpty}>
@@ -62,9 +61,11 @@ export default function Maps() {
           setFilter(id, v);
           setState({ page: 1 });
         }}
-        searchValue={state.q}
-        onSearchChange={(v) => setState({ q: v, page: 1 })}
-        searchPlaceholder="Search maps by name or street"
+        onClearFilters={() => {
+          clearAll();
+          setState({ page: 1 });
+        }}
+        entity="map"
         selectable
         selectedIds={selectedIds}
         onSelectionChange={setSelectedIds}
@@ -77,12 +78,7 @@ export default function Maps() {
             />
           ) : undefined
         }
-        toolbarRightExtra={
-          <PinnedSearchesMenu
-            entity="map"
-            filtersActive={filtersActive || !!state.q.trim()}
-          />
-        }
+        toolbarRightExtra={<PinnedSearchesMenu entity="map" />}
       />
     </TablePageLayout>
   );

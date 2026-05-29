@@ -16,7 +16,7 @@ export default function Quests() {
     defaultSize: DEFAULT_PAGE_SIZE,
     defaultVisible,
   });
-  const { filters, setFilter, active: filtersActive } = useColumnFilters(columns);
+  const { filters, setFilter, clearAll, active: filtersActive } = useColumnFilters(columns);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const parentsQ = useQuery({
@@ -29,7 +29,6 @@ export default function Quests() {
       'db',
       'quests',
       {
-        q: state.q,
         sort: state.sort,
         dir: state.dir,
         page: state.page,
@@ -39,7 +38,6 @@ export default function Quests() {
     ],
     queryFn: () =>
       client.listQuests({
-        search: state.q || undefined,
         orderBy: state.sort,
         dir: state.dir,
         limit: state.size,
@@ -49,7 +47,7 @@ export default function Quests() {
     placeholderData: keepPreviousData,
   });
 
-  const isEmpty = questsQ.data?.total === 0 && !state.q && !filtersActive;
+  const isEmpty = questsQ.data?.total === 0 && !filtersActive;
 
   return (
     <TablePageLayout title="Quests" entityPlural="quests" isEmpty={isEmpty}>
@@ -74,10 +72,12 @@ export default function Quests() {
           setFilter(id, v);
           setState({ page: 1 });
         }}
+        onClearFilters={() => {
+          clearAll();
+          setState({ page: 1 });
+        }}
+        entity="quest"
         enumOptions={{ parent: parentsQ.data ?? [] }}
-        searchValue={state.q}
-        onSearchChange={(v) => setState({ q: v, page: 1 })}
-        searchPlaceholder="Search quests by name"
         selectable
         selectedIds={selectedIds}
         onSelectionChange={setSelectedIds}
@@ -90,12 +90,7 @@ export default function Quests() {
             />
           ) : undefined
         }
-        toolbarRightExtra={
-          <PinnedSearchesMenu
-            entity="quest"
-            filtersActive={filtersActive || !!state.q.trim()}
-          />
-        }
+        toolbarRightExtra={<PinnedSearchesMenu entity="quest" />}
       />
     </TablePageLayout>
   );

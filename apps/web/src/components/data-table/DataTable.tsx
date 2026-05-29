@@ -11,7 +11,7 @@ import {
   type SortingState,
   type VisibilityState,
 } from '@tanstack/react-table';
-import { ChevronDown, ChevronUp, ChevronsUpDown, Loader2, Search, X } from 'lucide-react';
+import { Loader2, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -21,11 +21,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ColumnVisibility } from './ColumnVisibility';
-import { ColumnFilterPopover } from './ColumnFilter';
+import { DisplayOptionsMenu } from './DisplayOptionsMenu';
+import { FilterMenu } from './FilterMenu';
+import { FilterBadges } from './FilterBadges';
 import { MobileCards } from './MobileCards';
 import type { TableUrlState, TableUrlStatePatch, TableSortDir } from './useTableUrlState';
 import type { ColumnFilter } from '@/db';
+import type { CollectionEntityType } from '@/db/user';
 import { useIsMobile } from '@/hooks/useIsMobile';
 
 const DEFAULT_PAGE_SIZES = [25, 50, 100] as const;
@@ -53,11 +55,18 @@ export interface DataTableProps<TData> {
   columnFilters?: Record<string, ColumnFilter>;
   /** Setter for a single column's filter (null clears). */
   onColumnFilterChange?: (columnId: string, value: ColumnFilter | null) => void;
+  /** Clears every column filter at once. Drives the badge row's "Clear"
+   *  button. The route owns the hook that produces this, so it can also
+   *  reset the search query in the same callback. */
+  onClearFilters?: () => void;
   /** Options for `meta.filter === 'enum'` columns, keyed by column id. */
   enumOptions?: Record<string, readonly string[]>;
   /** Optional per-column label formatter for `enum` filter dropdowns. The
    *  raw value still drives the URL/filter; only the option text changes. */
   enumLabels?: Record<string, (value: string) => string>;
+  /** Identifies the page's entity for Save (writes to pinned_searches).
+   *  Required when the filter UI's Save button needs to function. */
+  entity?: CollectionEntityType;
   /** Bound to the table's search input. Omit to hide the input. */
   searchValue?: string;
   onSearchChange?: (next: string) => void;
@@ -105,8 +114,10 @@ export function DataTable<TData>({
   fetching,
   columnFilters,
   onColumnFilterChange,
+  onClearFilters,
   enumOptions,
   enumLabels,
+  entity,
   searchValue,
   onSearchChange,
   searchPlaceholder = 'Search',
@@ -287,11 +298,31 @@ export function DataTable<TData>({
             )}
           </div>
         )}
-        <div className="flex flex-wrap items-center gap-2">
-          {toolbarRightExtra}
-          {!showCards && <ColumnVisibility table={table} />}
+        {toolbarRightExtra}
+        <div className="ml-auto flex items-center gap-1.5">
+          {onColumnFilterChange && (
+            <FilterMenu
+              columns={columns}
+              filters={columnFilters ?? {}}
+              onChange={onColumnFilterChange}
+              enumOptions={enumOptions}
+              enumLabels={enumLabels}
+            />
+          )}
+          <DisplayOptionsMenu table={table} state={state} setState={setState} />
         </div>
       </div>
+      {onColumnFilterChange && entity && onClearFilters && (
+        <FilterBadges
+          columns={columns}
+          filters={columnFilters ?? {}}
+          onChange={onColumnFilterChange}
+          onClearAll={onClearFilters}
+          enumOptions={enumOptions}
+          enumLabels={enumLabels}
+          entity={entity}
+        />
+      )}
 
       {showCards ? (
         <MobileCards
@@ -327,50 +358,9 @@ export function DataTable<TData>({
               )}
               {group.headers.map((header) => {
                 if (header.isPlaceholder) return <TableHead key={header.id} />;
-                const canSort = header.column.getCanSort();
-                const isActive = state.sort === header.column.id;
-                const filterType = header.column.columnDef.meta?.filter;
-                const headerNode = flexRender(header.column.columnDef.header, header.getContext());
-                const labelText =
-                  typeof header.column.columnDef.header === 'string'
-                    ? header.column.columnDef.header
-                    : header.column.id;
                 return (
                   <TableHead key={header.id}>
-                    <div className="inline-flex items-center gap-1">
-                      {canSort ? (
-                        <button
-                          type="button"
-                          onClick={() => header.column.toggleSorting()}
-                          className="hover:text-foreground -mx-1 inline-flex items-center gap-1 rounded px-1 py-0.5"
-                        >
-                          {headerNode}
-                          {isActive ? (
-                            state.dir === 'desc' ? (
-                              <ChevronDown className="h-3.5 w-3.5" />
-                            ) : (
-                              <ChevronUp className="h-3.5 w-3.5" />
-                            )
-                          ) : (
-                            <ChevronsUpDown className="h-3.5 w-3.5 opacity-40" />
-                          )}
-                        </button>
-                      ) : (
-                        headerNode
-                      )}
-                      {filterType && onColumnFilterChange && (
-                        <ColumnFilterPopover
-                          columnId={header.column.id}
-                          columnLabel={labelText}
-                          type={filterType}
-                          value={columnFilters?.[header.column.id]}
-                          onChange={onColumnFilterChange}
-                          enumOptions={enumOptions?.[header.column.id]}
-                          enumLabel={enumLabels?.[header.column.id]}
-                          booleanLabels={header.column.columnDef.meta?.booleanLabels}
-                        />
-                      )}
-                    </div>
+                    {flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 );
               })}

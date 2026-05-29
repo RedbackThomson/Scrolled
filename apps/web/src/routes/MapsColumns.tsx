@@ -61,7 +61,7 @@ export const columns: ColumnDef<MapRecord>[] = [
     id: 'id',
     accessorFn: (m) => m.id,
     header: 'ID',
-    meta: { filter: 'number' },
+    meta: { filter: 'string' },
     cell: ({ row }) => <span className="font-mono text-xs">{row.original.id}</span>,
   },
 ];

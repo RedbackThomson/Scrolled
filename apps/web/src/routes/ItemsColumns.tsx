@@ -56,7 +56,7 @@ export const columns: ColumnDef<ItemRecord>[] = [
     id: 'id',
     accessorFn: (i) => i.id,
     header: 'ID',
-    meta: { filter: 'number' },
+    meta: { filter: 'string' },
     cell: ({ row }) => <span className="font-mono text-xs">{row.original.id}</span>,
   },
 ];

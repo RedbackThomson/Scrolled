@@ -19,7 +19,7 @@ const DEFAULT_PAGE_SIZE = 50;
 
 export default function Weapons() {
   const client = useMemo(() => getDbClient(), []);
-  const { filters, setFilter, active: filtersActive } = useColumnFilters(columns);
+  const { filters, setFilter, clearAll, active: filtersActive } = useColumnFilters(columns);
 
   // When the user has pinned exactly one weapon type via the filter, the
   // visible-column set shifts so stat-relevant columns surface (M.Atk for
@@ -27,7 +27,7 @@ export default function Weapons() {
   // default when zero or multiple types are active.
   const pinnedType = useMemo(() => {
     const f = filters.equipType;
-    if (f && f.kind === 'string' && f.mode === 'equals' && f.value) return f.value;
+    if (f && f.kind === 'enum' && f.values.length === 1) return f.values[0];
     return null;
   }, [filters.equipType]);
   const defaultVisible = useMemo(() => defaultVisibleForType(pinnedType), [pinnedType]);
@@ -50,7 +50,6 @@ export default function Weapons() {
       'equips',
       'weapon',
       {
-        q: state.q,
         sort: state.sort,
         dir: state.dir,
         page: state.page,
@@ -61,7 +60,6 @@ export default function Weapons() {
     queryFn: () =>
       client.listEquips({
         kind: 'weapon',
-        search: state.q || undefined,
         orderBy: state.sort,
         dir: state.dir,
         limit: state.size,
@@ -71,7 +69,7 @@ export default function Weapons() {
     placeholderData: keepPreviousData,
   });
 
-  const isEmpty = weaponsQ.data?.total === 0 && !state.q && !filtersActive;
+  const isEmpty = weaponsQ.data?.total === 0 && !filtersActive;
 
   return (
     <TablePageLayout
@@ -101,13 +99,16 @@ export default function Weapons() {
           setFilter(id, v);
           setState({ page: 1 });
         }}
+        onClearFilters={() => {
+          clearAll();
+          setState({ page: 1 });
+        }}
+        entity="equip"
         enumOptions={{
           equipType: typesQ.data ?? [],
           requiredJob: ALL_EQUIP_CLASSES,
         }}
-        searchValue={state.q}
-        onSearchChange={(v) => setState({ q: v, page: 1 })}
-        searchPlaceholder="Search weapons by name"
+        enumLabels={{ equipType: labelForEquipType }}
         selectable
         selectedIds={selectedIds}
         onSelectionChange={setSelectedIds}
@@ -120,12 +121,7 @@ export default function Weapons() {
             />
           ) : undefined
         }
-        toolbarRightExtra={
-          <PinnedSearchesMenu
-            entity="equip"
-            filtersActive={filtersActive || !!state.q.trim()}
-          />
-        }
+        toolbarRightExtra={<PinnedSearchesMenu entity="equip" />}
       />
     </TablePageLayout>
   );

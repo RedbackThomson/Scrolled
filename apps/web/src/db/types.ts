@@ -406,6 +406,9 @@ export interface PageResult<T> {
  *   the value joins the column — `contains` is the default; `prefix` /
  *   `suffix` / `equals` switch the implicit `%` placement (none for
  *   equals).
+ * - `enum`: equality against one of a fixed set. `values` is non-empty
+ *   (an empty list means the filter isn't surfaced); multiple values
+ *   become an `IN` clause in SQL — `Element is one of Fire, Ice`.
  * - `range`: number bounds. Either side may be omitted; `min === max`
  *   collapses to an exact equality.
  */
@@ -413,6 +416,7 @@ export type StringFilterMode = 'contains' | 'prefix' | 'suffix' | 'equals';
 
 export type ColumnFilter =
   | { kind: 'string'; mode: StringFilterMode; value: string }
+  | { kind: 'enum'; values: string[] }
   | { kind: 'range'; min?: number; max?: number };
 
 /**

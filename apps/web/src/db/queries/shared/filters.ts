@@ -7,6 +7,10 @@ import type { ColumnFilter } from '../../types';
  * public column ids (the same ones the UI sends from URL state) map to
  * the SQL column they back, plus the filter type. Unknown filter keys
  * are silently dropped — same defence-in-depth as ORDER BY.
+ *
+ * `id` is declared as `'string'` despite being an INTEGER column: the UX
+ * is "find IDs containing these digits", not a range. SQLite's LIKE
+ * auto-coerces integers to text so `WHERE id LIKE '%5%'` works.
  */
 export interface FilterSpec {
   col: string;
@@ -29,7 +33,7 @@ export const ITEM_FILTER: Record<string, FilterSpec> = {
   subcategory: { col: 'subcategory', type: 'string' },
   requiredLevel: { col: 'required_level', type: 'number' },
   price: { col: 'price', type: 'number' },
-  id: { col: 'id', type: 'number' },
+  id: { col: 'id', type: 'string' },
 };
 
 export const EQUIP_FILTER: Record<string, FilterSpec> = {
@@ -61,7 +65,7 @@ export const EQUIP_FILTER: Record<string, FilterSpec> = {
   incJump: { col: 'inc_jump', type: 'number' },
   upgradeSlots: { col: 'upgrade_slots', type: 'number' },
   requiredJob: { col: 'required_job', type: 'classMask' },
-  id: { col: 'id', type: 'number' },
+  id: { col: 'id', type: 'string' },
 };
 
 export const MOB_FILTER: Record<string, FilterSpec> = {
@@ -76,12 +80,12 @@ export const MOB_FILTER: Record<string, FilterSpec> = {
   // is_boss is INTEGER 0/1; same trick as equips.cash — a boolean column
   // filter ({min:1,max:1}) maps cleanly through the number filter path.
   boss: { col: 'is_boss', type: 'number' },
-  id: { col: 'id', type: 'number' },
+  id: { col: 'id', type: 'string' },
 };
 
 export const NPC_FILTER: Record<string, FilterSpec> = {
   name: { col: 'name', type: 'string' },
-  id: { col: 'id', type: 'number' },
+  id: { col: 'id', type: 'string' },
 };
 
 export const MAP_FILTER: Record<string, FilterSpec> = {
@@ -89,14 +93,14 @@ export const MAP_FILTER: Record<string, FilterSpec> = {
   streetName: { col: 'street_name', type: 'string' },
   mobRate: { col: 'mob_rate', type: 'number' },
   returnMapId: { col: 'return_map_id', type: 'number' },
-  id: { col: 'id', type: 'number' },
+  id: { col: 'id', type: 'string' },
 };
 
 export const QUEST_FILTER: Record<string, FilterSpec> = {
   name: { col: 'name', type: 'string' },
   parent: { col: 'parent', type: 'string' },
   requiredLevel: { col: 'required_level', type: 'number' },
-  id: { col: 'id', type: 'number' },
+  id: { col: 'id', type: 'string' },
 };
 
 /**
@@ -129,6 +133,12 @@ export function applyFilters(
               : `%${esc}%`;
       where.push(`${spec.col} LIKE ? ESCAPE '\\'`);
       params.push(pattern);
+    } else if (spec.type === 'string' && filter.kind === 'enum' && filter.values.length > 0) {
+      // Enum on a TEXT column → `col IN (?, ?, …)`. One value collapses
+      // to a single-element IN, which SQLite plans the same as `col = ?`.
+      const placeholders = filter.values.map(() => '?').join(', ');
+      where.push(`${spec.col} IN (${placeholders})`);
+      params.push(...filter.values);
     } else if (spec.type === 'number' && filter.kind === 'range') {
       if (filter.min !== undefined && Number.isFinite(filter.min)) {
         where.push(`${spec.col} >= ?`);
@@ -138,6 +148,27 @@ export function applyFilters(
         where.push(`${spec.col} <= ?`);
         params.push(filter.max);
       }
+    } else if (
+      spec.type === 'elementStatus' &&
+      filter.kind === 'enum' &&
+      filter.values.length > 0 &&
+      spec.elementStatus
+    ) {
+      // OR together one LIKE per element name. Each pattern matches the
+      // literal `<code><level>` pair anywhere in the elemAttr string —
+      // same shape as the single-value branch below, just unioned.
+      const level = LEVEL_BY_STATUS[spec.elementStatus];
+      const patterns: string[] = [];
+      for (const v of filter.values) {
+        const code = ELEMENT_CODE_BY_NAME[v.toLowerCase()];
+        if (!code) continue;
+        patterns.push(`%${escapeLikeLiteral(`${code}${level}`)}%`);
+      }
+      if (patterns.length === 0) continue;
+      where.push(
+        '(' + patterns.map(() => `${spec.col} LIKE ? ESCAPE '\\'`).join(' OR ') + ')',
+      );
+      params.push(...patterns);
     } else if (
       spec.type === 'elementStatus' &&
       filter.kind === 'string' &&
@@ -153,6 +184,33 @@ export function applyFilters(
       const esc = escapeLikeLiteral(`${code}${LEVEL_BY_STATUS[spec.elementStatus]}`);
       where.push(`${spec.col} LIKE ? ESCAPE '\\'`);
       params.push(`%${esc}%`);
+    } else if (spec.type === 'classMask' && filter.kind === 'enum' && filter.values.length > 0) {
+      // OR the per-value class bits. Bit-0 classes (Beginner) only match
+      // unrestricted equips; non-zero bits also match equips whose bit
+      // is set. Collapse the non-zero bits into a single mask.
+      let combined = 0;
+      let allowUnrestricted = false;
+      for (const v of filter.values) {
+        const bit = EQUIP_CLASS_BIT[v as EquipClass];
+        if (bit === undefined) continue;
+        if (bit === 0) allowUnrestricted = true;
+        else combined |= bit;
+      }
+      const parts: string[] = [];
+      if (allowUnrestricted) {
+        parts.push(`${spec.col} IS NULL`, `${spec.col} = 0`);
+      }
+      if (combined !== 0) {
+        // Equips with no class restriction also match any class request —
+        // mirrors the single-value branch.
+        if (!allowUnrestricted) {
+          parts.push(`${spec.col} IS NULL`, `${spec.col} = 0`);
+        }
+        parts.push(`(${spec.col} & ?) != 0`);
+        params.push(combined);
+      }
+      if (parts.length === 0) continue;
+      where.push(`(${parts.join(' OR ')})`);
     } else if (spec.type === 'classMask' && filter.kind === 'string' && filter.value) {
       const bit = EQUIP_CLASS_BIT[filter.value as EquipClass];
       if (bit === undefined) continue;

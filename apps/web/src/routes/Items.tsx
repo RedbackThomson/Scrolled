@@ -16,7 +16,7 @@ export default function Items() {
     defaultSize: DEFAULT_PAGE_SIZE,
     defaultVisible,
   });
-  const { filters, setFilter, active: filtersActive } = useColumnFilters(columns);
+  const { filters, setFilter, clearAll, active: filtersActive } = useColumnFilters(columns);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const categoriesQ = useQuery({
@@ -29,7 +29,6 @@ export default function Items() {
       'db',
       'items',
       {
-        q: state.q,
         sort: state.sort,
         dir: state.dir,
         page: state.page,
@@ -39,7 +38,6 @@ export default function Items() {
     ],
     queryFn: () =>
       client.listItems({
-        search: state.q || undefined,
         orderBy: state.sort,
         dir: state.dir,
         limit: state.size,
@@ -49,7 +47,7 @@ export default function Items() {
     placeholderData: keepPreviousData,
   });
 
-  const isEmpty = itemsQ.data?.total === 0 && !state.q && !filtersActive;
+  const isEmpty = itemsQ.data?.total === 0 && !filtersActive;
 
   return (
     <TablePageLayout
@@ -79,10 +77,12 @@ export default function Items() {
           setFilter(id, v);
           setState({ page: 1 });
         }}
+        onClearFilters={() => {
+          clearAll();
+          setState({ page: 1 });
+        }}
+        entity="item"
         enumOptions={{ category: categoriesQ.data ?? [] }}
-        searchValue={state.q}
-        onSearchChange={(v) => setState({ q: v, page: 1 })}
-        searchPlaceholder="Search items by name"
         selectable
         selectedIds={selectedIds}
         onSelectionChange={setSelectedIds}
@@ -95,12 +95,7 @@ export default function Items() {
             />
           ) : undefined
         }
-        toolbarRightExtra={
-          <PinnedSearchesMenu
-            entity="item"
-            filtersActive={filtersActive || !!state.q.trim()}
-          />
-        }
+        toolbarRightExtra={<PinnedSearchesMenu entity="item" />}
       />
     </TablePageLayout>
   );

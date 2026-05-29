@@ -16,18 +16,17 @@ export default function Npcs() {
     defaultSize: DEFAULT_PAGE_SIZE,
     defaultVisible,
   });
-  const { filters, setFilter, active: filtersActive } = useColumnFilters(columns);
+  const { filters, setFilter, clearAll, active: filtersActive } = useColumnFilters(columns);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const npcsQ = useQuery({
     queryKey: [
       'db',
       'npcs',
-      { q: state.q, sort: state.sort, dir: state.dir, page: state.page, size: state.size, filters },
+      { sort: state.sort, dir: state.dir, page: state.page, size: state.size, filters },
     ],
     queryFn: () =>
       client.listNpcs({
-        search: state.q || undefined,
         orderBy: state.sort,
         dir: state.dir,
         limit: state.size,
@@ -37,7 +36,7 @@ export default function Npcs() {
     placeholderData: keepPreviousData,
   });
 
-  const isEmpty = npcsQ.data?.total === 0 && !state.q && !filtersActive;
+  const isEmpty = npcsQ.data?.total === 0 && !filtersActive;
 
   return (
     <TablePageLayout title="NPCs" entityPlural="NPCs" isEmpty={isEmpty}>
@@ -62,9 +61,11 @@ export default function Npcs() {
           setFilter(id, v);
           setState({ page: 1 });
         }}
-        searchValue={state.q}
-        onSearchChange={(v) => setState({ q: v, page: 1 })}
-        searchPlaceholder="Search NPCs by name"
+        onClearFilters={() => {
+          clearAll();
+          setState({ page: 1 });
+        }}
+        entity="npc"
         selectable
         selectedIds={selectedIds}
         onSelectionChange={setSelectedIds}
@@ -77,12 +78,7 @@ export default function Npcs() {
             />
           ) : undefined
         }
-        toolbarRightExtra={
-          <PinnedSearchesMenu
-            entity="npc"
-            filtersActive={filtersActive || !!state.q.trim()}
-          />
-        }
+        toolbarRightExtra={<PinnedSearchesMenu entity="npc" />}
       />
     </TablePageLayout>
   );
