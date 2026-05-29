@@ -160,7 +160,7 @@ export default function MapDetail() {
           <header className="flex items-center gap-3">
             <MapIcon className="text-muted-foreground h-12 w-12 shrink-0" />
             <div className="min-w-0 flex-1">
-              <h1 className="break-words text-3xl font-semibold tracking-tight">
+              <h1 className="break-words text-xl font-semibold tracking-tight md:text-3xl">
                 {m.name ?? `Map ${m.id}`}
               </h1>
               {m.streetName && <p className="text-muted-foreground text-sm">{m.streetName}</p>}

@@ -38,8 +38,10 @@ export function DetailPageNotFound({
   return (
     <div className="max-w-3xl">
       <BackLinkButton back={back} />
-      <h1 className="mt-4 text-3xl font-semibold tracking-tight">{entity} not found</h1>
-      <p className="text-muted-foreground mt-2 text-sm">
+      <h1 className="mt-3 text-xl font-semibold tracking-tight md:mt-4 md:text-3xl">
+        {entity} not found
+      </h1>
+      <p className="text-muted-foreground text-sm md:mt-2">
         {entity} <code className="font-mono">{id}</code> isn't in your library yet. It may not have
         been loaded —{' '}
         <Link to="/setup" className="text-primary hover:underline">
@@ -68,10 +70,10 @@ export function DetailPageLayout({
   children,
 }: DetailPageLayoutProps) {
   return (
-    <div className={cn(maxWidth, 'space-y-6')}>
+    <div className={cn(maxWidth, 'space-y-3')}>
       <BackLinkButton back={back} />
-      <div className={cn('grid gap-6', aside !== undefined && 'sm:grid-cols-[1fr_18rem]')}>
-        <article className="min-w-0 space-y-6">
+      <div className={cn('grid gap-3 md:gap-6', aside !== undefined && 'sm:grid-cols-[1fr_18rem]')}>
+        <article className="min-w-0 space-y-3 p-1 md:p-0">
           {header}
           {children}
         </article>

@@ -95,7 +95,9 @@ export default function QuestDetail() {
         <header className="flex items-center gap-3">
           <ScrollText className="text-muted-foreground h-12 w-12 shrink-0" />
           <div className="min-w-0 flex-1">
-            <h1 className="text-3xl font-semibold tracking-tight break-words">{q.name}</h1>
+            <h1 className="break-words text-xl font-semibold tracking-tight md:text-3xl">
+              {q.name}
+            </h1>
             {q.parent && <p className="text-muted-foreground text-sm">{q.parent}</p>}
             <p className="text-muted-foreground font-mono text-xs">{q.id}</p>
           </div>

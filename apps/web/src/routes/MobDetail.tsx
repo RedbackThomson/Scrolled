@@ -96,7 +96,9 @@ export default function MobDetail() {
           <EntityIcon entity="mob" id={m.id} size={96} placeholder={Skull} alt={m.name} />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-3xl font-semibold tracking-tight break-words">{m.name}</h1>
+              <h1 className="break-words text-xl font-semibold tracking-tight md:text-3xl">
+                {m.name}
+              </h1>
               {m.isBoss && (
                 <span className="inline-flex items-center gap-0.5 rounded bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">
                   <Crown className="h-3 w-3" /> Boss

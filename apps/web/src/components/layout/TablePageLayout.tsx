@@ -19,13 +19,13 @@ export function TablePageLayout({
   children,
 }: TablePageLayoutProps) {
   return (
-    <div className="max-w-6xl space-y-6">
+    <div className="max-w-6xl space-y-3">
       <header>
-        <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
-        {description && <p className="text-muted-foreground mt-2 text-sm">{description}</p>}
+        <h1 className="text-xl font-semibold tracking-tight md:text-3xl">{title}</h1>
+        {description && <p className="text-muted-foreground text-sm md:mt-2">{description}</p>}
       </header>
 
-      <section className="space-y-3">
+      <section className="space-y-3 md:space-y-3">
         {isEmpty ? (
           <div className="border-border bg-muted/40 rounded-md border p-6 text-center text-sm">
             <p className="text-muted-foreground">

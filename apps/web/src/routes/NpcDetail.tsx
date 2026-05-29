@@ -79,7 +79,9 @@ export default function NpcDetail() {
         <header className="flex items-center gap-3">
           <EntityIcon entity="npc" id={n.id} size={96} placeholder={Users} alt={n.name} />
           <div className="min-w-0 flex-1">
-            <h1 className="text-3xl font-semibold tracking-tight break-words">{n.name}</h1>
+            <h1 className="break-words text-xl font-semibold tracking-tight md:text-3xl">
+              {n.name}
+            </h1>
             <p className="text-muted-foreground font-mono text-xs">{n.id}</p>
           </div>
         </header>
