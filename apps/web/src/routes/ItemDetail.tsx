@@ -25,8 +25,6 @@ import { useFeatures } from '@/hooks/useFeatures';
 import { useListSort } from '@/hooks/useListSort';
 import { useShowEntityIds } from '@/stores/showEntityIds';
 
-const BACK = { to: '/items', label: 'Back to items' };
-
 export default function ItemDetail() {
   const params = useParams<{ id: string }>();
   const id = Number(params.id);
@@ -77,12 +75,11 @@ export default function ItemDetail() {
   if (itemQ.error) {
     return <p className="text-destructive text-sm">{(itemQ.error as Error).message}</p>;
   }
-  if (!itemQ.data) return <DetailPageNotFound entity="Item" id={id} back={BACK} />;
+  if (!itemQ.data) return <DetailPageNotFound entity="Item" id={id} />;
 
   const item = itemQ.data;
   return (
     <DetailPageLayout
-      back={BACK}
       header={
         <header className="flex items-center gap-3">
           <ItemIcon entity="item" id={item.id} size={48} alt={item.name} />

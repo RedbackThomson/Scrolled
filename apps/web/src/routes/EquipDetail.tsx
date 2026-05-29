@@ -69,18 +69,11 @@ export default function EquipDetail() {
   );
   useDetailPalette({ entity: 'equip', id, name: equipQ.data?.name, items: paletteItems });
 
-  // Route the breadcrumb back to whichever listing this row came from, so
-  // a user landing here from /weapons doesn't get bounced to /equips.
-  const isWeapon = equipQ.data?.equipType !== null && equipQ.data?.equipType !== undefined;
-  const back = isWeapon
-    ? { to: '/weapons', label: 'Back to weapons' }
-    : { to: '/equips', label: 'Back to equips' };
-
   if (equipQ.isLoading) return <DetailPageLoading entity="Equip" id={id} />;
   if (equipQ.error) {
     return <p className="text-destructive text-sm">{(equipQ.error as Error).message}</p>;
   }
-  if (!equipQ.data) return <DetailPageNotFound entity="Equip" id={id} back={back} />;
+  if (!equipQ.data) return <DetailPageNotFound entity="Equip" id={id} />;
 
   const e = equipQ.data;
   const hasAnyRequirement =
@@ -123,7 +116,6 @@ export default function EquipDetail() {
 
   return (
     <DetailPageLayout
-      back={back}
       header={
         <header className="flex items-center gap-3">
           <ItemIcon entity="equip" id={e.id} size={48} alt={e.name} />

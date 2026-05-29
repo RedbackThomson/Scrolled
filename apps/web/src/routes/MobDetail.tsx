@@ -25,8 +25,6 @@ import { useListSort } from '@/hooks/useListSort';
 import { useShowEntityIds } from '@/stores/showEntityIds';
 import { MobElementsSection } from '@/components/entity-display/MobElementsSection';
 
-const BACK = { to: '/mobs', label: 'Back to mobs' };
-
 export default function MobDetail() {
   const params = useParams<{ id: string }>();
   const id = Number(params.id);
@@ -87,12 +85,11 @@ export default function MobDetail() {
   if (mobQ.error) {
     return <p className="text-destructive text-sm">{(mobQ.error as Error).message}</p>;
   }
-  if (!mobQ.data) return <DetailPageNotFound entity="Mob" id={id} back={BACK} />;
+  if (!mobQ.data) return <DetailPageNotFound entity="Mob" id={id} />;
 
   const m = mobQ.data;
   return (
     <DetailPageLayout
-      back={BACK}
       header={
         <header className="flex items-center gap-3">
           <EntityIcon entity="mob" id={m.id} size={96} placeholder={Skull} alt={m.name} />

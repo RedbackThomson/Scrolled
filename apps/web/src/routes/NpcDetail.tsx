@@ -22,8 +22,6 @@ import { useFeatures } from '@/hooks/useFeatures';
 import { useListSort } from '@/hooks/useListSort';
 import { useShowEntityIds } from '@/stores/showEntityIds';
 
-const BACK = { to: '/npcs', label: 'Back to NPCs' };
-
 export default function NpcDetail() {
   const params = useParams<{ id: string }>();
   const id = Number(params.id);
@@ -71,12 +69,11 @@ export default function NpcDetail() {
   useDetailPalette({ entity: 'npc', id, name: npcQ.data?.name, items: paletteItems });
 
   if (npcQ.isLoading) return <DetailPageLoading entity="NPC" id={id} />;
-  if (!npcQ.data) return <DetailPageNotFound entity="NPC" id={id} back={BACK} />;
+  if (!npcQ.data) return <DetailPageNotFound entity="NPC" id={id} />;
 
   const n = npcQ.data;
   return (
     <DetailPageLayout
-      back={BACK}
       header={
         <header className="flex items-center gap-3">
           <EntityIcon entity="npc" id={n.id} size={96} placeholder={Users} alt={n.name} />

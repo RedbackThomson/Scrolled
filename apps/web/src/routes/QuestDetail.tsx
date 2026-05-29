@@ -23,8 +23,6 @@ import type { CommandItem } from '@/components/command-palette/types';
 import { useFeatures } from '@/hooks/useFeatures';
 import { useShowEntityIds } from '@/stores/showEntityIds';
 
-const BACK = { to: '/quests', label: 'Back to quests' };
-
 export default function QuestDetail() {
   const params = useParams<{ id: string }>();
   const id = Number(params.id);
@@ -77,7 +75,7 @@ export default function QuestDetail() {
   useDetailPalette({ entity: 'quest', id, name: questQ.data?.name, items: paletteItems });
 
   if (questQ.isLoading) return <DetailPageLoading entity="Quest" id={id} />;
-  if (!questQ.data) return <DetailPageNotFound entity="Quest" id={id} back={BACK} />;
+  if (!questQ.data) return <DetailPageNotFound entity="Quest" id={id} />;
 
   const q = questQ.data;
   const requirements = reqsQ.data ?? [];
@@ -91,7 +89,6 @@ export default function QuestDetail() {
 
   return (
     <DetailPageLayout
-      back={BACK}
       maxWidth="max-w-5xl"
       header={
         <header className="flex items-center gap-3">
@@ -229,9 +226,7 @@ function NpcRow({
         {label}
       </span>
       <span className="min-w-0 flex-1 truncate">{display}</span>
-      {showIds && (
-        <span className="text-muted-foreground shrink-0 font-mono text-xs">{id}</span>
-      )}
+      {showIds && <span className="text-muted-foreground shrink-0 font-mono text-xs">{id}</span>}
     </>
   );
   return (

@@ -149,13 +149,6 @@ export default function CollectionDetail() {
 
   return (
     <div className="max-w-5xl space-y-6">
-      <Link
-        to="/collections"
-        className="text-primary inline-flex items-center gap-1 text-sm hover:underline"
-      >
-        <ArrowLeft className="h-4 w-4" /> Back to collections
-      </Link>
-
       <header className="space-y-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-start gap-3">

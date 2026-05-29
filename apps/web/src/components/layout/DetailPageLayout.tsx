@@ -1,22 +1,7 @@
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-
-export interface BackLink {
-  to: string;
-  label: string;
-}
-
-const BACK_LINK_CLASS = 'text-primary inline-flex items-center gap-1 text-sm hover:underline';
-
-export function BackLinkButton({ back }: { back: BackLink }) {
-  return (
-    <Link to={back.to} className={BACK_LINK_CLASS}>
-      <ArrowLeft className="h-4 w-4" /> {back.label}
-    </Link>
-  );
-}
 
 export function DetailPageLoading({ entity, id }: { entity: string; id: number | string }) {
   return (
@@ -26,18 +11,9 @@ export function DetailPageLoading({ entity, id }: { entity: string; id: number |
   );
 }
 
-export function DetailPageNotFound({
-  entity,
-  id,
-  back,
-}: {
-  entity: string;
-  id: number | string;
-  back: BackLink;
-}) {
+export function DetailPageNotFound({ entity, id }: { entity: string; id: number | string }) {
   return (
     <div className="max-w-3xl">
-      <BackLinkButton back={back} />
       <h1 className="mt-3 text-xl font-semibold tracking-tight md:mt-4 md:text-3xl">
         {entity} not found
       </h1>
@@ -54,7 +30,6 @@ export function DetailPageNotFound({
 }
 
 interface DetailPageLayoutProps {
-  back: BackLink;
   header: ReactNode;
   aside?: ReactNode;
   /** Defaults to `max-w-4xl`; pass `max-w-5xl` for wider pages (maps, quests). */
@@ -63,7 +38,6 @@ interface DetailPageLayoutProps {
 }
 
 export function DetailPageLayout({
-  back,
   header,
   aside,
   maxWidth = 'max-w-4xl',
@@ -71,7 +45,6 @@ export function DetailPageLayout({
 }: DetailPageLayoutProps) {
   return (
     <div className={cn(maxWidth, 'space-y-3')}>
-      <BackLinkButton back={back} />
       <div className={cn('grid gap-3 md:gap-6', aside !== undefined && 'sm:grid-cols-[1fr_18rem]')}>
         <article className="min-w-0 space-y-3 p-1 md:p-0">
           {header}

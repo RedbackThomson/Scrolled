@@ -30,8 +30,6 @@ import { useShowEntityIds } from '@/stores/showEntityIds';
 // Sentinel value the WZ data uses to mean "no map" for return / target fields.
 const NO_TARGET = 999999999;
 
-const BACK = { to: '/maps', label: 'Back to maps' };
-
 export default function MapDetail() {
   const params = useParams<{ id: string }>();
   const id = Number(params.id);
@@ -150,13 +148,12 @@ export default function MapDetail() {
   useDetailPalette({ entity: 'map', id, name: mapQ.data?.name, items: paletteItems });
 
   if (mapQ.isLoading) return <DetailPageLoading entity="Map" id={id} />;
-  if (!mapQ.data) return <DetailPageNotFound entity="Map" id={id} back={BACK} />;
+  if (!mapQ.data) return <DetailPageNotFound entity="Map" id={id} />;
 
   const m = mapQ.data;
   return (
     <>
       <DetailPageLayout
-        back={BACK}
         maxWidth="max-w-5xl"
         header={
           <header className="flex items-center gap-3">
