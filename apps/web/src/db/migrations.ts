@@ -805,4 +805,22 @@ export const MIGRATIONS: readonly Migration[] = [
       ALTER TABLE skill_levels ADD COLUMN description TEXT;
     `,
   },
+  {
+    version: 27,
+    name: 'denormalized quest scalar rewards',
+    sql: `
+      -- Scalar completion rewards copied onto the quest row so the index
+      -- page can filter / sort without a join over quest_rewards. Additive
+      -- data-revision bump: NULL means "this quest hasn't been re-extracted
+      -- yet" or "no reward of this kind"; the extractor writes 0 when the
+      -- WZ entry is absent or zero.
+      ALTER TABLE quests ADD COLUMN reward_exp   INTEGER;
+      ALTER TABLE quests ADD COLUMN reward_meso  INTEGER;
+      ALTER TABLE quests ADD COLUMN reward_fame  INTEGER;
+
+      CREATE INDEX IF NOT EXISTS quests_reward_exp_idx  ON quests (reward_exp);
+      CREATE INDEX IF NOT EXISTS quests_reward_meso_idx ON quests (reward_meso);
+      CREATE INDEX IF NOT EXISTS quests_reward_fame_idx ON quests (reward_fame);
+    `,
+  },
 ];

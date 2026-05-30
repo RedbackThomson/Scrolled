@@ -131,6 +131,9 @@ export interface QuestRow extends Row {
   required_level: number | null;
   required_job: number | null;
   repeat_wait: number | null;
+  reward_exp: number | null;
+  reward_meso: number | null;
+  reward_fame: number | null;
   source_path: string;
 }
 
@@ -220,6 +223,9 @@ export function rowToQuest(r: QuestRow): QuestRecord {
     requiredLevel: r.required_level,
     requiredJob: r.required_job,
     repeatWait: r.repeat_wait,
+    rewardExp: r.reward_exp,
+    rewardMeso: r.reward_meso,
+    rewardFame: r.reward_fame,
     sourcePath: r.source_path,
   };
 }

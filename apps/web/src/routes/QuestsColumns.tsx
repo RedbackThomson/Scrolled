@@ -1,8 +1,24 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { Folder, Gauge, Hash, RotateCw, ScrollText } from 'lucide-react';
+import {
+  Coins,
+  Folder,
+  Gauge,
+  Hash,
+  RotateCw,
+  ScrollText,
+  Sparkles,
+  Star,
+} from 'lucide-react';
 import { QuestLink } from '@/components/entity-links';
 import type { QuestRecord } from '@/db';
 import { formatDurationSeconds } from '@/lib/duration';
+
+const numberFormatter = new Intl.NumberFormat();
+
+function renderRewardCell(value: number | null) {
+  if (value === null || value === 0) return <span className="text-muted-foreground">—</span>;
+  return <span className="tabular-nums">{numberFormatter.format(value)}</span>;
+}
 
 export const columns: ColumnDef<QuestRecord>[] = [
   {
@@ -36,6 +52,27 @@ export const columns: ColumnDef<QuestRecord>[] = [
     header: 'Req Lvl',
     meta: { filter: 'number', icon: Gauge },
     cell: ({ row }) => row.original.requiredLevel ?? '—',
+  },
+  {
+    id: 'rewardExp',
+    accessorFn: (q) => q.rewardExp,
+    header: 'Reward EXP',
+    meta: { filter: 'number', icon: Sparkles },
+    cell: ({ row }) => renderRewardCell(row.original.rewardExp),
+  },
+  {
+    id: 'rewardMeso',
+    accessorFn: (q) => q.rewardMeso,
+    header: 'Reward Mesos',
+    meta: { filter: 'number', icon: Coins },
+    cell: ({ row }) => renderRewardCell(row.original.rewardMeso),
+  },
+  {
+    id: 'rewardFame',
+    accessorFn: (q) => q.rewardFame,
+    header: 'Reward Fame',
+    meta: { filter: 'number', icon: Star },
+    cell: ({ row }) => renderRewardCell(row.original.rewardFame),
   },
   {
     id: 'repeatable',

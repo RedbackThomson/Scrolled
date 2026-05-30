@@ -81,6 +81,9 @@ export const QUEST_ORDER: Record<string, OrderSpec> = {
   name: { col: 'name', defaultDir: 'asc' },
   parent: { col: 'parent', defaultDir: 'asc' },
   requiredLevel: { col: 'required_level', defaultDir: 'asc' },
+  rewardExp: { col: 'reward_exp', defaultDir: 'desc' },
+  rewardMeso: { col: 'reward_meso', defaultDir: 'desc' },
+  rewardFame: { col: 'reward_fame', defaultDir: 'desc' },
   id: { col: 'id', defaultDir: 'asc' },
 };
 export const QUEST_ORDER_DEFAULT = 'name';

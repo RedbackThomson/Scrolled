@@ -105,6 +105,9 @@ export const QUEST_FILTER: Record<string, FilterSpec> = {
   parent: { col: 'parent', type: 'string' },
   requiredLevel: { col: 'required_level', type: 'number' },
   repeatable: { col: 'repeat_wait', type: 'presence' },
+  rewardExp: { col: 'reward_exp', type: 'number' },
+  rewardMeso: { col: 'reward_meso', type: 'number' },
+  rewardFame: { col: 'reward_fame', type: 'number' },
   id: { col: 'id', type: 'string' },
 };
 

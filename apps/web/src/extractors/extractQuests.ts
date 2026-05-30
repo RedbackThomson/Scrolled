@@ -218,6 +218,9 @@ export async function extractQuests(
       requiredLevel: lvMinN,
       requiredJob: jobN !== null && jobN > 0 ? jobN : null,
       repeatWait,
+      rewardExp: expN ?? 0,
+      rewardMeso: mesoN ?? 0,
+      rewardFame: fameN ?? 0,
       sourcePath: entry.fullPath,
     });
     processed += 1;

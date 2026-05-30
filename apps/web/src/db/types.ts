@@ -248,6 +248,12 @@ export interface QuestRecord {
   requiredJob: number | null;
   /** Cooldown seconds between repeats; null when the quest is not repeatable. */
   repeatWait: number | null;
+  /** Denormalized scalar completion rewards. 0 means "no reward of this kind"
+   *  in the extracted data; null means the row predates the reward columns
+   *  and hasn't been re-extracted yet. */
+  rewardExp: number | null;
+  rewardMeso: number | null;
+  rewardFame: number | null;
   sourcePath: string;
 }
 
