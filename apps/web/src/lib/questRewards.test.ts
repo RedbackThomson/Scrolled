@@ -22,6 +22,7 @@ function item(
     gender: null,
     period: null,
     targetName: `Item ${targetId}`,
+    targetEntity: 'item',
     ...overrides,
   };
 }

@@ -446,9 +446,14 @@ export interface QuestRequirementWithName extends QuestRequirementRecord {
   targetLevel: number | null;
 }
 
-/** A row from `quest_rewards` joined to the target item's display name. */
+/** A row from `quest_rewards` joined to the target item's display name.
+ *  `targetEntity` reflects which table (items vs equips) actually owns the
+ *  target id — `kind='item'` rewards cover both, so the UI needs this to
+ *  pick the right detail-page link and icon. Null when the id matched
+ *  neither (extraction gap) or the row isn't an item-shaped reward. */
 export interface QuestRewardWithName extends QuestRewardRecord {
   targetName: string | null;
+  targetEntity: 'item' | 'equip' | null;
 }
 
 /** Quest summary surfaced from a cross-link (e.g. "quests this NPC offers"). */

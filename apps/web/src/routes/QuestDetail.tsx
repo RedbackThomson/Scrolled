@@ -315,21 +315,22 @@ export default function QuestDetail() {
         {skillReward && skillReward.targetId !== null && (
           <SkillRewardRow id={skillReward.targetId} linkable={features.hasSkills} />
         )}
-        {itemGroups.map((g) =>
-          g.kind === 'guaranteed-item' ? (
+        {itemGroups.map((g) => {
+          // Both flags track Item.wz, but each is also gated on the matching
+          // table having rows; an equip reward should follow hasEquips, not
+          // hasItems, so a dump that loaded equips-only still links them.
+          const rowLinkable = (r: QuestRewardWithName) =>
+            r.targetEntity === 'equip' ? features.hasEquips : features.hasItems;
+          return g.kind === 'guaranteed-item' ? (
             <ItemRewardRow
               key={`item-${g.reward.idx}`}
               r={g.reward}
-              linkable={features.hasItems}
+              linkable={rowLinkable(g.reward)}
             />
           ) : (
-            <RandomPoolBlock
-              key={`pool-${g.id}`}
-              pool={g}
-              linkable={features.hasItems}
-            />
-          ),
-        )}
+            <RandomPoolBlock key={`pool-${g.id}`} pool={g} rowLinkable={rowLinkable} />
+          );
+        })}
         {hasAnyReward && visibleRewardCount > 0 && hiddenByFilter > 0 && (
           <li className="text-muted-foreground px-3 py-1.5 text-xs italic">
             {hiddenByFilter} reward{hiddenByFilter === 1 ? '' : 's'} hidden by your character
@@ -488,7 +489,7 @@ function ItemRewardRow({ r, linkable }: { r: QuestRewardWithName; linkable: bool
   }
   return (
     <EntityRow
-      entity="item"
+      entity={r.targetEntity ?? 'item'}
       id={r.targetId}
       name={r.targetName}
       meta={
@@ -499,7 +500,7 @@ function ItemRewardRow({ r, linkable }: { r: QuestRewardWithName; linkable: bool
           )}
         </span>
       }
-      linkable={linkable}
+      linkable={linkable && r.targetEntity !== null}
     />
   );
 }
@@ -511,10 +512,10 @@ function ItemRewardRow({ r, linkable }: { r: QuestRewardWithName; linkable: bool
  */
 function RandomPoolBlock({
   pool,
-  linkable,
+  rowLinkable,
 }: {
   pool: { rewards: QuestRewardWithName[]; totalWeight: number };
-  linkable: boolean;
+  rowLinkable: (r: QuestRewardWithName) => boolean;
 }) {
   return (
     <li className="space-y-1.5 px-3 py-2 text-sm">
@@ -531,7 +532,7 @@ function RandomPoolBlock({
             key={`pool-entry-${r.idx}-${r.targetId}`}
             reward={r}
             totalWeight={pool.totalWeight}
-            linkable={linkable}
+            linkable={rowLinkable(r)}
           />
         ))}
       </ul>
@@ -577,11 +578,11 @@ function PoolEntry({
   }
   return (
     <EntityRow
-      entity="item"
+      entity={reward.targetEntity ?? 'item'}
       id={reward.targetId}
       name={reward.targetName}
       meta={meta}
-      linkable={linkable}
+      linkable={linkable && reward.targetEntity !== null}
     />
   );
 }

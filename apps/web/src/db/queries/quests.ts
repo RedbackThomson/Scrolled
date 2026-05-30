@@ -194,14 +194,26 @@ export function getQuestRewards(sql: Sqlite, questId: number): QuestRewardWithNa
       gender: number | null;
       period: number | null;
       target_name: string | null;
+      target_entity: 'item' | 'equip' | null;
     }>(
+      // Items and equips share the `kind='item'` reward slot and an ID
+      // space that doesn't overlap between the two tables. `target_entity`
+      // tells the UI which side actually matched so it can route the row
+      // to the right detail page and icon instead of always assuming items.
       `SELECT
          qr.quest_id, qr.kind, qr.idx, qr.target_id, qr.amount,
          qr.prop, qr.job, qr.gender, qr.period,
          CASE qr.kind
            WHEN 'item' THEN COALESCE(i.name, e.name)
            ELSE NULL
-         END AS target_name
+         END AS target_name,
+         CASE qr.kind
+           WHEN 'item' THEN
+             CASE WHEN i.id IS NOT NULL THEN 'item'
+                  WHEN e.id IS NOT NULL THEN 'equip'
+                  ELSE NULL END
+           ELSE NULL
+         END AS target_entity
        FROM quest_rewards qr
        LEFT JOIN items  i ON qr.kind = 'item' AND i.id = qr.target_id
        LEFT JOIN equips e ON qr.kind = 'item' AND e.id = qr.target_id
@@ -220,6 +232,7 @@ export function getQuestRewards(sql: Sqlite, questId: number): QuestRewardWithNa
       gender: r.gender,
       period: r.period,
       targetName: r.target_name,
+      targetEntity: r.target_entity,
     }));
 }
 
