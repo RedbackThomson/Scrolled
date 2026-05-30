@@ -26,6 +26,7 @@ import {
   hasSkillPlaceholders,
   renderSkillTemplate,
 } from '@/domain/skillTemplate';
+import { formatDurationSeconds } from '@/lib/duration';
 
 /**
  * Level-table column definitions. Each one binds a domain field on
@@ -44,8 +45,8 @@ const LEVEL_COLUMNS: readonly {
   { key: 'damagePercent', label: 'Damage %', format: (n) => `${n}%` },
   { key: 'hits', label: 'Hits' },
   { key: 'targets', label: 'Targets' },
-  { key: 'durationSeconds', label: 'Duration', format: (n) => `${n}s` },
-  { key: 'cooldownSeconds', label: 'Cooldown', format: (n) => `${n}s` },
+  { key: 'durationSeconds', label: 'Duration', format: (n) => formatDurationSeconds(n, { short: true }) },
+  { key: 'cooldownSeconds', label: 'Cooldown', format: (n) => formatDurationSeconds(n, { short: true }) },
   { key: 'chancePercent', label: 'Chance', format: (n) => `${n}%` },
   { key: 'pad', label: 'W. Att' },
   { key: 'mad', label: 'M. Att' },
