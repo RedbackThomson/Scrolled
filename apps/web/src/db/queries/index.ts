@@ -338,6 +338,10 @@ export class DbApi implements GameDatabase {
     return quests.getItemQuests(this.sql, itemId);
   }
 
+  async getItemRewardingQuests(itemId: number): Promise<QuestSummary[]> {
+    return quests.getItemRewardingQuests(this.sql, itemId);
+  }
+
   async getMobQuests(mobId: number): Promise<QuestSummary[]> {
     return quests.getMobQuests(this.sql, mobId);
   }

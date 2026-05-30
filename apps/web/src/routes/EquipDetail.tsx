@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Copy, Skull } from 'lucide-react';
+import { Copy, Gift, Skull } from 'lucide-react';
 import { DetailListSection } from '@/components/layout/DetailListSection';
 import {
   DetailPageLayout,
@@ -48,10 +48,19 @@ export default function EquipDetail() {
     queryFn: () => client.getItemDroppedBy(id),
     enabled: Number.isFinite(id) && features.hasMobs,
   });
+  const rewardingQuestsQ = useQuery({
+    queryKey: ['db', 'equip', id, 'rewarding-quests'],
+    queryFn: () => client.getItemRewardingQuests(id),
+    enabled: Number.isFinite(id) && features.hasQuests,
+  });
 
   const droppedBySort = useListSort(droppedByQ.data, [
     { id: 'name', label: 'Mob name', get: (m) => m.name },
     { id: 'level', label: 'Level', get: (m) => m.level },
+  ]);
+  const rewardingQuestsSort = useListSort(rewardingQuestsQ.data, [
+    { id: 'name', label: 'Quest name', get: (q) => q.name },
+    { id: 'level', label: 'Required level', get: (q) => q.requiredLevel },
   ]);
 
   const paletteItems = useMemo<CommandItem[]>(
@@ -196,6 +205,37 @@ export default function EquipDetail() {
         <p className="whitespace-pre-line text-sm leading-relaxed">{e.description}</p>
       ) : (
         <p className="text-muted-foreground text-sm italic">No description available.</p>
+      )}
+
+      {features.hasQuests && (
+        <DetailListSection
+          icon={Gift}
+          title="Rewarded by quests"
+          count={rewardingQuestsQ.data?.length}
+          isLoading={rewardingQuestsQ.isLoading}
+          isEmpty={rewardingQuestsQ.data?.length === 0}
+          loadingLabel="Loading quests…"
+          action={
+            rewardingQuestsQ.data && rewardingQuestsQ.data.length > 0 ? (
+              <ListSortControl
+                fields={rewardingQuestsSort.fieldOptions}
+                value={rewardingQuestsSort.sort}
+                onChange={rewardingQuestsSort.setSort}
+              />
+            ) : null
+          }
+        >
+          {rewardingQuestsSort.sorted.map((q) => (
+            <EntityRow
+              key={q.id}
+              entity="quest"
+              id={q.id}
+              name={q.name}
+              subtitle={q.parent}
+              meta={q.requiredLevel !== null ? `Lvl ${q.requiredLevel}+` : undefined}
+            />
+          ))}
+        </DetailListSection>
       )}
 
       {features.hasMobs && (

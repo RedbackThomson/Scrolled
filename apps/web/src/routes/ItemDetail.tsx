@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Copy, ScrollText, Skull } from 'lucide-react';
+import { Copy, Gift, ScrollText, Skull } from 'lucide-react';
 import { DetailListSection } from '@/components/layout/DetailListSection';
 import {
   DetailPageLayout,
@@ -42,6 +42,11 @@ export default function ItemDetail() {
     queryFn: () => client.getItemQuests(id),
     enabled: Number.isFinite(id) && features.hasQuests,
   });
+  const rewardingQuestsQ = useQuery({
+    queryKey: ['db', 'item', id, 'rewarding-quests'],
+    queryFn: () => client.getItemRewardingQuests(id),
+    enabled: Number.isFinite(id) && features.hasQuests,
+  });
   const droppedByQ = useQuery({
     queryKey: ['db', 'item', id, 'dropped-by'],
     queryFn: () => client.getItemDroppedBy(id),
@@ -49,6 +54,10 @@ export default function ItemDetail() {
   });
 
   const questsSort = useListSort(questsQ.data, [
+    { id: 'name', label: 'Quest name', get: (q) => q.name },
+    { id: 'level', label: 'Required level', get: (q) => q.requiredLevel },
+  ]);
+  const rewardingQuestsSort = useListSort(rewardingQuestsQ.data, [
     { id: 'name', label: 'Quest name', get: (q) => q.name },
     { id: 'level', label: 'Required level', get: (q) => q.requiredLevel },
   ]);
@@ -143,6 +152,37 @@ export default function ItemDetail() {
           }
         >
           {questsSort.sorted.map((q) => (
+            <EntityRow
+              key={q.id}
+              entity="quest"
+              id={q.id}
+              name={q.name}
+              subtitle={q.parent}
+              meta={q.requiredLevel !== null ? `Lvl ${q.requiredLevel}+` : undefined}
+            />
+          ))}
+        </DetailListSection>
+      )}
+
+      {features.hasQuests && (
+        <DetailListSection
+          icon={Gift}
+          title="Rewarded by quests"
+          count={rewardingQuestsQ.data?.length}
+          isLoading={rewardingQuestsQ.isLoading}
+          isEmpty={rewardingQuestsQ.data?.length === 0}
+          loadingLabel="Loading quests…"
+          action={
+            rewardingQuestsQ.data && rewardingQuestsQ.data.length > 0 ? (
+              <ListSortControl
+                fields={rewardingQuestsSort.fieldOptions}
+                value={rewardingQuestsSort.sort}
+                onChange={rewardingQuestsSort.setSort}
+              />
+            ) : null
+          }
+        >
+          {rewardingQuestsSort.sorted.map((q) => (
             <EntityRow
               key={q.id}
               entity="quest"

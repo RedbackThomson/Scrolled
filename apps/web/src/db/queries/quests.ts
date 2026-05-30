@@ -267,6 +267,32 @@ export function getItemQuests(sql: Sqlite, itemId: number): QuestSummary[] {
     }));
 }
 
+/** Quests that hand this item out as a completion reward (`quest_rewards` with
+ *  `kind = 'item'`). Item and equip ids share the same target-id space, so the
+ *  same function backs both detail pages. */
+export function getItemRewardingQuests(sql: Sqlite, itemId: number): QuestSummary[] {
+  return sql
+    .selectObjects<{
+      id: number;
+      name: string;
+      parent: string | null;
+      required_level: number | null;
+    }>(
+      `SELECT DISTINCT q.id, q.name, q.parent, q.required_level
+       FROM quests q
+       JOIN quest_rewards r ON r.quest_id = q.id
+       WHERE r.kind = 'item' AND r.target_id = ?
+       ORDER BY q.parent NULLS LAST, q.name`,
+      [itemId],
+    )
+    .map((r) => ({
+      id: r.id,
+      name: r.name,
+      parent: r.parent,
+      requiredLevel: r.required_level,
+    }));
+}
+
 export function getMobQuests(sql: Sqlite, mobId: number): QuestSummary[] {
   return sql
     .selectObjects<{

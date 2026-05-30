@@ -809,6 +809,9 @@ export interface GameDatabase {
   getNpcQuests(npcId: number): Promise<QuestSummary[]>;
   /** Quests that ask for the given item as a requirement. */
   getItemQuests(itemId: number): Promise<QuestSummary[]>;
+  /** Quests that hand the given item out as a reward. Backs both ItemDetail
+   *  and EquipDetail since item and equip IDs share one target-id space. */
+  getItemRewardingQuests(itemId: number): Promise<QuestSummary[]>;
   /** Quests that require killing the given mob. */
   getMobQuests(mobId: number): Promise<QuestSummary[]>;
   /** Replace requirements + rewards for the given quest IDs in one
