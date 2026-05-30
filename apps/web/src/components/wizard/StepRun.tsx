@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   AlertTriangle,
+  Briefcase,
   CheckCircle2,
   GitBranch,
   Loader2,
@@ -9,6 +10,7 @@ import {
   ScrollText,
   Shield,
   Skull,
+  Sparkles,
   Users,
   XCircle,
   Map as MapIcon,
@@ -38,7 +40,16 @@ interface Props {
 /** Per-category summary tiles, keyed by the count field on `ExtractStats`.
  *  Icons mirror the sidebar so the summary reads like the app it built. */
 const SUMMARY_CARDS: {
-  key: 'items' | 'equips' | 'mobs' | 'npcs' | 'maps' | 'quests' | 'questChains';
+  key:
+    | 'items'
+    | 'equips'
+    | 'mobs'
+    | 'npcs'
+    | 'maps'
+    | 'quests'
+    | 'questChains'
+    | 'jobs'
+    | 'skills';
   label: string;
   Icon: LucideIcon;
 }[] = [
@@ -49,6 +60,8 @@ const SUMMARY_CARDS: {
   { key: 'maps', label: 'Maps', Icon: MapIcon },
   { key: 'quests', label: 'Quests', Icon: ScrollText },
   { key: 'questChains', label: 'Quest Chains', Icon: GitBranch },
+  { key: 'jobs', label: 'Jobs', Icon: Briefcase },
+  { key: 'skills', label: 'Skills', Icon: Sparkles },
 ];
 
 /**

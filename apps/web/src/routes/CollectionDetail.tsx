@@ -39,6 +39,7 @@ const TYPE_LABELS: Record<CollectionEntityType, string> = {
   map: 'Maps',
   quest: 'Quests',
   questChain: 'Quest Chains',
+  skill: 'Skills',
 };
 
 export default function CollectionDetail() {
@@ -103,6 +104,7 @@ export default function CollectionDetail() {
         map: new Map(),
         quest: new Map(),
         questChain: new Map(),
+        skill: new Map(),
       };
       for (const [t, map] of entries) lookup[t] = map;
       return lookup;

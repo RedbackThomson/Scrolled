@@ -18,6 +18,7 @@ export type {
   EquipRecord,
   GameDatabase,
   ItemRecord,
+  JobRecord,
   LevelBandCount,
   ListOptsBase,
   MapMobRecord,
@@ -49,6 +50,11 @@ export type {
   QuestRewardWithName,
   QuestSummary,
   SearchEntry,
+  SkillLevelRecord,
+  SkillPrerequisiteRecord,
+  SkillPrerequisiteWithName,
+  SkillRecord,
+  SkillSummary,
   SortDir,
 } from './types';
 export {

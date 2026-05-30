@@ -85,6 +85,15 @@ export const QUEST_ORDER: Record<string, OrderSpec> = {
 };
 export const QUEST_ORDER_DEFAULT = 'name';
 
+export const SKILL_ORDER: Record<string, OrderSpec> = {
+  name: { col: 'name', defaultDir: 'asc' },
+  jobId: { col: 'job_id', defaultDir: 'asc' },
+  maxLevel: { col: 'max_level', defaultDir: 'desc' },
+  element: { col: 'element', defaultDir: 'asc' },
+  id: { col: 'id', defaultDir: 'asc' },
+};
+export const SKILL_ORDER_DEFAULT = 'name';
+
 export const QUEST_CHAIN_ORDER: Record<string, OrderSpec> = {
   name: { col: 'name', defaultDir: 'asc' },
   parent: { col: 'parent', defaultDir: 'asc' },

@@ -1,4 +1,13 @@
-import { GitBranch, Map as MapIcon, Package, ScrollText, Shield, Skull, Users } from 'lucide-react';
+import {
+  GitBranch,
+  Map as MapIcon,
+  Package,
+  ScrollText,
+  Shield,
+  Skull,
+  Sparkles,
+  Users,
+} from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { EntityKind } from '@/db';
 
@@ -18,6 +27,8 @@ export function routeForEntity(entity: EntityKind, id: number | string): string 
       return `/quests/${id}`;
     case 'questChain':
       return `/quest-chains/${id}`;
+    case 'skill':
+      return `/skills/${id}`;
   }
 }
 
@@ -37,6 +48,8 @@ export function listingRouteForEntity(entity: EntityKind): string {
       return '/quests';
     case 'questChain':
       return '/quest-chains';
+    case 'skill':
+      return '/skills';
   }
 }
 
@@ -56,6 +69,8 @@ export function iconForEntity(entity: EntityKind): LucideIcon {
       return ScrollText;
     case 'questChain':
       return GitBranch;
+    case 'skill':
+      return Sparkles;
   }
 }
 
@@ -69,6 +84,7 @@ export function labelForEntityKind(entity: EntityKind, plural = false): string {
       map: 'Maps',
       quest: 'Quests',
       questChain: 'Quest Chains',
+      skill: 'Skills',
     }[entity];
   }
   return {
@@ -79,6 +95,7 @@ export function labelForEntityKind(entity: EntityKind, plural = false): string {
     map: 'Map',
     quest: 'Quest',
     questChain: 'Quest Chain',
+    skill: 'Skill',
   }[entity];
 }
 
@@ -90,4 +107,5 @@ export const ENTITY_KINDS: readonly EntityKind[] = [
   'map',
   'quest',
   'questChain',
+  'skill',
 ] as const;

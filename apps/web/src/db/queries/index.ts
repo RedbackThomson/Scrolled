@@ -18,6 +18,7 @@ import type {
   ExtractorResultRecord,
   EquipRecord,
   ItemRecord,
+  JobRecord,
   LevelBandCount,
   ListOptsBase,
   MapMobRecord,
@@ -46,6 +47,10 @@ import type {
   QuestRewardWithName,
   QuestSummary,
   SearchEntry,
+  SkillLevelRecord,
+  SkillPrerequisiteRecord,
+  SkillPrerequisiteWithName,
+  SkillRecord,
 } from '../types';
 import * as items from './items';
 import * as equips from './equips';
@@ -54,6 +59,8 @@ import * as npcs from './npcs';
 import * as maps from './maps';
 import * as quests from './quests';
 import * as questChains from './questChains';
+import * as jobs from './jobs';
+import * as skills from './skills';
 import * as search from './search';
 import * as datasets from './datasets';
 import {
@@ -99,6 +106,8 @@ export class DbApi implements GameDatabase {
         maps: countOf(this.sql, 'maps'),
         quests: countOf(this.sql, 'quests'),
         questChains: countOf(this.sql, 'quest_chains'),
+        skills: countOf(this.sql, 'skills'),
+        jobs: countOf(this.sql, 'jobs'),
         datasets: countOf(this.sql, 'datasets'),
       },
     };
@@ -362,6 +371,61 @@ export class DbApi implements GameDatabase {
 
   async getChainForQuest(questId: number): Promise<QuestChainRecord | null> {
     return questChains.getChainForQuest(this.sql, questId);
+  }
+
+  // -- jobs -------------------------------------------------------------------
+
+  async upsertJobs(list: JobRecord[]): Promise<number> {
+    return jobs.upsertJobs(this.sql, list);
+  }
+
+  async getJob(id: number): Promise<JobRecord | null> {
+    return jobs.getJob(this.sql, id);
+  }
+
+  async listJobs(): Promise<JobRecord[]> {
+    return jobs.listJobs(this.sql);
+  }
+
+  // -- skills -----------------------------------------------------------------
+
+  async upsertSkills(list: SkillRecord[]): Promise<number> {
+    return skills.upsertSkills(this.sql, list);
+  }
+
+  async getSkill(id: number): Promise<SkillRecord | null> {
+    return skills.getSkill(this.sql, id);
+  }
+
+  async getSkillIcon(id: number): Promise<Uint8Array | null> {
+    return skills.getSkillIcon(this.sql, id);
+  }
+
+  async listSkills(opts: ListOptsBase = {}): Promise<PageResult<SkillRecord>> {
+    return skills.listSkills(this.sql, opts);
+  }
+
+  async getSkillLevels(skillId: number): Promise<SkillLevelRecord[]> {
+    return skills.getSkillLevels(this.sql, skillId);
+  }
+
+  async getSkillPrerequisites(skillId: number): Promise<SkillPrerequisiteWithName[]> {
+    return skills.getSkillPrerequisites(this.sql, skillId);
+  }
+
+  async getSkillsRequiring(skillId: number): Promise<SkillPrerequisiteWithName[]> {
+    return skills.getSkillsRequiring(this.sql, skillId);
+  }
+
+  async getSkillQuests(skillId: number): Promise<QuestSummary[]> {
+    return skills.getSkillQuests(this.sql, skillId);
+  }
+
+  async replaceSkillRelations(rows: {
+    levels: SkillLevelRecord[];
+    prerequisites: SkillPrerequisiteRecord[];
+  }): Promise<void> {
+    skills.replaceSkillRelations(this.sql, rows);
   }
 
   // -- search / datasets ------------------------------------------------------

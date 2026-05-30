@@ -103,7 +103,7 @@ Then mount it in the right slot in `Palette.tsx`'s `<CommandList>`.
 ## Checklist: adding a new entity type
 
 1. **Register entity records in the global search index.** Name + ID both searchable, plus a stable category label. Add the entity to `db/queries.ts:listSearchEntries` so MiniSearch picks it up automatically — no palette-internal edits required.
-2. **Assign a category prefix** (single-token, leading position). Existing prefixes (`apps/web/src/components/command-palette/providers/globalSearch.tsx`): `m` mobs, `i` items, `e` equips, `n` NPCs, `mp` maps, `q` quests, `c` collections. Pick a short, collision-free shorthand and add it to the table in `command_palette_requirements.md`.
+2. **Assign a category prefix** (single-token, leading position). Existing prefixes (`apps/web/src/components/command-palette/providers/globalSearch.tsx`): `m` mobs, `i` items, `e` equips, `n` NPCs, `mp` maps, `q` quests, `qc` quest chains, `s` skills, `c` collections. Pick a short, collision-free shorthand and add it to the table in `command_palette_requirements.md`.
 3. **Register the listing route as a "Go to …" command** in `NavigationProvider` (`providers/navigation.tsx`). The listing must be reachable by name from the palette.
 4. **Register detail-page context commands.** On every detail page, call `useDetailPalette({ entity, id, name, items })` from `components/command-palette/useDetailPalette.ts` with a memoized items array — see `routes/MobDetail.tsx` for the canonical pattern. This single hook handles both the context registration AND the recents tracking.
 5. **Declare filter grammar.** Add an entry to `FILTER_KEYS` in `lib/filterGrammar.ts` listing the keys you accept. For each key:

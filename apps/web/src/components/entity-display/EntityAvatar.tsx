@@ -1,4 +1,4 @@
-import { Map as MapIcon, ScrollText, Skull, Users } from 'lucide-react';
+import { GitBranch, Map as MapIcon, ScrollText, Skull, Sparkles, Users } from 'lucide-react';
 import { EntityIcon } from '@/components/entity-display/EntityIcon';
 import { ItemIcon } from '@/components/entity-display/ItemIcon';
 import type { EntityKind } from '@/db/types';
@@ -66,6 +66,19 @@ export function EntityAvatar({ entity, id, size = 28, className, alt }: Props) {
       return <GlyphBox size={size} className={className} Glyph={MapIcon} />;
     case 'quest':
       return <GlyphBox size={size} className={className} Glyph={ScrollText} />;
+    case 'questChain':
+      return <GlyphBox size={size} className={className} Glyph={GitBranch} />;
+    case 'skill':
+      return (
+        <EntityIcon
+          entity="skill"
+          id={id}
+          size={size}
+          placeholder={Sparkles}
+          alt={alt}
+          className={cn('shrink-0', className)}
+        />
+      );
   }
 }
 

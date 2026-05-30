@@ -16,6 +16,7 @@ import {
   RotateCcw,
   Shield,
   Skull,
+  Sparkles,
   Swords,
   Users,
   Map as MapIcon,
@@ -59,7 +60,8 @@ interface SidebarSection {
     | 'hasNpcs'
     | 'hasMaps'
     | 'hasQuests'
-    | 'hasQuestChains';
+    | 'hasQuestChains'
+    | 'hasSkills';
 }
 
 const ITEM_CATEGORY_CHILDREN = [
@@ -194,6 +196,7 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
       feature: 'hasQuests',
       children: questChildren,
     },
+    { label: 'Skills', to: '/skills', icon: Sparkles, feature: 'hasSkills' },
   ];
   const entitySections = allSections.filter((s) => !s.feature || features[s.feature]);
   const collectionsSection: SidebarSection = {

@@ -692,4 +692,105 @@ export const MIGRATIONS: readonly Migration[] = [
       CREATE INDEX quest_rewards_target_idx ON quest_rewards (kind, target_id);
     `,
   },
+  {
+    version: 24,
+    name: 'skills',
+    sql: `
+      -- A skill row mirrors what \`Skill.wz/<jobId>.img/skill/<skillId>\`
+      -- carries on top of its identity strings from
+      -- \`String.wz/Skill.img/<skillId>\`. The mutable per-level fields
+      -- (mp cost, damage, buffs) live in \`skill_levels\` keyed by
+      -- (skill_id, level) — see migration notes below.
+      --
+      -- \`name\` is nullable because a job's skill table sometimes lists
+      -- a skill whose String.wz entry hasn't been localized yet; we still
+      -- want to surface the row with its numeric ID rather than drop it.
+      -- \`element\` and \`required_weapon\` are stored verbatim so the
+      -- decoder can evolve without a schema change.
+      CREATE TABLE skills (
+        id              INTEGER PRIMARY KEY,
+        job_id          INTEGER NOT NULL,
+        name            TEXT,
+        description     TEXT,
+        tooltip         TEXT,
+        max_level       INTEGER,
+        master_level    INTEGER,
+        hidden          INTEGER NOT NULL DEFAULT 0,
+        element         TEXT,
+        required_weapon TEXT,
+        icon_path       TEXT,
+        icon_data       BLOB,
+        source_path     TEXT NOT NULL
+      );
+      CREATE INDEX skills_job_id_idx ON skills (job_id);
+      CREATE INDEX skills_name_idx ON skills (name);
+
+      -- One row per (skill, level). Stat columns are nullable because
+      -- different skill archetypes touch different fields — an attack
+      -- skill carries damage_percent while a buff skill carries pad/mad.
+      -- \`raw_json\` preserves any WZ keys we don't yet promote to
+      -- columns, so the detail page can grow a new field by reading
+      -- the JSON rather than triggering another migration.
+      CREATE TABLE skill_levels (
+        skill_id          INTEGER NOT NULL,
+        level             INTEGER NOT NULL,
+        mp_cost           INTEGER,
+        hp_cost           INTEGER,
+        damage_percent    INTEGER,
+        hits              INTEGER,
+        targets           INTEGER,
+        duration_seconds  INTEGER,
+        cooldown_seconds  INTEGER,
+        chance_percent    INTEGER,
+        x                 INTEGER,
+        y                 INTEGER,
+        z                 INTEGER,
+        pad               INTEGER,
+        mad               INTEGER,
+        pdd               INTEGER,
+        mdd               INTEGER,
+        acc               INTEGER,
+        eva               INTEGER,
+        speed             INTEGER,
+        jump              INTEGER,
+        hp                INTEGER,
+        mp                INTEGER,
+        hp_percent        INTEGER,
+        mp_percent        INTEGER,
+        raw_json          TEXT,
+        PRIMARY KEY (skill_id, level)
+      );
+
+      -- A skill's prerequisite list: each row says skill \`skill_id\`
+      -- needs \`required_skill_id\` at level >= \`required_level\`.
+      -- Reverse-lookup index powers the "Required by" section of the
+      -- detail page (skills that need this one).
+      CREATE TABLE skill_prerequisites (
+        skill_id          INTEGER NOT NULL,
+        required_skill_id INTEGER NOT NULL,
+        required_level    INTEGER NOT NULL,
+        PRIMARY KEY (skill_id, required_skill_id)
+      );
+      CREATE INDEX skill_prereqs_required_idx ON skill_prerequisites (required_skill_id);
+    `,
+  },
+  {
+    version: 25,
+    name: 'jobs reference table',
+    sql: `
+      -- Small reference table populated from \`String.wz/Job.img\`. Holds
+      -- the canonical "id → name" mapping for the ~50 jobs (Beginner +
+      -- 5 base classes × 4 advancement tiers) so skill rows can render
+      -- a real job name instead of the raw integer.
+      --
+      -- \`base_job_id\` is derived at extraction time so listings can
+      -- group by branch without re-running the math.
+      CREATE TABLE jobs (
+        id          INTEGER PRIMARY KEY,
+        name        TEXT NOT NULL,
+        base_job_id INTEGER NOT NULL
+      );
+      CREATE INDEX jobs_base_job_idx ON jobs (base_job_id);
+    `,
+  },
 ];

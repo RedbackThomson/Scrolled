@@ -14,9 +14,16 @@ const ENTITY_FEATURE: Record<
   {
     flag: keyof Pick<
       Features,
-      'hasItems' | 'hasEquips' | 'hasMobs' | 'hasNpcs' | 'hasMaps' | 'hasQuests'
+      | 'hasItems'
+      | 'hasEquips'
+      | 'hasMobs'
+      | 'hasNpcs'
+      | 'hasMaps'
+      | 'hasQuests'
+      | 'hasSkills'
+      | 'hasJobs'
     >;
-    countKey: 'items' | 'equips' | 'mobs' | 'npcs' | 'maps' | 'quests';
+    countKey: 'items' | 'equips' | 'mobs' | 'npcs' | 'maps' | 'quests' | 'skills' | 'jobs';
   }
 > = {
   item: { flag: 'hasItems', countKey: 'items' },
@@ -25,6 +32,8 @@ const ENTITY_FEATURE: Record<
   npc: { flag: 'hasNpcs', countKey: 'npcs' },
   map: { flag: 'hasMaps', countKey: 'maps' },
   quest: { flag: 'hasQuests', countKey: 'quests' },
+  job: { flag: 'hasJobs', countKey: 'jobs' },
+  skill: { flag: 'hasSkills', countKey: 'skills' },
 };
 
 type ChipState = 'needed' | 'ready' | 'hashing' | 'already-loaded' | 'error';

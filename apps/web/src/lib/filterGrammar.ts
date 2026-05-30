@@ -19,6 +19,7 @@
 
 import type { EntityKind } from '@/db';
 import { ELEMENT_ORDER } from '@/domain/mobElements';
+import { SKILL_ELEMENT_ORDER } from '@/domain/skillElements';
 
 type EntityScope = EntityKind;
 
@@ -49,7 +50,11 @@ const ENTITY_ALIAS: Record<string, EntityScope> = {
   chain: 'questChain',
   questchains: 'questChain',
   questchain: 'questChain',
+  skills: 'skill',
+  skill: 'skill',
 };
+
+const SKILL_ELEMENT_VALUES: readonly string[] = SKILL_ELEMENT_ORDER.map((n) => n.toLowerCase());
 
 const FILTER_KEYS: Record<EntityScope, FilterMap> = {
   mob: {
@@ -97,6 +102,13 @@ const FILTER_KEYS: Record<EntityScope, FilterMap> = {
     loop: { kind: 'boolean', param: 'hasCycles' },
     parent: { kind: 'string', param: 'parent' },
   },
+  skill: {
+    job: { kind: 'number', param: 'jobId' },
+    level: { kind: 'number', param: 'maxLevel' },
+    element: { kind: 'enum', param: 'element', values: SKILL_ELEMENT_VALUES },
+    weapon: { kind: 'string', param: 'requiredWeapon' },
+    hidden: { kind: 'boolean', param: 'hidden' },
+  },
 };
 
 const NAME_COLUMN: Record<EntityScope, string> = {
@@ -107,6 +119,7 @@ const NAME_COLUMN: Record<EntityScope, string> = {
   map: 'name',
   quest: 'name',
   questChain: 'name',
+  skill: 'name',
 };
 
 export interface ParsedFilterQuery {
@@ -257,7 +270,7 @@ export function filterKeyHintsFor(entity: EntityScope): FilterKeyHint[] {
 }
 
 export function buildFilterUrl(entity: EntityScope, params: Record<string, string>): string {
-  const base = {
+  const base: Record<EntityScope, string> = {
     mob: '/mobs',
     item: '/items',
     equip: '/equips',
@@ -265,7 +278,8 @@ export function buildFilterUrl(entity: EntityScope, params: Record<string, strin
     map: '/maps',
     quest: '/quests',
     questChain: '/quest-chains',
-  }[entity];
+    skill: '/skills',
+  };
   const sp = new URLSearchParams(params);
-  return sp.toString() ? `${base}?${sp.toString()}` : base;
+  return sp.toString() ? `${base[entity]}?${sp.toString()}` : base[entity];
 }

@@ -10,6 +10,8 @@ import {
   extractNpcs,
   extractMaps,
   extractQuests,
+  extractSkills,
+  extractJobs,
 } from '@/extractors';
 import { createLogger, describeError } from '@/lib/logger';
 import { throttleProgress, type ProgressFn } from '@/lib/progress';
@@ -26,6 +28,8 @@ import type {
   ExtractNpcsResult,
   ExtractMapsResult,
   ExtractQuestsResult,
+  ExtractSkillsResult,
+  ExtractJobsResult,
 } from '@/extractors';
 
 const log = createLogger('worker');
@@ -151,6 +155,29 @@ class WorkerGameDataSource implements GameDataSource {
       quests: result.quests.length,
       requirements: result.requirements.length,
       rewards: result.rewards.length,
+      skipped: result.skipped.length,
+    });
+    return result;
+  }
+
+  async extractJobs(onProgress?: ProgressFn): Promise<ExtractJobsResult> {
+    log.info('extractJobs requested');
+    const result = await extractJobs(this.src(), {
+      onProgress: onProgress ? throttleProgress(onProgress) : undefined,
+    });
+    log.info('extractJobs complete', { jobs: result.jobs.length, skipped: result.skipped.length });
+    return result;
+  }
+
+  async extractSkills(onProgress?: ProgressFn): Promise<ExtractSkillsResult> {
+    log.info('extractSkills requested');
+    const result = await extractSkills(this.src(), {
+      onProgress: onProgress ? throttleProgress(onProgress) : undefined,
+    });
+    log.info('extractSkills complete', {
+      skills: result.skills.length,
+      levels: result.levels.length,
+      prerequisites: result.prerequisites.length,
       skipped: result.skipped.length,
     });
     return result;

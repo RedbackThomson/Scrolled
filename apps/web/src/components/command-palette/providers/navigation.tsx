@@ -40,6 +40,7 @@ export function NavigationProvider() {
     map: features.hasMaps,
     quest: features.hasQuests,
     questChain: features.hasQuestChains,
+    skill: features.hasSkills,
   };
 
   const entries: NavEntry[] = [

@@ -82,6 +82,14 @@ export const router = createBrowserRouter(
             import('@/routes/QuestChainDetail').then((m) => ({ Component: m.default })),
         },
         {
+          path: 'skills',
+          lazy: () => import('@/routes/Skills').then((m) => ({ Component: m.default })),
+        },
+        {
+          path: 'skills/:id',
+          lazy: () => import('@/routes/SkillDetail').then((m) => ({ Component: m.default })),
+        },
+        {
           path: 'collections',
           lazy: () => import('@/routes/Collections').then((m) => ({ Component: m.default })),
         },

@@ -21,13 +21,14 @@ import { createLogger } from '@/lib/logger';
 const log = createLogger('parser-pool');
 
 /** Named slots in the pool. Each name maps to one Web Worker. */
-export type PoolWorkerName = 'items' | 'mobs' | 'npcs' | 'maps' | 'quests';
+export type PoolWorkerName = 'items' | 'mobs' | 'npcs' | 'maps' | 'quests' | 'skills';
 export const POOL_WORKER_NAMES: readonly PoolWorkerName[] = [
   'items',
   'mobs',
   'npcs',
   'maps',
   'quests',
+  'skills',
 ];
 
 /**
@@ -46,6 +47,7 @@ export const POOL_WORKER_FILES: Record<PoolWorkerName, readonly string[]> = {
   npcs: ['Npc.wz', 'String.wz'],
   maps: ['Map.wz', 'String.wz'],
   quests: ['Quest.wz', 'String.wz'],
+  skills: ['Skill.wz', 'String.wz'],
 };
 
 /**
@@ -66,6 +68,7 @@ export const WORKER_EXTRACTORS: Record<PoolWorkerName, readonly string[]> = {
   npcs: ['npc'],
   maps: ['map'],
   quests: ['quest'],
+  skills: ['job', 'skill'],
 };
 
 interface PoolEntry {
@@ -124,6 +127,11 @@ function spawnPoolWorker(name: PoolWorkerName): Worker {
       return new Worker(new URL('@/workers/parseWorker.ts', import.meta.url), {
         type: 'module',
         name: 'scrolled-parser-quests',
+      });
+    case 'skills':
+      return new Worker(new URL('@/workers/parseWorker.ts', import.meta.url), {
+        type: 'module',
+        name: 'scrolled-parser-skills',
       });
   }
 }

@@ -15,6 +15,9 @@ const WZ_FILE_FEATURE: Record<string, (keyof FeatureFlags)[]> = {
   'Npc.wz': ['hasNpcs'],
   'Map.wz': ['hasMaps'],
   'Quest.wz': ['hasQuests'],
+  // Skill.wz unlocks both — jobs are extracted from String.wz/Job.img during
+  // the skills run, so the same dropped file gates both features.
+  'Skill.wz': ['hasSkills', 'hasJobs'],
 };
 
 export interface FeatureFlags {
@@ -26,6 +29,8 @@ export interface FeatureFlags {
   hasQuests: boolean;
   /** Derived from quest prerequisites; gated on quests being present. */
   hasQuestChains: boolean;
+  hasSkills: boolean;
+  hasJobs: boolean;
 }
 
 export interface Features extends FeatureFlags {
@@ -90,6 +95,8 @@ export function useFeatures(): Features {
       hasMaps: false,
       hasQuests: false,
       hasQuestChains: false,
+      hasSkills: false,
+      hasJobs: false,
     };
     for (const file of loadedFiles) {
       const keys = WZ_FILE_FEATURE[file];
@@ -106,6 +113,8 @@ export function useFeatures(): Features {
       hasMaps: fileFlags.hasMaps && (counts?.maps ?? 0) > 0,
       hasQuests,
       hasQuestChains: hasQuests && (counts?.questChains ?? 0) > 0,
+      hasSkills: fileFlags.hasSkills && (counts?.skills ?? 0) > 0,
+      hasJobs: fileFlags.hasJobs && (counts?.jobs ?? 0) > 0,
     };
   }, [loadedFiles, counts]);
 
@@ -116,7 +125,9 @@ export function useFeatures(): Features {
     flags.hasNpcs ||
     flags.hasMaps ||
     flags.hasQuests ||
-    flags.hasQuestChains;
+    flags.hasQuestChains ||
+    flags.hasSkills ||
+    flags.hasJobs;
 
   // First run: no datasets have ever been recorded *and* every entity table
   // is empty. The first condition alone would already imply "no setup", but

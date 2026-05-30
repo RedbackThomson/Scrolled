@@ -252,6 +252,129 @@ export interface QuestRecord {
 }
 
 /**
+ * A character job. Identity comes from `String.wz/Job.img/<id>` and the
+ * hierarchy is encoded in the id itself — `Math.floor(id / 100) * 100` is
+ * the base job (Beginner=0, Warrior=100, Magician=200, ...), and `id`
+ * below 100 is always a Beginner variant. Stored as a small reference
+ * table — populated whenever Skill.wz is loaded — so skill rows can
+ * display "Hero" instead of "Job 112".
+ */
+export interface JobRecord {
+  id: number;
+  name: string;
+  /** Branch root id — same as `id` for base jobs (0/100/200/...). */
+  baseJobId: number;
+}
+
+/**
+ * A character skill. Identity comes from `String.wz/Skill.img/<id>` and the
+ * static metadata from `Skill.wz/<jobId>.img/skill/<id>/common`. The level
+ * table and prerequisite list live in {@link SkillLevelRecord} and
+ * {@link SkillPrerequisiteRecord} rows keyed by `id`.
+ *
+ * `element` and `requiredWeapon` are stored verbatim — single-character
+ * codes like `"F"`/`"I"` and a numeric weapon-type code as a string — so
+ * the decoder in `domain/skillElements.ts` is the only place that needs
+ * to know the encoding. Unknown future codes still round-trip cleanly.
+ */
+export interface SkillRecord {
+  id: number;
+  /** Job that owns the skill (the integer `<jobId>` in `<jobId>.img`). */
+  jobId: number;
+  name: string | null;
+  description: string | null;
+  /** Tooltip text from `String.wz/Skill.img/<id>/h ?? h1 ?? h2`. */
+  tooltip: string | null;
+  maxLevel: number | null;
+  /**
+   * Optional master-level cap (only meaningful for ultimate / 4th-job
+   * skills where `masterLevel < maxLevel` until raised in-game).
+   */
+  masterLevel: number | null;
+  /** `common/invisible === 1` in the WZ tree. */
+  hidden: boolean;
+  /** Raw element code (e.g. `"F"`). Decode via `decodeSkillElement`. */
+  element: string | null;
+  /** Raw `weapon` code, stored as a string. Decode via `decodeRequiredWeapon`. */
+  requiredWeapon: string | null;
+  /** WZ path the icon sprite came from. */
+  iconPath: string | null;
+  /** Decoded PNG bytes for the skill icon, or null. */
+  iconData: Uint8Array | null;
+  sourcePath: string;
+}
+
+/**
+ * One row of a skill's level table. Every stat field is nullable — different
+ * skill archetypes touch different fields, so an attack skill carries
+ * `damagePercent` while a buff skill carries `pad`/`mad`. Keys we don't yet
+ * surface as columns are preserved in `rawJson` for forward compatibility.
+ */
+export interface SkillLevelRecord {
+  skillId: number;
+  level: number;
+  mpCost: number | null;
+  hpCost: number | null;
+  damagePercent: number | null;
+  /** WZ `attackCount`. Number of hits per cast. */
+  hits: number | null;
+  /** WZ `mobCount`. Number of targets the skill can hit. */
+  targets: number | null;
+  /** WZ `time`. Duration of the skill's effect, in seconds. */
+  durationSeconds: number | null;
+  /** WZ `cooltime`. Cooldown between casts, in seconds. */
+  cooldownSeconds: number | null;
+  /** WZ `prop`. Success chance, as a percentage. */
+  chancePercent: number | null;
+  x: number | null;
+  y: number | null;
+  z: number | null;
+  /** Weapon attack bonus (`pad`). */
+  pad: number | null;
+  /** Magic attack bonus (`mad`). */
+  mad: number | null;
+  /** Weapon defense bonus (`pdd`). */
+  pdd: number | null;
+  /** Magic defense bonus (`mdd`). */
+  mdd: number | null;
+  acc: number | null;
+  eva: number | null;
+  speed: number | null;
+  jump: number | null;
+  hp: number | null;
+  mp: number | null;
+  /** Percent HP buff (`hpR`). */
+  hpPercent: number | null;
+  /** Percent MP buff (`mpR`). */
+  mpPercent: number | null;
+  /** JSON-encoded object of WZ keys we don't yet promote to columns. */
+  rawJson: string | null;
+}
+
+/**
+ * One skill the parent skill requires before it can be learned. The
+ * `requiredSkillId` must be at least `requiredLevel` before this skill
+ * unlocks. Composite PK is `(skillId, requiredSkillId)`.
+ */
+export interface SkillPrerequisiteRecord {
+  skillId: number;
+  requiredSkillId: number;
+  requiredLevel: number;
+}
+
+/** A `skill_prerequisites` row joined to the required skill's display name. */
+export interface SkillPrerequisiteWithName extends SkillPrerequisiteRecord {
+  requiredSkillName: string | null;
+}
+
+/** Summary surfaced from a cross-link (e.g. "skills this quest grants"). */
+export interface SkillSummary {
+  id: number;
+  name: string | null;
+  jobId: number;
+}
+
+/**
  * One requirement row attached to a quest. `kind` identifies what must be
  * supplied/satisfied; `targetId` and `amount` are interpreted per-kind:
  *
@@ -491,6 +614,8 @@ export interface DbStatus {
     maps: number;
     quests: number;
     questChains: number;
+    skills: number;
+    jobs: number;
     datasets: number;
   };
 }
@@ -629,6 +754,31 @@ export interface GameDatabase {
   /** Per-spawn mob rows (one per spawn point, not aggregated by mob id). */
   getMapMobSpawns(mapId: number): Promise<MapMobSpawnWithName[]>;
 
+  upsertJobs(jobs: JobRecord[]): Promise<number>;
+  getJob(id: number): Promise<JobRecord | null>;
+  /** Every job, ordered by id ascending. Cheap (≤ ~50 rows) — clients
+   *  fetch the whole table and build their own id → name map. */
+  listJobs(): Promise<JobRecord[]>;
+
+  upsertSkills(skills: SkillRecord[]): Promise<number>;
+  getSkill(id: number): Promise<SkillRecord | null>;
+  listSkills(opts?: ListOptsBase): Promise<PageResult<SkillRecord>>;
+  /** Decoded PNG bytes for the skill icon, or null. */
+  getSkillIcon(id: number): Promise<Uint8Array | null>;
+  /** Level table rows for one skill, ordered by level ascending. */
+  getSkillLevels(skillId: number): Promise<SkillLevelRecord[]>;
+  /** Direct prerequisites of a skill, joined to the required skill's name. */
+  getSkillPrerequisites(skillId: number): Promise<SkillPrerequisiteWithName[]>;
+  /** Skills that list `skillId` as a prerequisite — the inverse lookup. */
+  getSkillsRequiring(skillId: number): Promise<SkillPrerequisiteWithName[]>;
+  /** Quests that grant the given skill as a reward. */
+  getSkillQuests(skillId: number): Promise<QuestSummary[]>;
+  /** Replace a skill's level + prereq rows in one transaction. */
+  replaceSkillRelations(rows: {
+    levels: SkillLevelRecord[];
+    prerequisites: SkillPrerequisiteRecord[];
+  }): Promise<void>;
+
   upsertQuests(quests: QuestRecord[]): Promise<number>;
   getQuest(id: number): Promise<QuestRecord | null>;
   listQuests(opts?: ListOptsBase & { parent?: string }): Promise<PageResult<QuestRecord>>;
@@ -732,7 +882,15 @@ export interface GameDatabase {
   importBytes(bytes: Uint8Array): Promise<{ backend: 'opfs' | 'memory'; schemaVersion: number }>;
 }
 
-export type EntityKind = 'item' | 'equip' | 'mob' | 'npc' | 'map' | 'quest' | 'questChain';
+export type EntityKind =
+  | 'item'
+  | 'equip'
+  | 'mob'
+  | 'npc'
+  | 'map'
+  | 'quest'
+  | 'questChain'
+  | 'skill';
 
 export interface SearchEntry {
   id: number;

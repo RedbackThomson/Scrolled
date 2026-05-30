@@ -107,7 +107,7 @@ export default function Settings() {
                   schema v{statusQ.data.schemaVersion} · data rev {statusQ.data.dataRevision}
                 </span>
               </div>
-              <dl className="text-muted-foreground mt-3 grid grid-cols-3 gap-2 text-xs sm:grid-cols-7">
+              <dl className="text-muted-foreground mt-3 grid grid-cols-3 gap-2 text-xs sm:grid-cols-9">
                 {(
                   [
                     ['items', statusQ.data.counts.items],
@@ -116,6 +116,8 @@ export default function Settings() {
                     ['npcs', statusQ.data.counts.npcs],
                     ['maps', statusQ.data.counts.maps],
                     ['quests', statusQ.data.counts.quests],
+                    ['skills', statusQ.data.counts.skills],
+                    ['jobs', statusQ.data.counts.jobs],
                     ['datasets', statusQ.data.counts.datasets],
                   ] as const
                 ).map(([label, count]) => (

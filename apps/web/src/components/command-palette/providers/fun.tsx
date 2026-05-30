@@ -28,6 +28,7 @@ export function FunProvider() {
     map: features.hasMaps,
     quest: features.hasQuests,
     questChain: features.hasQuestChains,
+    skill: features.hasSkills,
   };
 
   const entries = ENTITY_KINDS.filter((k) => enabled[k]).map((k) => ({

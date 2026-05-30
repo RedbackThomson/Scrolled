@@ -10,7 +10,7 @@ import type { CollectionsExportJson, ImportConflictMode, ImportReport } from './
 
 export type CollectionEntityType = Extract<
   EntityKind,
-  'item' | 'equip' | 'mob' | 'npc' | 'map' | 'quest' | 'questChain'
+  'item' | 'equip' | 'mob' | 'npc' | 'map' | 'quest' | 'questChain' | 'skill'
 >;
 
 export const COLLECTION_ENTITY_TYPES = [
@@ -21,6 +21,7 @@ export const COLLECTION_ENTITY_TYPES = [
   'map',
   'quest',
   'questChain',
+  'skill',
 ] as const satisfies readonly CollectionEntityType[];
 
 export interface CollectionRecord {

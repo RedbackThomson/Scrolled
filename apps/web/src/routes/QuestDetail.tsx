@@ -312,7 +312,7 @@ export default function QuestDetail() {
           <BuffRewardRow id={buffReward.targetId} />
         )}
         {skillReward && skillReward.targetId !== null && (
-          <SkillRewardRow id={skillReward.targetId} />
+          <SkillRewardRow id={skillReward.targetId} linkable={features.hasSkills} />
         )}
         {itemGroups.map((g) =>
           g.kind === 'guaranteed-item' ? (
@@ -452,14 +452,15 @@ function BuffRewardRow({ id }: { id: number }) {
   );
 }
 
-function SkillRewardRow({ id }: { id: number }) {
+function SkillRewardRow({ id, linkable }: { id: number; linkable: boolean }) {
   return (
-    <li className="flex items-center gap-3 px-3 py-2 text-sm">
-      <Zap className="text-muted-foreground h-6 w-6 shrink-0" />
-      <span className="flex-1">
-        Skill <span className="text-muted-foreground font-mono text-xs">#{id}</span>
-      </span>
-    </li>
+    <EntityRow
+      entity="skill"
+      id={id}
+      name={null}
+      hideId={false}
+      linkable={linkable}
+    />
   );
 }
 

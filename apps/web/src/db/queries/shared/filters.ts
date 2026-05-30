@@ -108,6 +108,18 @@ export const QUEST_FILTER: Record<string, FilterSpec> = {
   id: { col: 'id', type: 'string' },
 };
 
+export const SKILL_FILTER: Record<string, FilterSpec> = {
+  name: { col: 'name', type: 'string' },
+  jobId: { col: 'job_id', type: 'number' },
+  maxLevel: { col: 'max_level', type: 'number' },
+  element: { col: 'element', type: 'string' },
+  requiredWeapon: { col: 'required_weapon', type: 'string' },
+  // hidden is INTEGER 0/1; mirrors mobs.is_boss — boolean filter values
+  // ({min:1,max:1}) collapse cleanly to col = ?.
+  hidden: { col: 'hidden', type: 'number' },
+  id: { col: 'id', type: 'string' },
+};
+
 export const QUEST_CHAIN_FILTER: Record<string, FilterSpec> = {
   name: { col: 'name', type: 'string' },
   parent: { col: 'parent', type: 'string' },
@@ -166,6 +178,15 @@ export function applyFilters(
         where.push(`${spec.col} <= ?`);
         params.push(filter.max);
       }
+    } else if (spec.type === 'number' && filter.kind === 'enum' && filter.values.length > 0) {
+      // Enum on an INTEGER column → `col IN (?, ?, …)`. Used by the skills
+      // listing's "Job" filter (one row per job id, label resolved from
+      // the `jobs` reference table at render time).
+      const numeric = filter.values.map((v) => Number(v)).filter((n) => Number.isFinite(n));
+      if (numeric.length === 0) continue;
+      const placeholders = numeric.map(() => '?').join(', ');
+      where.push(`${spec.col} IN (${placeholders})`);
+      params.push(...numeric);
     } else if (spec.type === 'presence' && filter.kind === 'range') {
       // Boolean picker writes {min:max:1} for present, {min:max:0} for absent.
       if (filter.min === 1 && filter.max === 1) {

@@ -61,6 +61,18 @@ export function listSearchEntries(sql: Sqlite): SearchEntry[] {
   }>(`SELECT id, name, parent FROM quest_chains WHERE name IS NOT NULL AND name <> ''`)) {
     out.push({ id: r.id, name: r.name, entity: 'questChain', category: r.parent });
   }
+  for (const r of sql.selectObjects<{
+    id: number;
+    name: string | null;
+    job_id: number;
+  }>(`SELECT id, name, job_id FROM skills WHERE name IS NOT NULL AND name <> ''`)) {
+    out.push({
+      id: r.id,
+      name: r.name as string,
+      entity: 'skill',
+      category: `Job ${r.job_id}`,
+    });
+  }
   return out;
 }
 

@@ -2,10 +2,13 @@ import type { Row } from '../../sqlite';
 import type {
   EquipRecord,
   ItemRecord,
+  JobRecord,
   MapRecord,
   MobRecord,
   NpcRecord,
   QuestRecord,
+  SkillLevelRecord,
+  SkillRecord,
 } from '../../types';
 
 export interface ItemRow extends Row {
@@ -218,6 +221,110 @@ export function rowToQuest(r: QuestRow): QuestRecord {
     requiredJob: r.required_job,
     repeatWait: r.repeat_wait,
     sourcePath: r.source_path,
+  };
+}
+
+export interface SkillRow extends Row {
+  id: number;
+  job_id: number;
+  name: string | null;
+  description: string | null;
+  tooltip: string | null;
+  max_level: number | null;
+  master_level: number | null;
+  hidden: number;
+  element: string | null;
+  required_weapon: string | null;
+  icon_path: string | null;
+  icon_data: Uint8Array | null;
+  source_path: string;
+}
+
+export interface SkillLevelRow extends Row {
+  skill_id: number;
+  level: number;
+  mp_cost: number | null;
+  hp_cost: number | null;
+  damage_percent: number | null;
+  hits: number | null;
+  targets: number | null;
+  duration_seconds: number | null;
+  cooldown_seconds: number | null;
+  chance_percent: number | null;
+  x: number | null;
+  y: number | null;
+  z: number | null;
+  pad: number | null;
+  mad: number | null;
+  pdd: number | null;
+  mdd: number | null;
+  acc: number | null;
+  eva: number | null;
+  speed: number | null;
+  jump: number | null;
+  hp: number | null;
+  mp: number | null;
+  hp_percent: number | null;
+  mp_percent: number | null;
+  raw_json: string | null;
+}
+
+export interface JobRow extends Row {
+  id: number;
+  name: string;
+  base_job_id: number;
+}
+
+export function rowToJob(r: JobRow): JobRecord {
+  return { id: r.id, name: r.name, baseJobId: r.base_job_id };
+}
+
+export function rowToSkill(r: SkillRow): SkillRecord {
+  return {
+    id: r.id,
+    jobId: r.job_id,
+    name: r.name,
+    description: r.description,
+    tooltip: r.tooltip,
+    maxLevel: r.max_level,
+    masterLevel: r.master_level,
+    hidden: r.hidden === 1,
+    element: r.element,
+    requiredWeapon: r.required_weapon,
+    iconPath: r.icon_path,
+    iconData: r.icon_data,
+    sourcePath: r.source_path,
+  };
+}
+
+export function rowToSkillLevel(r: SkillLevelRow): SkillLevelRecord {
+  return {
+    skillId: r.skill_id,
+    level: r.level,
+    mpCost: r.mp_cost,
+    hpCost: r.hp_cost,
+    damagePercent: r.damage_percent,
+    hits: r.hits,
+    targets: r.targets,
+    durationSeconds: r.duration_seconds,
+    cooldownSeconds: r.cooldown_seconds,
+    chancePercent: r.chance_percent,
+    x: r.x,
+    y: r.y,
+    z: r.z,
+    pad: r.pad,
+    mad: r.mad,
+    pdd: r.pdd,
+    mdd: r.mdd,
+    acc: r.acc,
+    eva: r.eva,
+    speed: r.speed,
+    jump: r.jump,
+    hp: r.hp,
+    mp: r.mp,
+    hpPercent: r.hp_percent,
+    mpPercent: r.mp_percent,
+    rawJson: r.raw_json,
   };
 }
 

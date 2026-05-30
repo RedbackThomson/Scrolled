@@ -32,10 +32,25 @@ export const EXTRACTOR_DEPS = {
   npc: { label: 'NPCs', primary: 'Npc.wz', needs: ['String.wz'] },
   map: { label: 'Maps', primary: 'Map.wz', needs: ['String.wz'] },
   quest: { label: 'Quests', primary: 'Quest.wz', needs: ['String.wz'] },
+  // Jobs are a tiny reference table read out of String.wz alongside skill
+  // extraction. They share Skill.wz as the gating primary because the
+  // skill detail/list views are the only consumer of the table; dropping
+  // Skill.wz triggers both.
+  job: { label: 'Jobs', primary: 'Skill.wz', needs: ['String.wz'] },
+  skill: { label: 'Skills', primary: 'Skill.wz', needs: ['String.wz'] },
 } as const;
 
 export type ExtractorKey = keyof typeof EXTRACTOR_DEPS;
-export const ALL_EXTRACTOR_KEYS: ExtractorKey[] = ['item', 'equip', 'mob', 'npc', 'map', 'quest'];
+export const ALL_EXTRACTOR_KEYS: ExtractorKey[] = [
+  'item',
+  'equip',
+  'mob',
+  'npc',
+  'map',
+  'quest',
+  'job',
+  'skill',
+];
 
 export interface PlannedExtractor {
   key: ExtractorKey;

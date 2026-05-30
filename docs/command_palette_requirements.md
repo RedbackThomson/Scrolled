@@ -35,7 +35,7 @@ Target user: a player exploring or organizing data deeply enough to hit the pale
 ### 1. Global search & navigation
 
 - Fuzzy match across all entity types by name and ID
-- Category-prefix shorthand for scoped search (e.g. `m ` for mobs, `i ` for items, `q ` for quests, `qc ` for quest chains, `mp ` for maps, `n ` for NPCs, `e ` for equips, `c ` for collections)
+- Category-prefix shorthand for scoped search (e.g. `m ` for mobs, `i ` for items, `q ` for quests, `qc ` for quest chains, `mp ` for maps, `n ` for NPCs, `e ` for equips, `s ` for skills, `c ` for collections)
 - Raw entity ID resolution — typing a numeric ID jumps to the matching entity
 - Top-level destinations: each listing page, settings panes, debug, collections index
 

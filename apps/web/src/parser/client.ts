@@ -7,6 +7,8 @@ import type {
   ExtractNpcsResult,
   ExtractMapsResult,
   ExtractQuestsResult,
+  ExtractSkillsResult,
+  ExtractJobsResult,
 } from '@/extractors';
 import type { ProgressFn } from '@/lib/progress';
 
@@ -25,6 +27,8 @@ export interface ParserWorkerApi extends GameDataSource {
   extractNpcs(onProgress?: ProgressFn): Promise<ExtractNpcsResult>;
   extractMaps(onProgress?: ProgressFn): Promise<ExtractMapsResult>;
   extractQuests(onProgress?: ProgressFn): Promise<ExtractQuestsResult>;
+  extractSkills(onProgress?: ProgressFn): Promise<ExtractSkillsResult>;
+  extractJobs(onProgress?: ProgressFn): Promise<ExtractJobsResult>;
 }
 
 let cached: { worker: Worker; proxy: Remote<ParserWorkerApi> } | null = null;

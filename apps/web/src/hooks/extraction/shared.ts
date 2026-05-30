@@ -8,7 +8,16 @@
 
 import type { DatasetFileRef, ExtractorResultRecord } from '@/db';
 
-export const ALL_EXTRACTOR_KEYS = ['item', 'equip', 'mob', 'npc', 'map', 'quest'] as const;
+export const ALL_EXTRACTOR_KEYS = [
+  'item',
+  'equip',
+  'mob',
+  'npc',
+  'map',
+  'quest',
+  'job',
+  'skill',
+] as const;
 export type ExtractorKey = (typeof ALL_EXTRACTOR_KEYS)[number];
 
 /** Post-pass keys that run after the parser workers but get persisted in
@@ -26,6 +35,8 @@ export interface ExtractStats {
   maps: number;
   quests: number;
   questChains: number;
+  skills: number;
+  jobs: number;
   skipped: number;
   ms: number;
   /** Per-extractor outcome rows persisted into `extraction_extractors`. */
@@ -50,6 +61,8 @@ export function buildExtractStats(
     maps: rowsFor(perExtractor, 'map'),
     quests: rowsFor(perExtractor, 'quest'),
     questChains: rowsFor(perExtractor, 'questChain'),
+    skills: rowsFor(perExtractor, 'skill'),
+    jobs: rowsFor(perExtractor, 'job'),
     skipped,
     ms,
     perExtractor,
@@ -71,9 +84,14 @@ export function shouldSkip(skipWz: Set<string> | undefined, wz: string): boolean
   return !!skipWz && skipWz.has(wz);
 }
 
-/** Item / Equip extractors share the `item` skipWz key (Item.wz drives both). */
+/** Item / Equip extractors share the `item` skipWz key (Item.wz drives both).
+ *  Jobs piggy-back on the skills run (Skill.wz being unchanged means the
+ *  job table doesn't need re-extracting either), so they share the `skill`
+ *  skipWz key. */
 function equivWzKey(extractor: string): string {
-  return extractor === 'equip' ? 'item' : extractor;
+  if (extractor === 'equip') return 'item';
+  if (extractor === 'job') return 'skill';
+  return extractor;
 }
 
 /**

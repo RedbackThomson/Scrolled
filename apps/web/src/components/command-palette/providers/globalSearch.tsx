@@ -19,6 +19,7 @@ const PREFIX_TO_ENTITY: Record<string, EntityKind> = {
   mp: 'map',
   q: 'quest',
   qc: 'questChain',
+  s: 'skill',
 };
 
 interface ParsedQuery {
@@ -47,7 +48,7 @@ export function GlobalSearchProvider() {
 
   const counts = features.counts;
   const epoch = counts
-    ? `${counts.items}.${counts.equips}.${counts.mobs}.${counts.npcs}.${counts.maps}.${counts.quests}.${counts.questChains}`
+    ? `${counts.items}.${counts.equips}.${counts.mobs}.${counts.npcs}.${counts.maps}.${counts.quests}.${counts.questChains}.${counts.skills}.${counts.jobs}`
     : '';
 
   const indexQ = useQuery({
@@ -66,7 +67,7 @@ export function GlobalSearchProvider() {
       if (!Number.isFinite(id) || id <= 0) return [];
       const kinds: EntityKind[] = scope
         ? [scope]
-        : ['item', 'equip', 'mob', 'npc', 'map', 'quest', 'questChain'];
+        : ['item', 'equip', 'mob', 'npc', 'map', 'quest', 'questChain', 'skill'];
       const results = await Promise.all(
         kinds.map((k) => db.getEntitySummariesByIds(k, [id]).then((rows) => ({ kind: k, rows }))),
       );

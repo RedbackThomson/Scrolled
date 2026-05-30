@@ -22,3 +22,7 @@ export { extractMaps } from './extractMaps';
 export type { ExtractMapsResult } from './extractMaps';
 export { extractQuests } from './extractQuests';
 export type { ExtractQuestsResult } from './extractQuests';
+export { extractSkills } from './extractSkills';
+export type { ExtractSkillsResult } from './extractSkills';
+export { extractJobs, getBaseJobId } from './extractJobs';
+export type { ExtractJobsResult } from './extractJobs';

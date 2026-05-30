@@ -59,6 +59,8 @@ export const EXTRACTOR_TO_WORKER: Record<ExtractorKey, PoolWorkerName> = {
   npc: 'npcs',
   map: 'maps',
   quest: 'quests',
+  job: 'skills',
+  skill: 'skills',
 };
 
 export const EXTRACTOR_LABEL: Record<ExtractorKey, string> = {
@@ -68,6 +70,8 @@ export const EXTRACTOR_LABEL: Record<ExtractorKey, string> = {
   npc: 'NPCs',
   map: 'Maps',
   quest: 'Quests',
+  job: 'Jobs',
+  skill: 'Skills',
 };
 
 export interface ExtractorStatus {
@@ -531,6 +535,52 @@ async function runWorkerExtractors(
     });
     bumpSkipped(r.skipped.length);
     patchExtractor('quest', { phase: 'done', progress: null });
+    return;
+  }
+
+  if (name === 'skills' && (willRun.has('job') || willRun.has('skill'))) {
+    // Jobs first so skill rows can resolve to a job name immediately, even
+    // before the page reads from the DB. Both extractors share the skills
+    // worker since both consume `String.wz/Job.img` (jobs) or
+    // `Skill.wz/<jobId>.img` (skills, joined against String.wz).
+    if (willRun.has('job')) {
+      patchExtractor('job', { phase: 'extracting' });
+      const onProgress = proxy((p: ProgressUpdate) => patchExtractor('job', { progress: p }));
+      const r = await worker.extractJobs(onProgress);
+      const rows = r.jobs.length > 0 ? await db.upsertJobs(r.jobs) : 0;
+      out.push({
+        extractor: 'job',
+        status: 'ran',
+        rows,
+        skippedRows: r.skipped.length,
+        placeholderNames: 0,
+        error: null,
+      });
+      bumpSkipped(r.skipped.length);
+      patchExtractor('job', { phase: 'done', progress: null });
+    }
+    if (willRun.has('skill')) {
+      patchExtractor('skill', { phase: 'extracting' });
+      const onProgress = proxy((p: ProgressUpdate) => patchExtractor('skill', { progress: p }));
+      const r = await worker.extractSkills(onProgress);
+      const rows = r.skills.length > 0 ? await db.upsertSkills(r.skills) : 0;
+      if (r.levels.length > 0 || r.prerequisites.length > 0) {
+        await db.replaceSkillRelations({
+          levels: r.levels,
+          prerequisites: r.prerequisites,
+        });
+      }
+      out.push({
+        extractor: 'skill',
+        status: 'ran',
+        rows,
+        skippedRows: r.skipped.length,
+        placeholderNames: 0,
+        error: null,
+      });
+      bumpSkipped(r.skipped.length);
+      patchExtractor('skill', { phase: 'done', progress: null });
+    }
     return;
   }
 }

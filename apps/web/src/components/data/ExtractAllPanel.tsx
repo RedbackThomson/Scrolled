@@ -34,7 +34,8 @@ export function ExtractAllPanel() {
             <Database className="h-4 w-4" />
             <span>
               {stats.items} items, {stats.equips} equips, {stats.mobs} mobs, {stats.npcs} NPCs,{' '}
-              {stats.maps} maps, {stats.quests} quests, {stats.questChains} chains
+              {stats.maps} maps, {stats.quests} quests, {stats.questChains} chains,{' '}
+              {stats.skills} skills, {stats.jobs} jobs
               {stats.skipped > 0 ? `, ${stats.skipped} skipped` : ''} in {stats.ms} ms
             </span>
             <Link to="/items" className="text-primary text-xs hover:underline">

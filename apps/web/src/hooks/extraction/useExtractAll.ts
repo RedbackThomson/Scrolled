@@ -201,6 +201,50 @@ export function useExtractAll(opts: UseExtractAllOptions = {}) {
         log.info('skipping quests (Quest.wz hash unchanged)');
       }
 
+      if (!shouldSkip(opts.skipWz, 'skill')) {
+        try {
+          const j = await parser.extractJobs(onProgress);
+          setProgress({
+            phase: 'Saving jobs to database',
+            current: 0,
+            total: j.jobs.length,
+          });
+          const jobCount = j.jobs.length > 0 ? await db.upsertJobs(j.jobs) : 0;
+          tracker.ran('job', jobCount, j.skipped.length);
+          skippedTotal += j.skipped.length;
+        } catch (err) {
+          tracker.failed('job', err);
+          throw err;
+        }
+        try {
+          const r = await parser.extractSkills(onProgress);
+          setProgress({
+            phase: 'Saving skills to database',
+            current: 0,
+            total: r.skills.length,
+          });
+          const skillCount = r.skills.length > 0 ? await db.upsertSkills(r.skills) : 0;
+          if (r.levels.length > 0 || r.prerequisites.length > 0) {
+            setProgress({
+              phase: 'Saving skill levels + prerequisites',
+              current: 0,
+              total: r.levels.length + r.prerequisites.length,
+            });
+            await db.replaceSkillRelations({
+              levels: r.levels,
+              prerequisites: r.prerequisites,
+            });
+          }
+          tracker.ran('skill', skillCount, r.skipped.length);
+          skippedTotal += r.skipped.length;
+        } catch (err) {
+          tracker.failed('skill', err);
+          throw err;
+        }
+      } else {
+        log.info('skipping skills (Skill.wz hash unchanged)');
+      }
+
       // Quest chains are a pure DB derivation, not an extraction. Always run
       // — when WZ files are hash-skipped we still want chains populated on
       // the first run of a build that ships them.
