@@ -138,7 +138,7 @@ describe('extractSkills', () => {
     expect(result.skills[0].tooltip).toBe('Top.\nBottom.');
   });
 
-  it('falls back through h1/h2 when h is missing', async () => {
+  it('stores h<level> strings as per-level static descriptions (older WZ pattern)', async () => {
     const source = makeSource(
       {
         'Skill.wz': [
@@ -148,18 +148,63 @@ describe('extractSkills', () => {
           { name: '2100000', fullPath: 'Skill.wz/210.img/skill/2100000', kind: 'property', hasChildren: true },
         ],
         'Skill.wz/210.img/skill/2100000/req': [],
-        'Skill.wz/210.img/skill/2100000/level': [],
+        'Skill.wz/210.img/skill/2100000/level': [
+          { name: '1', fullPath: 'Skill.wz/210.img/skill/2100000/level/1', kind: 'property', hasChildren: true },
+          { name: '2', fullPath: 'Skill.wz/210.img/skill/2100000/level/2', kind: 'property', hasChildren: true },
+          { name: '3', fullPath: 'Skill.wz/210.img/skill/2100000/level/3', kind: 'property', hasChildren: true },
+        ],
+        'Skill.wz/210.img/skill/2100000/level/1': [],
+        'Skill.wz/210.img/skill/2100000/level/2': [],
+        'Skill.wz/210.img/skill/2100000/level/3': [],
+        'String.wz/Skill.img/2100000': [
+          leaf('h1', 'String.wz/Skill.img/2100000/h1', 'Accuracy +1', 'string'),
+          leaf('h2', 'String.wz/Skill.img/2100000/h2', 'Accuracy +2', 'string'),
+          leaf('h3', 'String.wz/Skill.img/2100000/h3', 'Accuracy +3', 'string'),
+        ],
       },
       {
-        'String.wz/Skill.img/2100000/h1': leaf('h1', '', 'Boosts magic attack.', 'string'),
-        'String.wz/Skill.img/2100000/h2': leaf('h2', '', 'Tooltip line two.', 'string'),
+        'String.wz/Skill.img/2100000/h1': leaf('h1', '', 'Accuracy +1', 'string'),
+        'String.wz/Skill.img/2100000/h2': leaf('h2', '', 'Accuracy +2', 'string'),
+        'String.wz/Skill.img/2100000/h3': leaf('h3', '', 'Accuracy +3', 'string'),
       },
     );
 
     const result = await extractSkills(source);
     expect(result.skills).toHaveLength(1);
-    expect(result.skills[0].tooltip).toBe('Boosts magic attack.');
-    expect(result.skills[0].name).toBeNull();
+    // No `h` → parent tooltip stays null; descriptions attach to each level.
+    expect(result.skills[0].tooltip).toBeNull();
+    const byLevel = new Map(result.levels.map((l) => [l.level, l.description]));
+    expect(byLevel.get(1)).toBe('Accuracy +1');
+    expect(byLevel.get(2)).toBe('Accuracy +2');
+    expect(byLevel.get(3)).toBe('Accuracy +3');
+  });
+
+  it('leaves level.description null when only a templated h exists (modern pattern)', async () => {
+    const source = makeSource(
+      {
+        'Skill.wz': [
+          { name: '230.img', fullPath: 'Skill.wz/230.img', kind: 'image', hasChildren: true },
+        ],
+        'Skill.wz/230.img/skill': [
+          { name: '2301003', fullPath: 'Skill.wz/230.img/skill/2301003', kind: 'property', hasChildren: true },
+        ],
+        'Skill.wz/230.img/skill/2301003/req': [],
+        'Skill.wz/230.img/skill/2301003/level': [
+          { name: '1', fullPath: 'Skill.wz/230.img/skill/2301003/level/1', kind: 'property', hasChildren: true },
+        ],
+        'Skill.wz/230.img/skill/2301003/level/1': [],
+        'String.wz/Skill.img/2301003': [
+          leaf('h', 'String.wz/Skill.img/2301003/h', 'Increase Max HP by #x%.', 'string'),
+        ],
+      },
+      {
+        'String.wz/Skill.img/2301003/h': leaf('h', '', 'Increase Max HP by #x%.', 'string'),
+      },
+    );
+
+    const result = await extractSkills(source);
+    expect(result.skills[0].tooltip).toBe('Increase Max HP by #x%.');
+    expect(result.levels[0].description).toBeNull();
   });
 
   it('emits one prerequisite row per req entry', async () => {

@@ -210,8 +210,8 @@ export function replaceSkillRelations(
           skill_id, level, mp_cost, hp_cost, damage_percent, hits, targets,
           duration_seconds, cooldown_seconds, chance_percent, x, y, z,
           pad, mad, pdd, mdd, acc, eva, speed, jump, hp, mp,
-          hp_percent, mp_percent, raw_json
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          hp_percent, mp_percent, description, raw_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           l.skillId,
           l.level,
@@ -238,6 +238,7 @@ export function replaceSkillRelations(
           l.mp,
           l.hpPercent,
           l.mpPercent,
+          l.description,
           l.rawJson,
         ],
       );

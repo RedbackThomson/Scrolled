@@ -793,4 +793,16 @@ export const MIGRATIONS: readonly Migration[] = [
       CREATE INDEX jobs_base_job_idx ON jobs (base_job_id);
     `,
   },
+  {
+    version: 26,
+    name: 'skill level static description',
+    sql: `
+      -- Older WZ dumps don't carry a templated \`h\` on the parent skill —
+      -- they put a literal description on each level as \`h1\`, \`h2\`,
+      -- \`h3\`, ..., \`h<level>\`. Store the resolved string here so the
+      -- per-level table can show it verbatim without inventing template
+      -- placeholders the data doesn't have.
+      ALTER TABLE skill_levels ADD COLUMN description TEXT;
+    `,
+  },
 ];

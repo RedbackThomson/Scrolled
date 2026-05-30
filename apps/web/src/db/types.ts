@@ -347,6 +347,12 @@ export interface SkillLevelRecord {
   hpPercent: number | null;
   /** Percent MP buff (`mpR`). */
   mpPercent: number | null;
+  /**
+   * Static per-level description from older WZ dumps (`h<level>`). When set,
+   * the UI shows this verbatim instead of rendering the parent skill's
+   * templated `tooltip`. Null when the data uses the modern template style.
+   */
+  description: string | null;
   /** JSON-encoded object of WZ keys we don't yet promote to columns. */
   rawJson: string | null;
 }

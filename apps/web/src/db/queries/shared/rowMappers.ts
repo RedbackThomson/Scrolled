@@ -266,6 +266,7 @@ export interface SkillLevelRow extends Row {
   mp: number | null;
   hp_percent: number | null;
   mp_percent: number | null;
+  description: string | null;
   raw_json: string | null;
 }
 
@@ -324,6 +325,7 @@ export function rowToSkillLevel(r: SkillLevelRow): SkillLevelRecord {
     mp: r.mp,
     hpPercent: r.hp_percent,
     mpPercent: r.mp_percent,
+    description: r.description,
     rawJson: r.raw_json,
   };
 }

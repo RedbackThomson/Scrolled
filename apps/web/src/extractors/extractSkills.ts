@@ -132,8 +132,7 @@ export async function extractSkills(
       nameNode,
       descNode,
       hNode,
-      h1Node,
-      h2Node,
+      stringChildren,
       maxLevelN,
       masterLevelN,
       invisibleN,
@@ -143,8 +142,7 @@ export async function extractSkills(
       source.getNode(`${stringPath}/name`),
       source.getNode(`${stringPath}/desc`),
       source.getNode(`${stringPath}/h`),
-      source.getNode(`${stringPath}/h1`),
-      source.getNode(`${stringPath}/h2`),
+      source.listChildren(stringPath),
       pathToNumber(source, `${skillPath}/common/maxLevel`),
       pathToNumber(source, `${skillPath}/common/masterLevel`),
       pathToNumber(source, `${skillPath}/common/invisible`),
@@ -154,13 +152,22 @@ export async function extractSkills(
 
     const name = scalarToString(nameNode?.scalar);
     const description = unescapeWzString(scalarToString(descNode?.scalar));
-    // `h` is the canonical tooltip slot; older dumps split it into `h1`/`h2`
-    // when the tooltip needed two paragraphs. Fall back in order.
-    const tooltip = unescapeWzString(
-      scalarToString(hNode?.scalar) ??
-        scalarToString(h1Node?.scalar) ??
-        scalarToString(h2Node?.scalar),
-    );
+    // `h` is the templated tooltip (e.g. "Boost by #x% for #time sec.")
+    // resolved per-level by the renderer. Older dumps skip `h` entirely and
+    // put a static description on each level as `h1`, `h2`, ..., `hN`; those
+    // are picked up below and attached to each level row.
+    const tooltip = unescapeWzString(scalarToString(hNode?.scalar));
+    const perLevelDescriptions = new Map<number, string>();
+    for (const child of stringChildren) {
+      const match = child.name.match(/^h(\d+)$/);
+      if (!match) continue;
+      const lvl = Number(match[1]);
+      if (!Number.isFinite(lvl) || lvl <= 0) continue;
+      const text = scalarToString(child.scalar);
+      if (!text) continue;
+      const unescaped = unescapeWzString(text);
+      if (unescaped !== null) perLevelDescriptions.set(lvl, unescaped);
+    }
     const element = scalarToString(elemNode?.scalar);
     // `weapon` may arrive as either a number (cleaner v83 dumps) or a
     // string (some private-server repacks). Persist as a string so the
@@ -235,6 +242,7 @@ export async function extractSkills(
         mp: knownNumeric.mp ?? null,
         hpPercent: knownNumeric.hpR ?? null,
         mpPercent: knownNumeric.mpR ?? null,
+        description: perLevelDescriptions.get(level) ?? null,
         rawJson,
       });
     }

@@ -21,6 +21,11 @@ import { useFeatures } from '@/hooks/useFeatures';
 import { useJobsMap } from '@/hooks/useJobs';
 import { useShowEntityIds } from '@/stores/showEntityIds';
 import { decodeRequiredWeapon, decodeSkillElement } from '@/domain/skillElements';
+import {
+  buildSkillTemplateValues,
+  hasSkillPlaceholders,
+  renderSkillTemplate,
+} from '@/domain/skillTemplate';
 
 /**
  * Level-table column definitions. Each one binds a domain field on
@@ -30,7 +35,7 @@ import { decodeRequiredWeapon, decodeSkillElement } from '@/domain/skillElements
  * empty `pad`/`mad` columns next to its damage column.
  */
 const LEVEL_COLUMNS: readonly {
-  key: keyof Omit<SkillLevelRecord, 'skillId' | 'level' | 'rawJson'>;
+  key: keyof Omit<SkillLevelRecord, 'skillId' | 'level' | 'description' | 'rawJson'>;
   label: string;
   format?: (n: number) => string;
 }[] = [
@@ -54,9 +59,6 @@ const LEVEL_COLUMNS: readonly {
   { key: 'mp', label: 'MP buff' },
   { key: 'hpPercent', label: 'HP %', format: (n) => `${n}%` },
   { key: 'mpPercent', label: 'MP %', format: (n) => `${n}%` },
-  { key: 'x', label: 'x' },
-  { key: 'y', label: 'y' },
-  { key: 'z', label: 'z' },
 ];
 
 export default function SkillDetail() {
@@ -258,7 +260,11 @@ export default function SkillDetail() {
         </DetailListSection>
       )}
 
-      <LevelsTable levels={levels} isLoading={levelsQ.isLoading} />
+      <LevelsTable
+        levels={levels}
+        isLoading={levelsQ.isLoading}
+        template={s.tooltip ?? s.description ?? null}
+      />
     </DetailPageLayout>
   );
 }
@@ -266,9 +272,11 @@ export default function SkillDetail() {
 function LevelsTable({
   levels,
   isLoading,
+  template,
 }: {
   levels: SkillLevelRecord[];
   isLoading: boolean;
+  template: string | null;
 }) {
   if (isLoading) {
     return (
@@ -294,6 +302,18 @@ function LevelsTable({
     levels.some((row) => row[col.key] !== null && row[col.key] !== undefined),
   );
 
+  // Show the Description column when:
+  //   - any level has a static `description` (older WZ pattern: `h<level>`
+  //     in String.wz holds a literal string per level), OR
+  //   - the parent has a templated tooltip with `#name` placeholders
+  //     (modern WZ pattern: a single `h` template resolved against the
+  //     row's values — see `domain/skillTemplate.ts`).
+  // A non-templated tooltip is suppressed because every row would render
+  // the same static string.
+  const hasStaticDescriptions = levels.some((l) => l.description !== null);
+  const hasTemplate = template !== null && hasSkillPlaceholders(template);
+  const showDescription = hasStaticDescriptions || hasTemplate;
+
   return (
     <section className="space-y-2">
       <h2 className="text-base font-semibold">Per level</h2>
@@ -312,6 +332,11 @@ function LevelsTable({
                   {col.label}
                 </th>
               ))}
+              {showDescription && (
+                <th className="text-muted-foreground px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                  Description
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -335,6 +360,14 @@ function LevelsTable({
                     </td>
                   );
                 })}
+                {showDescription && (
+                  <td className="text-foreground max-w-md whitespace-pre-line px-3 py-1.5 leading-relaxed">
+                    {row.description ??
+                      (template && hasTemplate
+                        ? renderSkillTemplate(template, buildSkillTemplateValues(row))
+                        : '—')}
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

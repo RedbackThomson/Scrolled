@@ -13,7 +13,7 @@
 // touching them — they gate data integrity for every existing user.
 
 /** Revision the current build produces when extraction runs. */
-export const CURRENT_DATA_REVISION: number = 9;
+export const CURRENT_DATA_REVISION: number = 10;
 
 /**
  * Lowest revision the current build can still read. Data below this is treated
