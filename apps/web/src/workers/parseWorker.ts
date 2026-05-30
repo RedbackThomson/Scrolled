@@ -5,6 +5,7 @@ import { ImgDataSource } from '@/parser/ImgDataSource';
 import { ensureWzInit } from '@/parser/wzInit';
 import {
   extractItems,
+  extractChairs,
   extractEquips,
   extractMobs,
   extractNpcs,
@@ -23,6 +24,7 @@ import type {
 } from '@/parser/types';
 import type {
   ExtractItemsResult,
+  ExtractChairsResult,
   ExtractEquipsResult,
   ExtractMobsResult,
   ExtractNpcsResult,
@@ -97,6 +99,18 @@ class WorkerGameDataSource implements GameDataSource {
     });
     log.info('extractItems complete', {
       items: result.items.length,
+      skipped: result.skipped.length,
+    });
+    return result;
+  }
+
+  async extractChairs(onProgress?: ProgressFn): Promise<ExtractChairsResult> {
+    log.info('extractChairs requested');
+    const result = await extractChairs(this.src(), {
+      onProgress: onProgress ? throttleProgress(onProgress) : undefined,
+    });
+    log.info('extractChairs complete', {
+      chairs: result.chairs.length,
       skipped: result.skipped.length,
     });
     return result;

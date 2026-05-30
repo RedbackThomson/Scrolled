@@ -10,6 +10,7 @@ import type { DatasetFileRef, ExtractorResultRecord } from '@/db';
 
 export const ALL_EXTRACTOR_KEYS = [
   'item',
+  'chair',
   'equip',
   'mob',
   'npc',
@@ -29,6 +30,7 @@ export type PostExtractorKey = (typeof POST_EXTRACTOR_KEYS)[number];
 
 export interface ExtractStats {
   items: number;
+  chairs: number;
   equips: number;
   mobs: number;
   npcs: number;
@@ -55,6 +57,7 @@ export function buildExtractStats(
 ): ExtractStats {
   return {
     items: rowsFor(perExtractor, 'item'),
+    chairs: rowsFor(perExtractor, 'chair'),
     equips: rowsFor(perExtractor, 'equip'),
     mobs: rowsFor(perExtractor, 'mob'),
     npcs: rowsFor(perExtractor, 'npc'),
@@ -90,6 +93,7 @@ export function shouldSkip(skipWz: Set<string> | undefined, wz: string): boolean
  *  skipWz key. */
 function equivWzKey(extractor: string): string {
   if (extractor === 'equip') return 'item';
+  if (extractor === 'chair') return 'item';
   if (extractor === 'job') return 'skill';
   return extractor;
 }

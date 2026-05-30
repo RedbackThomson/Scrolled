@@ -62,6 +62,8 @@ export function clearAllData(sql: Sqlite): void {
       'npcs',
       'mobs',
       'equips',
+      // chairs.item_id FKs into items.id — must clear before items.
+      'chairs',
       'items',
       'assets',
       'extraction_extractors',

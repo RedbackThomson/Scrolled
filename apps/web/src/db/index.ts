@@ -5,6 +5,7 @@
 
 export type {
   CategoryCount,
+  ChairRecord,
   ColumnFilter,
   StringFilterMode,
   DatasetFileRef,

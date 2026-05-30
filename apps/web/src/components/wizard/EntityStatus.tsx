@@ -27,6 +27,9 @@ const ENTITY_FEATURE: Record<
   }
 > = {
   item: { flag: 'hasItems', countKey: 'items' },
+  // Chairs share the items feature flag — they're a subtype of items and
+  // surface inside the item detail page rather than a dedicated category.
+  chair: { flag: 'hasItems', countKey: 'items' },
   equip: { flag: 'hasEquips', countKey: 'equips' },
   mob: { flag: 'hasMobs', countKey: 'mobs' },
   npc: { flag: 'hasNpcs', countKey: 'npcs' },

@@ -33,6 +33,25 @@ export interface ItemRecord {
   sourcePath: string;
 }
 
+/**
+ * Chair-specific metadata for Install items whose .img carries an `effect`
+ * subtree. A chair row exists in addition to the generic items row — chair
+ * detail pages query both. The pre-rendered animated preview lives here as a
+ * BLOB, alongside its dimensions so the UI can size the `<img>` before the
+ * blob URL resolves.
+ */
+export interface ChairRecord {
+  itemId: number;
+  recoveryHp: number | null;
+  recoveryMp: number | null;
+  frameCount: number;
+  /** Animated WebP bytes. Always populated — a chair without a preview is
+   *  not persisted. */
+  previewData: Uint8Array;
+  previewWidth: number;
+  previewHeight: number;
+}
+
 export interface EquipRecord {
   id: number;
   name: string;
@@ -706,6 +725,13 @@ export interface GameDatabase {
   listItemCategoryCounts(limit?: number): Promise<CategoryCount[]>;
   /** Just the persisted icon bytes for an item, or null. */
   getItemIcon(id: number): Promise<Uint8Array | null>;
+
+  /** Persist chair-specific metadata + pre-rendered preview for Install items
+   *  whose .img carries an `effect` subtree. Item rows must already exist —
+   *  chairs.item_id FKs into items.id. */
+  upsertChairs(chairs: ChairRecord[]): Promise<number>;
+  /** Returns null for items that aren't chairs. */
+  getChair(itemId: number): Promise<ChairRecord | null>;
 
   upsertEquip(equip: EquipRecord): Promise<void>;
   upsertEquips(equips: EquipRecord[]): Promise<number>;

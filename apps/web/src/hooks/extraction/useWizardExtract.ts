@@ -54,7 +54,8 @@ export { ALL_EXTRACTOR_KEYS, type ExtractorKey } from './shared';
 
 export const EXTRACTOR_TO_WORKER: Record<ExtractorKey, PoolWorkerName> = {
   item: 'items',
-  equip: 'items',
+  chair: 'chairs',
+  equip: 'equips',
   mob: 'mobs',
   npc: 'npcs',
   map: 'maps',
@@ -65,6 +66,7 @@ export const EXTRACTOR_TO_WORKER: Record<ExtractorKey, PoolWorkerName> = {
 
 export const EXTRACTOR_LABEL: Record<ExtractorKey, string> = {
   item: 'Items',
+  chair: 'Chairs',
   equip: 'Equips',
   mob: 'Mobs',
   npc: 'NPCs',
@@ -227,6 +229,21 @@ export function useWizardExtract(opts: UseWizardExtractOptions) {
       const perExtractor: ExtractorResultRecord[] = [];
       let skippedTotal = 0;
 
+      // The chairs worker runs in parallel with items, but `chairs.item_id`
+      // FKs into `items.id` — chair upserts can't land before the items
+      // upsert finishes. This deferred lets the items branch signal
+      // completion without serializing the WZ-reading work.
+      let resolveItemsDone: () => void = () => {};
+      let rejectItemsDone: (err: unknown) => void = () => {};
+      const itemsDone = new Promise<void>((res, rej) => {
+        resolveItemsDone = res;
+        rejectItemsDone = rej;
+      });
+      // If items isn't planned this run, chairs aren't either (they share
+      // Item.wz as the primary), but resolve eagerly anyway so awaiters
+      // never hang on an unreachable signal.
+      if (!willRun.has('item')) resolveItemsDone();
+
       await Promise.all(
         activeWorkers.map(async (name) => {
           const worker = getPoolWorker(name);
@@ -240,6 +257,11 @@ export function useWizardExtract(opts: UseWizardExtractOptions) {
               perExtractor,
               (n) => {
                 skippedTotal += n;
+              },
+              {
+                awaitItem: () => itemsDone,
+                signalItemDone: resolveItemsDone,
+                signalItemFailed: rejectItemsDone,
               },
             );
           } catch (e) {
@@ -396,6 +418,17 @@ function makeFileRouter(
   };
 }
 
+interface RunDeps {
+  /** Resolves once the items worker has persisted its rows — chairs FK
+   *  into items, so the chairs worker awaits this before upserting. */
+  awaitItem: () => Promise<void>;
+  /** Called by the items branch after upsert succeeds. */
+  signalItemDone: () => void;
+  /** Called by the items branch if extraction or upsert throws, so the
+   *  chairs branch fails fast instead of hanging on a dead promise. */
+  signalItemFailed: (err: unknown) => void;
+}
+
 async function runWorkerExtractors(
   name: PoolWorkerName,
   worker: Remote<ParserWorkerApi>,
@@ -404,14 +437,15 @@ async function runWorkerExtractors(
   db: Remote<GameDatabase>,
   out: ExtractorResultRecord[],
   bumpSkipped: (n: number) => void,
+  deps: RunDeps,
 ): Promise<void> {
   // Each branch runs sequentially within its worker (single JS thread per
   // worker), but Promise.all at the caller level lets different workers
   // make progress concurrently on different threads.
-  if (name === 'items' && (willRun.has('item') || willRun.has('equip'))) {
-    if (willRun.has('item')) {
-      patchExtractor('item', { phase: 'extracting' });
-      const onProgress = proxy((p: ProgressUpdate) => patchExtractor('item', { progress: p }));
+  if (name === 'items' && willRun.has('item')) {
+    patchExtractor('item', { phase: 'extracting' });
+    const onProgress = proxy((p: ProgressUpdate) => patchExtractor('item', { progress: p }));
+    try {
       const r = await worker.extractItems(onProgress);
       const rows = r.items.length > 0 ? await db.upsertItems(r.items) : 0;
       out.push({
@@ -424,23 +458,52 @@ async function runWorkerExtractors(
       });
       bumpSkipped(r.skipped.length);
       patchExtractor('item', { phase: 'done', progress: null });
+      deps.signalItemDone();
+    } catch (e) {
+      deps.signalItemFailed(e);
+      throw e;
     }
-    if (willRun.has('equip')) {
-      patchExtractor('equip', { phase: 'extracting' });
-      const onProgress = proxy((p: ProgressUpdate) => patchExtractor('equip', { progress: p }));
-      const r = await worker.extractEquips(onProgress);
-      const rows = r.equips.length > 0 ? await db.upsertEquips(r.equips) : 0;
-      out.push({
-        extractor: 'equip',
-        status: 'ran',
-        rows,
-        skippedRows: r.skipped.length,
-        placeholderNames: 0,
-        error: null,
-      });
-      bumpSkipped(r.skipped.length);
-      patchExtractor('equip', { phase: 'done', progress: null });
-    }
+    return;
+  }
+
+  if (name === 'chairs' && willRun.has('chair')) {
+    // The chairs worker has its own Item.wz buffer, so its WZ reads don't
+    // contend with the items worker's. The DB upsert FKs into `items`, so
+    // we run extraction in parallel with items but block the upsert until
+    // items finishes — chair rows never land before their parent item rows.
+    patchExtractor('chair', { phase: 'extracting' });
+    const onProgress = proxy((p: ProgressUpdate) => patchExtractor('chair', { progress: p }));
+    const r = await worker.extractChairs(onProgress);
+    await deps.awaitItem();
+    const rows = r.chairs.length > 0 ? await db.upsertChairs(r.chairs) : 0;
+    out.push({
+      extractor: 'chair',
+      status: 'ran',
+      rows,
+      skippedRows: r.skipped.length,
+      placeholderNames: 0,
+      error: null,
+    });
+    bumpSkipped(r.skipped.length);
+    patchExtractor('chair', { phase: 'done', progress: null });
+    return;
+  }
+
+  if (name === 'equips' && willRun.has('equip')) {
+    patchExtractor('equip', { phase: 'extracting' });
+    const onProgress = proxy((p: ProgressUpdate) => patchExtractor('equip', { progress: p }));
+    const r = await worker.extractEquips(onProgress);
+    const rows = r.equips.length > 0 ? await db.upsertEquips(r.equips) : 0;
+    out.push({
+      extractor: 'equip',
+      status: 'ran',
+      rows,
+      skippedRows: r.skipped.length,
+      placeholderNames: 0,
+      error: null,
+    });
+    bumpSkipped(r.skipped.length);
+    patchExtractor('equip', { phase: 'done', progress: null });
     return;
   }
 

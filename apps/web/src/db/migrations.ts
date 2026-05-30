@@ -823,4 +823,23 @@ export const MIGRATIONS: readonly Migration[] = [
       CREATE INDEX IF NOT EXISTS quests_reward_fame_idx ON quests (reward_fame);
     `,
   },
+  {
+    version: 28,
+    name: 'chairs',
+    sql: `
+      -- Install items whose .img carries an /effect subtree are chairs. Their
+      -- chair-specific fields (recovery values, the pre-rendered animated
+      -- preview) live here rather than on the generic items row, so non-chair
+      -- items don't pay for nullable BLOB columns they'll never use.
+      CREATE TABLE chairs (
+        item_id        INTEGER PRIMARY KEY REFERENCES items(id),
+        recovery_hp    INTEGER,
+        recovery_mp    INTEGER,
+        frame_count    INTEGER NOT NULL,
+        preview_data   BLOB    NOT NULL,
+        preview_width  INTEGER NOT NULL,
+        preview_height INTEGER NOT NULL
+      );
+    `,
+  },
 ];

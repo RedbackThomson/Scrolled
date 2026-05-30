@@ -12,6 +12,8 @@ export interface Extractor<T> {
 
 export { extractItems } from './extractItems';
 export type { ExtractItemsResult } from './extractItems';
+export { extractChairs, defaultChairImageOps } from './extractChairs';
+export type { ExtractChairsResult, ChairImageOps } from './extractChairs';
 export { extractEquips } from './extractEquips';
 export type { ExtractEquipsResult } from './extractEquips';
 export { extractMobs } from './extractMobs';

@@ -27,6 +27,9 @@ import type { WizardFile } from './StepFiles';
  */
 export const EXTRACTOR_DEPS = {
   item: { label: 'Items', primary: 'Item.wz', needs: ['String.wz'] },
+  // Chairs piggy-back on Item.wz like equips do: dropping it triggers all
+  // three, sequentially within the items pool worker.
+  chair: { label: 'Chairs', primary: 'Item.wz', needs: ['String.wz'] },
   equip: { label: 'Equips', primary: 'Item.wz', needs: ['String.wz', 'Character.wz'] },
   mob: { label: 'Mobs', primary: 'Mob.wz', needs: ['String.wz'] },
   npc: { label: 'NPCs', primary: 'Npc.wz', needs: ['String.wz'] },
@@ -43,6 +46,7 @@ export const EXTRACTOR_DEPS = {
 export type ExtractorKey = keyof typeof EXTRACTOR_DEPS;
 export const ALL_EXTRACTOR_KEYS: ExtractorKey[] = [
   'item',
+  'chair',
   'equip',
   'mob',
   'npc',

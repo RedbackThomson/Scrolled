@@ -85,6 +85,17 @@ export function useExtractAll(opts: UseExtractAllOptions = {}) {
           tracker.ran('item', itemCount, r.skipped.length);
           skippedTotal += r.skipped.length;
 
+          // Chairs FK into items.id, so they have to land after upsertItems.
+          const c = await parser.extractChairs(onProgress);
+          setProgress({
+            phase: 'Saving chairs to database',
+            current: 0,
+            total: c.chairs.length,
+          });
+          const chairCount = c.chairs.length > 0 ? await db.upsertChairs(c.chairs) : 0;
+          tracker.ran('chair', chairCount, c.skipped.length);
+          skippedTotal += c.skipped.length;
+
           const e = await parser.extractEquips(onProgress);
           setProgress({
             phase: 'Saving equips to database',
@@ -96,11 +107,12 @@ export function useExtractAll(opts: UseExtractAllOptions = {}) {
           skippedTotal += e.skipped.length;
         } catch (err) {
           tracker.failed('item', err);
+          tracker.failed('chair', err);
           tracker.failed('equip', err);
           throw err;
         }
       } else {
-        log.info('skipping items+equips (Item.wz hash unchanged)');
+        log.info('skipping items+chairs+equips (Item.wz hash unchanged)');
       }
 
       if (!shouldSkip(opts.skipWz, 'mob')) {

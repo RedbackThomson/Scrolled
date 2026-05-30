@@ -11,6 +11,7 @@ import {
   InfoSection,
   SourceSection,
 } from '@/components/layout/DetailPageLayout';
+import { ChairAnimatedPreview } from '@/components/entity-display/ChairAnimatedPreview';
 import { EntityRow } from '@/components/entity-display/EntityRow';
 import { ItemIcon } from '@/components/entity-display/ItemIcon';
 import { Badge } from '@/components/ui/badge';
@@ -52,6 +53,13 @@ export default function ItemDetail() {
     queryFn: () => client.getItemDroppedBy(id),
     enabled: Number.isFinite(id) && features.hasMobs,
   });
+  // Returns null for items that aren't chairs — Install items without an
+  // /effect subtree never get a row in the chairs table.
+  const chairQ = useQuery({
+    queryKey: ['db', 'item', id, 'chair'],
+    queryFn: () => client.getChair(id),
+    enabled: Number.isFinite(id),
+  });
 
   const questsSort = useListSort(questsQ.data, [
     { id: 'name', label: 'Quest name', get: (q) => q.name },
@@ -88,6 +96,7 @@ export default function ItemDetail() {
   if (!itemQ.data) return <DetailPageNotFound entity="Item" id={id} />;
 
   const item = itemQ.data;
+  const chair = chairQ.data ?? null;
   return (
     <DetailPageLayout
       header={
@@ -121,11 +130,30 @@ export default function ItemDetail() {
               )}
             </InfoSection>
           )}
+          {chair && (chair.recoveryHp !== null || chair.recoveryMp !== null) && (
+            <InfoSection title="Recovery">
+              {chair.recoveryHp !== null && (
+                <InfoRow label="HP" value={String(chair.recoveryHp)} />
+              )}
+              {chair.recoveryMp !== null && (
+                <InfoRow label="MP" value={String(chair.recoveryMp)} />
+              )}
+            </InfoSection>
+          )}
           <SourceSection path={item.sourcePath} />
         </>
       }
     >
       <CollectionBadgeStrip entityType="item" entityId={item.id} />
+
+      {chair && (
+        <ChairAnimatedPreview
+          data={chair.previewData}
+          width={chair.previewWidth}
+          height={chair.previewHeight}
+          alt={`${item.name} animated preview`}
+        />
+      )}
 
       {item.description ? (
         <p className="whitespace-pre-line text-sm leading-relaxed">{item.description}</p>

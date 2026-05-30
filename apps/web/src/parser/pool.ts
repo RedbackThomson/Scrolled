@@ -20,10 +20,25 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('parser-pool');
 
-/** Named slots in the pool. Each name maps to one Web Worker. */
-export type PoolWorkerName = 'items' | 'mobs' | 'npcs' | 'maps' | 'quests' | 'skills';
+/**
+ * Named slots in the pool. Each name maps to one Web Worker. `items`,
+ * `chairs`, and `equips` all need `Item.wz` + `String.wz` loaded, so each
+ * pays its own copy — the win is that they run on three threads instead
+ * of sharing one, and chair WebP encoding no longer blocks items/equips.
+ */
+export type PoolWorkerName =
+  | 'items'
+  | 'chairs'
+  | 'equips'
+  | 'mobs'
+  | 'npcs'
+  | 'maps'
+  | 'quests'
+  | 'skills';
 export const POOL_WORKER_NAMES: readonly PoolWorkerName[] = [
   'items',
+  'chairs',
+  'equips',
   'mobs',
   'npcs',
   'maps',
@@ -36,13 +51,18 @@ export const POOL_WORKER_NAMES: readonly PoolWorkerName[] = [
  * "primary" — if it isn't dropped by the user, the worker doesn't run.
  * Subsequent entries are companion files (overwhelmingly `String.wz` for
  * localized names).
+ *
+ * Item.wz is duplicated across `items` / `chairs` / `equips` so the three
+ * extractors can run on separate threads. Each worker's copy adds the
+ * Item.wz buffer size (~tens of MB), which is negligible next to Map.wz.
  */
 export const POOL_WORKER_FILES: Record<PoolWorkerName, readonly string[]> = {
-  // `Character.wz` is loaded into the items worker so `extractEquips` can
-  // pull stat blocks (info/incPAD, info/reqLevel, …) from its per-equip
-  // `<Slot>/<id>.img` images. Item.wz remains the primary — without it the
-  // worker doesn't spawn at all.
-  items: ['Item.wz', 'String.wz', 'Character.wz'],
+  items: ['Item.wz', 'String.wz'],
+  chairs: ['Item.wz', 'String.wz'],
+  // Equip stat blocks live in `Character.wz` (the per-equip `info` images);
+  // without it the equip extractor can't populate attack/defense/requirements,
+  // so it's a hard dep, not a "produces nameless rows" soft one.
+  equips: ['Item.wz', 'String.wz', 'Character.wz'],
   mobs: ['Mob.wz', 'String.wz'],
   npcs: ['Npc.wz', 'String.wz'],
   maps: ['Map.wz', 'String.wz'],
@@ -60,10 +80,12 @@ export function logicalToImgFolder(logical: string): string {
 }
 
 /** Which extractor keys are owned by which worker. `useExtractAll`-style
- *  keys ('item', 'equip', ...) — `item` and `equip` share the items worker
- *  because they both read from `Item.wz` + `String.wz`. */
+ *  keys ('item', 'chair', ...). Items / chairs / equips each get their own
+ *  worker so they run in parallel across threads. */
 export const WORKER_EXTRACTORS: Record<PoolWorkerName, readonly string[]> = {
-  items: ['item', 'equip'],
+  items: ['item'],
+  chairs: ['chair'],
+  equips: ['equip'],
   mobs: ['mob'],
   npcs: ['npc'],
   maps: ['map'],
@@ -107,6 +129,16 @@ function spawnPoolWorker(name: PoolWorkerName): Worker {
       return new Worker(new URL('@/workers/parseWorker.ts', import.meta.url), {
         type: 'module',
         name: 'scrolled-parser-items',
+      });
+    case 'chairs':
+      return new Worker(new URL('@/workers/parseWorker.ts', import.meta.url), {
+        type: 'module',
+        name: 'scrolled-parser-chairs',
+      });
+    case 'equips':
+      return new Worker(new URL('@/workers/parseWorker.ts', import.meta.url), {
+        type: 'module',
+        name: 'scrolled-parser-equips',
       });
     case 'mobs':
       return new Worker(new URL('@/workers/parseWorker.ts', import.meta.url), {
