@@ -7,17 +7,20 @@ import {
   type ImportConflictMode,
   type ImportReport,
 } from '../collectionsJson';
-import type {
-  AddMemberOptions,
-  BulkAddResult,
-  CollectionEntityType,
-  CollectionMember,
-  CollectionRecord,
-  CreateCollectionInput,
-  EntityRef,
-  MembershipBadge,
-  UpdateCollectionPatch,
-  UpdateMemberPatch,
+import {
+  COLLECTION_GROUPINGS,
+  COLLECTION_SORT_DIRS,
+  COLLECTION_SORT_KEYS,
+  type AddMemberOptions,
+  type BulkAddResult,
+  type CollectionEntityType,
+  type CollectionMember,
+  type CollectionRecord,
+  type CreateCollectionInput,
+  type EntityRef,
+  type MembershipBadge,
+  type UpdateCollectionPatch,
+  type UpdateMemberPatch,
 } from '../types';
 import { rowToCollection, rowToMember } from './rowMappers';
 import { listPinnedSearches } from './pinnedSearches';
@@ -37,6 +40,10 @@ export function listCollections(db: Sqlite): CollectionRecord[] {
       c.icon,
       c.pinned,
       c.pinned_position,
+      c.grouping,
+      c.subgrouping,
+      c.sort_key,
+      c.sort_dir,
       c.created_at,
       c.updated_at,
       COUNT(m.entity_id) AS member_count
@@ -66,6 +73,7 @@ export function createCollection(db: Sqlite, input: CreateCollectionInput): Coll
   const created = db.selectObject<Row>(
     `SELECT c.id, c.name, c.description, c.color, c.icon,
             c.pinned, c.pinned_position,
+            c.grouping, c.subgrouping, c.sort_key, c.sort_dir,
             c.created_at, c.updated_at,
             0 AS member_count
      FROM collections c WHERE c.id = ?`,
@@ -79,6 +87,7 @@ export function getCollection(db: Sqlite, id: number): CollectionRecord | null {
   const row = db.selectObject<Row>(
     `SELECT c.id, c.name, c.description, c.color, c.icon,
             c.pinned, c.pinned_position,
+            c.grouping, c.subgrouping, c.sort_key, c.sort_dir,
             c.created_at, c.updated_at,
             (SELECT COUNT(*) FROM collection_members m WHERE m.collection_id = c.id) AS member_count
      FROM collections c WHERE c.id = ?`,
@@ -152,6 +161,26 @@ export function updateCollection(
     sets.push('icon = ?');
     params.push(patch.icon);
   }
+  if (patch.grouping !== undefined) {
+    assertEnum(patch.grouping, COLLECTION_GROUPINGS, 'grouping');
+    sets.push('grouping = ?');
+    params.push(patch.grouping);
+  }
+  if (patch.subgrouping !== undefined) {
+    assertEnum(patch.subgrouping, COLLECTION_GROUPINGS, 'subgrouping');
+    sets.push('subgrouping = ?');
+    params.push(patch.subgrouping);
+  }
+  if (patch.sortKey !== undefined) {
+    assertEnum(patch.sortKey, COLLECTION_SORT_KEYS, 'sortKey');
+    sets.push('sort_key = ?');
+    params.push(patch.sortKey);
+  }
+  if (patch.sortDir !== undefined) {
+    assertEnum(patch.sortDir, COLLECTION_SORT_DIRS, 'sortDir');
+    sets.push('sort_dir = ?');
+    params.push(patch.sortDir);
+  }
   if (sets.length === 0) {
     const existing = getCollection(db, id);
     if (!existing) throw new Error(`Collection ${id} not found`);
@@ -173,13 +202,42 @@ export function deleteCollection(db: Sqlite, id: number): void {
 
 export function listMembers(db: Sqlite, collectionId: number): CollectionMember[] {
   const rows = db.selectObjects<Row>(
-    `SELECT collection_id, entity_type, entity_id, note, quantity, done, added_at
+    `SELECT collection_id, entity_type, entity_id, note, quantity, done,
+            added_at, group_id, position
      FROM collection_members
      WHERE collection_id = ?
-     ORDER BY entity_type ASC, added_at ASC`,
+     ORDER BY position ASC, added_at ASC`,
     [collectionId],
   );
   return rows.map(rowToMember);
+}
+
+/**
+ * Next free position within (collectionId, groupId). Groups are scoped
+ * separately, so the default-group bucket and a named-group bucket can
+ * each start at 0. Used by every insert path; `moveMember` re-densifies
+ * positions on its own.
+ */
+function nextMemberPosition(
+  db: Sqlite,
+  collectionId: number,
+  groupId: number | null,
+): number {
+  const value =
+    groupId == null
+      ? db.selectValue<number>(
+          `SELECT COALESCE(MAX(position), -1) + 1
+           FROM collection_members
+           WHERE collection_id = ? AND group_id IS NULL`,
+          [collectionId],
+        )
+      : db.selectValue<number>(
+          `SELECT COALESCE(MAX(position), -1) + 1
+           FROM collection_members
+           WHERE collection_id = ? AND group_id = ?`,
+          [collectionId, groupId],
+        );
+  return value ?? 0;
 }
 
 export function addMember(
@@ -189,24 +247,31 @@ export function addMember(
   entityId: number,
   opts: AddMemberOptions = {},
 ): void {
-  db.exec(
-    `INSERT INTO collection_members
-       (collection_id, entity_type, entity_id, note, quantity, done, added_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)
-     ON CONFLICT (collection_id, entity_type, entity_id) DO UPDATE SET
-       note     = excluded.note,
-       quantity = excluded.quantity,
-       done     = excluded.done`,
-    [
-      collectionId,
-      entityType,
-      entityId,
-      opts.note ?? null,
-      opts.quantity ?? null,
-      opts.done ? 1 : 0,
-      Date.now(),
-    ],
-  );
+  // Insert into the default group at the end. On conflict we preserve the
+  // existing row's `group_id` and `position` so resaving an item doesn't
+  // tear the user's manual ordering.
+  db.transaction(() => {
+    const pos = nextMemberPosition(db, collectionId, null);
+    db.exec(
+      `INSERT INTO collection_members
+         (collection_id, entity_type, entity_id, note, quantity, done, added_at, group_id, position)
+       VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?)
+       ON CONFLICT (collection_id, entity_type, entity_id) DO UPDATE SET
+         note     = excluded.note,
+         quantity = excluded.quantity,
+         done     = excluded.done`,
+      [
+        collectionId,
+        entityType,
+        entityId,
+        opts.note ?? null,
+        opts.quantity ?? null,
+        opts.done ? 1 : 0,
+        Date.now(),
+        pos,
+      ],
+    );
+  });
 }
 
 export function removeMember(
@@ -262,6 +327,7 @@ export function bulkAddMembers(
   let skipped = 0;
   const now = Date.now();
   db.transaction(() => {
+    let nextPos = nextMemberPosition(db, collectionId, null);
     for (const ref of refs) {
       const before =
         db.selectValue<number>(
@@ -275,10 +341,11 @@ export function bulkAddMembers(
       }
       db.exec(
         `INSERT INTO collection_members
-           (collection_id, entity_type, entity_id, note, quantity, done, added_at)
-         VALUES (?, ?, ?, NULL, NULL, 0, ?)`,
-        [collectionId, ref.entityType, ref.entityId, now],
+           (collection_id, entity_type, entity_id, note, quantity, done, added_at, group_id, position)
+         VALUES (?, ?, ?, NULL, NULL, 0, ?, NULL, ?)`,
+        [collectionId, ref.entityType, ref.entityId, now, nextPos],
       );
+      nextPos++;
       added++;
     }
   });
@@ -454,15 +521,26 @@ export function importJson(
 
 function buildBundle(db: Sqlite, id: number): CollectionBundleJson | null {
   const c = db.selectObject<Row>(
-    `SELECT name, description, color, icon, pinned, pinned_position
+    `SELECT name, description, color, icon, pinned, pinned_position,
+            grouping, subgrouping, sort_key, sort_dir
      FROM collections WHERE id = ?`,
     [id],
   );
   if (!c) return null;
+  const groups = db.selectObjects<Row>(
+    `SELECT id, name, position
+     FROM collection_groups
+     WHERE collection_id = ?
+     ORDER BY position ASC, name COLLATE NOCASE ASC`,
+    [id],
+  );
+  const groupNameById = new Map<number, string>();
+  for (const g of groups) groupNameById.set(Number(g.id), String(g.name));
+
   const members = db.selectObjects<Row>(
-    `SELECT entity_type, entity_id, note, quantity, done
+    `SELECT entity_type, entity_id, note, quantity, done, group_id, position
      FROM collection_members WHERE collection_id = ?
-     ORDER BY entity_type ASC, added_at ASC`,
+     ORDER BY position ASC, added_at ASC`,
     [id],
   );
   return {
@@ -472,14 +550,36 @@ function buildBundle(db: Sqlite, id: number): CollectionBundleJson | null {
     icon: c.icon == null ? null : String(c.icon),
     pinned: Number(c.pinned ?? 0) === 1,
     pinnedPosition: c.pinned_position == null ? null : Number(c.pinned_position),
+    grouping: pickEnum(c.grouping, COLLECTION_GROUPINGS, 'group'),
+    subgrouping: pickEnum(c.subgrouping, COLLECTION_GROUPINGS, 'type'),
+    sortKey: pickEnum(c.sort_key, COLLECTION_SORT_KEYS, 'manual'),
+    sortDir: pickEnum(c.sort_dir, COLLECTION_SORT_DIRS, 'asc'),
+    groups: groups.map((g) => ({
+      name: String(g.name),
+      position: Number(g.position),
+    })),
     members: members.map((m) => ({
       entityType: String(m.entity_type) as CollectionEntityType,
       entityId: Number(m.entity_id),
       note: m.note == null ? null : String(m.note),
       quantity: m.quantity == null ? null : Number(m.quantity),
       done: Number(m.done) === 1,
+      groupName: m.group_id == null ? null : (groupNameById.get(Number(m.group_id)) ?? null),
+      position: Number(m.position),
     })),
   };
+}
+
+function pickEnum<T extends string>(raw: unknown, allowed: readonly T[], fallback: T): T {
+  if (raw == null) return fallback;
+  const s = String(raw);
+  return (allowed as readonly string[]).includes(s) ? (s as T) : fallback;
+}
+
+function assertEnum<T extends string>(value: unknown, allowed: readonly T[], field: string): asserts value is T {
+  if (typeof value !== 'string' || !(allowed as readonly string[]).includes(value)) {
+    throw new Error(`Invalid ${field}: ${String(value)}`);
+  }
 }
 
 function findCollectionIdByName(db: Sqlite, name: string): number | null {
@@ -515,10 +615,16 @@ function insertCollection(db: Sqlite, bundle: CollectionBundleJson): number {
         'SELECT COALESCE(MAX(pinned_position), -1) + 1 FROM collections WHERE pinned = 1',
       ) ?? 0)
     : null;
+  const grouping = pickEnum(bundle.grouping, COLLECTION_GROUPINGS, 'group');
+  const subgrouping = pickEnum(bundle.subgrouping, COLLECTION_GROUPINGS, 'type');
+  const sortKey = pickEnum(bundle.sortKey, COLLECTION_SORT_KEYS, 'manual');
+  const sortDir = pickEnum(bundle.sortDir, COLLECTION_SORT_DIRS, 'asc');
   db.exec(
     `INSERT INTO collections
-       (name, description, color, icon, pinned, pinned_position, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+       (name, description, color, icon, pinned, pinned_position,
+        grouping, subgrouping, sort_key, sort_dir,
+        created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       bundle.name,
       bundle.description ?? null,
@@ -526,6 +632,10 @@ function insertCollection(db: Sqlite, bundle: CollectionBundleJson): number {
       bundle.icon ?? null,
       pinned,
       nextPos,
+      grouping,
+      subgrouping,
+      sortKey,
+      sortDir,
       now,
       now,
     ],
@@ -535,14 +645,97 @@ function insertCollection(db: Sqlite, bundle: CollectionBundleJson): number {
   return Number(id);
 }
 
+/**
+ * Pre-create the bundle's groups on `collectionId` and return a
+ * name → id lookup. Skips names that already exist on the target
+ * (merge mode is the only path that hits an existing collection, and
+ * we want existing groups to keep their identity). Positions for new
+ * groups are appended at the end of whatever's already there.
+ */
+function importBundleGroups(
+  db: Sqlite,
+  collectionId: number,
+  bundle: CollectionBundleJson,
+): Map<string, number> {
+  const lookup = new Map<string, number>();
+  const existing = db.selectObjects<Row>(
+    `SELECT id, name FROM collection_groups WHERE collection_id = ?`,
+    [collectionId],
+  );
+  for (const g of existing) lookup.set(String(g.name), Number(g.id));
+
+  if (!bundle.groups || bundle.groups.length === 0) return lookup;
+
+  const now = Date.now();
+  let nextPos =
+    db.selectValue<number>(
+      `SELECT COALESCE(MAX(position), -1) + 1 FROM collection_groups WHERE collection_id = ?`,
+      [collectionId],
+    ) ?? 0;
+
+  const sorted = [...bundle.groups].sort((a, b) => a.position - b.position);
+  for (const g of sorted) {
+    if (lookup.has(g.name)) continue;
+    db.exec(
+      `INSERT INTO collection_groups
+         (collection_id, name, position, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?)`,
+      [collectionId, g.name, nextPos, now, now],
+    );
+    const newId = db.selectValue<number>('SELECT last_insert_rowid()');
+    if (newId != null) lookup.set(g.name, Number(newId));
+    nextPos++;
+  }
+  return lookup;
+}
+
 function insertBundleMembers(
   db: Sqlite,
   collectionId: number,
   bundle: CollectionBundleJson,
   report: ImportReport,
 ): void {
+  const groupIdByName = importBundleGroups(db, collectionId, bundle);
   const now = Date.now();
-  for (const m of bundle.members) {
+
+  // Track the next free position per destination bucket so a fresh import
+  // appends contiguously without re-reading MAX() on every insert.
+  const nextPosByBucket = new Map<string, number>();
+  const bucketKey = (groupId: number | null) => (groupId == null ? 'null' : String(groupId));
+  const seedPosition = (groupId: number | null): number => {
+    const key = bucketKey(groupId);
+    const cached = nextPosByBucket.get(key);
+    if (cached != null) return cached;
+    const value =
+      groupId == null
+        ? db.selectValue<number>(
+            `SELECT COALESCE(MAX(position), -1) + 1
+             FROM collection_members
+             WHERE collection_id = ? AND group_id IS NULL`,
+            [collectionId],
+          )
+        : db.selectValue<number>(
+            `SELECT COALESCE(MAX(position), -1) + 1
+             FROM collection_members
+             WHERE collection_id = ? AND group_id = ?`,
+            [collectionId, groupId],
+          );
+    const seed = value ?? 0;
+    nextPosByBucket.set(key, seed);
+    return seed;
+  };
+
+  // Import in stable order: groups (by export position) first, then each
+  // member by its in-bundle position. This way two members with the same
+  // exported group land in the right relative order without needing
+  // explicit per-bucket sorting.
+  const sortedMembers = [...bundle.members].sort((a, b) => {
+    const ap = a.position ?? 0;
+    const bp = b.position ?? 0;
+    return ap - bp;
+  });
+
+  for (const m of sortedMembers) {
     const exists =
       db.selectValue<number>(
         `SELECT 1 FROM collection_members
@@ -553,10 +746,14 @@ function insertBundleMembers(
       report.skippedMembers++;
       continue;
     }
+    const groupId =
+      m.groupName == null ? null : (groupIdByName.get(m.groupName) ?? null);
+    const pos = seedPosition(groupId);
+    nextPosByBucket.set(bucketKey(groupId), pos + 1);
     db.exec(
       `INSERT INTO collection_members
-         (collection_id, entity_type, entity_id, note, quantity, done, added_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+         (collection_id, entity_type, entity_id, note, quantity, done, added_at, group_id, position)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         collectionId,
         m.entityType,
@@ -565,6 +762,8 @@ function insertBundleMembers(
         m.quantity ?? null,
         m.done ? 1 : 0,
         now,
+        groupId,
+        pos,
       ],
     );
     report.addedMembers++;

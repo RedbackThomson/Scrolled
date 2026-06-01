@@ -1,9 +1,13 @@
 import type { Row } from '../../sqlite';
-import type {
-  CollectionEntityType,
-  CollectionMember,
-  CollectionRecord,
-  PinnedSearchRecord,
+import {
+  COLLECTION_GROUPINGS,
+  COLLECTION_SORT_DIRS,
+  COLLECTION_SORT_KEYS,
+  type CollectionEntityType,
+  type CollectionGroup,
+  type CollectionMember,
+  type CollectionRecord,
+  type PinnedSearchRecord,
 } from '../types';
 
 export function rowToMember(row: Row): CollectionMember {
@@ -15,6 +19,19 @@ export function rowToMember(row: Row): CollectionMember {
     quantity: row.quantity == null ? null : Number(row.quantity),
     done: Number(row.done) === 1,
     addedAt: Number(row.added_at),
+    groupId: row.group_id == null ? null : Number(row.group_id),
+    position: Number(row.position ?? 0),
+  };
+}
+
+export function rowToGroup(row: Row): CollectionGroup {
+  return {
+    id: Number(row.id),
+    collectionId: Number(row.collection_id),
+    name: String(row.name),
+    position: Number(row.position),
+    createdAt: Number(row.created_at),
+    updatedAt: Number(row.updated_at),
   };
 }
 
@@ -55,5 +72,19 @@ export function rowToCollection(row: Row): CollectionRecord {
     memberCount: Number(row.member_count ?? 0),
     pinned: Number(row.pinned ?? 0) === 1,
     pinnedPosition: row.pinned_position == null ? null : Number(row.pinned_position),
+    grouping: parseEnum(row.grouping, COLLECTION_GROUPINGS, 'group'),
+    subgrouping: parseEnum(row.subgrouping, COLLECTION_GROUPINGS, 'type'),
+    sortKey: parseEnum(row.sort_key, COLLECTION_SORT_KEYS, 'manual'),
+    sortDir: parseEnum(row.sort_dir, COLLECTION_SORT_DIRS, 'asc'),
   };
+}
+
+function parseEnum<T extends string>(
+  raw: unknown,
+  allowed: readonly T[],
+  fallback: T,
+): T {
+  if (raw == null) return fallback;
+  const s = String(raw);
+  return (allowed as readonly string[]).includes(s) ? (s as T) : fallback;
 }

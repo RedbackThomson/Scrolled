@@ -1,12 +1,22 @@
-// Per-collection detail page. Shows every member grouped by entity type,
-// with a tombstone row for any member whose underlying entity isn't
-// loaded into the game DB (e.g. user re-imported a different WZ set,
-// leaving stale ids behind).
+// Per-collection detail page. Renders the collection header (icon /
+// title / pin / export / edit / delete + axis toggle), then delegates
+// member rendering to <CollectionMembersBoard /> which owns the
+// drag-and-drop, group, and ordering UX. Tombstone rows for stale
+// entity ids live inside the row component.
 
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Download, Loader2, Pencil, Pin, PinOff, Trash2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  Download,
+  FolderPlus,
+  Loader2,
+  Pencil,
+  Pin,
+  PinOff,
+  Trash2,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   CollectionFormDialog,
@@ -16,31 +26,26 @@ import {
   slugify,
   todayStamp,
 } from '@/components/collections';
-import { MemberRow } from '@/components/collections/MemberRow';
+import { CollectionMembersBoard } from '@/components/collections/CollectionMembersBoard';
+import { CollectionDisplayOptionsMenu } from '@/components/collections/CollectionDisplayOptionsMenu';
+import { usePaletteRegistration } from '@/components/command-palette/usePaletteContext';
+import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient, type EntitySummary } from '@/db';
 import {
   useCollection,
+  useCollectionGroups,
   useCollectionMembers,
+  useCreateGroup,
   useDeleteCollection,
   useExportCollectionJson,
   useSetCollectionPinned,
 } from '@/hooks/useCollections';
-import type { CollectionEntityType, CollectionMember } from '@/db/user';
+import type { CollectionEntityType, CollectionGroup, CollectionMember } from '@/db/user';
 import { COLLECTION_ENTITY_TYPES } from '@/db/user';
 import { cn } from '@/lib/utils';
 
 const EMPTY_MEMBERS: readonly CollectionMember[] = [];
-
-const TYPE_LABELS: Record<CollectionEntityType, string> = {
-  item: 'Items',
-  equip: 'Equips',
-  mob: 'Mobs',
-  npc: 'NPCs',
-  map: 'Maps',
-  quest: 'Quests',
-  questChain: 'Quest Chains',
-  skill: 'Skills',
-};
+const EMPTY_GROUPS: readonly CollectionGroup[] = [];
 
 export default function CollectionDetail() {
   const params = useParams<{ id: string }>();
@@ -48,13 +53,16 @@ export default function CollectionDetail() {
   const navigate = useNavigate();
   const collectionQ = useCollection(Number.isFinite(id) ? id : null);
   const membersQ = useCollectionMembers(Number.isFinite(id) ? id : null);
+  const groupsQ = useCollectionGroups(Number.isFinite(id) ? id : null);
 
   const [editOpen, setEditOpen] = useState(false);
   const deleteM = useDeleteCollection();
   const exportM = useExportCollectionJson();
   const pinM = useSetCollectionPinned();
+  const createGroupM = useCreateGroup();
 
   const members = membersQ.data ?? EMPTY_MEMBERS;
+  const groups = groupsQ.data ?? EMPTY_GROUPS;
 
   // Group member ids by entity type so we can fan out one batch lookup
   // per type. Re-keyed only when the set of ids changes.
@@ -112,6 +120,26 @@ export default function CollectionDetail() {
     enabled: members.length > 0,
   });
 
+  const paletteItems = useMemo<CommandItem[]>(() => {
+    if (!Number.isFinite(id) || !collectionQ.data) return [];
+    return [
+      {
+        id: 'collection-create-group',
+        group: 'context',
+        label: 'Create group',
+        keywords: ['new', 'group', 'create'],
+        icon: FolderPlus,
+        onSelect: async () => {
+          const name = promptForGroupName(groups);
+          if (!name) return;
+          await createGroupM.mutateAsync({ collectionId: id, name });
+        },
+      },
+    ];
+  }, [id, collectionQ.data, groups, createGroupM]);
+
+  usePaletteRegistration({ items: paletteItems });
+
   if (!Number.isFinite(id)) {
     return <NotFound />;
   }
@@ -128,12 +156,7 @@ export default function CollectionDetail() {
   }
 
   const collection = collectionQ.data;
-
-  const grouped: { type: CollectionEntityType; items: CollectionMember[] }[] =
-    COLLECTION_ENTITY_TYPES.map((t) => ({
-      type: t,
-      items: members.filter((m) => m.entityType === t),
-    })).filter((g) => g.items.length > 0);
+  const hasMembers = members.length > 0;
 
   const onDelete = async () => {
     if (
@@ -177,6 +200,7 @@ export default function CollectionDetail() {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            {hasMembers && <CollectionDisplayOptionsMenu collection={collection} />}
             <Button
               variant="outline"
               size="sm"
@@ -236,34 +260,34 @@ export default function CollectionDetail() {
         <p className="text-muted-foreground text-sm">
           <Loader2 className="inline h-4 w-4 animate-spin" /> Loading members…
         </p>
-      ) : grouped.length === 0 ? (
+      ) : !hasMembers ? (
         <div className="border-border bg-muted/40 rounded-md border p-6 text-center text-sm">
           <p className="text-muted-foreground">
             No members yet. Open any item, mob, map, or quest page and click "Save".
           </p>
         </div>
       ) : (
-        <div className="space-y-6">
-          {grouped.map((group) => (
-            <section key={group.type} className="space-y-2">
-              <h2 className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">
-                {TYPE_LABELS[group.type]} ({group.items.length})
-              </h2>
-              <ul className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
-                {group.items.map((m) => (
-                  <MemberRow
-                    key={`${m.entityType}-${m.entityId}`}
-                    member={m}
-                    name={summariesQ.data?.[m.entityType]?.get(m.entityId) ?? null}
-                  />
-                ))}
-              </ul>
-            </section>
-          ))}
-        </div>
+        <CollectionMembersBoard
+          collection={collection}
+          members={members}
+          groups={groups}
+          summaries={summariesQ.data}
+        />
       )}
     </div>
   );
+}
+
+function promptForGroupName(existing: readonly CollectionGroup[]): string | null {
+  const taken = new Set(existing.map((g) => g.name));
+  let suggestion = 'New group';
+  for (let i = 2; i < 1000 && taken.has(suggestion); i++) {
+    suggestion = `New group ${i}`;
+  }
+  const raw = window.prompt('Name this group:', suggestion);
+  if (raw == null) return null;
+  const trimmed = raw.trim();
+  return trimmed.length > 0 ? trimmed : null;
 }
 
 function NotFound() {

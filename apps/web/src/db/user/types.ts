@@ -24,6 +24,24 @@ export const COLLECTION_ENTITY_TYPES = [
   'skill',
 ] as const satisfies readonly CollectionEntityType[];
 
+/**
+ * Linear-backlog-style display options persisted per collection. Each
+ * collection remembers its preferred grouping axes, sort key, and
+ * direction so revisits land on the same view.
+ *
+ * `grouping` is the OUTER axis; `subgrouping` is the INNER axis nested
+ * inside it. `'none'` means flat for that level. When `sortKey` is
+ * `'manual'`, drag-and-drop reorders are honored via `position`; any
+ * other sort sources its order from the named member field.
+ */
+export type CollectionGrouping = 'none' | 'group' | 'type';
+export type CollectionSortKey = 'manual' | 'name' | 'added' | 'done' | 'quantity';
+export type CollectionSortDir = 'asc' | 'desc';
+
+export const COLLECTION_GROUPINGS = ['none', 'group', 'type'] as const satisfies readonly CollectionGrouping[];
+export const COLLECTION_SORT_KEYS = ['manual', 'name', 'added', 'done', 'quantity'] as const satisfies readonly CollectionSortKey[];
+export const COLLECTION_SORT_DIRS = ['asc', 'desc'] as const satisfies readonly CollectionSortDir[];
+
 export interface CollectionRecord {
   id: number;
   name: string;
@@ -39,6 +57,29 @@ export interface CollectionRecord {
   pinned: boolean;
   /** Sort key within the pinned grid; null when unpinned. */
   pinnedPosition: number | null;
+  /** Outer grouping axis on the detail page. */
+  grouping: CollectionGrouping;
+  /** Inner (nested) grouping axis on the detail page. */
+  subgrouping: CollectionGrouping;
+  /** Sort key applied within the innermost bucket. */
+  sortKey: CollectionSortKey;
+  /** Sort direction applied alongside `sortKey`. */
+  sortDir: CollectionSortDir;
+}
+
+/**
+ * A named, user-defined group inside a single collection. The default
+ * group is *implicit* — represented by `group_id IS NULL` on members,
+ * never materialized as a row here.
+ */
+export interface CollectionGroup {
+  id: number;
+  collectionId: number;
+  name: string;
+  /** Order within the collection's group list (0-based, dense). */
+  position: number;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export interface CollectionMember {
@@ -50,6 +91,10 @@ export interface CollectionMember {
   quantity: number | null;
   done: boolean;
   addedAt: number;
+  /** Owning group; null means the default (implicit) group. */
+  groupId: number | null;
+  /** Order within (collectionId, groupId). 0-based, dense. */
+  position: number;
 }
 
 export interface CreateCollectionInput {
@@ -76,6 +121,10 @@ export interface UpdateCollectionPatch {
   description?: string | null;
   color?: string | null;
   icon?: string | null;
+  grouping?: CollectionGrouping;
+  subgrouping?: CollectionGrouping;
+  sortKey?: CollectionSortKey;
+  sortDir?: CollectionSortDir;
 }
 
 export interface EntityRef {
@@ -168,6 +217,26 @@ export interface UserDatabase {
   /** Pin or unpin a collection. Pinning appends to the end of the pinned
    *  grid; unpinning clears the position. */
   setCollectionPinned(id: number, pinned: boolean): Promise<CollectionRecord>;
+
+  listGroups(collectionId: number): Promise<CollectionGroup[]>;
+  createGroup(collectionId: number, name: string): Promise<CollectionGroup>;
+  renameGroup(groupId: number, name: string): Promise<CollectionGroup>;
+  deleteGroup(groupId: number): Promise<void>;
+  /** Persist a new ordering of the collection's groups (top to bottom). */
+  reorderGroups(collectionId: number, orderedGroupIds: readonly number[]): Promise<void>;
+  /**
+   * Move a member to a target group + position. `targetGroupId` may be
+   * null for the default (implicit) group. `targetIndex` is 0-based;
+   * pass `members.length` to drop at the end. Re-densifies positions in
+   * both source and destination buckets in one transaction.
+   */
+  moveMember(
+    collectionId: number,
+    entityType: CollectionEntityType,
+    entityId: number,
+    targetGroupId: number | null,
+    targetIndex: number,
+  ): Promise<void>;
 
   listMembers(collectionId: number): Promise<CollectionMember[]>;
   addMember(

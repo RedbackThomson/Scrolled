@@ -6,7 +6,12 @@
 // path via zod; the writer side just builds plain objects.
 
 import { z } from 'zod';
-import { COLLECTION_ENTITY_TYPES } from './types';
+import {
+  COLLECTION_ENTITY_TYPES,
+  COLLECTION_GROUPINGS,
+  COLLECTION_SORT_DIRS,
+  COLLECTION_SORT_KEYS,
+} from './types';
 
 export const COLLECTIONS_JSON_VERSION = 1 as const;
 
@@ -16,6 +21,19 @@ export const collectionMemberJsonSchema = z.object({
   note: z.string().nullable().optional(),
   quantity: z.number().int().nonnegative().nullable().optional(),
   done: z.boolean().optional(),
+  /** Owning group's name; null/absent means the default (implicit)
+   *  group. Resolved by name on import so a group rename downstream
+   *  doesn't break the link. */
+  groupName: z.string().nullable().optional(),
+  /** Order within its bucket at export time. Optional so pre-group
+   *  exports still validate; the importer derives a stable order
+   *  otherwise. */
+  position: z.number().int().nonnegative().optional(),
+});
+
+export const collectionGroupJsonSchema = z.object({
+  name: z.string().min(1),
+  position: z.number().int().nonnegative(),
 });
 
 export const collectionBundleSchema = z.object({
@@ -28,6 +46,16 @@ export const collectionBundleSchema = z.object({
   /** Relative position within the pinned grid at export time. Optional;
    *  the importer re-derives a contiguous order. */
   pinnedPosition: z.number().int().nullable().optional(),
+  /** Linear-backlog-style display options at export time. All optional
+   *  so pre-display-options exports still validate; the importer
+   *  applies defaults when missing. */
+  grouping: z.enum(COLLECTION_GROUPINGS).optional(),
+  subgrouping: z.enum(COLLECTION_GROUPINGS).optional(),
+  sortKey: z.enum(COLLECTION_SORT_KEYS).optional(),
+  sortDir: z.enum(COLLECTION_SORT_DIRS).optional(),
+  /** User-defined groups (the default group is implicit and never
+   *  appears here). Optional so pre-group exports still validate. */
+  groups: z.array(collectionGroupJsonSchema).optional(),
   members: z.array(collectionMemberJsonSchema),
 });
 
@@ -65,6 +93,7 @@ export const collectionsExportSchema = z.discriminatedUnion('kind', [
 ]);
 
 export type CollectionMemberJson = z.infer<typeof collectionMemberJsonSchema>;
+export type CollectionGroupJson = z.infer<typeof collectionGroupJsonSchema>;
 export type CollectionBundleJson = z.infer<typeof collectionBundleSchema>;
 export type PinnedSearchJson = z.infer<typeof pinnedSearchJsonSchema>;
 export type UiPrefJson = z.infer<typeof uiPrefJsonSchema>;

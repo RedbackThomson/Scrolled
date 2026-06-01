@@ -12,6 +12,7 @@ import type {
   AddMemberOptions,
   BulkAddResult,
   CollectionEntityType,
+  CollectionGroup,
   CollectionMember,
   CollectionRecord,
   CreateCollectionInput,
@@ -27,6 +28,7 @@ import type {
   UserDbStatus,
 } from '../types';
 import * as collections from './collections';
+import * as collectionGroups from './collectionGroups';
 import * as pinned from './pinnedSearches';
 import * as uiPrefs from './uiPrefs';
 
@@ -86,6 +88,50 @@ export class UserDbApi implements UserDatabase {
   async setCollectionPinned(id: number, pinned: boolean): Promise<CollectionRecord> {
     return collections.setCollectionPinned(this.db, id, pinned);
   }
+
+  // -- groups -----------------------------------------------------------------
+
+  async listGroups(collectionId: number): Promise<CollectionGroup[]> {
+    return collectionGroups.listGroups(this.db, collectionId);
+  }
+
+  async createGroup(collectionId: number, name: string): Promise<CollectionGroup> {
+    return collectionGroups.createGroup(this.db, collectionId, name);
+  }
+
+  async renameGroup(groupId: number, name: string): Promise<CollectionGroup> {
+    return collectionGroups.renameGroup(this.db, groupId, name);
+  }
+
+  async deleteGroup(groupId: number): Promise<void> {
+    collectionGroups.deleteGroup(this.db, groupId);
+  }
+
+  async reorderGroups(
+    collectionId: number,
+    orderedGroupIds: readonly number[],
+  ): Promise<void> {
+    collectionGroups.reorderGroups(this.db, collectionId, orderedGroupIds);
+  }
+
+  async moveMember(
+    collectionId: number,
+    entityType: CollectionEntityType,
+    entityId: number,
+    targetGroupId: number | null,
+    targetIndex: number,
+  ): Promise<void> {
+    collectionGroups.moveMember(
+      this.db,
+      collectionId,
+      entityType,
+      entityId,
+      targetGroupId,
+      targetIndex,
+    );
+  }
+
+  // -- members ----------------------------------------------------------------
 
   async listMembers(collectionId: number): Promise<CollectionMember[]> {
     return collections.listMembers(this.db, collectionId);

@@ -8,8 +8,12 @@ export type {
   AddMemberOptions,
   BulkAddResult,
   CollectionEntityType,
+  CollectionGroup,
+  CollectionGrouping,
   CollectionMember,
   CollectionRecord,
+  CollectionSortDir,
+  CollectionSortKey,
   CreateCollectionInput,
   CreatePinnedSearchInput,
   EntityRef,
@@ -31,5 +35,10 @@ export type {
   PinnedSearchJson,
 } from './collectionsJson';
 export { COLLECTIONS_JSON_VERSION } from './collectionsJson';
-export { COLLECTION_ENTITY_TYPES } from './types';
+export {
+  COLLECTION_ENTITY_TYPES,
+  COLLECTION_GROUPINGS,
+  COLLECTION_SORT_DIRS,
+  COLLECTION_SORT_KEYS,
+} from './types';
 export { getUserDbClient, terminateUserDbClient } from './client';

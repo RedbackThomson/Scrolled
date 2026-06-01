@@ -92,4 +92,62 @@ export const USER_MIGRATIONS: readonly Migration[] = [
       );
     `,
   },
+  {
+    version: 5,
+    name: 'collection groups v1',
+    // Named groups inside a collection, plus an explicit per-member
+    // `position` so the user can reorder. The default group is implicit:
+    // a NULL `group_id` means "ungrouped". The four display-option
+    // columns on `collections` mirror the Linear-backlog "display
+    // options" popover used on table pages — primary grouping axis,
+    // secondary (sub)grouping axis, sort key, and sort direction. The
+    // trailing UPDATE seeds positions for pre-existing members from
+    // `added_at` so today's insertion order is preserved.
+    sql: `
+      CREATE TABLE collection_groups (
+        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        collection_id INTEGER NOT NULL REFERENCES collections(id) ON DELETE CASCADE,
+        name          TEXT    NOT NULL,
+        position      INTEGER NOT NULL,
+        created_at    INTEGER NOT NULL,
+        updated_at    INTEGER NOT NULL,
+        UNIQUE (collection_id, name)
+      );
+
+      CREATE INDEX collection_groups_collection_idx
+        ON collection_groups (collection_id, position);
+
+      ALTER TABLE collection_members
+        ADD COLUMN group_id INTEGER REFERENCES collection_groups(id) ON DELETE SET NULL;
+      ALTER TABLE collection_members
+        ADD COLUMN position INTEGER NOT NULL DEFAULT 0;
+
+      CREATE INDEX collection_members_group_idx
+        ON collection_members (collection_id, group_id, position);
+
+      ALTER TABLE collections
+        ADD COLUMN grouping TEXT NOT NULL DEFAULT 'group'
+          CHECK (grouping IN ('none','group','type'));
+      ALTER TABLE collections
+        ADD COLUMN subgrouping TEXT NOT NULL DEFAULT 'type'
+          CHECK (subgrouping IN ('none','group','type'));
+      ALTER TABLE collections
+        ADD COLUMN sort_key TEXT NOT NULL DEFAULT 'manual'
+          CHECK (sort_key IN ('manual','name','added','done','quantity'));
+      ALTER TABLE collections
+        ADD COLUMN sort_dir TEXT NOT NULL DEFAULT 'asc'
+          CHECK (sort_dir IN ('asc','desc'));
+
+      UPDATE collection_members
+      SET position = (
+        SELECT COUNT(*) - 1
+        FROM collection_members m2
+        WHERE m2.collection_id = collection_members.collection_id
+          AND (
+            m2.added_at < collection_members.added_at
+            OR (m2.added_at = collection_members.added_at AND m2.rowid <= collection_members.rowid)
+          )
+      );
+    `,
+  },
 ];

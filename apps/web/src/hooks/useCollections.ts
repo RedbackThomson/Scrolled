@@ -17,6 +17,7 @@ import {
 import {
   getUserDbClient,
   type CollectionEntityType,
+  type CollectionGroup,
   type CollectionMember,
   type CollectionRecord,
   type CollectionsExportJson,
@@ -44,6 +45,9 @@ export function collectionDetailKey(id: number) {
 export function collectionMembersKey(id: number) {
   return [...ROOT_KEY, 'members', id] as const;
 }
+export function collectionGroupsKey(id: number) {
+  return [...ROOT_KEY, 'groups', id] as const;
+}
 export function membershipKey(entityType: CollectionEntityType, entityId: number) {
   return [...ROOT_KEY, 'membership', entityType, entityId] as const;
 }
@@ -70,6 +74,15 @@ export function useCollectionMembers(id: number | null): UseQueryResult<Collecti
   return useQuery({
     queryKey: collectionMembersKey(id ?? -1),
     queryFn: () => (id == null ? Promise.resolve([]) : db.listMembers(id)),
+    enabled: id != null,
+  });
+}
+
+export function useCollectionGroups(id: number | null): UseQueryResult<CollectionGroup[]> {
+  const db = useUserDb();
+  return useQuery({
+    queryKey: collectionGroupsKey(id ?? -1),
+    queryFn: () => (id == null ? Promise.resolve([]) : db.listGroups(id)),
     enabled: id != null,
   });
 }
@@ -247,6 +260,97 @@ export function useImportUserDbBytes(): UseMutationResult<
   const invalidate = useInvalidateAll();
   return useMutation({
     mutationFn: (bytes: Uint8Array) => db.importBytes(bytes),
+    onSuccess: () => invalidate(),
+  });
+}
+
+// -- groups + drag-and-drop -------------------------------------------------
+
+export function useCreateGroup(): UseMutationResult<
+  CollectionGroup,
+  Error,
+  { collectionId: number; name: string }
+> {
+  const db = useUserDb();
+  const invalidate = useInvalidateAll();
+  return useMutation({
+    mutationFn: ({ collectionId, name }) => db.createGroup(collectionId, name),
+    onSuccess: () => invalidate(),
+  });
+}
+
+export function useRenameGroup(): UseMutationResult<
+  CollectionGroup,
+  Error,
+  { groupId: number; name: string }
+> {
+  const db = useUserDb();
+  const invalidate = useInvalidateAll();
+  return useMutation({
+    mutationFn: ({ groupId, name }) => db.renameGroup(groupId, name),
+    onSuccess: () => invalidate(),
+  });
+}
+
+export function useDeleteGroup(): UseMutationResult<void, Error, number> {
+  const db = useUserDb();
+  const invalidate = useInvalidateAll();
+  return useMutation({
+    mutationFn: (groupId) => db.deleteGroup(groupId),
+    onSuccess: () => invalidate(),
+  });
+}
+
+export function useReorderGroups(): UseMutationResult<
+  void,
+  Error,
+  { collectionId: number; orderedGroupIds: readonly number[] }
+> {
+  const db = useUserDb();
+  const invalidate = useInvalidateAll();
+  return useMutation({
+    mutationFn: ({ collectionId, orderedGroupIds }) =>
+      db.reorderGroups(collectionId, orderedGroupIds),
+    onSuccess: () => invalidate(),
+  });
+}
+
+export interface MoveMemberArgs {
+  collectionId: number;
+  entityType: CollectionEntityType;
+  entityId: number;
+  /** Null = default (implicit) group. */
+  targetGroupId: number | null;
+  /** 0-based index in the destination bucket *after* the source was removed. */
+  targetIndex: number;
+}
+
+export function useMoveMember(): UseMutationResult<void, Error, MoveMemberArgs> {
+  const db = useUserDb();
+  const invalidate = useInvalidateAll();
+  return useMutation({
+    mutationFn: ({ collectionId, entityType, entityId, targetGroupId, targetIndex }) =>
+      db.moveMember(collectionId, entityType, entityId, targetGroupId, targetIndex),
+    onSuccess: () => invalidate(),
+  });
+}
+
+export interface DisplayOptionsPatch {
+  grouping?: CollectionRecord['grouping'];
+  subgrouping?: CollectionRecord['subgrouping'];
+  sortKey?: CollectionRecord['sortKey'];
+  sortDir?: CollectionRecord['sortDir'];
+}
+
+export function useSetDisplayOptions(): UseMutationResult<
+  CollectionRecord,
+  Error,
+  { id: number; patch: DisplayOptionsPatch }
+> {
+  const db = useUserDb();
+  const invalidate = useInvalidateAll();
+  return useMutation({
+    mutationFn: ({ id, patch }) => db.updateCollection(id, patch),
     onSuccess: () => invalidate(),
   });
 }
