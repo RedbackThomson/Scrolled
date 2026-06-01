@@ -209,6 +209,74 @@ describe('extractChairs', () => {
     ]);
   });
 
+  it('follows UOL frame entries so origin/delay come from the target, not (0,0)/100', async () => {
+    // Effect tree: /0 is a real frame with origin (40,60); /1 is a UOL → "0".
+    // Before the fix, the UOL's origin would silently fall back to (0,0),
+    // which composites that frame at the canvas anchor — a visible jump.
+    const source = makeSource(
+      {
+        'Item.wz/Install': [imageNode('0301.img', 'Item.wz/Install/0301.img')],
+        'Item.wz/Install/0301.img': [
+          imageNode('3010777', 'Item.wz/Install/0301.img/3010777'),
+        ],
+        'Item.wz/Install/0301.img/3010777/info': [],
+        'Item.wz/Install/0301.img/3010777/effect': [
+          imageNode('0', 'Item.wz/Install/0301.img/3010777/effect/0'),
+          {
+            name: '1',
+            fullPath: 'Item.wz/Install/0301.img/3010777/effect/1',
+            kind: 'property',
+            propertyKind: 'uol',
+            hasChildren: false,
+            scalar: '0',
+          },
+        ],
+      },
+      Object.fromEntries([
+        [
+          'Item.wz/Install/0301.img/3010777/effect',
+          imageNode('effect', 'Item.wz/Install/0301.img/3010777/effect'),
+        ],
+        [
+          'Item.wz/Install/0301.img/3010777/effect/0/origin',
+          propNode('origin', '', '40,60', 'vector'),
+        ],
+        [
+          'Item.wz/Install/0301.img/3010777/effect/0/delay',
+          propNode('delay', '', 150),
+        ],
+        stringName(3010777, 'UOL Chair'),
+      ]),
+      {
+        'Item.wz/Install/0301.img/3010777/effect/0': new Uint8Array([0]),
+        // The UOL itself; getIconPng follows it transparently in production.
+        'Item.wz/Install/0301.img/3010777/effect/1': new Uint8Array([0]),
+      },
+    );
+
+    let lastFrames: { width: number; height: number }[] = [];
+    const ops: ChairImageOps = {
+      async decodePngFrame() {
+        return { rgba: new Uint8ClampedArray(64 * 64 * 4), width: 64, height: 64 };
+      },
+      async encodeAnimation(frames) {
+        lastFrames = frames.map((f) => ({ width: f.width, height: f.height }));
+        return { data: new Uint8Array(16), width: frames[0]!.width, height: frames[0]!.height };
+      },
+    };
+
+    const result = await extractChairs(source, { ops });
+    expect(result.chairs).toHaveLength(1);
+    expect(result.chairs[0]!.frameCount).toBe(2);
+    // If origin defaulted to (0,0), the bounding box would expand to 64+40=104
+    // wide × 64+60=124 tall. With the UOL resolved correctly to (40,60), both
+    // frames share the same origin, so the canvas stays 64×64.
+    expect(lastFrames).toEqual([
+      { width: 64, height: 64 },
+      { width: 64, height: 64 },
+    ]);
+  });
+
   it('returns an empty result when Item.wz/Install is absent', async () => {
     const source = makeSource({}, {});
     const result = await extractChairs(source);

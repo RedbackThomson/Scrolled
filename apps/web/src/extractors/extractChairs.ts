@@ -255,7 +255,16 @@ async function collectFrameMetas(source: GameDataSource, effectPath: string): Pr
     const m = child.name.match(/^(\d+)$/);
     if (!m) continue;
     const index = Number(m[1]);
-    const framePath = child.fullPath;
+    // WZ uses UOLs to share frame data — e.g. `/effect/3` is a UOL pointing
+    // at `/effect/0`. `getIconPng` follows UOLs internally, but the parser
+    // surfaces the UOL itself as a childless leaf, so `…/origin` and `…/delay`
+    // would silently fall back to defaults and the frame would render at the
+    // wrong position. Resolve the UOL target up front so origin/delay come
+    // from the real frame.
+    const framePath =
+      child.propertyKind === 'uol' && typeof child.scalar === 'string'
+        ? resolveRelativePath(child.fullPath, child.scalar)
+        : child.fullPath;
     const originNode = await source.getNode(`${framePath}/origin`);
     const { x: originX, y: originY } = parseVector(originNode?.scalar) ?? { x: 0, y: 0 };
     const delay = (await pathToNumber(source, `${framePath}/delay`)) ?? 100;
@@ -263,6 +272,16 @@ async function collectFrameMetas(source: GameDataSource, effectPath: string): Pr
   }
   metas.sort((a, b) => a.index - b.index);
   return metas;
+}
+
+function resolveRelativePath(fromFullPath: string, target: string): string {
+  const segments = fromFullPath.split('/');
+  segments.pop();
+  for (const seg of target.split('/').filter(Boolean)) {
+    if (seg === '..') segments.pop();
+    else segments.push(seg);
+  }
+  return segments.join('/');
 }
 
 function parseVector(scalar: unknown): { x: number; y: number } | null {
