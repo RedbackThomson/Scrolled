@@ -4,7 +4,8 @@
 
 import { Link } from 'react-router-dom';
 import { ArrowRight, Pin } from 'lucide-react';
-import { resolveCollectionColor, resolveCollectionIcon } from '@/components/collections';
+import { resolveCollectionColor } from '@/components/collections/colorRegistry';
+import { resolveCollectionIcon } from '@/components/collections/iconRegistry';
 import { useCollectionsList } from '@/hooks/useCollections';
 import { cn } from '@/lib/utils';
 import { HomeSection } from './HomeSection';

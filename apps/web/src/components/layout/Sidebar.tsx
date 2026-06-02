@@ -33,7 +33,8 @@ import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useSidebarLayout, useSidebarSections } from '@/stores/sidebarState';
 import { getDbClient } from '@/db';
 import { getUserDbClient } from '@/db/user';
-import { resolveCollectionColor, resolveCollectionIcon } from '@/components/collections';
+import { resolveCollectionColor } from '@/components/collections/colorRegistry';
+import { resolveCollectionIcon } from '@/components/collections/iconRegistry';
 import { cn } from '@/lib/utils';
 
 interface SidebarChild {

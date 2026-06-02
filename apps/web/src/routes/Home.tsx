@@ -19,16 +19,19 @@ import {
   PinnedSearchesRow,
 } from '@/components/home';
 
+import { useHomeLayout } from '@/components/home/useHomeLayout';
+import type { HomeSectionId } from '@/components/home/layout';
+import { useFeatures, type Features } from '@/hooks/useFeatures';
+
 const MobLevelHistogram = lazy(() =>
   import('@/components/home/MobLevelHistogram').then((m) => ({ default: m.MobLevelHistogram })),
 );
 const EquipJobBreakdown = lazy(() =>
   import('@/components/home/EquipJobBreakdown').then((m) => ({ default: m.EquipJobBreakdown })),
 );
-import { HomeEditor } from '@/components/home/HomeEditor';
-import { useHomeLayout } from '@/components/home/useHomeLayout';
-import type { HomeSectionId } from '@/components/home/layout';
-import { useFeatures, type Features } from '@/hooks/useFeatures';
+const HomeEditor = lazy(() =>
+  import('@/components/home/HomeEditor').then((m) => ({ default: m.HomeEditor })),
+);
 
 export default function Home() {
   const features = useFeatures();
@@ -74,7 +77,9 @@ export default function Home() {
 
       {editing ? (
         <HomeSectionProvider editing>
-          <HomeEditor layout={layout} renderSection={renderSection} />
+          <Suspense fallback={<HomeChartPlaceholder label="Editor" />}>
+            <HomeEditor layout={layout} renderSection={renderSection} />
+          </Suspense>
         </HomeSectionProvider>
       ) : (
         <div className="space-y-8">
