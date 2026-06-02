@@ -1,5 +1,4 @@
 import { createBrowserRouter } from 'react-router-dom';
-import { AppShell } from '@/components/layout/AppShell';
 
 // Vite injects BASE_URL from `vite.config.ts#base`. React Router prefers a
 // basename without a trailing slash.
@@ -14,7 +13,8 @@ export const router = createBrowserRouter(
       lazy: () => import('@/routes/Setup').then((m) => ({ Component: m.default })),
     },
     {
-      element: <AppShell />,
+      lazy: () =>
+        import('@/components/layout/AppShell').then((m) => ({ Component: m.AppShell })),
       children: [
         {
           index: true,

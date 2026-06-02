@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Palette } from '@/components/command-palette/Palette';
+import { CommandPaletteHost } from '@/components/command-palette/CommandPaletteHost';
 import { DataUpdatePrompt } from '@/components/data/DataUpdatePrompt';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TopBar } from '@/components/layout/TopBar';
@@ -23,7 +23,7 @@ export function AppShell() {
           </div>
         </main>
       </div>
-      <Palette />
+      <CommandPaletteHost />
       <DataUpdatePrompt />
     </div>
   );

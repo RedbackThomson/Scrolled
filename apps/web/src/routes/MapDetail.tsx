@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { lazy, Suspense, useCallback, useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Copy, DoorOpen, Map as MapIcon, MapPin, Maximize, Skull, Users } from 'lucide-react';
@@ -17,8 +17,12 @@ import { MapPortalRow } from '@/components/entity-display/MapPortalRow';
 import { ListSortControl } from '@/components/common/ListSortControl';
 import { MapLink } from '@/components/entity-links';
 import { CollectionBadgeStrip } from '@/components/collections';
-import { MapViewerModal, type MapViewerHighlight } from '@/components/MapViewer';
+import type { MapViewerHighlight } from '@/components/MapViewer';
 import { parseViewerParam, serializeViewerParam } from '@/components/MapViewer/viewerState';
+
+const MapViewerModal = lazy(() =>
+  import('@/components/MapViewer/MapViewerModal').then((m) => ({ default: m.MapViewerModal })),
+);
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
 import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient } from '@/db';
@@ -389,13 +393,17 @@ export default function MapDetail() {
         </DetailListSection>
       </DetailPageLayout>
 
-      <MapViewerModal
-        open={viewerState.open}
-        onClose={closeViewer}
-        mapId={m.id}
-        selection={viewerState.highlight}
-        onSelectionChange={setViewerSelection}
-      />
+      {viewerState.open ? (
+        <Suspense fallback={null}>
+          <MapViewerModal
+            open={viewerState.open}
+            onClose={closeViewer}
+            mapId={m.id}
+            selection={viewerState.highlight}
+            onSelectionChange={setViewerSelection}
+          />
+        </Suspense>
+      ) : null}
     </>
   );
 }

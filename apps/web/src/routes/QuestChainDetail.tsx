@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -29,7 +29,11 @@ import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient } from '@/db';
 import type { QuestChainExternalEdgeWithName, QuestChainMemberWithName } from '@/db';
 import { useShowEntityIds } from '@/stores/showEntityIds';
-import { QuestChainGraphModal } from '@/components/QuestChainGraph';
+const QuestChainGraphModal = lazy(() =>
+  import('@/components/QuestChainGraph/QuestChainGraphModal').then((m) => ({
+    default: m.QuestChainGraphModal,
+  })),
+);
 
 export default function QuestChainDetail() {
   const params = useParams<{ id: string }>();
@@ -296,14 +300,18 @@ export default function QuestChainDetail() {
         </DetailListSection>
       )}
 
-      <QuestChainGraphModal
-        open={graphOpen}
-        onClose={() => setGraphOpen(false)}
-        chain={chain}
-        members={visibleMembers}
-        edges={visibleEdges}
-        externalEdges={visibleExternalEdges}
-      />
+      {graphOpen ? (
+        <Suspense fallback={null}>
+          <QuestChainGraphModal
+            open={graphOpen}
+            onClose={() => setGraphOpen(false)}
+            chain={chain}
+            members={visibleMembers}
+            edges={visibleEdges}
+            externalEdges={visibleExternalEdges}
+          />
+        </Suspense>
+      ) : null}
     </DetailPageLayout>
   );
 }

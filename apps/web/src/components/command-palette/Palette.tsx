@@ -1,4 +1,3 @@
-import { useHotkey } from '@tanstack/react-hotkeys';
 import { CommandDialog, CommandEmpty, CommandInput, CommandList } from '@/components/ui/command';
 import { useCommandPalette } from '@/stores/useCommandPalette';
 import {
@@ -22,11 +21,8 @@ import { TogglesProvider } from './providers/toggles';
 export function Palette() {
   const open = useCommandPalette((s) => s.open);
   const setOpen = useCommandPalette((s) => s.setOpen);
-  const toggle = useCommandPalette((s) => s.toggle);
   const query = useCommandPalette((s) => s.query);
   const setQuery = useCommandPalette((s) => s.setQuery);
-
-  useHotkey('Mod+K', () => toggle());
 
   return (
     <CommandDialog

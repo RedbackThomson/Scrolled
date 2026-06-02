@@ -15,6 +15,27 @@ const basePath = process.env.BASE_PATH ?? '/';
 // set it ship root-relative URLs — fine for the app, just no rich embeds.
 const siteUrl = (process.env.VITE_SITE_URL ?? '').replace(/\/+$/, '');
 
+/** Stable vendor splits — smaller route chunks and better long-term caching. */
+function manualChunks(id: string): string | undefined {
+  if (!id.includes('node_modules')) return;
+  if (id.includes('recharts') || id.includes('d3-') || id.includes('victory-vendor')) {
+    return 'vendor-charts';
+  }
+  if (id.includes('@dagrejs')) return 'vendor-dagre';
+  if (id.includes('lucide-react')) return 'vendor-icons';
+  if (id.includes('@tanstack')) return 'vendor-tanstack';
+  if (id.includes('@radix-ui') || id.includes('cmdk')) return 'vendor-ui';
+  if (
+    id.includes('/react-dom/') ||
+    id.includes('/react-router') ||
+    id.includes('/react/') ||
+    id.includes('/scheduler/')
+  ) {
+    return 'vendor-react';
+  }
+  return undefined;
+}
+
 export default defineConfig({
   base: basePath,
   plugins: [
@@ -72,6 +93,13 @@ export default defineConfig({
   },
   worker: {
     format: 'es',
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks,
+      },
+    },
   },
   test: {
     environment: 'jsdom',

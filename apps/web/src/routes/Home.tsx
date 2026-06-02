@@ -6,20 +6,25 @@
 // visibility of those widgets are user-editable (Edit / Done button) and
 // persisted to the user DB so the layout rides backup/restore.
 
-import { useState, type ReactNode } from 'react';
+import { lazy, Suspense, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Check, Pencil, Sparkles } from 'lucide-react';
 import {
   BrowseTiles,
   ContinueStrip,
-  EquipJobBreakdown,
   HomeSectionProvider,
   LibraryStats,
   MapsByRegion,
-  MobLevelHistogram,
   PinnedCollectionsPanel,
   PinnedSearchesRow,
 } from '@/components/home';
+
+const MobLevelHistogram = lazy(() =>
+  import('@/components/home/MobLevelHistogram').then((m) => ({ default: m.MobLevelHistogram })),
+);
+const EquipJobBreakdown = lazy(() =>
+  import('@/components/home/EquipJobBreakdown').then((m) => ({ default: m.EquipJobBreakdown })),
+);
 import { HomeEditor } from '@/components/home/HomeEditor';
 import { useHomeLayout } from '@/components/home/useHomeLayout';
 import type { HomeSectionId } from '@/components/home/layout';
@@ -103,10 +108,28 @@ function sectionContent(id: HomeSectionId, features: Features): ReactNode {
     case 'library':
       return <LibraryStats features={features} />;
     case 'mob-histogram':
-      return <MobLevelHistogram features={features} />;
+      return (
+        <Suspense fallback={<HomeChartPlaceholder label="Mob levels" />}>
+          <MobLevelHistogram features={features} />
+        </Suspense>
+      );
     case 'equip-breakdown':
-      return <EquipJobBreakdown features={features} />;
+      return (
+        <Suspense fallback={<HomeChartPlaceholder label="Equipment by job" />}>
+          <EquipJobBreakdown features={features} />
+        </Suspense>
+      );
   }
+}
+
+function HomeChartPlaceholder({ label }: { label: string }) {
+  return (
+    <div
+      className="border-border bg-muted/30 h-48 animate-pulse rounded-lg border"
+      aria-busy
+      aria-label={`Loading ${label}`}
+    />
+  );
 }
 
 function Welcome() {
