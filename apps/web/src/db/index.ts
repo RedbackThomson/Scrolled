@@ -11,8 +11,6 @@ export type {
   DatasetFileRef,
   DatasetRecord,
   DbStatus,
-  EquipJobBucket,
-  EquipJobCount,
   ExtractorResultRecord,
   EntityKind,
   EntitySummary,

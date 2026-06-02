@@ -18,17 +18,10 @@ import {
   PinnedCollectionsPanel,
   PinnedSearchesRow,
 } from '@/components/home';
-
 import { useHomeLayout } from '@/components/home/useHomeLayout';
 import type { HomeSectionId } from '@/components/home/layout';
 import { useFeatures, type Features } from '@/hooks/useFeatures';
 
-const MobLevelHistogram = lazy(() =>
-  import('@/components/home/MobLevelHistogram').then((m) => ({ default: m.MobLevelHistogram })),
-);
-const EquipJobBreakdown = lazy(() =>
-  import('@/components/home/EquipJobBreakdown').then((m) => ({ default: m.EquipJobBreakdown })),
-);
 const HomeEditor = lazy(() =>
   import('@/components/home/HomeEditor').then((m) => ({ default: m.HomeEditor })),
 );
@@ -77,7 +70,7 @@ export default function Home() {
 
       {editing ? (
         <HomeSectionProvider editing>
-          <Suspense fallback={<HomeChartPlaceholder label="Editor" />}>
+          <Suspense fallback={<HomeSectionPlaceholder label="Editor" />}>
             <HomeEditor layout={layout} renderSection={renderSection} />
           </Suspense>
         </HomeSectionProvider>
@@ -112,22 +105,10 @@ function sectionContent(id: HomeSectionId, features: Features): ReactNode {
       return <MapsByRegion features={features} />;
     case 'library':
       return <LibraryStats features={features} />;
-    case 'mob-histogram':
-      return (
-        <Suspense fallback={<HomeChartPlaceholder label="Mob levels" />}>
-          <MobLevelHistogram features={features} />
-        </Suspense>
-      );
-    case 'equip-breakdown':
-      return (
-        <Suspense fallback={<HomeChartPlaceholder label="Equipment by job" />}>
-          <EquipJobBreakdown features={features} />
-        </Suspense>
-      );
   }
 }
 
-function HomeChartPlaceholder({ label }: { label: string }) {
+function HomeSectionPlaceholder({ label }: { label: string }) {
   return (
     <div
       className="border-border bg-muted/30 h-48 animate-pulse rounded-lg border"

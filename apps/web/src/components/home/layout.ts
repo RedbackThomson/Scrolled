@@ -16,8 +16,6 @@ export const HOME_SECTION_IDS = [
   'browse',
   'regions',
   'library',
-  'mob-histogram',
-  'equip-breakdown',
 ] as const;
 
 export type HomeSectionId = (typeof HOME_SECTION_IDS)[number];
@@ -32,8 +30,6 @@ export const HOME_SECTION_LABEL: Record<HomeSectionId, string> = {
   browse: 'Browse',
   regions: 'Regions',
   library: 'Library',
-  'mob-histogram': 'Mobs by level',
-  'equip-breakdown': 'Equip restrictions',
 };
 
 /** Default order, used by first-time visitors and as the baseline the

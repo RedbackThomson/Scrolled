@@ -79,12 +79,11 @@ Schema and join-table inventory follow §8.4 of the MVP doc.
 
 ### 2.7 Visualization
 
-- **Recharts** (v3) for the home-page widgets that summarize the user's loaded library — mob level histogram and equip job breakdown. Picked over hand-rolled SVG because it ships theme-aware tooltips, responsive sizing, and accessible labels for free, and the cost (~250 KB minified, tree-shakeable) is acceptable for a single page. Restricted to `components/home/`; do not reach for it elsewhere without a similarly clear need — the rest of the UI stays a plain Tailwind + shadcn stack.
 - **`@dagrejs/dagre`** for the quest-chain graph viewer (`components/QuestChainGraph/`). Sugiyama-style layered layout of the prereq DAG; we render the resulting nodes + edges with plain DOM/SVG inside our own pan/zoom container (modeled on `MapViewer/`). Picked over hand-rolled BFS layering because diamond and many-parent shapes are common in quest data and dagre's crossing-minimisation makes them readable without bespoke heuristics. Restricted to the chain viewer; do not pull dagre into any other component without re-evaluating.
 
 ### 2.8 Drag and drop
 
-- **`@dnd-kit`** (`core`, `sortable`, `utilities`) for the home-page edit mode that lets users reorder dashboard sections. Picked over `react-beautiful-dnd` (unmaintained) and HTML5 native DnD (poor touch + a11y). Keyboard-accessible and touch-friendly out of the box. Restricted to `components/home/` for the same reason as recharts; any other reorder UI in the app should re-evaluate before pulling it in.
+- **`@dnd-kit`** (`core`, `sortable`, `utilities`) for the home-page edit mode that lets users reorder dashboard sections. Picked over `react-beautiful-dnd` (unmaintained) and HTML5 native DnD (poor touch + a11y). Keyboard-accessible and touch-friendly out of the box. Restricted to `components/home/`; any other reorder UI in the app should re-evaluate before pulling it in.
 
 ### 2.9 Other
 

@@ -1,7 +1,6 @@
 import type { Sqlite } from '../sqlite';
 import type {
   CategoryCount,
-  LevelBandCount,
   ListOptsBase,
   MobDropRecord,
   MobDropWithName,
@@ -110,14 +109,6 @@ export function listMobs(sql: Sqlite, opts: ListOptsBase = {}): PageResult<MobRe
 }
 
 /**
- * Mob count grouped into level bands of `bandSize` rows (default 10).
- *
- * Rows with NULL level are dropped. The band key is the lower bound of the
- * window (e.g. `band=10` covers levels 10..19 when `bandSize=10`). Bands
- * are returned in ascending order with empty bands omitted — the histogram
- * fills gaps client-side so a missing low-level band is visually obvious.
- */
-/**
  * Mob count for the three "browse by level" buckets shown on the home
  * page. The cutoff values come from the common MapleStory level brackets
  * (early/mid/end game). Buckets use inclusive bounds, matching how the
@@ -140,22 +131,6 @@ export function listMobLevelBucketCounts(sql: Sqlite): CategoryCount[] {
     { key: '70-120', count: Number(row?.mid ?? 0) },
     { key: '120+', count: Number(row?.endgame ?? 0) },
   ];
-}
-
-export function listMobLevelBandCounts(
-  sql: Sqlite,
-  bandSize = 10,
-): LevelBandCount[] {
-  const size = Math.max(1, Math.floor(bandSize));
-  const rows = sql.selectObjects<{ band: number; count: number }>(
-    `SELECT (level / ?) * ? AS band, COUNT(*) AS count
-       FROM mobs
-      WHERE level IS NOT NULL
-      GROUP BY band
-      ORDER BY band ASC`,
-    [size, size],
-  );
-  return rows.map((r) => ({ band: Number(r.band), count: Number(r.count) }));
 }
 
 export function getMobDrops(sql: Sqlite, mobId: number): MobDropWithName[] {

@@ -752,15 +752,11 @@ export interface GameDatabase {
   listEquipTypes(): Promise<string[]>;
   /** Top equip slots (e.g. Overall, Cap) by member count. */
   listEquipSlotCounts(limit?: number): Promise<CategoryCount[]>;
-  /** Equip count grouped into exclusive class buckets (see EquipJobBucket). */
-  listEquipJobCounts(): Promise<EquipJobCount[]>;
   getEquipIcon(id: number): Promise<Uint8Array | null>;
 
   upsertMobs(mobs: MobRecord[]): Promise<number>;
   getMob(id: number): Promise<MobRecord | null>;
   listMobs(opts?: ListOptsBase): Promise<PageResult<MobRecord>>;
-  /** Mob count grouped into level bands of `bandSize` (default 10). */
-  listMobLevelBandCounts(bandSize?: number): Promise<LevelBandCount[]>;
   /** Mob count for the home page's three "browse by level" buckets
    *  (30-70 / 70-120 / 120+). Bounds are inclusive; see implementation
    *  note in the query for why edge mobs overlap two buckets. */
@@ -972,24 +968,5 @@ export interface CategoryCount {
  *  the band; e.g. `band: 10` with `bandSize: 10` covers levels 10..19. */
 export interface LevelBandCount {
   band: number;
-  count: number;
-}
-
-/** Exclusive job bucket for the equip-by-class donut. Buckets sum to the
- *  total equip count: an equip with no restriction lands in `any`, an equip
- *  restricted to exactly one class lands in that class's bucket, and an
- *  equip restricted to more than one class lands in `multi`. */
-export type EquipJobBucket =
-  | 'any'
-  | 'warrior'
-  | 'magician'
-  | 'bowman'
-  | 'thief'
-  | 'pirate'
-  | 'beginner'
-  | 'multi';
-
-export interface EquipJobCount {
-  job: EquipJobBucket;
   count: number;
 }

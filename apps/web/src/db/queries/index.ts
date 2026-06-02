@@ -15,7 +15,6 @@ import type {
   DbStatus,
   EntityKind,
   EntitySummary,
-  EquipJobCount,
   ExtractorResultRecord,
   EquipRecord,
   ItemRecord,
@@ -193,10 +192,6 @@ export class DbApi implements GameDatabase {
     return equips.listEquipSlotCounts(this.sql, limit);
   }
 
-  async listEquipJobCounts(): Promise<EquipJobCount[]> {
-    return equips.listEquipJobCounts(this.sql);
-  }
-
   // -- mobs -------------------------------------------------------------------
 
   async upsertMobs(list: MobRecord[]): Promise<number> {
@@ -213,10 +208,6 @@ export class DbApi implements GameDatabase {
 
   async listMobs(opts: ListOptsBase = {}): Promise<PageResult<MobRecord>> {
     return mobs.listMobs(this.sql, opts);
-  }
-
-  async listMobLevelBandCounts(bandSize?: number): Promise<LevelBandCount[]> {
-    return mobs.listMobLevelBandCounts(this.sql, bandSize);
   }
 
   async listMobLevelBucketCounts(): Promise<CategoryCount[]> {
