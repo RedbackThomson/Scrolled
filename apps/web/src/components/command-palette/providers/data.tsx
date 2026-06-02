@@ -18,10 +18,10 @@ const ENTRIES = [
     icon: Database,
   },
   {
-    id: 'data-debug',
-    label: 'Diagnostics',
-    keywords: ['debug', 'parser', 'wz', 'tree', 'troubleshoot'],
-    to: '/debug',
+    id: 'data-developer',
+    label: 'Developer tools',
+    keywords: ['debug', 'parser', 'wz', 'tree', 'troubleshoot', 'diagnostics'],
+    to: '/settings/developer',
     icon: Wrench,
   },
 ];

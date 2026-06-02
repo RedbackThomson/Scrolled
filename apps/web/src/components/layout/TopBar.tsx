@@ -1,19 +1,26 @@
 import { Menu } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { PaletteTrigger } from '@/components/command-palette/PaletteTrigger';
 import { Button } from '@/components/ui/button';
 import { useSidebarLayout } from '@/stores/sidebarState';
 
 export function TopBar() {
+  const location = useLocation();
   const setMobileOpen = useSidebarLayout((s) => s.setMobileOpen);
+  const setSettingsNavOpen = useSidebarLayout((s) => s.setSettingsNavOpen);
+  const onSettingsRoute = location.pathname.startsWith('/settings');
+
   return (
     <header className="border-border bg-background sticky top-0 z-10 flex h-14 items-center gap-2 border-b px-2 sm:px-4">
       <Button
         variant="ghost"
         size="icon"
         className="md:hidden"
-        aria-label="Open navigation menu"
-        onClick={() => setMobileOpen(true)}
+        aria-label={onSettingsRoute ? 'Open settings menu' : 'Open navigation menu'}
+        onClick={() =>
+          onSettingsRoute ? setSettingsNavOpen(true) : setMobileOpen(true)
+        }
       >
         <Menu className="h-4 w-4" />
       </Button>

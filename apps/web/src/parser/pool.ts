@@ -170,7 +170,7 @@ function spawnPoolWorker(name: PoolWorkerName): Worker {
 
 /**
  * Terminate all live pool workers. Doesn't touch the singleton parser
- * worker used by `/debug`.
+ * worker used by settings developer tools.
  */
 export function terminatePool(): void {
   for (const [name, entry] of cache) {

@@ -124,8 +124,8 @@ export function StepRun({ version, files, onComplete, mode }: Props) {
         </div>
         <p className="text-muted-foreground text-sm">
           You can fix the issue and try again. The{' '}
-          <Link to="/debug" className="text-primary hover:underline">
-            Diagnostics
+          <Link to="/settings/developer" className="text-primary hover:underline">
+            Developer
           </Link>{' '}
           page has the full error chain.
         </p>
@@ -196,8 +196,8 @@ export function StepRun({ version, files, onComplete, mode }: Props) {
             </h3>
             <p className="mt-1 text-xs">
               The{' '}
-              <Link to="/debug" className="underline">
-                Diagnostics
+              <Link to="/settings/developer" className="underline">
+                Developer
               </Link>{' '}
               page has the full error chain.
             </p>

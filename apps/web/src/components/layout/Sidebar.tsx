@@ -24,7 +24,6 @@ import {
   Home,
   Settings as SettingsIcon,
   WifiOff,
-  Wrench,
   type LucideIcon,
 } from 'lucide-react';
 import { WEAPON_TYPE_ORDER, labelForEquipSlot, labelForEquipType } from '@/domain/equipTypes';
@@ -353,7 +352,6 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
             className={cn('border-border my-2 border-t', collapsed && 'mx-1')}
           />
           <NavItem to="/settings" icon={SettingsIcon} label="Settings" collapsed={collapsed} />
-          <NavItem to="/debug" icon={Wrench} label="Diagnostics" collapsed={collapsed} />
         </ul>
       </nav>
       <div className="border-border border-t">

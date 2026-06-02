@@ -99,11 +99,19 @@ export const router = createBrowserRouter(
         },
         {
           path: 'settings',
-          lazy: () => import('@/routes/Settings').then((m) => ({ Component: m.default })),
-        },
-        {
-          path: 'debug',
-          lazy: () => import('@/routes/Debug').then((m) => ({ Component: m.default })),
+          lazy: () =>
+            import('@/routes/settings/SettingsLayout').then((m) => ({ Component: m.default })),
+          children: [
+            {
+              index: true,
+              lazy: () => import('@/routes/settings/index').then((m) => ({ Component: m.default })),
+            },
+            {
+              path: 'developer',
+              lazy: () =>
+                import('@/routes/settings/Developer').then((m) => ({ Component: m.default })),
+            },
+          ],
         },
         {
           path: '*',

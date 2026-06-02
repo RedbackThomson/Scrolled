@@ -86,6 +86,9 @@ importers:
       comlink:
         specifier: ^4.4.2
         version: 4.4.2
+      domet:
+        specifier: ^1.2.0
+        version: 1.2.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       fflate:
         specifier: ^0.8.2
         version: 0.8.3
@@ -2320,6 +2323,12 @@ packages:
 
   dom-walk@0.1.2:
     resolution: {integrity: sha512-6QvTW9mrGeIegrFXdtQi9pk7O/nSK6lSdXW2eqUspN5LWD7UTji2Fqw5V2YLjBpHEoU9Xl/eUWNpDeZvoyOv2w==}
+
+  domet@1.2.0:
+    resolution: {integrity: sha512-yPkLM6Y88X8EvPz4mMloWTtk0HI+KaNsbamAYPXKy/Qc/j9UYNo0G8l9hh+KtZzHPkuxV+KTgTQo2fyg6GXMEw==}
+    peerDependencies:
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
 
   dunder-proto@1.0.1:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
@@ -6551,6 +6560,11 @@ snapshots:
   dom-accessibility-api@0.6.3: {}
 
   dom-walk@0.1.2: {}
+
+  domet@1.2.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+    dependencies:
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
 
   dunder-proto@1.0.1:
     dependencies:

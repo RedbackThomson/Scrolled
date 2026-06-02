@@ -1,6 +1,6 @@
 // useWizardExtract — pool-driven extraction for the first-run wizard.
 //
-// `useExtractAll` (legacy) still drives the /debug page where everything
+// `useExtractAll` (legacy) still drives the developer settings page where everything
 // runs in a single shared worker. This hook is the wizard's path: it
 // shards files across the parser pool so the I/O-bound load phase
 // overlaps with itself and the CPU-bound extract phase can use multiple

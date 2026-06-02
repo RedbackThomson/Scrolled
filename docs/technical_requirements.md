@@ -37,6 +37,7 @@ Companion document to `mapleroyals_wiki_clone_requirements.md`. This document co
 | Component primitives | shadcn/ui (Radix-based)                     | Components copied into the repo — no runtime version lock-in, full control over markup.                            |
 | Icons                | Lucide                                      | Matches shadcn's defaults.                                                                                         |
 | Design tokens        | CSS variables in `:root` / `.dark`          | A future game-nostalgic theme is a token swap, not a rewrite.                                                      |
+| Settings scroll-spy  | [`domet`](https://www.npmjs.com/package/domet) | Headless hook for in-page section nav; supports a custom scroll container (`<main>`), hysteresis, and programmatic scroll. |
 
 ### 2.3 State and data
 

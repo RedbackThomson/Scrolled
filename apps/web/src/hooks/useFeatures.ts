@@ -132,7 +132,7 @@ export function useFeatures(): Features {
   // First run: no datasets have ever been recorded *and* every entity table
   // is empty. The first condition alone would already imply "no setup", but
   // checking counts too means a developer who manually inserts data via
-  // /debug doesn't get bounced to /setup.
+  // /settings/developer doesn't get bounced to /setup.
   const isFirstRun = ready && (counts?.datasets ?? 0) === 0 && !hasAny;
 
   return {

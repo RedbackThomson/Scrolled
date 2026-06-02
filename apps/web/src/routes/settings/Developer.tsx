@@ -20,7 +20,6 @@ import { cn } from '@/lib/utils';
 import { buildReport } from '@/lib/diagnosticsReport';
 import type { ProgressUpdate } from '@/lib/progress';
 
-// MapleRoyals' v83-era client uses the "old GMS" encryption — listed first.
 const VERSIONS: WzMapleVersionName[] = ['GMS', 'BMS', 'EMS', 'CLASSIC'];
 
 interface LoadState {
@@ -28,7 +27,7 @@ interface LoadState {
   errors: { name: string; message: string }[];
 }
 
-export default function Debug() {
+export default function SettingsDeveloper() {
   const [version, setVersion] = useState<WzMapleVersionName>('GMS');
   const [busy, setBusy] = useState(false);
   const [loadState, setLoadState] = useState<LoadState | null>(null);
@@ -81,17 +80,20 @@ export default function Debug() {
   }, [client, lookupPath]);
 
   return (
-    <div className="max-w-4xl space-y-8">
+    <div className="max-w-3xl space-y-10">
       <header>
-        <h1 className="text-3xl font-semibold tracking-tight">Diagnostics</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Developer</h1>
         <p className="text-muted-foreground mt-2 text-sm">
-          Inspect loaded files, look up entries by path, and capture a diagnostics report when
-          something looks wrong.
+          Inspect game files, look up entries by path, and copy a support report when something
+          looks wrong.
         </p>
       </header>
 
+      <SupportReportPanel />
+
       <section className="space-y-3">
-        <div className="flex items-center gap-3">
+        <h2 className="text-lg font-semibold">File inspector</h2>
+        <div className="flex flex-wrap items-center gap-3">
           <label className="text-sm font-medium" htmlFor="wz-version">
             Encryption version
           </label>
@@ -124,48 +126,52 @@ export default function Debug() {
             <span>{error}</span>
           </div>
         )}
+
+        {loadState && (
+          <div className="space-y-4 pt-2">
+            <h3 className="text-sm font-semibold">Loaded files</h3>
+            <ul className="space-y-2">
+              {loadState.loaded.map((f) => (
+                <li
+                  key={f.name}
+                  className="border-border bg-card text-card-foreground rounded-md border p-3 text-sm"
+                >
+                  <div className="font-mono text-xs font-medium">{f.name}</div>
+                  <div className="text-muted-foreground mt-1 text-xs">
+                    {f.rootDirectories.length} top-level entries:{' '}
+                    {f.rootDirectories.slice(0, 8).join(', ')}
+                    {f.rootDirectories.length > 8 && ' …'}
+                  </div>
+                  <TreeRoot path={f.name} />
+                </li>
+              ))}
+              {loadState.errors.map((e) => (
+                <li
+                  key={e.name}
+                  className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border p-3 text-sm"
+                >
+                  <div className="font-mono text-xs font-medium">{e.name}</div>
+                  <div className="mt-1 text-xs">{e.message}</div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </section>
 
-      {loadState && (
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold">Loaded files</h2>
-          <ul className="space-y-2">
-            {loadState.loaded.map((f) => (
-              <li
-                key={f.name}
-                className="border-border bg-card text-card-foreground rounded-md border p-3 text-sm"
-              >
-                <div className="font-mono text-xs font-medium">{f.name}</div>
-                <div className="text-muted-foreground mt-1 text-xs">
-                  {f.rootDirectories.length} top-level entries:{' '}
-                  {f.rootDirectories.slice(0, 8).join(', ')}
-                  {f.rootDirectories.length > 8 && ' …'}
-                </div>
-                <TreeRoot path={f.name} />
-              </li>
-            ))}
-            {loadState.errors.map((e) => (
-              <li
-                key={e.name}
-                className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border p-3 text-sm"
-              >
-                <div className="font-mono text-xs font-medium">{e.name}</div>
-                <div className="mt-1 text-xs">{e.message}</div>
-              </li>
-            ))}
-          </ul>
+      {loadState && loadState.loaded.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">Bulk tools</h2>
+          <ExtractAllPanel />
         </section>
       )}
 
-      {loadState && loadState.loaded.length > 0 && <ExtractAllPanel />}
-
-      <DiagnosticsPanel />
-
-      {/* Lookup works against whatever the worker has loaded — including
-       *  files loaded via the first-run wizard — so it's available without
-       *  re-uploading on this page. */}
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Lookup by path</h2>
+        <h2 className="text-lg font-semibold">Path lookup</h2>
+        <p className="text-muted-foreground text-sm">
+          Works against whatever the parser worker has loaded — including files from setup — without
+          re-uploading here.
+        </p>
         <div className="flex items-center gap-2">
           <input
             type="text"
@@ -196,21 +202,11 @@ export default function Debug() {
   );
 }
 
-/**
- * Round-trip demo: take a String.wz item node, fetch its localized name +
- * description, and write it to the local database. The Items route shows
- * what's in the DB across reloads.
- */
 function SaveItemPanel({ node }: { node: WzNodeInfo }) {
   const parser = useMemo(() => getParserClient(), []);
   const db = useMemo(() => getDbClient(), []);
   const queryClient = useQueryClient();
 
-  // The "item" is the deepest path segment that looks like a numeric ID. If
-  // the user looked up the item directly (e.g. `String.wz/Consume.img/2000000`,
-  // whose WZ node is a SubProperty container) or one of its leaf properties
-  // (e.g. `…/2000000/name`), both forms target the same row in the items
-  // table.
   const target = resolveItemTarget(node.fullPath);
 
   const saveM = useMutation({
@@ -218,8 +214,6 @@ function SaveItemPanel({ node }: { node: WzNodeInfo }) {
       if (!target) {
         throw new Error('No numeric item ID found in this path');
       }
-      // Manual saves go through Item.wz to find the icon, not String.wz —
-      // String.wz only carries names/descriptions.
       const itemWzPath = target.itemPath.replace(/^String\.wz\/(\w+)\.img/, (_m, cat) => {
         const dir = { Consume: 'Consume', Etc: 'Etc', Ins: 'Install', Cash: 'Cash' }[cat as string];
         return dir ? `Item.wz/${dir}` : `String.wz/${cat}.img`;
@@ -271,7 +265,7 @@ function SaveItemPanel({ node }: { node: WzNodeInfo }) {
         <span className="font-medium">No item ID in this path.</span>{' '}
         <span className="text-muted-foreground">
           Look up something like <code className="font-mono">String.wz/Consume.img/2000000</code>{' '}
-          (or one of its children) to save it to the database.
+          (or one of its children) to save it to the library.
         </span>
       </div>
     );
@@ -282,7 +276,7 @@ function SaveItemPanel({ node }: { node: WzNodeInfo }) {
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <Database className="h-4 w-4" />
-          <span className="font-medium">Save to local database</span>
+          <span className="font-medium">Save to local library</span>
         </div>
         <div className="text-muted-foreground mt-1 truncate text-xs">
           ID {target.id} · <code className="font-mono">{target.itemPath}</code>
@@ -308,11 +302,6 @@ function SaveItemPanel({ node }: { node: WzNodeInfo }) {
   );
 }
 
-/**
- * Locate the deepest numeric segment in a WZ path — that's the item ID. Works
- * whether the user looks up the item container itself or any descendant
- * property under it.
- */
 function resolveItemTarget(fullPath: string): { itemPath: string; id: number } | null {
   const segments = fullPath.split('/').filter(Boolean);
   for (let i = segments.length - 1; i >= 0; i--) {
@@ -326,11 +315,6 @@ function resolveItemTarget(fullPath: string): { itemPath: string; id: number } |
   return null;
 }
 
-/**
- * Best-effort category inference from a String.wz path. Used only by the
- * manual save-from-lookup flow on this page; bulk extractors do this
- * properly via their own category mapping.
- */
 function inferCategory(path: string): string | null {
   const match = path.match(/String\.wz\/([^/]+)\.img/i);
   if (!match) return null;
@@ -357,7 +341,7 @@ function TreeChildren({ path, depth }: { path: string; depth: number }) {
   const client = useMemo(() => getParserClient(), []);
   const [children, setChildren] = useState<WzNodeInfo[] | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [treeError, setTreeError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -368,7 +352,7 @@ function TreeChildren({ path, depth }: { path: string; depth: number }) {
         if (!cancelled) setChildren(c);
       })
       .catch((e: unknown) => {
-        if (!cancelled) setError(String(e));
+        if (!cancelled) setTreeError(String(e));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -379,7 +363,7 @@ function TreeChildren({ path, depth }: { path: string; depth: number }) {
   }, [client, path]);
 
   if (loading) return <div className="text-muted-foreground text-xs">loading…</div>;
-  if (error) return <div className="text-destructive text-xs">{error}</div>;
+  if (treeError) return <div className="text-destructive text-xs">{treeError}</div>;
   if (!children || children.length === 0) {
     return <div className="text-muted-foreground text-xs">(empty)</div>;
   }
@@ -442,7 +426,7 @@ function TreeNode({ node, depth }: { node: WzNodeInfo; depth: number }) {
   );
 }
 
-function DiagnosticsPanel() {
+function SupportReportPanel() {
   const client = useMemo(() => getParserClient(), []);
   const db = useMemo(() => getDbClient(), []);
   const [busy, setBusy] = useState(false);
@@ -471,8 +455,8 @@ function DiagnosticsPanel() {
 
   return (
     <section className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Diagnostics</h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold">Support report</h2>
         <Button variant="outline" size="sm" onClick={buildAndCopy} disabled={busy}>
           {busy ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -484,7 +468,7 @@ function DiagnosticsPanel() {
       </div>
       <p className="text-muted-foreground text-sm">
         Captures the parser log buffer, AES smoke-test result, and environment. Paste into a GitHub
-        issue if something's not working.
+        issue if something is not working.
       </p>
       {status && <p className="text-muted-foreground text-xs">{status}</p>}
       {preview && (
