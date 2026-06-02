@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { CommandPaletteHost } from '@/components/command-palette/CommandPaletteHost';
 import { DataUpdatePrompt } from '@/components/data/DataUpdatePrompt';
+import { AppBootScreen } from '@/components/layout/AppBootScreen';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TopBar } from '@/components/layout/TopBar';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
@@ -10,7 +11,8 @@ import { useDataState } from '@/hooks/useDataState';
 import { useSidebarLayout } from '@/stores/sidebarState';
 
 export function AppShell() {
-  useSetupRedirect();
+  const { showBoot } = useSetupGate();
+  if (showBoot) return <AppBootScreen />;
   return (
     <div className="flex h-full w-full">
       <Sidebar />
@@ -61,8 +63,8 @@ function MobileSidebarDrawer() {
 }
 
 /**
- * Bounce users to the setup wizard when there's nothing to show, covering two
- * cases with one redirect:
+ * Gate AppShell behind a boot screen while library status resolves, then bounce
+ * first-run / rebuild users to the setup wizard. Covers two redirect cases:
  *
  *   - **Rebuild needed**: an incompatible cache was destructively cleared on
  *     open (`reinitialize-required`). We pass `state.reason` so the wizard
@@ -77,19 +79,31 @@ function MobileSidebarDrawer() {
  * wizard is up. When the user clicks "Go Explore", AppShell remounts and the
  * queries synchronously serve their stale pre-extraction snapshot while a
  * refetch is in flight — without the gate we'd redirect right back to /setup.
+ *
+ * `showBoot` keeps the full shell hidden until redirect completes so first-time
+ * visitors don't flash the home page chrome.
  */
-function useSetupRedirect(): void {
+function useSetupGate(): { showBoot: boolean } {
   const features = useFeatures();
   const { state, ready } = useDataState();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const onSetup = location.pathname === '/setup';
+  const shouldRedirect =
+    ready &&
+    !onSetup &&
+    (state === 'reinitialize-required' || features.isFirstRun);
+  const showBoot = !onSetup && (!ready || shouldRedirect);
+
   useEffect(() => {
-    if (!ready) return;
-    if (location.pathname === '/setup') return;
+    if (!shouldRedirect) return;
     if (state === 'reinitialize-required') {
       navigate('/setup', { replace: true, state: { reason: 'data-incompatible' } });
-    } else if (features.isFirstRun) {
+    } else {
       navigate('/setup', { replace: true });
     }
-  }, [ready, state, features.isFirstRun, location.pathname, navigate]);
+  }, [shouldRedirect, state, navigate]);
+
+  return { showBoot };
 }
