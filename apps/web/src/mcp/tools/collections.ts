@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { NotFoundError } from '../errors';
 import type { ToolDefinition } from '../types';
+import { DESTRUCTIVE, READ, WRITE_IDEMPOTENT, WRITE_NEW } from './annotations';
 import { idSchema, collectionEntityTypeSchema } from './schemas';
 
 const collectionsListSchema = z.object({}).optional();
@@ -9,6 +10,7 @@ export const collectionsList: ToolDefinition<typeof collectionsListSchema, unkno
   category: 'Collections',
   description: 'List every collection with its member count.',
   inputSchema: collectionsListSchema,
+  annotations: READ,
   execute: (_input, ctx) => ctx.userDb.listCollections(),
 };
 
@@ -18,6 +20,7 @@ export const collectionsGet: ToolDefinition<typeof collectionsGetSchema, unknown
   category: 'Collections',
   description: 'Fetch one collection by id.',
   inputSchema: collectionsGetSchema,
+  annotations: READ,
   execute: async (input, ctx) => {
     const row = await ctx.userDb.getCollection(input.id);
     if (!row) throw new NotFoundError(`Collection ${input.id} not found`);
@@ -36,6 +39,7 @@ export const collectionsCreate: ToolDefinition<typeof collectionsCreateSchema, u
   category: 'Collections',
   description: 'Create a new collection.',
   inputSchema: collectionsCreateSchema,
+  annotations: WRITE_NEW,
   execute: (input, ctx) => ctx.userDb.createCollection(input),
 };
 
@@ -57,6 +61,7 @@ export const collectionsUpdate: ToolDefinition<typeof collectionsUpdateSchema, u
   category: 'Collections',
   description: 'Update a collection — any subset of its mutable fields.',
   inputSchema: collectionsUpdateSchema,
+  annotations: WRITE_IDEMPOTENT,
   execute: (input, ctx) => ctx.userDb.updateCollection(input.id, input.patch),
 };
 
@@ -66,6 +71,7 @@ export const collectionsDelete: ToolDefinition<typeof collectionsDeleteSchema, u
   category: 'Collections',
   description: 'Delete a collection and all its members.',
   inputSchema: collectionsDeleteSchema,
+  annotations: DESTRUCTIVE,
   execute: async (input, ctx) => {
     await ctx.userDb.deleteCollection(input.id);
     return { ok: true };
@@ -81,6 +87,7 @@ export const collectionsSetPinned: ToolDefinition<typeof collectionsSetPinnedSch
   category: 'Collections',
   description: 'Pin or unpin a collection on the home page.',
   inputSchema: collectionsSetPinnedSchema,
+  annotations: WRITE_IDEMPOTENT,
   execute: (input, ctx) => ctx.userDb.setCollectionPinned(input.id, input.pinned),
 };
 
@@ -97,6 +104,7 @@ export const collectionsAddEntity: ToolDefinition<typeof collectionsAddEntitySch
   category: 'Collections',
   description: 'Add an entity to a collection. Idempotent — re-adds are a no-op.',
   inputSchema: collectionsAddEntitySchema,
+  annotations: WRITE_IDEMPOTENT,
   execute: async (input, ctx) => {
     await ctx.userDb.addMember(input.collectionId, input.entityType, input.entityId, {
       note: input.note ?? null,
@@ -120,6 +128,7 @@ export const collectionsRemoveEntity: ToolDefinition<
   category: 'Collections',
   description: 'Remove an entity from a collection.',
   inputSchema: collectionsRemoveEntitySchema,
+  annotations: DESTRUCTIVE,
   execute: async (input, ctx) => {
     await ctx.userDb.removeMember(input.collectionId, input.entityType, input.entityId);
     return { ok: true };
@@ -135,6 +144,7 @@ export const collectionsListMembers: ToolDefinition<
   category: 'Collections',
   description: 'List members of a collection.',
   inputSchema: collectionsListMembersSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.userDb.listMembers(input.id),
 };
 
@@ -150,6 +160,7 @@ export const collectionsListMemberships: ToolDefinition<
   category: 'Collections',
   description: 'Collections that contain the given (entityType, entityId).',
   inputSchema: collectionsListMembershipsSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.userDb.listMembershipsFor(input.entityType, input.entityId),
 };
 
@@ -162,6 +173,7 @@ export const collectionsBulkAdd: ToolDefinition<typeof collectionsBulkAddSchema,
   category: 'Collections',
   description: 'Add many entities to a collection in one transaction.',
   inputSchema: collectionsBulkAddSchema,
+  annotations: WRITE_IDEMPOTENT,
   execute: (input, ctx) => ctx.userDb.bulkAddMembers(input.collectionId, input.refs),
 };
 
@@ -174,6 +186,7 @@ export const collectionsBulkRemove: ToolDefinition<typeof collectionsBulkRemoveS
   category: 'Collections',
   description: 'Remove many entities from a collection in one transaction.',
   inputSchema: collectionsBulkRemoveSchema,
+  annotations: DESTRUCTIVE,
   execute: async (input, ctx) => {
     await ctx.userDb.bulkRemoveMembers(input.collectionId, input.refs);
     return { ok: true };

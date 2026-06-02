@@ -1,0 +1,41 @@
+{
+  "dxt_version": "0.1",
+  "name": "scrolled",
+  "display_name": "Scrolled",
+  "version": "0.1.0",
+  "description": "Bridge to an open Scrolled browser tab — exposes every map, item, mob, quest, and collection as MCP tools.",
+  "long_description": "Connects Claude to your Scrolled tab over a localhost WebSocket. Enable External Tools in Scrolled's Settings, then ask Claude about your library — search maps, look up drops, manage collections. Nothing leaves your machine; the browser owns the data and the extension is just a protocol adapter.",
+  "author": {
+    "name": "Nicholas Thomson"
+  },
+  "homepage": "https://github.com/RedbackThomson/scrolled",
+  "license": "Apache-2.0",
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.cjs",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.cjs"],
+      "env": {
+        "MCP_BRIDGE_PORT": "${user_config.port}",
+        "MCP_BRIDGE_HOST": "${user_config.host}"
+      }
+    }
+  },
+  "user_config": {
+    "port": {
+      "type": "number",
+      "title": "Bridge port",
+      "description": "WebSocket port the Scrolled tab dials. Match the value in Scrolled's Settings → External Tools.",
+      "default": 8765,
+      "required": false
+    },
+    "host": {
+      "type": "string",
+      "title": "Bridge host",
+      "description": "Bind address for the WebSocket server.",
+      "default": "127.0.0.1",
+      "required": false
+    }
+  }
+}

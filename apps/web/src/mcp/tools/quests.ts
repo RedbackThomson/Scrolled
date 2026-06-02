@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { NotFoundError } from '../errors';
 import type { ToolDefinition } from '../types';
+import { READ } from './annotations';
 import { idSchema, listOptsBaseSchema } from './schemas';
 
 const questsSearchSchema = listOptsBaseSchema.extend({
@@ -11,6 +12,7 @@ export const questsSearch: ToolDefinition<typeof questsSearchSchema, unknown> = 
   category: 'Quests',
   description: 'Search and page through quests, optionally filtered by parent.',
   inputSchema: questsSearchSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.db.listQuests(input),
 };
 
@@ -20,6 +22,7 @@ export const questsGet: ToolDefinition<typeof questsGetSchema, unknown> = {
   category: 'Quests',
   description: 'Fetch one quest by id.',
   inputSchema: questsGetSchema,
+  annotations: READ,
   execute: async (input, ctx) => {
     const row = await ctx.db.getQuest(input.id);
     if (!row) throw new NotFoundError(`Quest ${input.id} not found`);
@@ -33,6 +36,7 @@ export const questsParents: ToolDefinition<typeof questsParentsSchema, unknown> 
   category: 'Quests',
   description: 'Distinct quest parent values for filter UIs.',
   inputSchema: questsParentsSchema,
+  annotations: READ,
   execute: (_input, ctx) => ctx.db.listQuestParents(),
 };
 
@@ -42,6 +46,7 @@ export const questsRequirements: ToolDefinition<typeof questsRequirementsSchema,
   category: 'Quests',
   description: 'Requirements for a quest, joined to target names.',
   inputSchema: questsRequirementsSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.db.getQuestRequirements(input.id),
 };
 
@@ -51,6 +56,7 @@ export const questsRewards: ToolDefinition<typeof questsRewardsSchema, unknown> 
   category: 'Quests',
   description: 'Rewards for a quest, joined to target names.',
   inputSchema: questsRewardsSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.db.getQuestRewards(input.id),
 };
 

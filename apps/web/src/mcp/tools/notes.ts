@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { ToolDefinition } from '../types';
+import { WRITE_IDEMPOTENT } from './annotations';
 import { idSchema, collectionEntityTypeSchema } from './schemas';
 
 const notesUpdateSchema = z.object({
@@ -18,6 +19,7 @@ export const notesUpdate: ToolDefinition<typeof notesUpdateSchema, unknown> = {
   description:
     'Update a collection member\'s note / target quantity / done flag. Any subset of the patch is fine.',
   inputSchema: notesUpdateSchema,
+  annotations: WRITE_IDEMPOTENT,
   execute: async (input, ctx) => {
     await ctx.userDb.updateMember(
       input.collectionId,

@@ -23,6 +23,7 @@ export class ToolRegistry {
       description: tool.description,
       inputSchema: tool.inputSchema,
       outputSchema: tool.outputSchema,
+      annotations: tool.annotations,
       execute: (rawInput: unknown, ctx: ToolContext) =>
         tool.execute(rawInput, ctx) as Promise<unknown>,
     };
@@ -61,6 +62,7 @@ export class ToolRegistry {
         outputSchema: t.outputSchema
           ? (zodToJsonSchema(t.outputSchema, { $refStrategy: 'none' }) as unknown)
           : undefined,
+        annotations: t.annotations,
       })),
     };
   }

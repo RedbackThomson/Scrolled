@@ -35,6 +35,66 @@ pnpm preview
 
 The `preview` command starts a local server and prints the URL. The contents of `apps/web/dist/` after `pnpm build` are plain static files — you can also serve them with any static file server (e.g. `npx serve apps/web/dist`) or host them anywhere that serves static content.
 
+## 🤖 Use it from an AI agent (MCP)
+
+The app exposes its read-and-write surface as [MCP](https://modelcontextprotocol.io/) tools — every map, item, mob, quest, collection, and setting is reachable from any MCP-speaking client (Claude Desktop, IDE plugins, your own scripts) and from a bundled CLI. Tool execution stays inside the browser, so your data never leaves the tab.
+
+### Enable the bridge
+
+In the app, go to **Settings → External Tools** and flip the toggle on. By default the tab will dial out to `ws://localhost:8765`; change the URL there if you need a different port. Off by default — nothing happens until you opt in.
+
+### Run a local MCP server
+
+The server is a small Node process that hosts the WebSocket the tab connects to and speaks MCP stdio upstream:
+
+```bash
+pnpm --filter @scrolled/mcp-server start
+```
+
+Leave it running. The browser tab will connect when the Settings toggle is on.
+
+### Connect Claude Desktop
+
+Add an entry to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or the platform equivalent:
+
+```json
+{
+  "mcpServers": {
+    "scrolled": {
+      "command": "node",
+      "args": [
+        "--experimental-strip-types",
+        "/absolute/path/to/scrolled/packages/mcp-server/src/cli.ts"
+      ]
+    }
+  }
+}
+```
+
+Restart Claude Desktop. The Scrolled tools appear in its tool list — ask things like "use scrolled to find maps named henesys" or "show me what bigfoot drops".
+
+Only one host can serve the bridge at a time. If you started `mcp-server` manually, let Claude Desktop spawn its own copy instead (or vice versa) — don't run both.
+
+### Try it from the CLI
+
+The bundled CLI is the quickest way to verify everything's wired up:
+
+```bash
+# List every registered tool
+pnpm --filter @scrolled/mcp-cli exec scrolled-mcp list
+
+# Schema for one tool
+pnpm --filter @scrolled/mcp-cli exec scrolled-mcp describe maps.search
+
+# Invoke a tool — JSON in, JSON out
+pnpm --filter @scrolled/mcp-cli exec scrolled-mcp call maps.search --input '{"limit":5}'
+pnpm --filter @scrolled/mcp-cli exec scrolled-mcp call search.global --input '{"q":"henesys"}'
+pnpm --filter @scrolled/mcp-cli exec scrolled-mcp call collections.list --input '{}'
+pnpm --filter @scrolled/mcp-cli exec scrolled-mcp call db.gameStatus --input '{}'
+```
+
+If the CLI sits at "waiting for the browser tab to connect", the Settings toggle is off or the URL doesn't match. The status pill in Settings flips to **Connected** when the bridge is live.
+
 ## ⚖️ Your files, your machine
 
 This repository contains **only code**. It does not ship any game data — no `.wz` archives, no extracted assets, no sprites, no pre-built databases. You bring your own files at runtime, and those files never leave your browser.

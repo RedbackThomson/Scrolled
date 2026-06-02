@@ -7,6 +7,7 @@ import {
 } from '@/serverProfiles';
 import { NotFoundError } from '../errors';
 import type { ToolDefinition } from '../types';
+import { READ } from './annotations';
 import { idSchema, listOptsBaseSchema } from './schemas';
 
 const equipmentSearchSchema = listOptsBaseSchema.extend({
@@ -18,6 +19,7 @@ export const equipmentSearch: ToolDefinition<typeof equipmentSearchSchema, unkno
   category: 'Equipment',
   description: 'Search and page through equips (armor + weapons).',
   inputSchema: equipmentSearchSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.db.listEquips(input),
 };
 
@@ -27,6 +29,7 @@ export const equipmentGet: ToolDefinition<typeof equipmentGetSchema, unknown> = 
   category: 'Equipment',
   description: 'Fetch one equip by id.',
   inputSchema: equipmentGetSchema,
+  annotations: READ,
   execute: async (input, ctx) => {
     const row = await ctx.db.getEquip(input.id);
     if (!row) throw new NotFoundError(`Equip ${input.id} not found`);
@@ -40,6 +43,7 @@ export const equipmentSlots: ToolDefinition<typeof equipmentSlotsSchema, unknown
   category: 'Equipment',
   description: 'Distinct equip slot values for filters / nav.',
   inputSchema: equipmentSlotsSchema,
+  annotations: READ,
   execute: (_input, ctx) => ctx.db.listEquipSlots(),
 };
 
@@ -49,6 +53,7 @@ export const equipmentTypes: ToolDefinition<typeof equipmentTypesSchema, unknown
   category: 'Equipment',
   description: 'Distinct weapon equip-type values for the Weapons nav.',
   inputSchema: equipmentTypesSchema,
+  annotations: READ,
   execute: (_input, ctx) => ctx.db.listEquipTypes(),
 };
 
@@ -59,6 +64,7 @@ export const equipmentRanges: ToolDefinition<typeof equipmentRangesSchema, unkno
   description:
     'Possible stat ranges for an equip under the currently active server profile.',
   inputSchema: equipmentRangesSchema,
+  annotations: READ,
   execute: async (input, ctx) => {
     const row = await ctx.db.getEquip(input.id);
     if (!row) throw new NotFoundError(`Equip ${input.id} not found`);

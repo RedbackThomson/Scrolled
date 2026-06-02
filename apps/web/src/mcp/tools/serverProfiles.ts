@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { BUILTIN_PROFILES, resolveServerProfile } from '@/serverProfiles';
 import { NotFoundError } from '../errors';
 import type { ToolDefinition } from '../types';
+import { READ, WRITE_IDEMPOTENT } from './annotations';
 
 const profilesListSchema = z.object({}).optional();
 export const profilesList: ToolDefinition<typeof profilesListSchema, unknown> = {
@@ -9,6 +10,7 @@ export const profilesList: ToolDefinition<typeof profilesListSchema, unknown> = 
   category: 'ServerProfiles',
   description: 'List built-in server profiles.',
   inputSchema: profilesListSchema,
+  annotations: READ,
   execute: async () => BUILTIN_PROFILES,
 };
 
@@ -18,6 +20,7 @@ export const profilesGet: ToolDefinition<typeof profilesGetSchema, unknown> = {
   category: 'ServerProfiles',
   description: 'Fetch one server profile by id.',
   inputSchema: profilesGetSchema,
+  annotations: READ,
   execute: async (input) => {
     const found = BUILTIN_PROFILES.find((p) => p.id === input.id);
     if (!found) throw new NotFoundError(`Server profile ${input.id} not found`);
@@ -31,6 +34,7 @@ export const profilesGetActive: ToolDefinition<typeof profilesGetActiveSchema, u
   category: 'ServerProfiles',
   description: 'Currently active server profile.',
   inputSchema: profilesGetActiveSchema,
+  annotations: READ,
   execute: async (_input, ctx) => {
     const id = await ctx.db.getServerProfile();
     return resolveServerProfile(id);
@@ -43,6 +47,7 @@ export const profilesSetActive: ToolDefinition<typeof profilesSetActiveSchema, u
   category: 'ServerProfiles',
   description: 'Set the active server profile by id.',
   inputSchema: profilesSetActiveSchema,
+  annotations: WRITE_IDEMPOTENT,
   execute: async (input, ctx) => {
     await ctx.db.setServerProfile(input.id);
     return { ok: true };

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { getSearchIndex, querySearch } from '@/search';
 import type { ToolDefinition } from '../types';
+import { READ } from './annotations';
 
 const searchGlobalSchema = z.object({
   q: z.string().min(1),
@@ -12,6 +13,7 @@ export const searchGlobal: ToolDefinition<typeof searchGlobalSchema, unknown> = 
   category: 'Search',
   description: 'Cross-entity fuzzy/prefix search across maps, items, mobs, NPCs, quests, skills.',
   inputSchema: searchGlobalSchema,
+  annotations: READ,
   execute: async (input, ctx) => {
     const status = await ctx.db.status();
     const c = status.counts;

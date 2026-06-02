@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { NotFoundError } from '../errors';
 import type { ToolDefinition } from '../types';
+import { DESTRUCTIVE, READ, WRITE_IDEMPOTENT, WRITE_NEW } from './annotations';
 import { idSchema, collectionEntityTypeSchema } from './schemas';
 
 const pinnedListSchema = z.object({}).optional();
@@ -9,6 +10,7 @@ export const pinnedList: ToolDefinition<typeof pinnedListSchema, unknown> = {
   category: 'PinnedSearches',
   description: 'List the user\'s saved listing filters.',
   inputSchema: pinnedListSchema,
+  annotations: READ,
   execute: (_input, ctx) => ctx.userDb.listPinnedSearches(),
 };
 
@@ -18,6 +20,7 @@ export const pinnedGet: ToolDefinition<typeof pinnedGetSchema, unknown> = {
   category: 'PinnedSearches',
   description: 'Fetch one pinned search by id.',
   inputSchema: pinnedGetSchema,
+  annotations: READ,
   execute: async (input, ctx) => {
     const row = await ctx.userDb.getPinnedSearch(input.id);
     if (!row) throw new NotFoundError(`Pinned search ${input.id} not found`);
@@ -35,6 +38,7 @@ export const pinnedCreate: ToolDefinition<typeof pinnedCreateSchema, unknown> = 
   category: 'PinnedSearches',
   description: 'Save a new listing filter.',
   inputSchema: pinnedCreateSchema,
+  annotations: WRITE_NEW,
   execute: (input, ctx) => ctx.userDb.createPinnedSearch(input),
 };
 
@@ -50,6 +54,7 @@ export const pinnedUpdate: ToolDefinition<typeof pinnedUpdateSchema, unknown> = 
   category: 'PinnedSearches',
   description: 'Update a pinned search\'s name or params.',
   inputSchema: pinnedUpdateSchema,
+  annotations: WRITE_IDEMPOTENT,
   execute: (input, ctx) => ctx.userDb.updatePinnedSearch(input.id, input.patch),
 };
 
@@ -59,6 +64,7 @@ export const pinnedDelete: ToolDefinition<typeof pinnedDeleteSchema, unknown> = 
   category: 'PinnedSearches',
   description: 'Delete a pinned search.',
   inputSchema: pinnedDeleteSchema,
+  annotations: DESTRUCTIVE,
   execute: async (input, ctx) => {
     await ctx.userDb.deletePinnedSearch(input.id);
     return { ok: true };

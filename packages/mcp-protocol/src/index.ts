@@ -70,6 +70,23 @@ export const toolErrorSchema = z.object({
 export type ToolError = z.infer<typeof toolErrorSchema>;
 
 /**
+ * MCP "tool annotations" — behavioural hints a client can surface in UI
+ * (read-only badges, write-confirmation prompts, etc.). Advisory only; the
+ * tool's handler is still authoritative. Defaults match the MCP spec:
+ *   readOnlyHint=false, destructiveHint=true, idempotentHint=false,
+ *   openWorldHint=true.
+ * Every Scrolled tool is local-only, so we always set openWorldHint=false.
+ */
+export const toolAnnotationsSchema = z.object({
+  title: z.string().optional(),
+  readOnlyHint: z.boolean().optional(),
+  destructiveHint: z.boolean().optional(),
+  idempotentHint: z.boolean().optional(),
+  openWorldHint: z.boolean().optional(),
+});
+export type ToolAnnotations = z.infer<typeof toolAnnotationsSchema>;
+
+/**
  * Tool metadata returned by `discover`. Carries only what a generic client
  * needs to render help and validate input shape — schemas cross the wire as
  * JSON Schema (Zod's `toJSONSchema` output) so non-TS clients can use them.
@@ -80,6 +97,7 @@ export const toolMetadataSchema = z.object({
   description: z.string(),
   inputSchema: z.unknown(),
   outputSchema: z.unknown().optional(),
+  annotations: toolAnnotationsSchema.optional(),
 });
 export type ToolMetadata = z.infer<typeof toolMetadataSchema>;
 

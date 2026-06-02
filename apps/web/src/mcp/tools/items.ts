@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { NotFoundError } from '../errors';
 import type { ToolDefinition } from '../types';
+import { READ } from './annotations';
 import { idSchema, listOptsBaseSchema } from './schemas';
 
 const itemsSearchSchema = listOptsBaseSchema.extend({
@@ -11,6 +12,7 @@ export const itemsSearch: ToolDefinition<typeof itemsSearchSchema, unknown> = {
   category: 'Items',
   description: 'Search and page through use/setup/etc items.',
   inputSchema: itemsSearchSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.db.listItems(input),
 };
 
@@ -20,6 +22,7 @@ export const itemsGet: ToolDefinition<typeof itemsGetSchema, unknown> = {
   category: 'Items',
   description: 'Fetch one item by id.',
   inputSchema: itemsGetSchema,
+  annotations: READ,
   execute: async (input, ctx) => {
     const row = await ctx.db.getItem(input.id);
     if (!row) throw new NotFoundError(`Item ${input.id} not found`);
@@ -33,6 +36,7 @@ export const itemsCategories: ToolDefinition<typeof itemsCategoriesSchema, unkno
   category: 'Items',
   description: 'Distinct item category values for filters / nav.',
   inputSchema: itemsCategoriesSchema,
+  annotations: READ,
   execute: (_input, ctx) => ctx.db.listItemCategories(),
 };
 
@@ -42,6 +46,7 @@ export const itemsDroppedBy: ToolDefinition<typeof itemsDroppedBySchema, unknown
   category: 'Items',
   description: 'Mobs that can drop this item, joined to mob name + level.',
   inputSchema: itemsDroppedBySchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.db.getItemDroppedBy(input.id),
 };
 
@@ -51,6 +56,7 @@ export const itemsQuestsRequiring: ToolDefinition<typeof itemsQuestsRequiringSch
   category: 'Items',
   description: 'Quests that ask for this item as a requirement.',
   inputSchema: itemsQuestsRequiringSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.db.getItemQuests(input.id),
 };
 
@@ -60,6 +66,7 @@ export const itemsQuestsRewarding: ToolDefinition<typeof itemsQuestsRewardingSch
   category: 'Items',
   description: 'Quests that grant this item as a reward.',
   inputSchema: itemsQuestsRewardingSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.db.getItemRewardingQuests(input.id),
 };
 

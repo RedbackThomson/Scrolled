@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { ToolDefinition } from '../types';
+import { DESTRUCTIVE, READ, WRITE_IDEMPOTENT, WRITE_NEW } from './annotations';
 import { idSchema, collectionEntityTypeSchema } from './schemas';
 
 const groupsListSchema = z.object({ collectionId: idSchema });
@@ -8,6 +9,7 @@ export const groupsList: ToolDefinition<typeof groupsListSchema, unknown> = {
   category: 'Groups',
   description: 'List user-defined groups inside a collection (default group is implicit).',
   inputSchema: groupsListSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.userDb.listGroups(input.collectionId),
 };
 
@@ -20,6 +22,7 @@ export const groupsCreate: ToolDefinition<typeof groupsCreateSchema, unknown> = 
   category: 'Groups',
   description: 'Create a new group inside a collection.',
   inputSchema: groupsCreateSchema,
+  annotations: WRITE_NEW,
   execute: (input, ctx) => ctx.userDb.createGroup(input.collectionId, input.name),
 };
 
@@ -29,6 +32,7 @@ export const groupsRename: ToolDefinition<typeof groupsRenameSchema, unknown> = 
   category: 'Groups',
   description: 'Rename a group.',
   inputSchema: groupsRenameSchema,
+  annotations: WRITE_IDEMPOTENT,
   execute: (input, ctx) => ctx.userDb.renameGroup(input.groupId, input.name),
 };
 
@@ -38,6 +42,7 @@ export const groupsDelete: ToolDefinition<typeof groupsDeleteSchema, unknown> = 
   category: 'Groups',
   description: 'Delete a group. Members fall back into the implicit default group.',
   inputSchema: groupsDeleteSchema,
+  annotations: DESTRUCTIVE,
   execute: async (input, ctx) => {
     await ctx.userDb.deleteGroup(input.groupId);
     return { ok: true };
@@ -53,6 +58,7 @@ export const groupsReorder: ToolDefinition<typeof groupsReorderSchema, unknown> 
   category: 'Groups',
   description: 'Persist a new top-to-bottom ordering of a collection\'s groups.',
   inputSchema: groupsReorderSchema,
+  annotations: WRITE_IDEMPOTENT,
   execute: async (input, ctx) => {
     await ctx.userDb.reorderGroups(input.collectionId, input.orderedGroupIds);
     return { ok: true };
@@ -72,6 +78,7 @@ export const groupsMoveMember: ToolDefinition<typeof groupsMoveMemberSchema, unk
   description:
     'Move a member to a (groupId|null, index). `null` group means the implicit default group.',
   inputSchema: groupsMoveMemberSchema,
+  annotations: WRITE_IDEMPOTENT,
   execute: async (input, ctx) => {
     await ctx.userDb.moveMember(
       input.collectionId,

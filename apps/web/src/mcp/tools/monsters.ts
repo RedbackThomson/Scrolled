@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { NotFoundError } from '../errors';
 import type { ToolDefinition } from '../types';
+import { READ } from './annotations';
 import { idSchema, listOptsBaseSchema } from './schemas';
 
 export const monstersSearch: ToolDefinition<typeof listOptsBaseSchema, unknown> = {
@@ -8,6 +9,7 @@ export const monstersSearch: ToolDefinition<typeof listOptsBaseSchema, unknown> 
   category: 'Monsters',
   description: 'Search and page through mobs.',
   inputSchema: listOptsBaseSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.db.listMobs(input),
 };
 
@@ -17,6 +19,7 @@ export const monstersGet: ToolDefinition<typeof monstersGetSchema, unknown> = {
   category: 'Monsters',
   description: 'Fetch one mob by id.',
   inputSchema: monstersGetSchema,
+  annotations: READ,
   execute: async (input, ctx) => {
     const row = await ctx.db.getMob(input.id);
     if (!row) throw new NotFoundError(`Mob ${input.id} not found`);
@@ -30,6 +33,7 @@ export const monstersDrops: ToolDefinition<typeof monstersDropsSchema, unknown> 
   category: 'Monsters',
   description: 'Items this mob can drop, joined to item / equip names.',
   inputSchema: monstersDropsSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.db.getMobDrops(input.id),
 };
 
@@ -39,6 +43,7 @@ export const monstersMaps: ToolDefinition<typeof monstersMapsSchema, unknown> = 
   category: 'Monsters',
   description: 'Maps where this mob spawns, with per-map aggregated count.',
   inputSchema: monstersMapsSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.db.getMobMaps(input.id),
 };
 
@@ -48,6 +53,7 @@ export const monstersQuests: ToolDefinition<typeof monstersQuestsSchema, unknown
   category: 'Monsters',
   description: 'Quests that require killing this mob.',
   inputSchema: monstersQuestsSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.db.getMobQuests(input.id),
 };
 

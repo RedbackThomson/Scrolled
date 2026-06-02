@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { NotFoundError } from '../errors';
 import type { ToolDefinition } from '../types';
+import { READ } from './annotations';
 import { idSchema, listOptsBaseSchema } from './schemas';
 
 export const npcsSearch: ToolDefinition<typeof listOptsBaseSchema, unknown> = {
@@ -8,6 +9,7 @@ export const npcsSearch: ToolDefinition<typeof listOptsBaseSchema, unknown> = {
   category: 'NPCs',
   description: 'Search and page through NPCs.',
   inputSchema: listOptsBaseSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.db.listNpcs(input),
 };
 
@@ -17,6 +19,7 @@ export const npcsGet: ToolDefinition<typeof npcsGetSchema, unknown> = {
   category: 'NPCs',
   description: 'Fetch one NPC by id.',
   inputSchema: npcsGetSchema,
+  annotations: READ,
   execute: async (input, ctx) => {
     const row = await ctx.db.getNpc(input.id);
     if (!row) throw new NotFoundError(`NPC ${input.id} not found`);
@@ -30,6 +33,7 @@ export const npcsMaps: ToolDefinition<typeof npcsMapsSchema, unknown> = {
   category: 'NPCs',
   description: 'Maps where this NPC appears.',
   inputSchema: npcsMapsSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.db.getNpcMaps(input.id),
 };
 
@@ -39,6 +43,7 @@ export const npcsQuests: ToolDefinition<typeof npcsQuestsSchema, unknown> = {
   category: 'NPCs',
   description: 'Quests this NPC offers (start or end).',
   inputSchema: npcsQuestsSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.db.getNpcQuests(input.id),
 };
 

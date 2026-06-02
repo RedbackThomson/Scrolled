@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { NotFoundError } from '../errors';
 import type { ToolDefinition } from '../types';
+import { READ } from './annotations';
 import { idSchema, listOptsBaseSchema } from './schemas';
 
 export const mapsSearch: ToolDefinition<typeof listOptsBaseSchema, unknown> = {
@@ -8,6 +9,7 @@ export const mapsSearch: ToolDefinition<typeof listOptsBaseSchema, unknown> = {
   category: 'Maps',
   description: 'Search and page through maps. Returns rows + total count.',
   inputSchema: listOptsBaseSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.db.listMaps(input),
 };
 
@@ -17,6 +19,7 @@ export const mapsGet: ToolDefinition<typeof mapsGetSchema, unknown> = {
   category: 'Maps',
   description: 'Fetch one map by id, including minimap metadata.',
   inputSchema: mapsGetSchema,
+  annotations: READ,
   execute: async (input, ctx) => {
     const row = await ctx.db.getMap(input.id);
     if (!row) throw new NotFoundError(`Map ${input.id} not found`);
@@ -30,6 +33,7 @@ export const mapsListMobs: ToolDefinition<typeof mapsListMobsSchema, unknown> = 
   category: 'Maps',
   description: 'List mobs that spawn on a given map, joined to mob names.',
   inputSchema: mapsListMobsSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.db.getMapMobs(input.id),
 };
 
@@ -39,6 +43,7 @@ export const mapsListNpcs: ToolDefinition<typeof mapsListNpcsSchema, unknown> = 
   category: 'Maps',
   description: 'List NPCs on a given map, joined to NPC names.',
   inputSchema: mapsListNpcsSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.db.getMapNpcs(input.id),
 };
 
@@ -48,6 +53,7 @@ export const mapsListPortals: ToolDefinition<typeof mapsListPortalsSchema, unkno
   category: 'Maps',
   description: 'List portals on a given map, joined to target map names.',
   inputSchema: mapsListPortalsSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.db.getMapPortals(input.id),
 };
 
@@ -57,6 +63,7 @@ export const mapsListMobSpawns: ToolDefinition<typeof mapsListMobSpawnsSchema, u
   category: 'Maps',
   description: 'List per-position mob spawns on a given map.',
   inputSchema: mapsListMobSpawnsSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.db.getMapMobSpawns(input.id),
 };
 

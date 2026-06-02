@@ -5,6 +5,7 @@
 import { z } from 'zod';
 import { UnsupportedError } from '../errors';
 import type { ToolDefinition } from '../types';
+import { DESTRUCTIVE, READ } from './annotations';
 import { idSchema } from './schemas';
 
 const collectionsExportOneSchema = z.object({ id: idSchema });
@@ -13,6 +14,7 @@ export const collectionsExportOne: ToolDefinition<typeof collectionsExportOneSch
   category: 'ImportExport',
   description: 'Export a single collection as JSON.',
   inputSchema: collectionsExportOneSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.userDb.exportCollectionJson(input.id),
 };
 
@@ -25,6 +27,7 @@ export const collectionsExportAll: ToolDefinition<
   category: 'ImportExport',
   description: 'Export every collection as a single JSON bundle.',
   inputSchema: collectionsExportAllSchema,
+  annotations: READ,
   execute: (_input, ctx) => ctx.userDb.exportAllJson(),
 };
 
@@ -38,6 +41,7 @@ export const collectionsImport: ToolDefinition<typeof collectionsImportSchema, u
   description:
     'Import a JSON bundle previously produced by `collections.export` / `collections.exportAll`.',
   inputSchema: collectionsImportSchema,
+  annotations: DESTRUCTIVE,
   execute: (input, ctx) => ctx.userDb.importJson(input.payload, input.conflict),
 };
 
@@ -48,6 +52,7 @@ export const libraryExport: ToolDefinition<typeof libraryExportSchema, unknown> 
   description:
     'Export the game-data SQLite file as a base64 string. Large — prefer the in-app Backup UI for >100MB libraries.',
   inputSchema: libraryExportSchema,
+  annotations: READ,
   execute: async (_input, ctx) => {
     const bytes = await ctx.db.exportBytes();
     return { base64: bytesToBase64(bytes), byteLength: bytes.byteLength };
@@ -63,6 +68,7 @@ export const libraryImport: ToolDefinition<typeof libraryImportSchema, unknown> 
   description:
     'Replace the game-data SQLite file with a previously exported base64 blob. Use the Backup UI for restores you can step through visually.',
   inputSchema: libraryImportSchema,
+  annotations: DESTRUCTIVE,
   execute: async (input, ctx) => {
     try {
       const bytes = base64ToBytes(input.base64);

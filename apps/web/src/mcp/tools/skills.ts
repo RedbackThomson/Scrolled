@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { NotFoundError } from '../errors';
 import type { ToolDefinition } from '../types';
+import { READ } from './annotations';
 import { idSchema, listOptsBaseSchema } from './schemas';
 
 export const skillsList: ToolDefinition<typeof listOptsBaseSchema, unknown> = {
@@ -8,6 +9,7 @@ export const skillsList: ToolDefinition<typeof listOptsBaseSchema, unknown> = {
   category: 'Skills',
   description: 'Paged listing of skills.',
   inputSchema: listOptsBaseSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.db.listSkills(input),
 };
 
@@ -17,6 +19,7 @@ export const skillsGet: ToolDefinition<typeof skillsGetSchema, unknown> = {
   category: 'Skills',
   description: 'Fetch one skill by id.',
   inputSchema: skillsGetSchema,
+  annotations: READ,
   execute: async (input, ctx) => {
     const row = await ctx.db.getSkill(input.id);
     if (!row) throw new NotFoundError(`Skill ${input.id} not found`);
@@ -30,6 +33,7 @@ export const skillsLevels: ToolDefinition<typeof skillsLevelsSchema, unknown> = 
   category: 'Skills',
   description: 'Level-table rows for a skill, ordered by level ascending.',
   inputSchema: skillsLevelsSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.db.getSkillLevels(input.id),
 };
 
@@ -39,6 +43,7 @@ export const skillsPrereqs: ToolDefinition<typeof skillsPrereqSchema, unknown> =
   category: 'Skills',
   description: 'Direct prerequisites of a skill.',
   inputSchema: skillsPrereqSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.db.getSkillPrerequisites(input.id),
 };
 
@@ -48,6 +53,7 @@ export const skillsRequiring: ToolDefinition<typeof skillsRequiringSchema, unkno
   category: 'Skills',
   description: 'Skills that list this skill as a prerequisite.',
   inputSchema: skillsRequiringSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.db.getSkillsRequiring(input.id),
 };
 
@@ -57,6 +63,7 @@ export const skillsQuests: ToolDefinition<typeof skillsQuestsSchema, unknown> = 
   category: 'Skills',
   description: 'Quests that grant this skill as a reward.',
   inputSchema: skillsQuestsSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.db.getSkillQuests(input.id),
 };
 

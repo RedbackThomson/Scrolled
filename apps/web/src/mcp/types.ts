@@ -5,12 +5,12 @@
 
 import type { Remote } from 'comlink';
 import type { ZodTypeAny, z } from 'zod';
-import type { ToolCategory, ToolMetadata } from '@scrolled/mcp-protocol';
+import type { ToolAnnotations, ToolCategory, ToolMetadata } from '@scrolled/mcp-protocol';
 import type { GameDatabase } from '@/db';
 import type { UserDatabase } from '@/db/user';
 import type { McpServices } from './services';
 
-export type { ToolCategory, ToolMetadata } from '@scrolled/mcp-protocol';
+export type { ToolAnnotations, ToolCategory, ToolMetadata } from '@scrolled/mcp-protocol';
 
 export interface ToolContext {
   db: Remote<GameDatabase>;
@@ -30,6 +30,9 @@ export interface ToolDefinition<TInputSchema extends ZodTypeAny, TOutput> {
   description: string;
   inputSchema: TInputSchema;
   outputSchema?: ZodTypeAny;
+  /** Behavioural hints surfaced over MCP so clients can warn users before
+   *  invoking destructive tools. Advisory only — handlers are authoritative. */
+  annotations?: ToolAnnotations;
   execute(input: z.infer<TInputSchema>, ctx: ToolContext): Promise<TOutput>;
 }
 
@@ -40,6 +43,7 @@ export interface RegisteredTool {
   description: string;
   inputSchema: ZodTypeAny;
   outputSchema?: ZodTypeAny;
+  annotations?: ToolAnnotations;
   execute(input: unknown, ctx: ToolContext): Promise<unknown>;
 }
 

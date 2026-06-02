@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { NotFoundError } from '../errors';
 import type { ToolDefinition } from '../types';
+import { READ } from './annotations';
 import { idSchema, listOptsBaseSchema } from './schemas';
 
 const questChainsListSchema = listOptsBaseSchema.extend({
@@ -11,6 +12,7 @@ export const questChainsList: ToolDefinition<typeof questChainsListSchema, unkno
   category: 'QuestChains',
   description: 'Paged listing of derived quest chains.',
   inputSchema: questChainsListSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.db.listQuestChains(input),
 };
 
@@ -20,6 +22,7 @@ export const questChainsGet: ToolDefinition<typeof questChainsGetSchema, unknown
   category: 'QuestChains',
   description: 'Hydrated chain (members + edges) for the detail page.',
   inputSchema: questChainsGetSchema,
+  annotations: READ,
   execute: async (input, ctx) => {
     const row = await ctx.db.getQuestChain(input.id);
     if (!row) throw new NotFoundError(`Quest chain ${input.id} not found`);
@@ -33,6 +36,7 @@ export const questChainsForQuest: ToolDefinition<typeof questChainsForQuestSchem
   category: 'QuestChains',
   description: 'Chain a given quest belongs to, or null.',
   inputSchema: questChainsForQuestSchema,
+  annotations: READ,
   execute: (input, ctx) => ctx.db.getChainForQuest(input.id),
 };
 
