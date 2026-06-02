@@ -163,8 +163,12 @@ export class UserDbApi implements UserDatabase {
     collections.updateMember(this.db, collectionId, entityType, entityId, patch);
   }
 
-  async bulkAddMembers(collectionId: number, refs: readonly EntityRef[]): Promise<BulkAddResult> {
-    return collections.bulkAddMembers(this.db, collectionId, refs);
+  async bulkAddMembers(
+    collectionId: number,
+    refs: readonly EntityRef[],
+    groupId: number | null = null,
+  ): Promise<BulkAddResult> {
+    return collections.bulkAddMembers(this.db, collectionId, refs, groupId);
   }
 
   async bulkRemoveMembers(collectionId: number, refs: readonly EntityRef[]): Promise<void> {

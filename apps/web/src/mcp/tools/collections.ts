@@ -98,11 +98,13 @@ const collectionsAddEntitySchema = z.object({
   note: z.string().nullable().optional(),
   quantity: z.number().int().nullable().optional(),
   done: z.boolean().optional(),
+  groupId: idSchema.nullable().optional(),
 });
 export const collectionsAddEntity: ToolDefinition<typeof collectionsAddEntitySchema, unknown> = {
   name: 'collections.addEntity',
   category: 'Collections',
-  description: 'Add an entity to a collection. Idempotent — re-adds are a no-op.',
+  description:
+    'Add an entity to a collection. Pass `groupId` to land it in a named group; omit or null for the default group. Idempotent — re-adds preserve existing group and position.',
   inputSchema: collectionsAddEntitySchema,
   annotations: WRITE_IDEMPOTENT,
   execute: async (input, ctx) => {
@@ -110,6 +112,7 @@ export const collectionsAddEntity: ToolDefinition<typeof collectionsAddEntitySch
       note: input.note ?? null,
       quantity: input.quantity ?? null,
       done: input.done,
+      groupId: input.groupId ?? null,
     });
     return { ok: true };
   },
@@ -167,14 +170,17 @@ export const collectionsListMemberships: ToolDefinition<
 const collectionsBulkAddSchema = z.object({
   collectionId: idSchema,
   refs: z.array(z.object({ entityType: collectionEntityTypeSchema, entityId: idSchema })).min(1),
+  groupId: idSchema.nullable().optional(),
 });
 export const collectionsBulkAdd: ToolDefinition<typeof collectionsBulkAddSchema, unknown> = {
   name: 'collections.bulkAdd',
   category: 'Collections',
-  description: 'Add many entities to a collection in one transaction.',
+  description:
+    'Add many entities to a collection in one transaction. Pass `groupId` to land them in a named group; omit or null for the default group.',
   inputSchema: collectionsBulkAddSchema,
   annotations: WRITE_IDEMPOTENT,
-  execute: (input, ctx) => ctx.userDb.bulkAddMembers(input.collectionId, input.refs),
+  execute: (input, ctx) =>
+    ctx.userDb.bulkAddMembers(input.collectionId, input.refs, input.groupId ?? null),
 };
 
 const collectionsBulkRemoveSchema = z.object({

@@ -72,7 +72,7 @@ export class BridgeDispatcher {
         id,
         kind: 'response',
         success: true,
-        result,
+        result: stripBinary(result),
       });
     } catch (e) {
       const error: ToolError =
@@ -115,6 +115,55 @@ export function newProgressEnvelope(forId: string, pct: number, message?: string
     pct,
     message,
   };
+}
+
+/**
+ * Drop any binary buffer (Uint8Array, other typed arrays, ArrayBuffer,
+ * DataView) inside a tool result before it crosses the wire. JSON.stringify
+ * of a Uint8Array balloons into `{"0":1,"1":2,…}` — a 50KB icon blob
+ * becomes hundreds of kilobytes of useless JSON. None of the registered
+ * tools' downstream consumers need raw bytes; an MCP client that wants an
+ * icon should fetch it through the web UI, not the LLM.
+ *
+ * Fields holding binary values are *omitted* rather than nulled so the wire
+ * payload reads "this field is not transmitted" rather than "this field is
+ * absent" — null on `iconData` is ambiguous about whether the item has no
+ * icon or whether the data was stripped.
+ *
+ * Top-level binary values (rare — no tool currently returns one) collapse
+ * to `null`; binary array elements likewise become `null` so element
+ * indices stay stable.
+ *
+ * Exported for the unit test.
+ */
+export function stripBinary(value: unknown): unknown {
+  if (value === null || value === undefined) return value;
+  if (isBinary(value)) return null;
+  if (Array.isArray(value)) {
+    return value.map((v) => (isBinary(v) ? null : stripBinary(v)));
+  }
+  if (typeof value === 'object' && isPlainObject(value)) {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      if (isBinary(v)) continue; // omit the key entirely
+      out[k] = stripBinary(v);
+    }
+    return out;
+  }
+  // Class instances (Date, Map, Set, …) pass through unchanged — recursing
+  // via Object.entries would treat their non-enumerable internals as an
+  // empty object and lose the value.
+  return value;
+}
+
+function isBinary(value: unknown): boolean {
+  if (value instanceof ArrayBuffer) return true;
+  return ArrayBuffer.isView(value); // Uint8Array, DataView, etc.
+}
+
+function isPlainObject(value: object): boolean {
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
 }
 
 void TOOL_VERSION; // keep symbol live for downstream importers

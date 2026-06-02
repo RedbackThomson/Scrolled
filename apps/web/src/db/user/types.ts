@@ -108,6 +108,13 @@ export interface AddMemberOptions {
   note?: string | null;
   quantity?: number | null;
   done?: boolean;
+  /**
+   * Target group for the new row. Null (or omitted) lands it in the
+   * default implicit group. Ignored on conflict — re-adding an existing
+   * member preserves its current group and position so manual ordering
+   * isn't disturbed; use {@link UserDatabase.moveMember} to relocate.
+   */
+  groupId?: number | null;
 }
 
 export interface UpdateMemberPatch {
@@ -256,7 +263,17 @@ export interface UserDatabase {
     entityId: number,
     patch: UpdateMemberPatch,
   ): Promise<void>;
-  bulkAddMembers(collectionId: number, refs: readonly EntityRef[]): Promise<BulkAddResult>;
+  /**
+   * Insert many members. Existing rows (same entityType + entityId) are
+   * skipped without touching their group/position. New rows land at the
+   * tail of `groupId`'s bucket — pass `null` (or omit) for the default
+   * implicit group.
+   */
+  bulkAddMembers(
+    collectionId: number,
+    refs: readonly EntityRef[],
+    groupId?: number | null,
+  ): Promise<BulkAddResult>;
   bulkRemoveMembers(collectionId: number, refs: readonly EntityRef[]): Promise<void>;
 
   /** Collections that contain the given (entityType, entityId). */

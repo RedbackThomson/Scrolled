@@ -247,15 +247,16 @@ export function addMember(
   entityId: number,
   opts: AddMemberOptions = {},
 ): void {
-  // Insert into the default group at the end. On conflict we preserve the
-  // existing row's `group_id` and `position` so resaving an item doesn't
-  // tear the user's manual ordering.
+  // Insert into `opts.groupId` (or the default group when null/omitted) at
+  // the end. On conflict we preserve the existing row's `group_id` and
+  // `position` so resaving an item doesn't tear the user's manual ordering.
+  const targetGroupId = opts.groupId ?? null;
   db.transaction(() => {
-    const pos = nextMemberPosition(db, collectionId, null);
+    const pos = nextMemberPosition(db, collectionId, targetGroupId);
     db.exec(
       `INSERT INTO collection_members
          (collection_id, entity_type, entity_id, note, quantity, done, added_at, group_id, position)
-       VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT (collection_id, entity_type, entity_id) DO UPDATE SET
          note     = excluded.note,
          quantity = excluded.quantity,
@@ -268,6 +269,7 @@ export function addMember(
         opts.quantity ?? null,
         opts.done ? 1 : 0,
         Date.now(),
+        targetGroupId,
         pos,
       ],
     );
@@ -321,13 +323,14 @@ export function bulkAddMembers(
   db: Sqlite,
   collectionId: number,
   refs: readonly EntityRef[],
+  groupId: number | null = null,
 ): BulkAddResult {
   if (refs.length === 0) return { added: 0, skipped: 0 };
   let added = 0;
   let skipped = 0;
   const now = Date.now();
   db.transaction(() => {
-    let nextPos = nextMemberPosition(db, collectionId, null);
+    let nextPos = nextMemberPosition(db, collectionId, groupId);
     for (const ref of refs) {
       const before =
         db.selectValue<number>(
@@ -342,8 +345,8 @@ export function bulkAddMembers(
       db.exec(
         `INSERT INTO collection_members
            (collection_id, entity_type, entity_id, note, quantity, done, added_at, group_id, position)
-         VALUES (?, ?, ?, NULL, NULL, 0, ?, NULL, ?)`,
-        [collectionId, ref.entityType, ref.entityId, now, nextPos],
+         VALUES (?, ?, ?, NULL, NULL, 0, ?, ?, ?)`,
+        [collectionId, ref.entityType, ref.entityId, now, groupId, nextPos],
       );
       nextPos++;
       added++;
