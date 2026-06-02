@@ -11,6 +11,7 @@ const BASE_SECTIONS: SettingsSectionNavItem[] = [
   { kind: 'section', id: 'game-data', label: 'Game Data' },
   { kind: 'section', id: 'import-export', label: 'Import & Export' },
   { kind: 'section', id: 'server', label: 'Server' },
+  { kind: 'section', id: 'mcp', label: 'External Tools' },
   { kind: 'section', id: 'privacy', label: 'Privacy' },
   { kind: 'route', to: '/settings/developer', label: 'Developer' },
 ];

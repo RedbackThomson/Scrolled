@@ -171,6 +171,29 @@ This is the portability seam: a future Tauri or local-server backend replaces `p
 - One **hash worker** owns `crypto.subtle.digest` for WZ-file fingerprinting in the first-run wizard. Reads each File once via `arrayBuffer()` (no JS-side chunk coalescing) and queues calls so concurrent drops run sequentially.
 - All workers are addressed via `comlink` proxies. Cross-worker traffic uses transferable byte buffers where size warrants it.
 
+### 4.4 MCP / external-tool surface
+
+External processes (AI agents, scripts, a CLI) reach the app through a self-contained MCP subsystem under `apps/web/src/mcp/`. The subsystem owns three things and **nothing else in the app imports from it except a single mount line each in `main.tsx`, the Settings index, and the command palette**:
+
+- **Tool registry** — every exposed capability is a Zod-validated, name-stable `ToolDefinition`. Tools are thin adapters over `DbApi` / `UserDbApi`; orchestration that today lives inside a hook gets extracted into `mcp/services/` so the hook and the tool call one shared async function.
+- **Transport-abstracted bridge** — a `BridgeTransport` interface plus a WebSocket implementation. The browser is the WS *client*; an external Node host (`packages/mcp-server`, `packages/mcp-cli`) runs the WS server. Browsers cannot accept inbound connections, so the direction is fixed.
+- **Settings + palette wiring** — opt-in `mcp.bridge.enabled` / `mcp.bridge.url` prefs stored in `ui_prefs`. Off by default; flipping the toggle starts / stops the bridge live without a reload.
+
+Wire format and version constants live in `packages/mcp-protocol/`, depended on by `apps/web` and every external consumer, so the three sides cannot drift. Envelope kinds: `tool`, `response`, `discoverRequest`, `discoverResponse`, `progress` — discriminated by `kind`, versioned by `v`. `ProgressEnvelope` is defined now and used by stub long-running tools so progress reporting can land later without breaking compatibility.
+
+External packages, all in the same pnpm workspace:
+
+- `packages/mcp-protocol/` — Zod schemas and types. No runtime.
+- `packages/mcp-bridge-client/` — Node-side WS host. Used by both the MCP server and the CLI.
+- `packages/mcp-server/` — adapts the bridge into MCP stdio for tools like Claude Desktop.
+- `packages/mcp-cli/` — `scrolled-mcp list`/`describe`/`call` against the open browser tab.
+
+Constraints this satisfies:
+
+- **No remote network.** Bridge is localhost-only and gated by an explicit user toggle.
+- **No business logic duplication.** Tools live exactly once; MCP server and CLI are protocol adapters.
+- **No new access path.** Every external consumer goes through `BridgeHost` → `BridgeDispatcher` → `ToolRegistry`.
+
 ## 5. Repository layout
 
 ```

@@ -1,0 +1,25 @@
+{
+  "name": "@scrolled/mcp-bridge-client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Node-side bridge helper. Hosts a WebSocket the Scrolled browser tab dials into; exposes a typed client (discover / callTool) to consumers like the MCP server and the CLI.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@scrolled/mcp-protocol": "workspace:*",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.4",
+    "@types/ws": "^8.5.13",
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.2"
+  }
+}

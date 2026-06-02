@@ -1,0 +1,32 @@
+{
+  "name": "@scrolled/mcp-server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Local MCP server that bridges the Scrolled browser tab to MCP-speaking clients (Claude Desktop, etc.). Hosts a WebSocket the tab dials into; speaks MCP stdio upstream.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "bin": {
+    "scrolled-mcp-server": "./src/cli.ts"
+  },
+  "scripts": {
+    "start": "node --experimental-strip-types ./src/cli.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "@scrolled/mcp-bridge-client": "workspace:*",
+    "@scrolled/mcp-protocol": "workspace:*",
+    "ws": "^8.18.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.4",
+    "@types/ws": "^8.5.13",
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.2"
+  }
+}

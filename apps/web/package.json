@@ -17,6 +17,7 @@
     "@dnd-kit/sortable": "^8.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@radix-ui/react-dialog": "^1.1.15",
+    "@scrolled/mcp-protocol": "workspace:*",
     "@scrolled/wz": "workspace:*",
     "@sqlite.org/sqlite-wasm": "3.53.0-build1",
     "@tanstack/react-hotkeys": "^0.10.0",
@@ -36,6 +37,7 @@
     "react-router-dom": "^6.26.2",
     "tailwind-merge": "^2.5.2",
     "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.23.5",
     "zustand": "^5.0.0"
   },
   "devDependencies": {

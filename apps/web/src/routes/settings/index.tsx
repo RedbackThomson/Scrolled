@@ -5,6 +5,7 @@ import { ServerProfileSection } from '@/components/settings/ServerProfileSection
 import { AppearanceSection } from '@/components/settings/AppearanceSection';
 import { PrivacySection } from '@/components/settings/PrivacySection';
 import { CollectionsSection } from '@/components/settings/CollectionsSection';
+import { BridgeSettingsPanel } from '@/mcp';
 
 export default function SettingsIndex() {
   return (
@@ -22,6 +23,7 @@ export default function SettingsIndex() {
       <GameDataSection />
       <BackupSection />
       <ServerProfileSection />
+      <BridgeSettingsPanel />
       <PrivacySection />
     </div>
   );

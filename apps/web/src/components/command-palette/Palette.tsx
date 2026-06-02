@@ -1,5 +1,6 @@
 import { CommandDialog, CommandEmpty, CommandInput, CommandList } from '@/components/ui/command';
 import { useCommandPalette } from '@/stores/useCommandPalette';
+import { McpPaletteProvider } from '@/mcp';
 import {
   CollectionsContextProvider,
   CollectionsCreateProvider,
@@ -58,6 +59,7 @@ export function Palette() {
         <CollectionsCreateProvider />
         <TogglesProvider />
         <ServerProfileProvider />
+        <McpPaletteProvider />
         <DataProvider />
         <FunProvider />
       </CommandList>

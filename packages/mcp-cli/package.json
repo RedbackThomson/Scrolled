@@ -1,0 +1,28 @@
+{
+  "name": "@scrolled/mcp-cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Human-facing CLI for the Scrolled MCP bridge. Lists, describes, and invokes tools that the open browser tab exposes.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "bin": {
+    "scrolled-mcp": "./src/cli.ts"
+  },
+  "scripts": {
+    "start": "node --experimental-strip-types ./src/cli.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@scrolled/mcp-bridge-client": "workspace:*",
+    "@scrolled/mcp-protocol": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.4",
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.2"
+  }
+}
