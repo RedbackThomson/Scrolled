@@ -214,7 +214,11 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
     variant === 'mobile'
       ? 'bg-sidebar text-sidebar-foreground border-border flex h-full w-full flex-col'
       : cn(
-          'bg-sidebar text-sidebar-foreground border-border hidden shrink-0 border-r transition-[width] duration-200 ease-out md:flex md:flex-col',
+          // Sticky + h-screen + self-start keeps the sidebar pinned in the viewport
+          // while the document scrolls underneath it. The outer AppShell flex row
+          // would otherwise stretch the aside to the full page height, defeating
+          // sticky positioning.
+          'bg-sidebar text-sidebar-foreground border-border hidden shrink-0 self-start border-r transition-[width] duration-200 ease-out md:sticky md:top-0 md:flex md:h-screen md:flex-col',
           collapsed ? 'w-14' : 'w-60',
         );
 

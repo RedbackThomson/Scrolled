@@ -14,12 +14,12 @@ export function AppShell() {
   const { showBoot } = useSetupGate();
   if (showBoot) return <AppBootScreen />;
   return (
-    <div className="flex h-full w-full">
+    <div className="flex min-h-screen w-full">
       <Sidebar />
       <MobileSidebarDrawer />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar />
-        <main className="flex-1 overflow-y-auto">
+        <main className="isolate">
           <div className="container py-4 max-md:px-2 md:py-4">
             <Outlet />
           </div>

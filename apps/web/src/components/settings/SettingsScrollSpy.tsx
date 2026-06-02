@@ -1,12 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  type ReactNode,
-} from 'react';
+import { createContext, useContext, useEffect, useMemo, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useDomet, type LinkProps, type RegisterProps } from 'domet';
 import { getSettingsNavItems, sectionIdsFromNav } from '@/components/settings/settingsNavConfig';
@@ -20,21 +12,14 @@ interface SettingsScrollSpyContextValue {
 
 const SettingsScrollSpyContext = createContext<SettingsScrollSpyContextValue | null>(null);
 
-/** AppShell scrolls `<main>`; domet needs that element as its root, not `window`. */
-const MAIN_SCROLL_SELECTOR = 'main.overflow-y-auto';
-
 export function SettingsScrollSpyProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
-  const containerRef = useRef<HTMLElement | null>(null);
   const sectionIds = useMemo(() => sectionIdsFromNav(getSettingsNavItems()), []);
 
-  useLayoutEffect(() => {
-    containerRef.current = document.querySelector<HTMLElement>(MAIN_SCROLL_SELECTOR);
-  }, []);
-
+  // No container ref — domet defaults to window scroll, which is what the
+  // document-scrolling AppShell exposes.
   const { active, register, scrollTo, link } = useDomet({
     ids: sectionIds,
-    container: containerRef,
     tracking: { hysteresis: 120, throttle: 16 },
     scrolling: { behavior: 'smooth', lockActive: true },
   });
