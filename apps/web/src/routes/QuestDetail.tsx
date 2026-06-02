@@ -43,11 +43,7 @@ import { useShowEntityIds } from '@/stores/showEntityIds';
 import { useCharacterPreferences } from '@/stores/characterPreferences';
 import { formatDurationSeconds } from '@/lib/duration';
 import { parseRewardJob, formatEquipJobs, isAnyClass } from '@/domain/equipJobs';
-import {
-  filterGroupedRewards,
-  groupItemRewards,
-  type GroupedItemReward,
-} from '@/lib/questRewards';
+import { filterGroupedRewards, groupItemRewards, type GroupedItemReward } from '@/lib/questRewards';
 
 export default function QuestDetail() {
   const params = useParams<{ id: string }>();
@@ -128,6 +124,7 @@ export default function QuestDetail() {
   if (!questQ.data) return <DetailPageNotFound entity="Quest" id={id} />;
 
   const q = questQ.data;
+  const endNpcIdForDisplay = q.endNpcId ?? q.startNpcId;
   const requirements = reqsQ.data ?? [];
   const itemReqs = requirements.filter((r) => r.kind === 'item');
   const mobReqs = requirements.filter((r) => r.kind === 'mob');
@@ -172,10 +169,7 @@ export default function QuestDetail() {
             {showIds && <InfoRow label="ID" value={String(q.id)} mono />}
             <InfoRow label="Area" value={q.parent ?? '—'} />
             {q.repeatWait !== null && (
-              <InfoRow
-                label="Repeatable"
-                value={`every ${formatDurationSeconds(q.repeatWait)}`}
-              />
+              <InfoRow label="Repeatable" value={`every ${formatDurationSeconds(q.repeatWait)}`} />
             )}
           </InfoSection>
           {(q.requiredLevel !== null || q.requiredJob !== null) && (
@@ -209,7 +203,7 @@ export default function QuestDetail() {
         <p className="whitespace-pre-line text-sm leading-relaxed">{q.description}</p>
       )}
 
-      {(q.startNpcId !== null || q.endNpcId !== null) && (
+      {(q.startNpcId !== null || endNpcIdForDisplay !== null) && (
         <DetailListSection icon={Users} title="NPCs">
           {q.startNpcId !== null && (
             <NpcRow
@@ -219,11 +213,15 @@ export default function QuestDetail() {
               linkable={features.hasNpcs}
             />
           )}
-          {q.endNpcId !== null && q.endNpcId !== q.startNpcId && (
+          {endNpcIdForDisplay && (
             <NpcRow
               label="End"
-              id={q.endNpcId}
-              name={endNpcQ.data?.name ?? null}
+              id={endNpcIdForDisplay}
+              name={
+                endNpcIdForDisplay === q.startNpcId
+                  ? (startNpcQ.data?.name ?? null)
+                  : (endNpcQ.data?.name ?? null)
+              }
               linkable={features.hasNpcs}
             />
           )}
@@ -287,7 +285,13 @@ export default function QuestDetail() {
         }
         action={hasAnyReward ? <RewardFilterControl /> : null}
       >
-        {expReward && <ScalarRewardRow icon={Sparkles} label="Experience" value={<ExpValue exp={expReward.amount ?? 0} />} />}
+        {expReward && (
+          <ScalarRewardRow
+            icon={Sparkles}
+            label="Experience"
+            value={<ExpValue exp={expReward.amount ?? 0} />}
+          />
+        )}
         {mesoReward && (
           <ScalarRewardRow
             icon={Coins}
@@ -309,9 +313,7 @@ export default function QuestDetail() {
             value={(fameReward.amount ?? 0).toLocaleString()}
           />
         )}
-        {buffReward && buffReward.targetId !== null && (
-          <BuffRewardRow id={buffReward.targetId} />
-        )}
+        {buffReward && buffReward.targetId !== null && <BuffRewardRow id={buffReward.targetId} />}
         {skillReward && skillReward.targetId !== null && (
           <SkillRewardRow id={skillReward.targetId} linkable={features.hasSkills} />
         )}
@@ -455,15 +457,7 @@ function BuffRewardRow({ id }: { id: number }) {
 }
 
 function SkillRewardRow({ id, linkable }: { id: number; linkable: boolean }) {
-  return (
-    <EntityRow
-      entity="skill"
-      id={id}
-      name={null}
-      hideId={false}
-      linkable={linkable}
-    />
-  );
+  return <EntityRow entity="skill" id={id} name={null} hideId={false} linkable={linkable} />;
 }
 
 /**
@@ -495,9 +489,7 @@ function ItemRewardRow({ r, linkable }: { r: QuestRewardWithName; linkable: bool
       meta={
         <span className="flex items-center gap-1.5">
           {badges}
-          {r.amount !== null && r.amount > 1 && (
-            <span className="font-mono">×{r.amount}</span>
-          )}
+          {r.amount !== null && r.amount > 1 && <span className="font-mono">×{r.amount}</span>}
         </span>
       }
       linkable={linkable && r.targetEntity !== null}
@@ -522,9 +514,7 @@ function RandomPoolBlock({
       <div className="text-muted-foreground flex items-center gap-1.5 text-xs uppercase tracking-wide">
         <Dices className="h-3.5 w-3.5" />
         Choose one
-        <span className="text-muted-foreground/70 normal-case">
-          ({pool.rewards.length})
-        </span>
+        <span className="text-muted-foreground/70 normal-case">({pool.rewards.length})</span>
       </div>
       <ul className="border-border bg-background divide-border divide-y rounded-md border">
         {pool.rewards.map((r) => (
@@ -550,8 +540,7 @@ function PoolEntry({
   linkable: boolean;
 }) {
   const weight = reward.prop ?? 0;
-  const pct =
-    totalWeight > 0 ? Math.round((weight / totalWeight) * 100) : null;
+  const pct = totalWeight > 0 ? Math.round((weight / totalWeight) * 100) : null;
   const meta = (
     <span className="flex items-center gap-1.5">
       <RewardBadges reward={reward} omitJobIfImpliedByAny={false} />
