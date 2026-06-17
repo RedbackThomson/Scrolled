@@ -3,14 +3,16 @@ import { nodeToNumber } from './wzCoerce';
 import type { ItemRecord } from '@/db';
 import { createLogger } from '@/lib/logger';
 import type { ProgressFn } from '@/lib/progress';
-import { unescapeWzString } from './wzText';
+import { buildItemStringIndex, type StringIndex } from './stringIndex';
 
 const log = createLogger('extract-items');
 
 /**
- * Item.wz top-level categories we know how to extract. Each maps to the
- * String.wz image holding localized names + descriptions for that category,
- * and the `items.category` value we write into the database.
+ * Item.wz top-level categories we know how to extract, and the `items.category`
+ * value we write into the database. This is item *classification* only —
+ * localized names/descriptions are resolved by ID through the string index
+ * (`buildItemStringIndex`), so where the string node actually lives in
+ * String.wz no longer has to be guessed here.
  *
  * Equipment (Item.wz/Eqp) and pets (Item.wz/Pet) are intentionally absent —
  * equips are driven from Character.wz by `extractEquips`, and pets aren't
@@ -19,34 +21,15 @@ const log = createLogger('extract-items');
 interface CategorySpec {
   /** Subdirectory under `Item.wz`. */
   itemDir: string;
-  /** Candidate paths under `String.wz` that may carry localized strings.
-   *  Tried in order — first hit wins. */
-  stringRoots: string[];
   /** Value we store in `items.category`. */
   category: ItemRecord['category'];
 }
 
 const CATEGORIES: readonly CategorySpec[] = [
-  {
-    itemDir: 'Consume',
-    stringRoots: ['String.wz/Consume.img'],
-    category: 'use',
-  },
-  {
-    itemDir: 'Etc',
-    stringRoots: ['String.wz/Etc.img/Etc', 'String.wz/Etc.img'],
-    category: 'etc',
-  },
-  {
-    itemDir: 'Install',
-    stringRoots: ['String.wz/Ins.img', 'String.wz/Install.img'],
-    category: 'setup',
-  },
-  {
-    itemDir: 'Cash',
-    stringRoots: ['String.wz/Cash.img'],
-    category: 'cash',
-  },
+  { itemDir: 'Consume', category: 'use' },
+  { itemDir: 'Etc', category: 'etc' },
+  { itemDir: 'Install', category: 'setup' },
+  { itemDir: 'Cash', category: 'cash' },
 ];
 
 export interface ExtractItemsResult {
@@ -112,6 +95,8 @@ export async function extractItems(
   }
   log.info('discovery complete', { totalItems: total, groups: work.length });
 
+  const strings = await buildItemStringIndex(source);
+
   // --- Step 2: extraction -------------------------------------------------
   let processed = 0;
   for (const { spec, group, ids } of work) {
@@ -122,7 +107,7 @@ export async function extractItems(
         total,
         detail: `${spec.itemDir} / ${group.name} · ${id}`,
       });
-      const record = await readItem(source, id, node, spec, skipped);
+      const record = await readItem(source, id, node, spec, strings, skipped);
       if (record) items.push(record);
       processed += 1;
     }
@@ -138,6 +123,7 @@ async function readItem(
   id: number,
   node: WzNodeInfo,
   spec: CategorySpec,
+  strings: StringIndex,
   skipped: { reason: string; path: string }[],
 ): Promise<ItemRecord | null> {
   const itemPath = node.fullPath;
@@ -147,20 +133,13 @@ async function readItem(
   const info = new Map<string, WzNodeInfo>();
   for (const child of await source.listChildren(`${itemPath}/info`)) info.set(child.name, child);
 
-  let name: string | null = null;
-  let description: string | null = null;
-  for (const root of spec.stringRoots) {
-    const nameNode = await source.getNode(`${root}/${id}/name`);
-    if (typeof nameNode?.scalar === 'string' && nameNode.scalar) {
-      name = nameNode.scalar;
-      const descNode = await source.getNode(`${root}/${id}/desc`);
-      if (typeof descNode?.scalar === 'string') description = unescapeWzString(descNode.scalar);
-      break;
-    }
-  }
+  const entry = strings.get(id);
+  const name = entry?.name ?? null;
+  const description = entry?.desc ?? null;
 
   if (!name) {
     skipped.push({ reason: 'no localized name found', path: itemPath });
+    log.warn('missing item string', { id, sourcePath: itemPath });
     return null;
   }
 
@@ -190,5 +169,7 @@ async function readItem(
     dropBlock: nodeToNumber(info.get('dropBlock')) === 1,
     tradeAvailable: nodeToNumber(info.get('tradeAvailable')) === 1,
     sourcePath: itemPath,
+    stringPath: entry!.path,
+    stringCategory: entry!.category,
   };
 }

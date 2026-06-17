@@ -3,8 +3,8 @@ import { nodeToNumber } from './wzCoerce';
 import type { EquipRecord } from '@/db';
 import { createLogger } from '@/lib/logger';
 import type { ProgressFn } from '@/lib/progress';
-import { unescapeWzString } from './wzText';
 import { normalizeEquipSlot, resolveEquipType } from '@/domain/equipTypes';
+import { buildEquipStringIndex } from './stringIndex';
 
 const log = createLogger('extract-equips');
 
@@ -35,10 +35,10 @@ const NON_EQUIP_DIRS = new Set([
 ]);
 
 /**
- * Slot-name aliases between Character.wz and String.wz/Eqp.img/Eqp. WZ
- * versions disagree on a few (e.g. "TamingMob" in Character.wz vs "Taming"
- * in String.wz). Maps Character.wz dir name → String.wz/Eqp.img/Eqp dir
- * name; anything not listed is matched 1:1.
+ * Slot-name aliases applied before `normalizeEquipSlot` so the stored `slot`
+ * value matches the conventional name (e.g. "TamingMob" in Character.wz →
+ * "Taming"). Names are now resolved by ID via the string index, so this no
+ * longer affects name lookup — only the slot classification.
  */
 const SLOT_ALIASES: Record<string, string> = {
   TamingMob: 'Taming',
@@ -105,6 +105,10 @@ export async function extractEquips(
   }
   log.info('discovery complete', { totalEquips: work.length });
 
+  // Names/descriptions are resolved by ID across every `Eqp` bucket, not by
+  // the Character.wz slot — see buildEquipStringIndex for why.
+  const strings = await buildEquipStringIndex(source);
+
   // --- Extraction -------------------------------------------------------
   const total = work.length;
   let processed = 0;
@@ -116,18 +120,15 @@ export async function extractEquips(
       detail: `${w.characterSlot} · ${w.id}`,
     });
 
-    const name = await readScalarString(
-      source,
-      `String.wz/Eqp.img/Eqp/${w.stringSlot}/${w.id}/name`,
-    );
+    const entry = strings.get(w.id);
+    const name = entry?.name ?? null;
     if (!name) {
       skipped.push({ reason: 'no localized name', path: w.imagePath });
+      log.warn('missing equip string', { id: w.id, sourcePath: w.imagePath });
       processed += 1;
       continue;
     }
-    const description = unescapeWzString(
-      await readScalarString(source, `String.wz/Eqp.img/Eqp/${w.stringSlot}/${w.id}/desc`),
-    );
+    const description = entry?.desc ?? null;
     const info = await readInfo(source, w.imagePath);
     const slotKey = normalizeEquipSlot(w.stringSlot);
     const iconPath = info.hasIcon ? `${w.imagePath}/info/icon` : null;
@@ -174,6 +175,8 @@ export async function extractEquips(
       iconPath,
       iconData,
       sourcePath: w.imagePath,
+      stringPath: entry!.path,
+      stringCategory: entry!.category,
     });
     processed += 1;
   }
@@ -297,10 +300,4 @@ async function readInfo(source: GameDataSource, imagePath: string): Promise<Equi
     pickupBlock: nodeToNumber(map.get('pickupBlock')),
     notSale: nodeToNumber(map.get('notSale')),
   };
-}
-
-async function readScalarString(source: GameDataSource, path: string): Promise<string | null> {
-  const node = await source.getNode(path);
-  if (typeof node?.scalar === 'string' && node.scalar) return node.scalar;
-  return null;
 }

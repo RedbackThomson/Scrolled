@@ -253,6 +253,8 @@ function SaveItemPanel({ node }: { node: WzNodeInfo }) {
         dropBlock: false,
         tradeAvailable: false,
         sourcePath: target.itemPath,
+        stringPath: target.itemPath,
+        stringCategory: null,
       });
       return { id: target.id, name };
     },

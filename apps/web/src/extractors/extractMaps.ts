@@ -9,6 +9,7 @@ import type {
 } from '@/db';
 import { createLogger, describeError } from '@/lib/logger';
 import type { ProgressFn } from '@/lib/progress';
+import { buildMapStringIndex } from './stringIndex';
 
 const log = createLogger('extract-maps');
 
@@ -93,7 +94,7 @@ export async function extractMaps(
   const total = imgs.length;
   log.info('discovery complete', { totalMaps: total });
 
-  const nameLookup = await buildMapNameLookup(source);
+  const nameLookup = await buildMapStringIndex(source);
 
   let processed = 0;
   for (const { id, node, bucket } of imgs) {
@@ -181,8 +182,8 @@ export async function extractMaps(
 
     maps.push({
       id,
-      name: strs?.mapName ?? null,
-      streetName: strs?.streetName ?? null,
+      name: strs?.raw.mapName ?? null,
+      streetName: strs?.raw.streetName ?? null,
       returnMapId: childToNumber(infoTree, 'returnMap'),
       forcedReturnMapId: childToNumber(infoTree, 'forcedReturn'),
       fieldLimit: childToNumber(infoTree, 'fieldLimit'),
@@ -261,37 +262,4 @@ export async function extractMaps(
     skipped: skipped.length,
   });
   return { maps, mapNpcs, mapMobs, mapMobSpawns, mapPortals, skipped };
-}
-
-interface MapStrings {
-  mapName: string | null;
-  streetName: string | null;
-}
-
-/**
- * Walk `String.wz/Map.img` once and build an id → { mapName, streetName }
- * lookup. The structure is `String.wz/Map.img/<region>/<id>/{mapName,
- * streetName}` — region buckets vary by client version. Pulled in one
- * `readImageTree` call (~50 regions × ~100 ids × a few props each is
- * ~20 k nodes, still small) so we avoid thousands of per-leaf
- * `getNode` round-trips.
- */
-async function buildMapNameLookup(source: GameDataSource): Promise<Map<number, MapStrings>> {
-  const lookup = new Map<number, MapStrings>();
-  const tree = await source.readImageTree('String.wz/Map.img', { maxDepth: 3 });
-  if (!tree) {
-    log.warn('String.wz/Map.img not found — map names will be empty');
-    return lookup;
-  }
-  for (const region of tree.children) {
-    for (const entry of region.children) {
-      const m = entry.name.match(/^(\d+)$/);
-      if (!m) continue;
-      lookup.set(Number(m[1]), {
-        mapName: childToString(entry, 'mapName'),
-        streetName: childToString(entry, 'streetName'),
-      });
-    }
-  }
-  return lookup;
 }

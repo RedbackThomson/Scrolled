@@ -17,8 +17,8 @@ export function upsertItemRow(sql: Sqlite, item: ItemRecord): void {
       price, stack_size, required_level,
       cash, trade_block, account_sharable, only_one, quest_item,
       time_limited, expire_on_logout, pickup_block, not_sale, drop_block, trade_available,
-      source_path
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      source_path, string_path, string_category
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
       name           = excluded.name,
       description    = excluded.description,
@@ -42,7 +42,9 @@ export function upsertItemRow(sql: Sqlite, item: ItemRecord): void {
       not_sale          = excluded.not_sale,
       drop_block        = excluded.drop_block,
       trade_available   = excluded.trade_available,
-      source_path    = excluded.source_path`,
+      source_path     = excluded.source_path,
+      string_path     = excluded.string_path,
+      string_category = excluded.string_category`,
     [
       item.id,
       item.name,
@@ -66,6 +68,8 @@ export function upsertItemRow(sql: Sqlite, item: ItemRecord): void {
       item.dropBlock ? 1 : 0,
       item.tradeAvailable ? 1 : 0,
       item.sourcePath,
+      item.stringPath,
+      item.stringCategory,
     ],
   );
 }
@@ -129,7 +133,7 @@ export function listItems(
                 price, stack_size, required_level,
                 cash, trade_block, account_sharable, only_one, quest_item,
                 time_limited, expire_on_logout, pickup_block, not_sale, drop_block, trade_available,
-                source_path
+                source_path, string_path, string_category
          FROM items ${clause}
          ORDER BY ${order.col} ${order.dir === 'desc' ? 'DESC' : 'ASC'} NULLS LAST, id ASC
          LIMIT ? OFFSET ?`,

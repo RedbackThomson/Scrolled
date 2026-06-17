@@ -4,6 +4,7 @@ import { createLogger } from '@/lib/logger';
 import type { ProgressFn } from '@/lib/progress';
 import { pickSprite } from './sprites';
 import { unescapeWzString } from './wzText';
+import { buildNpcStringIndex } from './stringIndex';
 
 const log = createLogger('extract-npcs');
 
@@ -42,6 +43,8 @@ export async function extractNpcs(
   const total = imgs.length;
   log.info('discovery complete', { totalNpcs: total });
 
+  const strings = await buildNpcStringIndex(source);
+
   let processed = 0;
   for (const img of imgs) {
     const idMatch = img.name.match(/^(\d+)\.img$/);
@@ -55,14 +58,11 @@ export async function extractNpcs(
       detail: `${img.name}`,
     });
 
-    const [nameNode, funcNode] = await Promise.all([
-      source.getNode(`String.wz/Npc.img/${id}/name`),
-      source.getNode(`String.wz/Npc.img/${id}/func`),
-    ]);
-
-    const name = typeof nameNode?.scalar === 'string' && nameNode.scalar ? nameNode.scalar : null;
+    const entry = strings.get(id);
+    const name = entry?.name ?? null;
     if (!name) {
       skipped.push({ reason: 'no localized name', path: img.fullPath });
+      log.warn('missing npc string', { id, sourcePath: img.fullPath });
       processed += 1;
       continue;
     }
@@ -72,7 +72,7 @@ export async function extractNpcs(
     npcs.push({
       id,
       name,
-      description: typeof funcNode?.scalar === 'string' ? unescapeWzString(funcNode.scalar) : null,
+      description: entry?.raw.func != null ? unescapeWzString(entry.raw.func) : null,
       iconPath,
       iconData,
       sourcePath: img.fullPath,

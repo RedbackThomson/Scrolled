@@ -1,7 +1,41 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
 import { extractMobs } from './extractMobs';
-import type { GameDataSource, WzNodeInfo } from '@/parser';
+import type { GameDataSource, WzNodeInfo, WzNodeTree } from '@/parser';
+
+/**
+ * Reconstruct a depth-2 `String.wz/<X>.img` tree (`<id>/<field>` leaves) from
+ * the flat `nodes` map so the string-index builders, which read via
+ * `readImageTree`, see the same data the per-leaf fixtures declare.
+ */
+function synthImageTree(nodes: Record<string, WzNodeInfo>, path: string): WzNodeTree | null {
+  const prefix = `${path}/`;
+  const byId = new Map<string, WzNodeTree[]>();
+  for (const [key, info] of Object.entries(nodes)) {
+    if (!key.startsWith(prefix)) continue;
+    const rest = key.slice(prefix.length).split('/');
+    if (rest.length !== 2) continue;
+    const [id, field] = rest;
+    const leaves = byId.get(id!) ?? [];
+    leaves.push({ ...info, name: field!, fullPath: key, children: [] });
+    byId.set(id!, leaves);
+  }
+  if (byId.size === 0) return null;
+  return {
+    name: path.split('/').pop()!,
+    fullPath: path,
+    kind: 'image',
+    hasChildren: true,
+    children: [...byId.entries()].map(([id, leaves]) => ({
+      name: id,
+      fullPath: `${path}/${id}`,
+      kind: 'property',
+      propertyKind: 'sub',
+      hasChildren: true,
+      children: leaves,
+    })),
+  };
+}
 
 /**
  * Synthetic raw-tree stub of the WZ surface the mob extractor reads.
@@ -23,7 +57,7 @@ function makeSource(
     listChildren: async (path) => tree[path] ?? [],
     getNode: async (path) => nodes[path] ?? null,
     getIconPng: async () => null,
-    readImageTree: async () => null,
+    readImageTree: async (path) => synthImageTree(nodes, path),
     diagnose: async () => ({ log: [], aesSmokeTest: { ok: true }, loadedFiles: [] }),
     dispose: async () => {},
   };

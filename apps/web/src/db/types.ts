@@ -31,6 +31,10 @@ export interface ItemRecord {
   dropBlock: boolean;
   tradeAvailable: boolean;
   sourcePath: string;
+  /** Where the localized name/description was resolved from in String.wz. */
+  stringPath: string;
+  /** The String.wz bucket node the strings sat under (item category); null for flat layouts. */
+  stringCategory: string | null;
 }
 
 /**
@@ -109,6 +113,10 @@ export interface EquipRecord {
   iconPath: string | null;
   iconData: Uint8Array | null;
   sourcePath: string;
+  /** Where the localized name/description was resolved from in String.wz. */
+  stringPath: string;
+  /** The String.wz `Eqp` bucket the strings sat under (e.g. "Accessory"); null if absent. */
+  stringCategory: string | null;
 }
 
 export interface MobRecord {

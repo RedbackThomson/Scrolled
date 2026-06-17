@@ -1,6 +1,7 @@
 import type { GameDataSource } from '@/parser';
 import { pathToNumber, scalarToNumber, scalarToString } from './wzCoerce';
 import { unescapeWzString } from './wzText';
+import { buildSkillStringIndex } from './stringIndex';
 import type {
   SkillLevelRecord,
   SkillPrerequisiteRecord,
@@ -116,6 +117,8 @@ export async function extractSkills(
   }
   log.info('discovery complete', { totalSkills: total, totalJobs: jobImgs.length });
 
+  const strings = await buildSkillStringIndex(source);
+
   let processed = 0;
   for (const { jobId, jobImg, skillId } of jobSkillEntries) {
     opts.onProgress?.({
@@ -126,23 +129,8 @@ export async function extractSkills(
     });
 
     const skillPath = `${jobImg}/skill/${skillId}`;
-    const stringPath = `String.wz/Skill.img/${skillId}`;
 
-    const [
-      nameNode,
-      descNode,
-      hNode,
-      stringChildren,
-      maxLevelN,
-      masterLevelN,
-      invisibleN,
-      elemNode,
-      weaponNode,
-    ] = await Promise.all([
-      source.getNode(`${stringPath}/name`),
-      source.getNode(`${stringPath}/desc`),
-      source.getNode(`${stringPath}/h`),
-      source.listChildren(stringPath),
+    const [maxLevelN, masterLevelN, invisibleN, elemNode, weaponNode] = await Promise.all([
       pathToNumber(source, `${skillPath}/common/maxLevel`),
       pathToNumber(source, `${skillPath}/common/masterLevel`),
       pathToNumber(source, `${skillPath}/common/invisible`),
@@ -150,23 +138,22 @@ export async function extractSkills(
       source.getNode(`${skillPath}/weapon`),
     ]);
 
-    const name = scalarToString(nameNode?.scalar);
-    const description = unescapeWzString(scalarToString(descNode?.scalar));
+    const strEntry = strings.get(skillId);
+    const name = strEntry?.name ?? null;
+    const description = strEntry?.desc ?? null;
     // `h` is the templated tooltip (e.g. "Boost by #x% for #time sec.")
     // resolved per-level by the renderer. Older dumps skip `h` entirely and
     // put a static description on each level as `h1`, `h2`, ..., `hN`; those
     // are picked up below and attached to each level row.
-    const tooltip = unescapeWzString(scalarToString(hNode?.scalar));
+    const tooltip = unescapeWzString(strEntry?.raw.h ?? null);
     const perLevelDescriptions = new Map<number, string>();
-    for (const child of stringChildren) {
-      const match = child.name.match(/^h(\d+)$/);
+    for (const [key, value] of Object.entries(strEntry?.raw ?? {})) {
+      const match = key.match(/^h(\d+)$/);
       if (!match) continue;
       const lvl = Number(match[1]);
       if (!Number.isFinite(lvl) || lvl <= 0) continue;
-      const text = scalarToString(child.scalar);
-      if (!text) continue;
-      const unescaped = unescapeWzString(text);
-      if (unescaped !== null) perLevelDescriptions.set(lvl, unescaped);
+      const unescaped = unescapeWzString(value);
+      if (unescaped) perLevelDescriptions.set(lvl, unescaped);
     }
     const element = scalarToString(elemNode?.scalar);
     // `weapon` may arrive as either a number (cleaner v83 dumps) or a

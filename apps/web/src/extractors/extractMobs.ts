@@ -4,6 +4,7 @@ import type { MobDropRecord, MobRecord } from '@/db';
 import { createLogger } from '@/lib/logger';
 import type { ProgressFn } from '@/lib/progress';
 import { pickSprite } from './sprites';
+import { buildMobStringIndex } from './stringIndex';
 
 const log = createLogger('extract-mobs');
 
@@ -48,6 +49,8 @@ export async function extractMobs(
   const total = imgs.length;
   log.info('discovery complete', { totalMobs: total });
 
+  const strings = await buildMobStringIndex(source);
+
   let processed = 0;
   for (const img of imgs) {
     const idMatch = img.name.match(/^(\d+)\.img$/);
@@ -62,19 +65,19 @@ export async function extractMobs(
     });
 
     const infoPath = `${img.fullPath}/info`;
-    const [levelN, hpN, mpN, expN, bossN, elemN, nameNode] = await Promise.all([
+    const [levelN, hpN, mpN, expN, bossN, elemN] = await Promise.all([
       pathToNumber(source, `${infoPath}/level`),
       pathToNumber(source, `${infoPath}/maxHP`),
       pathToNumber(source, `${infoPath}/maxMP`),
       pathToNumber(source, `${infoPath}/exp`),
       pathToNumber(source, `${infoPath}/boss`),
       source.getNode(`${infoPath}/elemAttr`),
-      source.getNode(`String.wz/Mob.img/${id}/name`),
     ]);
 
-    const name = typeof nameNode?.scalar === 'string' && nameNode.scalar ? nameNode.scalar : null;
+    const name = strings.get(id)?.name ?? null;
     if (!name) {
       skipped.push({ reason: 'no localized name', path: img.fullPath });
+      log.warn('missing mob string', { id, sourcePath: img.fullPath });
       processed += 1;
       continue;
     }

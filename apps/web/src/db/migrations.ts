@@ -842,4 +842,22 @@ export const MIGRATIONS: readonly Migration[] = [
       );
     `,
   },
+  {
+    version: 29,
+    name: 'item and equip string provenance',
+    sql: `
+      -- Where each row's localized name/description was resolved from in
+      -- String.wz, recorded by the string-index layer. Aids debugging
+      -- extractor gaps (e.g. an accessory whose strings sit under a bucket
+      -- that doesn't mirror its Character.wz slot). Breaking data-revision
+      -- bump: the cache is cleared before migrations, so these run against
+      -- empty tables — every persisted item/equip has a resolved name, hence
+      -- string_path is NOT NULL. string_category is nullable because flat
+      -- string layouts have no bucket node.
+      ALTER TABLE items  ADD COLUMN string_path     TEXT NOT NULL;
+      ALTER TABLE items  ADD COLUMN string_category TEXT;
+      ALTER TABLE equips ADD COLUMN string_path     TEXT NOT NULL;
+      ALTER TABLE equips ADD COLUMN string_category TEXT;
+    `,
+  },
 ];

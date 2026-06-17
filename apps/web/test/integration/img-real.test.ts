@@ -3,7 +3,7 @@ import { readFileSync, statSync } from 'node:fs';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { detectImageVersion } from '@scrolled/wz';
 import { ImgDataSource } from '@/parser/ImgDataSource';
-import { extractItems, extractMobs } from '@/extractors';
+import { extractEquips, extractItems, extractMobs } from '@/extractors';
 import type { WzMapleVersionName } from '@/parser';
 import { gatherImgFixtures, hasImgFixtures, wzVersionFromEnv } from '../helpers/localFixtures';
 
@@ -105,6 +105,28 @@ describe.skipIf(!hasImgFixtures())('ImgDataSource — real .img dataset', () => 
       const withIcon = result.items.find((i) => i.iconData && i.iconData.byteLength > 0);
       if (withIcon?.iconData) {
         expect([...withIcon.iconData.subarray(0, 4)]).toEqual([0x89, 0x50, 0x4e, 0x47]);
+      }
+    },
+  );
+
+  it.skipIf(!has('Character.wz') || !has('String.wz'))(
+    'resolves accessory-bucket equips by id across the slot mismatch',
+    async () => {
+      const result = await extractEquips(source);
+      expect(result.equips.length).toBeGreaterThan(0);
+      // Every emitted equip has a localized name (nameless ones are skipped).
+      expect(result.equips.every((e) => typeof e.name === 'string' && e.name.length > 0)).toBe(
+        true,
+      );
+      // String.wz groups rings/pendants/belts/medals under `Accessory` even
+      // though Character.wz files them under separate slot dirs — the index
+      // must surface at least one such equip by id.
+      expect(result.equips.some((e) => e.stringCategory === 'Accessory')).toBe(true);
+      // If this dataset ships the reported ring, it must resolve (and not be skipped).
+      const ring = result.equips.find((e) => e.id === 1112400);
+      if (ring) {
+        expect(ring.name.length).toBeGreaterThan(0);
+        expect(ring.stringCategory).toBe('Accessory');
       }
     },
   );

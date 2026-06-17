@@ -25,8 +25,8 @@ export function upsertEquipRow(sql: Sqlite, e: EquipRecord): void {
       inc_speed, inc_jump, cash, equip_type,
       trade_block, equip_trade_block, account_sharable, only_one, quest_item,
       time_limited, expire_on_logout, pickup_block, not_sale,
-      icon_path, icon_data, source_path
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      icon_path, icon_data, source_path, string_path, string_category
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
       name           = excluded.name,
       description    = excluded.description,
@@ -66,7 +66,9 @@ export function upsertEquipRow(sql: Sqlite, e: EquipRecord): void {
       not_sale          = excluded.not_sale,
       icon_path      = excluded.icon_path,
       icon_data      = COALESCE(excluded.icon_data, equips.icon_data),
-      source_path    = excluded.source_path`,
+      source_path     = excluded.source_path,
+      string_path     = excluded.string_path,
+      string_category = excluded.string_category`,
     [
       e.id,
       e.name,
@@ -108,6 +110,8 @@ export function upsertEquipRow(sql: Sqlite, e: EquipRecord): void {
       e.iconPath,
       e.iconData,
       e.sourcePath,
+      e.stringPath,
+      e.stringCategory,
     ],
   );
 }
@@ -176,7 +180,7 @@ export function listEquips(
                 inc_speed, inc_jump, cash, equip_type,
                 trade_block, equip_trade_block, account_sharable, only_one, quest_item,
                 time_limited, expire_on_logout, pickup_block, not_sale,
-                icon_path, NULL AS icon_data, source_path
+                icon_path, NULL AS icon_data, source_path, string_path, string_category
          FROM equips ${clause}
          ORDER BY ${order.col} ${order.dir === 'desc' ? 'DESC' : 'ASC'} NULLS LAST, id ASC
          LIMIT ? OFFSET ?`,

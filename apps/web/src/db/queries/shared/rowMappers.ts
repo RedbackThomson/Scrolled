@@ -34,6 +34,8 @@ export interface ItemRow extends Row {
   drop_block: number;
   trade_available: number;
   source_path: string;
+  string_path: string;
+  string_category: string | null;
 }
 
 export interface EquipRow extends Row {
@@ -77,6 +79,8 @@ export interface EquipRow extends Row {
   icon_path: string | null;
   icon_data: Uint8Array | null;
   source_path: string;
+  string_path: string;
+  string_category: string | null;
 }
 
 export interface MobRow extends Row {
@@ -161,6 +165,8 @@ export function rowToItem(r: ItemRow): ItemRecord {
     dropBlock: r.drop_block === 1,
     tradeAvailable: r.trade_available === 1,
     sourcePath: r.source_path,
+    stringPath: r.string_path,
+    stringCategory: r.string_category,
   };
 }
 
@@ -378,5 +384,7 @@ export function rowToEquip(r: EquipRow): EquipRecord {
     iconPath: r.icon_path,
     iconData: r.icon_data,
     sourcePath: r.source_path,
+    stringPath: r.string_path,
+    stringCategory: r.string_category,
   };
 }
