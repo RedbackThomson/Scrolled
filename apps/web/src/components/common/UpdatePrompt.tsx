@@ -9,6 +9,23 @@ export function UpdatePrompt() {
 
   if (!needRefresh) return null;
 
+  // vite-plugin-pwa only reloads via a one-shot workbox `controlling` listener,
+  // which silently never fires if the waiting worker already took control or that
+  // listener was already consumed — leaving the toast stuck. Drive the reload
+  // ourselves: skip waiting, reload on the next controller change, and fall back
+  // to a plain reload so the button always acts.
+  const reload = () => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener(
+        'controllerchange',
+        () => window.location.reload(),
+        { once: true },
+      );
+    }
+    void updateServiceWorker(true);
+    window.setTimeout(() => window.location.reload(), 1500);
+  };
+
   return (
     <div
       role="status"
@@ -20,7 +37,7 @@ export function UpdatePrompt() {
         <Button variant="ghost" size="sm" onClick={() => setNeedRefresh(false)}>
           Later
         </Button>
-        <Button size="sm" onClick={() => void updateServiceWorker(true)}>
+        <Button size="sm" onClick={reload}>
           Reload
         </Button>
       </div>
