@@ -76,11 +76,16 @@ independent versions. Know which one a change needs. Mechanics: `DEVELOPMENT.md`
 Two ways to bump, and prefer breaking:
 
 - **Breaking** (the data changes): raise **both** constants. The cache is
-  destructively cleared _before_ migrations run, so your migration hits empty
-  tables — write a clean schema (`ADD COLUMN … NOT NULL`, no nullable sentinels).
+  discarded and refilled rather than reinterpreted, so old rows needn't survive.
 - **Additive** (old data still renders): raise `CURRENT_DATA_REVISION` only. The
   migration hits populated tables, so new columns must tolerate existing rows
   (nullable or `NOT NULL DEFAULT`) — the only case a nullable backfill belongs.
+
+Either way, **write the migration as if the tables already hold rows** — the
+destructive reset isn't guaranteed to have emptied them (it skips additive bumps,
+imports, and re-runs). SQLite rejects `ADD COLUMN … NOT NULL` without a `DEFAULT`
+on a non-empty table and bricks `open()`, so every `NOT NULL` column you add must
+carry a `DEFAULT` (`… NOT NULL DEFAULT ''`); extraction overwrites it next run.
 
 Don't bump revisions for UI-only or extraction-independent schema changes.
 

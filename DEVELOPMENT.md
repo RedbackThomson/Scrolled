@@ -102,14 +102,22 @@ explainer. The next successful run clears it.
 Bump the data revision whenever extraction output changes (new extraction-fed
 column, reinterpreted field, changed extractor) — usually alongside a migration.
 
-- **Breaking** (preferred): raise **both** constants. The reset clears the cache
-  before migrating, so write the clean schema directly — `ADD COLUMN … NOT NULL`,
-  tightened constraints, no nullable "not-yet-extracted" sentinels, no throwaway
-  defaults. (The reset runs _before_ migrations precisely so a `NOT NULL` add
-  can't hit populated rows, throw, and brick `open()`.)
-- **Additive**: raise `CURRENT_DATA_REVISION` only. No reset happens, so the
-  migration hits populated tables — new columns must tolerate existing rows
-  (nullable or `NOT NULL DEFAULT`). The only case a nullable backfill belongs.
+- **Breaking** (preferred): raise **both** constants. The cache is discarded and
+  rebuilt rather than reinterpreted — use this when old rows can't be migrated in
+  place. It does **not** license a bare `NOT NULL` add: see the rule below.
+- **Additive**: raise `CURRENT_DATA_REVISION` only. No reset happens, so old rows
+  survive and must keep rendering — new columns must tolerate them (nullable or
+  `NOT NULL DEFAULT`). The only case a nullable backfill belongs.
+
+**Write every migration as if the tables already hold rows.** Don't assume the
+destructive reset emptied them first: it only fires for a `< MINIMUM` cache that
+actually has data — never for an additive bump, an import of current-revision
+data, or a plain re-run — and it's a hook a refactor could move. SQLite rejects
+`ALTER TABLE … ADD COLUMN … NOT NULL` without a `DEFAULT` on a non-empty table
+("Cannot add a NOT NULL column with default value NULL"); that throws inside the
+migration transaction and bricks `open()` for everyone who upgrades with data.
+So **every `NOT NULL` column you add needs a `DEFAULT`** (e.g. `NOT NULL DEFAULT
+''` / `DEFAULT 0`) — extraction overwrites the placeholder on the next run.
 
 Don't bump for UI-only or extraction-independent schema changes. Shipped
 migrations (e.g. the nullable equip-bonus columns in 14) predate this and must

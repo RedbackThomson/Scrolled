@@ -849,14 +849,17 @@ export const MIGRATIONS: readonly Migration[] = [
       -- Where each row's localized name/description was resolved from in
       -- String.wz, recorded by the string-index layer. Aids debugging
       -- extractor gaps (e.g. an accessory whose strings sit under a bucket
-      -- that doesn't mirror its Character.wz slot). Breaking data-revision
-      -- bump: the cache is cleared before migrations, so these run against
-      -- empty tables — every persisted item/equip has a resolved name, hence
-      -- string_path is NOT NULL. string_category is nullable because flat
-      -- string layouts have no bucket node.
-      ALTER TABLE items  ADD COLUMN string_path     TEXT NOT NULL;
+      -- that doesn't mirror its Character.wz slot).
+      --
+      -- NOT NULL needs a DEFAULT: SQLite forbids ADD COLUMN ... NOT NULL
+      -- without one on a table that has rows ("Cannot add a NOT NULL column
+      -- with default value NULL"). This runs against populated tables in the
+      -- additive case, so the default is required — extraction overwrites the
+      -- empty string with the real path. string_category is nullable because
+      -- flat string layouts have no bucket node.
+      ALTER TABLE items  ADD COLUMN string_path     TEXT NOT NULL DEFAULT '';
       ALTER TABLE items  ADD COLUMN string_category TEXT;
-      ALTER TABLE equips ADD COLUMN string_path     TEXT NOT NULL;
+      ALTER TABLE equips ADD COLUMN string_path     TEXT NOT NULL DEFAULT '';
       ALTER TABLE equips ADD COLUMN string_category TEXT;
     `,
   },

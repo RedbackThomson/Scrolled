@@ -21,7 +21,7 @@ export const CURRENT_DATA_REVISION: number = 14;
  * raise this to equal CURRENT_DATA_REVISION; for an additive feature that only
  * needs a refresh, leave it and bump CURRENT_DATA_REVISION alone.
  */
-export const MINIMUM_SUPPORTED_DATA_REVISION: number = 14;
+export const MINIMUM_SUPPORTED_DATA_REVISION: number = 12;
 
 export type DataState =
   /** Cache matches the current build — nothing to do. */
