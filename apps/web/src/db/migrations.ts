@@ -947,3 +947,10 @@ export const MIGRATIONS: readonly Migration[] = [
     `,
   },
 ];
+
+/**
+ * Highest schema version this build can produce/migrate to. Migrations are
+ * forward-only, so a database whose schema exceeds this was built by a newer app
+ * and cannot be safely opened here.
+ */
+export const LATEST_SCHEMA_VERSION: number = Math.max(...MIGRATIONS.map((m) => m.version));

@@ -35,6 +35,35 @@ committed to `scrolled`. See `CLAUDE.md` and `docs/writing_conventions.md`.
 - A newer published version surfaces a `DatasetUpdatePrompt` (distinct from the
   PWA app-update prompt); accepting it re-installs in place.
 
+## Keeping the app and dataset in sync
+
+The dataset is a database export, so it carries two contracts that must match the
+app build that opens it (see `CLAUDE.md` → schema vs. data revisions):
+
+- **schema version** (`_migrations`) — the SQL shape. The app migrates an older
+  schema up, but cannot go down.
+- **data revision** (`app_meta.data_revision`) — the extracted-data contract the
+  app understands.
+
+These ride inside the artifact itself (the `.scrolled-backup` manifest), so
+compatibility is decided from the artifact, not from hand-entered metadata.
+`evaluateBackupImport()` enforces it on every install/update, both directions:
+
+- Data older than `MINIMUM_SUPPORTED_DATA_REVISION` → blocked.
+- Data newer than `CURRENT_DATA_REVISION`, or schema beyond
+  `LATEST_SCHEMA_VERSION` → blocked with an "update the app" message (a cached,
+  older app refuses a dataset built by a newer one rather than risk corruption).
+
+This makes a mismatch **safe** rather than corrupting. The usual way an app and
+dataset drift is the **service-worker cache**: a returning visitor can run a
+previously-cached app build after the deployment has advanced. The guard turns
+that into a clear "update the app" prompt; the PWA update path then heals it.
+
+**Operationally, publish them together.** When you cut a new app build that bumps
+the data revision, rebuild and republish the dataset from that same build and
+flip `latest.json` alongside the app deploy. The canonical deployment then never
+serves a mismatched pair, and the guard covers the transient cache window.
+
 ## The dataset repository layout
 
 A static tree, hostable from GitHub Pages, R2, S3, or any static host:

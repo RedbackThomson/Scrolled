@@ -3,10 +3,12 @@ export {
   BACKUP_FORMAT_VERSION,
   backupManifestSchema,
   evaluateBackupImport,
+  BackupIncompatibleError,
   type BackupManifest,
   type BackupGameEntry,
   type BackupDatabaseEntry,
   type BackupImportDecision,
+  type BackupBlockKind,
 } from './manifest';
 export {
   packBackup,

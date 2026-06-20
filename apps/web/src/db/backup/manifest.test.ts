@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CURRENT_DATA_REVISION, MINIMUM_SUPPORTED_DATA_REVISION } from '@/db/dataVersion';
+import { LATEST_SCHEMA_VERSION } from '@/db/migrations';
 import {
   BACKUP_FORMAT,
   BACKUP_FORMAT_VERSION,
@@ -34,7 +35,26 @@ describe('evaluateBackupImport', () => {
   it('blocks game data below the minimum supported revision', () => {
     const d = evaluateBackupImport(manifest({ game: game(MINIMUM_SUPPORTED_DATA_REVISION - 1) }));
     expect(d.blocked).toBe(true);
-    expect(d.reason).toMatch(/older than this version can read/);
+    expect(d.kind).toBe('data-too-old');
+    expect(d.reason).toMatch(/older than this version of the app can read/);
+  });
+
+  it('blocks game data newer than this build can read (app too old)', () => {
+    const d = evaluateBackupImport(manifest({ game: game(CURRENT_DATA_REVISION + 1) }));
+    expect(d.blocked).toBe(true);
+    expect(d.kind).toBe('app-too-old');
+    expect(d.reason).toMatch(/newer version of the app/);
+  });
+
+  it('blocks a database schema beyond what this build supports (app too old)', () => {
+    const d = evaluateBackupImport(
+      manifest({
+        game: { ...game(CURRENT_DATA_REVISION), schemaVersion: LATEST_SCHEMA_VERSION + 1 },
+      }),
+    );
+    expect(d.blocked).toBe(true);
+    expect(d.kind).toBe('app-too-old');
+    expect(d.reason).toMatch(/newer database format/);
   });
 
   it('warns but allows game data between minimum and current', () => {

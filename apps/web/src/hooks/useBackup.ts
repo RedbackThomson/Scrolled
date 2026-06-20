@@ -9,6 +9,7 @@ import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/r
 import { getDbClient } from '@/db';
 import { getUserDbClient } from '@/db/user';
 import {
+  BackupIncompatibleError,
   classifyRawSqlite,
   evaluateBackupImport,
   looksLikeBackup,
@@ -55,7 +56,12 @@ export async function importBackupBytes(bytes: Uint8Array): Promise<ImportBackup
   if (looksLikeBackup(bytes)) {
     const contents = await readBackup(bytes);
     const decision = evaluateBackupImport(contents.manifest);
-    if (decision.blocked) throw new Error(decision.reason);
+    if (decision.blocked) {
+      throw new BackupIncompatibleError(
+        decision.kind ?? 'app-too-old',
+        decision.reason ?? 'This backup is not compatible with this version of the app.',
+      );
+    }
     const imported: ('game' | 'user')[] = [];
     let backend: 'opfs' | 'memory' | null = null;
     let schemaVersion: number | null = null;

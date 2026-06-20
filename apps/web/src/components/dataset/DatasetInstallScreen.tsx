@@ -4,8 +4,11 @@
 // manifest (data, not source) and otherwise stays generic.
 
 import { AlertCircle, Loader2 } from 'lucide-react';
+import { useRegisterSW } from 'virtual:pwa-register/react';
 import { Button } from '@/components/ui/button';
+import { BackupIncompatibleError } from '@/db/backup';
 import { useFixedDatasetInstall } from '@/hooks/dataset/useFixedDatasetInstall';
+import { reloadForUpdate } from '@/lib/swReload';
 
 function formatMb(bytes: number): string {
   return (bytes / 1_000_000).toFixed(1);
@@ -13,7 +16,14 @@ function formatMb(bytes: number): string {
 
 export function DatasetInstallScreen() {
   const { status, progress, error, retry } = useFixedDatasetInstall();
+  const { updateServiceWorker } = useRegisterSW();
   const name = progress?.manifest?.displayName ?? 'your library';
+
+  // The dataset was built by a newer app than this (cached) build. Retrying
+  // can't help — the app itself must update. The PWA prompt isn't rendered on
+  // this blocking screen, so offer the update here.
+  const needsAppUpdate =
+    error instanceof BackupIncompatibleError && error.kind === 'app-too-old';
 
   const download = progress?.download;
   const percent =
@@ -49,14 +59,27 @@ export function DatasetInstallScreen() {
           <>
             <AlertCircle className="text-destructive h-7 w-7" aria-hidden />
             <div className="space-y-1">
-              <p className="text-sm font-medium">Couldn't install the dataset</p>
+              <p className="text-sm font-medium">
+                {needsAppUpdate ? 'This site needs to update' : "Couldn't install the dataset"}
+              </p>
               <p className="text-muted-foreground text-xs">
                 {error?.message ?? 'Something went wrong while downloading.'}
               </p>
             </div>
-            <Button type="button" variant="outline" size="sm" onClick={retry}>
-              Try again
-            </Button>
+            {needsAppUpdate ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => reloadForUpdate(updateServiceWorker)}
+              >
+                Reload to update
+              </Button>
+            ) : (
+              <Button type="button" variant="outline" size="sm" onClick={retry}>
+                Try again
+              </Button>
+            )}
           </>
         ) : (
           <>

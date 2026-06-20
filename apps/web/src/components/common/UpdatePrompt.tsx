@@ -1,5 +1,6 @@
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { Button } from '@/components/ui/button';
+import { reloadForUpdate } from '@/lib/swReload';
 
 export function UpdatePrompt() {
   const {
@@ -9,22 +10,7 @@ export function UpdatePrompt() {
 
   if (!needRefresh) return null;
 
-  // vite-plugin-pwa only reloads via a one-shot workbox `controlling` listener,
-  // which silently never fires if the waiting worker already took control or that
-  // listener was already consumed — leaving the toast stuck. Drive the reload
-  // ourselves: skip waiting, reload on the next controller change, and fall back
-  // to a plain reload so the button always acts.
-  const reload = () => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener(
-        'controllerchange',
-        () => window.location.reload(),
-        { once: true },
-      );
-    }
-    void updateServiceWorker(true);
-    window.setTimeout(() => window.location.reload(), 1500);
-  };
+  const reload = () => reloadForUpdate(updateServiceWorker);
 
   return (
     <div
