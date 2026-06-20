@@ -1,7 +1,16 @@
-import { lazy, Suspense, useCallback, useMemo } from 'react';
+import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Copy, DoorOpen, Map as MapIcon, MapPin, Maximize, Skull, Users } from 'lucide-react';
+import {
+  Copy,
+  DoorOpen,
+  Globe2,
+  Map as MapIcon,
+  MapPin,
+  Maximize,
+  Skull,
+  Users,
+} from 'lucide-react';
 import { DetailListSection } from '@/components/layout/DetailListSection';
 import {
   DetailPageLayout,
@@ -22,6 +31,9 @@ import { parseViewerParam, serializeViewerParam } from '@/components/MapViewer/v
 
 const MapViewerModal = lazy(() =>
   import('@/components/MapViewer/MapViewerModal').then((m) => ({ default: m.MapViewerModal })),
+);
+const WorldMapViewerModal = lazy(() =>
+  import('@/components/WorldMapViewer').then((m) => ({ default: m.WorldMapViewerModal })),
 );
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
 import type { CommandItem } from '@/components/command-palette/types';
@@ -56,6 +68,13 @@ export default function MapDetail() {
     queryFn: () => client.getMap(id),
     enabled: Number.isFinite(id),
   });
+  const worldMapQ = useQuery({
+    queryKey: ['db', 'map', id, 'world-map'],
+    queryFn: () => client.findWorldMapForMap(id),
+    enabled: Number.isFinite(id),
+  });
+  const worldMapFor = worldMapQ.data ?? null;
+  const [worldMapOpen, setWorldMapOpen] = useState(false);
   const npcsQ = useQuery({
     queryKey: ['db', 'map', id, 'npcs'],
     queryFn: () => client.getMapNpcs(id),
@@ -160,6 +179,18 @@ export default function MapDetail() {
         icon: Maximize,
         onSelect: () => writeViewerParam({ open: true, highlight: null }, { replace: false }),
       },
+      ...(worldMapFor
+        ? [
+            {
+              id: 'open-world-map',
+              group: 'context' as const,
+              label: 'Open world map',
+              keywords: ['world', 'map', 'region', 'overview'],
+              icon: Globe2,
+              onSelect: () => setWorldMapOpen(true),
+            },
+          ]
+        : []),
       {
         id: 'copy-map-id',
         group: 'context',
@@ -169,7 +200,7 @@ export default function MapDetail() {
         onSelect: () => navigator.clipboard.writeText(String(id)),
       },
     ],
-    [id, writeViewerParam],
+    [id, writeViewerParam, worldMapFor],
   );
   useDetailPalette({ entity: 'map', id, name: mapQ.data?.name, items: paletteItems });
 
@@ -257,6 +288,19 @@ export default function MapDetail() {
                 <MapPin className="h-3.5 w-3.5" /> Show map details
               </button>
             </div>
+          </section>
+        )}
+
+        {worldMapFor && (
+          <section>
+            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide">World map</h2>
+            <button
+              type="button"
+              onClick={() => setWorldMapOpen(true)}
+              className="text-primary inline-flex items-center gap-1 text-xs hover:underline"
+            >
+              <Globe2 className="h-3.5 w-3.5" /> View on world map
+            </button>
           </section>
         )}
 
@@ -401,6 +445,17 @@ export default function MapDetail() {
             mapId={m.id}
             selection={viewerState.highlight}
             onSelectionChange={setViewerSelection}
+          />
+        </Suspense>
+      ) : null}
+
+      {worldMapOpen && worldMapFor ? (
+        <Suspense fallback={null}>
+          <WorldMapViewerModal
+            open={worldMapOpen}
+            onClose={() => setWorldMapOpen(false)}
+            worldMapId={worldMapFor.worldMapId}
+            focusMapId={m.id}
           />
         </Suspense>
       ) : null}

@@ -863,4 +863,47 @@ export const MIGRATIONS: readonly Migration[] = [
       ALTER TABLE equips ADD COLUMN string_category TEXT;
     `,
   },
+  {
+    version: 30,
+    name: 'world maps',
+    sql: `
+      -- Overview maps under Map.wz/WorldMap/WorldMap*.img: a background image
+      -- with clickable markers that each group one or more map ids, plus
+      -- parent/child nesting. The background PNG lives inline (like
+      -- maps.minimap_data); coordinates are stored raw (origin-relative) and
+      -- projected to screen space at render as origin + wz. MapLink overlays
+      -- and MapList path overlays are deliberately omitted until a later
+      -- additive migration.
+      CREATE TABLE world_maps (
+        id              TEXT PRIMARY KEY,
+        parent_id       TEXT,
+        base_image_data BLOB,
+        origin_x        INTEGER NOT NULL DEFAULT 0,
+        origin_y        INTEGER NOT NULL DEFAULT 0,
+        source_path     TEXT NOT NULL DEFAULT ''
+      );
+
+      CREATE TABLE world_map_markers (
+        id            TEXT PRIMARY KEY,
+        world_map_id  TEXT NOT NULL,
+        marker_index  INTEGER NOT NULL,
+        wz_x          INTEGER NOT NULL DEFAULT 0,
+        wz_y          INTEGER NOT NULL DEFAULT 0,
+        type          INTEGER,
+        title         TEXT,
+        description   TEXT
+      );
+
+      CREATE TABLE world_map_marker_maps (
+        marker_id  TEXT NOT NULL,
+        map_id     INTEGER NOT NULL,
+        map_index  INTEGER NOT NULL,
+        PRIMARY KEY (marker_id, map_index)
+      );
+
+      CREATE INDEX world_map_markers_world_map_idx ON world_map_markers (world_map_id);
+      CREATE INDEX world_map_marker_maps_map_idx   ON world_map_marker_maps (map_id);
+      CREATE INDEX world_maps_parent_idx           ON world_maps (parent_id);
+    `,
+  },
 ];

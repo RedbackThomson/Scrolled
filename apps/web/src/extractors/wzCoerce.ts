@@ -53,6 +53,23 @@ export function childToString(parent: WzNodeTree | undefined, name: string): str
   return scalarToString(childScalar(parent, name));
 }
 
+/** Coerce a WZ vector scalar (the parser joins it as `"x,y"`) to a point. */
+export function scalarToVector(scalar: Scalar): { x: number; y: number } | null {
+  if (typeof scalar !== 'string') return null;
+  const [xs, ys] = scalar.split(',');
+  const x = scalarToNumber(xs);
+  const y = scalarToNumber(ys);
+  return x === null || y === null ? null : { x, y };
+}
+
+/** Vector value of a named child of a tree node, or null. */
+export function childToVector(
+  parent: WzNodeTree | undefined,
+  name: string,
+): { x: number; y: number } | null {
+  return scalarToVector(childScalar(parent, name));
+}
+
 /** Fetch a node by path and coerce its scalar to a number, or null. */
 export async function pathToNumber(source: GameDataSource, path: string): Promise<number | null> {
   const node = await source.getNode(path);

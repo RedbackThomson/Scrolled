@@ -23,7 +23,7 @@ const ENTITY_FEATURE: Record<
       | 'hasSkills'
       | 'hasJobs'
     >;
-    countKey: 'items' | 'equips' | 'mobs' | 'npcs' | 'maps' | 'quests' | 'skills' | 'jobs';
+    countKey: keyof NonNullable<Features['counts']>;
   }
 > = {
   item: { flag: 'hasItems', countKey: 'items' },
@@ -34,6 +34,9 @@ const ENTITY_FEATURE: Record<
   mob: { flag: 'hasMobs', countKey: 'mobs' },
   npc: { flag: 'hasNpcs', countKey: 'npcs' },
   map: { flag: 'hasMaps', countKey: 'maps' },
+  // World maps ride the maps feature flag (both need Map.wz) but carry their
+  // own row + count.
+  worldMap: { flag: 'hasMaps', countKey: 'worldMaps' },
   quest: { flag: 'hasQuests', countKey: 'quests' },
   job: { flag: 'hasJobs', countKey: 'jobs' },
   skill: { flag: 'hasSkills', countKey: 'skills' },

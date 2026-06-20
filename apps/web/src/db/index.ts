@@ -55,6 +55,11 @@ export type {
   SkillRecord,
   SkillSummary,
   SortDir,
+  WorldMapRecord,
+  WorldMapMarkerRecord,
+  WorldMapMarkerMapRecord,
+  WorldMapMarkerWithMaps,
+  WorldMapForMap,
 } from './types';
 export {
   CURRENT_DATA_REVISION,

@@ -59,6 +59,7 @@ export const EXTRACTOR_TO_WORKER: Record<ExtractorKey, PoolWorkerName> = {
   mob: 'mobs',
   npc: 'npcs',
   map: 'maps',
+  worldMap: 'maps',
   quest: 'quests',
   job: 'skills',
   skill: 'skills',
@@ -71,6 +72,7 @@ export const EXTRACTOR_LABEL: Record<ExtractorKey, string> = {
   mob: 'Mobs',
   npc: 'NPCs',
   map: 'Maps',
+  worldMap: 'World Maps',
   quest: 'Quests',
   job: 'Jobs',
   skill: 'Skills',
@@ -574,6 +576,28 @@ async function runWorkerExtractors(
     });
     bumpSkipped(r.skipped.length);
     patchExtractor('map', { phase: 'done', progress: null });
+
+    // World maps share Map.wz, so they run on this same worker after maps.
+    if (willRun.has('worldMap')) {
+      patchExtractor('worldMap', { phase: 'extracting' });
+      const onWmProgress = proxy((p: ProgressUpdate) =>
+        patchExtractor('worldMap', { progress: p }),
+      );
+      const wm = await worker.extractWorldMaps(onWmProgress);
+      const wmRows = wm.worldMaps.length > 0 ? await db.upsertWorldMaps(wm.worldMaps) : 0;
+      if (wm.markers.length > 0) await db.upsertWorldMapMarkers(wm.markers);
+      if (wm.markerMaps.length > 0) await db.upsertWorldMapMarkerMaps(wm.markerMaps);
+      out.push({
+        extractor: 'worldMap',
+        status: 'ran',
+        rows: wmRows,
+        skippedRows: wm.skipped.length,
+        placeholderNames: 0,
+        error: null,
+      });
+      bumpSkipped(wm.skipped.length);
+      patchExtractor('worldMap', { phase: 'done', progress: null });
+    }
     return;
   }
 

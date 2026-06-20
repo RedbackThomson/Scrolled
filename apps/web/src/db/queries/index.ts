@@ -51,6 +51,11 @@ import type {
   SkillPrerequisiteRecord,
   SkillPrerequisiteWithName,
   SkillRecord,
+  WorldMapForMap,
+  WorldMapMarkerMapRecord,
+  WorldMapMarkerRecord,
+  WorldMapMarkerWithMaps,
+  WorldMapRecord,
 } from '../types';
 import * as items from './items';
 import * as chairs from './chairs';
@@ -58,6 +63,7 @@ import * as equips from './equips';
 import * as mobs from './mobs';
 import * as npcs from './npcs';
 import * as maps from './maps';
+import * as worldMaps from './worldMaps';
 import * as quests from './quests';
 import * as questChains from './questChains';
 import * as jobs from './jobs';
@@ -105,6 +111,7 @@ export class DbApi implements GameDatabase {
         mobs: countOf(this.sql, 'mobs'),
         npcs: countOf(this.sql, 'npcs'),
         maps: countOf(this.sql, 'maps'),
+        worldMaps: countOf(this.sql, 'world_maps'),
         quests: countOf(this.sql, 'quests'),
         questChains: countOf(this.sql, 'quest_chains'),
         skills: countOf(this.sql, 'skills'),
@@ -299,6 +306,32 @@ export class DbApi implements GameDatabase {
     mobSpawns: MapMobSpawnRecord[];
   }): Promise<void> {
     maps.replaceMapLife(this.sql, rows);
+  }
+
+  // -- world maps -------------------------------------------------------------
+
+  async upsertWorldMaps(list: WorldMapRecord[]): Promise<number> {
+    return worldMaps.upsertWorldMaps(this.sql, list);
+  }
+
+  async upsertWorldMapMarkers(list: WorldMapMarkerRecord[]): Promise<number> {
+    return worldMaps.upsertWorldMapMarkers(this.sql, list);
+  }
+
+  async upsertWorldMapMarkerMaps(list: WorldMapMarkerMapRecord[]): Promise<number> {
+    return worldMaps.upsertWorldMapMarkerMaps(this.sql, list);
+  }
+
+  async getWorldMap(id: string): Promise<WorldMapRecord | null> {
+    return worldMaps.getWorldMap(this.sql, id);
+  }
+
+  async getWorldMapMarkers(worldMapId: string): Promise<WorldMapMarkerWithMaps[]> {
+    return worldMaps.getWorldMapMarkers(this.sql, worldMapId);
+  }
+
+  async findWorldMapForMap(mapId: number): Promise<WorldMapForMap | null> {
+    return worldMaps.findWorldMapForMap(this.sql, mapId);
   }
 
   // -- quests -----------------------------------------------------------------

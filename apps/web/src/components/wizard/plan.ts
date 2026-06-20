@@ -7,6 +7,7 @@
 
 import type { DatasetFileRef } from '@/db';
 import { wzKey } from '@/hooks/extraction/useExtractAll';
+import type { ExtractorKey as SharedExtractorKey } from '@/hooks/extraction/shared';
 import type { WizardFile } from './StepFiles';
 
 /**
@@ -34,6 +35,9 @@ export const EXTRACTOR_DEPS = {
   mob: { label: 'Mobs', primary: 'Mob.wz', needs: ['String.wz'] },
   npc: { label: 'NPCs', primary: 'Npc.wz', needs: ['String.wz'] },
   map: { label: 'Maps', primary: 'Map.wz', needs: ['String.wz'] },
+  // World maps read only Map.wz/WorldMap; their labels come from the embedded
+  // MapList, so String.wz isn't a dependency.
+  worldMap: { label: 'World Maps', primary: 'Map.wz', needs: [] },
   quest: { label: 'Quests', primary: 'Quest.wz', needs: ['String.wz'] },
   // Jobs are a tiny reference table read out of String.wz alongside skill
   // extraction. They share Skill.wz as the gating primary because the
@@ -44,17 +48,17 @@ export const EXTRACTOR_DEPS = {
 } as const;
 
 export type ExtractorKey = keyof typeof EXTRACTOR_DEPS;
-export const ALL_EXTRACTOR_KEYS: ExtractorKey[] = [
-  'item',
-  'chair',
-  'equip',
-  'mob',
-  'npc',
-  'map',
-  'quest',
-  'job',
-  'skill',
-];
+
+// Derived from EXTRACTOR_DEPS (declaration order) rather than hand-listed, so
+// adding an extractor above can never silently miss the plan/UI iteration.
+export const ALL_EXTRACTOR_KEYS = Object.keys(EXTRACTOR_DEPS) as ExtractorKey[];
+
+// Compile-time guarantee the wizard's extractor set stays identical to the
+// extraction layer's (`hooks/extraction/shared.ts`). If one gains a key the
+// other lacks, this assignment stops type-checking.
+type Mutual<A, B> = [A] extends [B] ? ([B] extends [A] ? true : never) : never;
+const _keysMatchExtractionLayer: Mutual<ExtractorKey, SharedExtractorKey> = true;
+void _keysMatchExtractionLayer;
 
 export interface PlannedExtractor {
   key: ExtractorKey;

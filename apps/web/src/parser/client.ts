@@ -7,6 +7,7 @@ import type {
   ExtractMobsResult,
   ExtractNpcsResult,
   ExtractMapsResult,
+  ExtractWorldMapsResult,
   ExtractQuestsResult,
   ExtractSkillsResult,
   ExtractJobsResult,
@@ -28,6 +29,7 @@ export interface ParserWorkerApi extends GameDataSource {
   extractMobs(onProgress?: ProgressFn): Promise<ExtractMobsResult>;
   extractNpcs(onProgress?: ProgressFn): Promise<ExtractNpcsResult>;
   extractMaps(onProgress?: ProgressFn): Promise<ExtractMapsResult>;
+  extractWorldMaps(onProgress?: ProgressFn): Promise<ExtractWorldMapsResult>;
   extractQuests(onProgress?: ProgressFn): Promise<ExtractQuestsResult>;
   extractSkills(onProgress?: ProgressFn): Promise<ExtractSkillsResult>;
   extractJobs(onProgress?: ProgressFn): Promise<ExtractJobsResult>;

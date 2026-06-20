@@ -187,6 +187,28 @@ export function useExtractAll(opts: UseExtractAllOptions = {}) {
         log.info('skipping maps (Map.wz hash unchanged)');
       }
 
+      if (!shouldSkip(opts.skipWz, 'map')) {
+        try {
+          const r = await parser.extractWorldMaps(onProgress);
+          setProgress({
+            phase: 'Saving world maps to database',
+            current: 0,
+            total: r.worldMaps.length,
+          });
+          const worldMapCount =
+            r.worldMaps.length > 0 ? await db.upsertWorldMaps(r.worldMaps) : 0;
+          if (r.markers.length > 0) await db.upsertWorldMapMarkers(r.markers);
+          if (r.markerMaps.length > 0) await db.upsertWorldMapMarkerMaps(r.markerMaps);
+          tracker.ran('worldMap', worldMapCount, r.skipped.length);
+          skippedTotal += r.skipped.length;
+        } catch (err) {
+          tracker.failed('worldMap', err);
+          throw err;
+        }
+      } else {
+        log.info('skipping world maps (Map.wz hash unchanged)');
+      }
+
       if (!shouldSkip(opts.skipWz, 'quest')) {
         try {
           const r = await parser.extractQuests(onProgress);

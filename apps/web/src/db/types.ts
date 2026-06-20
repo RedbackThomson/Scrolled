@@ -243,6 +243,54 @@ export interface MobMapAppearance extends MapRecord {
 }
 
 /**
+ * An overview world map (one `Map.wz/WorldMap/WorldMap*.img`). `originX`/
+ * `originY` come from the `BaseImg/0` canvas origin; marker/screen coords are
+ * projected at render as `origin + wz`. `parentId` references another
+ * world map's `id` for up-navigation.
+ */
+export interface WorldMapRecord {
+  id: string;
+  parentId: string | null;
+  /** Decoded PNG bytes for the `BaseImg/0` background, or null. */
+  baseImageData: Uint8Array | null;
+  originX: number;
+  originY: number;
+  sourcePath: string;
+}
+
+/** A clickable marker on a world map (one `MapList/<index>` entry). */
+export interface WorldMapMarkerRecord {
+  /** `"<worldMapId>:<markerIndex>"`. */
+  id: string;
+  worldMapId: string;
+  markerIndex: number;
+  /** Raw origin-relative spot coords; screen pos is `origin + wz`. */
+  wzX: number;
+  wzY: number;
+  type: number | null;
+  title: string | null;
+  description: string | null;
+}
+
+/** One map id grouped under a marker (one `MapList/<index>/mapNo/<i>` entry). */
+export interface WorldMapMarkerMapRecord {
+  markerId: string;
+  mapId: number;
+  mapIndex: number;
+}
+
+/** A marker with its grouped map ids attached, for rendering. */
+export interface WorldMapMarkerWithMaps extends WorldMapMarkerRecord {
+  mapIds: number[];
+}
+
+/** Which world map (and marker) a given map id appears on. */
+export interface WorldMapForMap {
+  worldMapId: string;
+  markerId: string;
+}
+
+/**
  * One item this mob can drop, taken from
  * `String.wz/MonsterBook.img/<mobId>/reward/<index>`. Rates and quantities
  * aren't in the WZ data — they're server-side — so this is the *possibility*
@@ -660,6 +708,7 @@ export interface DbStatus {
     mobs: number;
     npcs: number;
     maps: number;
+    worldMaps: number;
     quests: number;
     questChains: number;
     skills: number;
@@ -804,6 +853,16 @@ export interface GameDatabase {
   getMapPortals(mapId: number): Promise<MapPortalWithName[]>;
   /** Per-spawn mob rows (one per spawn point, not aggregated by mob id). */
   getMapMobSpawns(mapId: number): Promise<MapMobSpawnWithName[]>;
+
+  upsertWorldMaps(worldMaps: WorldMapRecord[]): Promise<number>;
+  upsertWorldMapMarkers(markers: WorldMapMarkerRecord[]): Promise<number>;
+  upsertWorldMapMarkerMaps(rows: WorldMapMarkerMapRecord[]): Promise<number>;
+  /** A world map incl. its decoded background PNG, or null. */
+  getWorldMap(id: string): Promise<WorldMapRecord | null>;
+  /** Markers for a world map, each with its grouped map ids attached. */
+  getWorldMapMarkers(worldMapId: string): Promise<WorldMapMarkerWithMaps[]>;
+  /** Which world map + marker a given map id appears on, or null. */
+  findWorldMapForMap(mapId: number): Promise<WorldMapForMap | null>;
 
   upsertJobs(jobs: JobRecord[]): Promise<number>;
   getJob(id: number): Promise<JobRecord | null>;

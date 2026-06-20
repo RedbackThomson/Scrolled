@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Database, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { EXTRACTOR_CARD_KEYS, EXTRACTOR_CARD_META } from '@/components/common/extractorCatalog';
 import { ProgressBar } from '@/components/common/ProgressBar';
 import { useExtractAll } from '@/hooks/extraction/useExtractAll';
 
@@ -33,9 +34,9 @@ export function ExtractAllPanel() {
           <div className="text-muted-foreground flex items-center gap-2 text-sm">
             <Database className="h-4 w-4" />
             <span>
-              {stats.items} items, {stats.chairs} chairs, {stats.equips} equips, {stats.mobs}{' '}
-              mobs, {stats.npcs} NPCs, {stats.maps} maps, {stats.quests} quests,{' '}
-              {stats.questChains} chains, {stats.skills} skills, {stats.jobs} jobs
+              {EXTRACTOR_CARD_KEYS.map((k) => `${stats.counts[k]} ${EXTRACTOR_CARD_META[k].label}`).join(
+                ', ',
+              )}
               {stats.skipped > 0 ? `, ${stats.skipped} skipped` : ''} in {stats.ms} ms
             </span>
             <Link to="/items" className="text-primary text-xs hover:underline">

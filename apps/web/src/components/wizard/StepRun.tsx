@@ -1,22 +1,8 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  AlertTriangle,
-  Briefcase,
-  CheckCircle2,
-  GitBranch,
-  Loader2,
-  Package,
-  ScrollText,
-  Shield,
-  Skull,
-  Sparkles,
-  Users,
-  XCircle,
-  Map as MapIcon,
-  type LucideIcon,
-} from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import { AccentPicker } from '@/components/common/AccentPicker';
+import { EXTRACTOR_CARD_KEYS, EXTRACTOR_CARD_META } from '@/components/common/extractorCatalog';
 import { ProgressBar } from '@/components/common/ProgressBar';
 import type { WzMapleVersionName } from '@/parser';
 import {
@@ -36,33 +22,6 @@ interface Props {
   onComplete: () => void;
   mode: 'first-run' | 'update';
 }
-
-/** Per-category summary tiles, keyed by the count field on `ExtractStats`.
- *  Icons mirror the sidebar so the summary reads like the app it built. */
-const SUMMARY_CARDS: {
-  key:
-    | 'items'
-    | 'equips'
-    | 'mobs'
-    | 'npcs'
-    | 'maps'
-    | 'quests'
-    | 'questChains'
-    | 'jobs'
-    | 'skills';
-  label: string;
-  Icon: LucideIcon;
-}[] = [
-  { key: 'items', label: 'Items', Icon: Package },
-  { key: 'equips', label: 'Equips', Icon: Shield },
-  { key: 'mobs', label: 'Mobs', Icon: Skull },
-  { key: 'npcs', label: 'NPCs', Icon: Users },
-  { key: 'maps', label: 'Maps', Icon: MapIcon },
-  { key: 'quests', label: 'Quests', Icon: ScrollText },
-  { key: 'questChains', label: 'Quest Chains', Icon: GitBranch },
-  { key: 'jobs', label: 'Jobs', Icon: Briefcase },
-  { key: 'skills', label: 'Skills', Icon: Sparkles },
-];
 
 /**
  * Runs the wizard's extraction in parallel across the parser pool.
@@ -135,8 +94,8 @@ export function StepRun({ version, files, onComplete, mode }: Props) {
 
   if (extract.stats) {
     const stats = extract.stats;
-    const loaded = SUMMARY_CARDS.filter((c) => stats[c.key] > 0);
-    const total = loaded.reduce((n, c) => n + stats[c.key], 0);
+    const loaded = EXTRACTOR_CARD_KEYS.filter((k) => stats.counts[k] > 0);
+    const total = loaded.reduce((n, k) => n + stats.counts[k], 0);
     return (
       <section className="space-y-5">
         <div className="flex items-center gap-3">
@@ -154,22 +113,25 @@ export function StepRun({ version, files, onComplete, mode }: Props) {
 
         {loaded.length > 0 && (
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {loaded.map(({ key, label, Icon }) => (
-              <li
-                key={key}
-                className="border-border bg-card text-card-foreground flex items-center gap-3 rounded-md border p-3"
-              >
-                <span className="bg-primary/10 text-primary flex h-9 w-9 shrink-0 items-center justify-center rounded-md">
-                  <Icon className="h-4 w-4" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block font-mono text-lg font-semibold tabular-nums leading-none">
-                    {stats[key].toLocaleString()}
+            {loaded.map((key) => {
+              const { label, Icon } = EXTRACTOR_CARD_META[key];
+              return (
+                <li
+                  key={key}
+                  className="border-border bg-card text-card-foreground flex items-center gap-3 rounded-md border p-3"
+                >
+                  <span className="bg-primary/10 text-primary flex h-9 w-9 shrink-0 items-center justify-center rounded-md">
+                    <Icon className="h-4 w-4" />
                   </span>
-                  <span className="text-muted-foreground mt-1 block text-xs">{label}</span>
-                </span>
-              </li>
-            ))}
+                  <span className="min-w-0">
+                    <span className="block font-mono text-lg font-semibold tabular-nums leading-none">
+                      {stats.counts[key].toLocaleString()}
+                    </span>
+                    <span className="text-muted-foreground mt-1 block text-xs">{label}</span>
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         )}
 

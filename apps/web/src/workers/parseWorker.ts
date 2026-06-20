@@ -10,6 +10,7 @@ import {
   extractMobs,
   extractNpcs,
   extractMaps,
+  extractWorldMaps,
   extractQuests,
   extractSkills,
   extractJobs,
@@ -29,6 +30,7 @@ import type {
   ExtractMobsResult,
   ExtractNpcsResult,
   ExtractMapsResult,
+  ExtractWorldMapsResult,
   ExtractQuestsResult,
   ExtractSkillsResult,
   ExtractJobsResult,
@@ -156,6 +158,19 @@ class WorkerGameDataSource implements GameDataSource {
       mapNpcs: result.mapNpcs.length,
       mapMobs: result.mapMobs.length,
       mapPortals: result.mapPortals.length,
+    });
+    return result;
+  }
+
+  async extractWorldMaps(onProgress?: ProgressFn): Promise<ExtractWorldMapsResult> {
+    log.info('extractWorldMaps requested');
+    const result = await extractWorldMaps(this.src(), {
+      onProgress: onProgress ? throttleProgress(onProgress) : undefined,
+    });
+    log.info('extractWorldMaps complete', {
+      worldMaps: result.worldMaps.length,
+      markers: result.markers.length,
+      markerMaps: result.markerMaps.length,
     });
     return result;
   }

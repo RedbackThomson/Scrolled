@@ -1,32 +1,21 @@
-import { DoorOpen, Repeat, Skull, Sparkles, Users, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { LayerKey, LayerVisibility } from './types';
+import type { LayerDescriptor, LayerVisibility } from './types';
 
-interface MapViewerLayerControlsProps {
+interface GraphicViewerLayerControlsProps {
+  layers: LayerDescriptor[];
   value: LayerVisibility;
   onChange: (next: LayerVisibility) => void;
-  counts: Record<LayerKey, number>;
 }
 
-const LAYERS: Array<{
-  key: LayerKey;
-  label: string;
-  Icon: LucideIcon;
-  swatch: string;
-}> = [
-  { key: 'spawns', label: 'Spawns', Icon: Sparkles, swatch: 'text-emerald-500' },
-  { key: 'portals', label: 'Portals', Icon: DoorOpen, swatch: 'text-sky-500' },
-  { key: 'teleports', label: 'Teleports', Icon: Repeat, swatch: 'text-violet-500' },
-  { key: 'npcs', label: 'NPCs', Icon: Users, swatch: 'text-amber-500' },
-  { key: 'mobs', label: 'Mobs', Icon: Skull, swatch: 'text-rose-500' },
-];
-
-export function MapViewerLayerControls({ value, onChange, counts }: MapViewerLayerControlsProps) {
+export function GraphicViewerLayerControls({
+  layers,
+  value,
+  onChange,
+}: GraphicViewerLayerControlsProps) {
   return (
     <div className="border-border bg-muted/30 flex shrink-0 flex-wrap items-center gap-2 border-t px-4 py-2">
-      {LAYERS.map(({ key, label, Icon, swatch }) => {
+      {layers.map(({ key, label, Icon, swatch, count }) => {
         const on = value[key];
-        const count = counts[key];
         return (
           <button
             key={key}

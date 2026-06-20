@@ -37,6 +37,8 @@ interface HoverPopoverProps {
   triggerStyle?: CSSProperties;
   /** Extra attributes for the trigger span — typically `data-*` or `aria-*`. */
   triggerProps?: Record<string, string | undefined>;
+  /** Click handler for the trigger span (e.g. a clickable map marker). */
+  onTriggerClick?: () => void;
   /**
    * Horizontal alignment of the popover relative to the trigger. `start`
    * (default) anchors the popover's left edge to the trigger's left; `end`
@@ -58,6 +60,7 @@ export function HoverPopover({
   triggerClassName,
   triggerStyle,
   triggerProps,
+  onTriggerClick,
   align = 'start',
 }: HoverPopoverProps) {
   const triggerRef = useRef<HTMLSpanElement>(null);
@@ -146,6 +149,7 @@ export function HoverPopover({
         onMouseLeave={startHide}
         onFocus={startShow}
         onBlur={startHide}
+        onClick={onTriggerClick}
         {...triggerProps}
       >
         {children}

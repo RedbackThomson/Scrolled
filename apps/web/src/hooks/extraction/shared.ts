@@ -15,6 +15,7 @@ export const ALL_EXTRACTOR_KEYS = [
   'mob',
   'npc',
   'map',
+  'worldMap',
   'quest',
   'job',
   'skill',
@@ -28,17 +29,16 @@ export type ExtractorKey = (typeof ALL_EXTRACTOR_KEYS)[number];
 export const POST_EXTRACTOR_KEYS = ['questChain'] as const;
 export type PostExtractorKey = (typeof POST_EXTRACTOR_KEYS)[number];
 
+/** Every key that produces a row count — parser extractors plus post-passes.
+ *  This is the canonical set the wizard summary + re-index panel iterate, so a
+ *  new extractor surfaces everywhere automatically (and any per-key metadata
+ *  map keyed by `ExtractCountKey` fails to compile until it's filled in). */
+export const EXTRACT_COUNT_KEYS = [...ALL_EXTRACTOR_KEYS, ...POST_EXTRACTOR_KEYS] as const;
+export type ExtractCountKey = (typeof EXTRACT_COUNT_KEYS)[number];
+
 export interface ExtractStats {
-  items: number;
-  chairs: number;
-  equips: number;
-  mobs: number;
-  npcs: number;
-  maps: number;
-  quests: number;
-  questChains: number;
-  skills: number;
-  jobs: number;
+  /** Row count per extractor/post-pass, keyed by `ExtractCountKey`. */
+  counts: Record<ExtractCountKey, number>;
   skipped: number;
   ms: number;
   /** Per-extractor outcome rows persisted into `extraction_extractors`. */
@@ -49,27 +49,17 @@ export function rowsFor(records: ExtractorResultRecord[], key: string): number {
   return records.find((r) => r.extractor === key)?.rows ?? 0;
 }
 
-/** Roll per-extractor records + skipped/elapsed totals into UI-facing stats. */
+/** Roll per-extractor records + skipped/elapsed totals into UI-facing stats.
+ *  Counts are derived by iterating `EXTRACT_COUNT_KEYS`, so every extractor is
+ *  covered without a hand-maintained field list. */
 export function buildExtractStats(
   perExtractor: ExtractorResultRecord[],
   skipped: number,
   ms: number,
 ): ExtractStats {
-  return {
-    items: rowsFor(perExtractor, 'item'),
-    chairs: rowsFor(perExtractor, 'chair'),
-    equips: rowsFor(perExtractor, 'equip'),
-    mobs: rowsFor(perExtractor, 'mob'),
-    npcs: rowsFor(perExtractor, 'npc'),
-    maps: rowsFor(perExtractor, 'map'),
-    quests: rowsFor(perExtractor, 'quest'),
-    questChains: rowsFor(perExtractor, 'questChain'),
-    skills: rowsFor(perExtractor, 'skill'),
-    jobs: rowsFor(perExtractor, 'job'),
-    skipped,
-    ms,
-    perExtractor,
-  };
+  const counts = {} as Record<ExtractCountKey, number>;
+  for (const k of EXTRACT_COUNT_KEYS) counts[k] = rowsFor(perExtractor, k);
+  return { counts, skipped, ms, perExtractor };
 }
 
 /** Stamp each recorded file with its load outcome from a name→error map. */
@@ -95,6 +85,7 @@ function equivWzKey(extractor: string): string {
   if (extractor === 'equip') return 'item';
   if (extractor === 'chair') return 'item';
   if (extractor === 'job') return 'skill';
+  if (extractor === 'worldMap') return 'map';
   return extractor;
 }
 

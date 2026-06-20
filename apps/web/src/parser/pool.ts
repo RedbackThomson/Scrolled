@@ -88,7 +88,7 @@ export const WORKER_EXTRACTORS: Record<PoolWorkerName, readonly string[]> = {
   equips: ['equip'],
   mobs: ['mob'],
   npcs: ['npc'],
-  maps: ['map'],
+  maps: ['map', 'worldMap'],
   quests: ['quest'],
   skills: ['job', 'skill'],
 };

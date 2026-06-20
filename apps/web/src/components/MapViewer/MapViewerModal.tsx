@@ -1,15 +1,17 @@
-import { useEffect, useMemo, useState } from 'react';
-import { List, Loader2 } from 'lucide-react';
-import { Modal } from '@/components/collections';
-import { buildPortalGraph, classifyPortal } from '@/domain/portal-types';
-import { useIsMobile } from '@/hooks/useIsMobile';
+import { useMemo, useState } from 'react';
+import { DoorOpen, Repeat, Skull, Sparkles, Users, type LucideIcon } from 'lucide-react';
+import { GraphicViewerModal, GraphicViewerIcon, type LayerDescriptor } from '@/components/GraphicViewer';
+import { MapHoverCard, MobHoverCard, NpcHoverCard } from '@/components/entity-links';
+import {
+  buildPortalGraph,
+  classifyPortal,
+  gameToPixel,
+  type PortalLayer,
+} from '@/domain/portal-types';
 import { useShowEntityIds } from '@/stores/showEntityIds';
-import { MapViewerCanvas } from './MapViewerCanvas';
-import { MapViewerLayerControls } from './MapViewerLayerControls';
-import { MapViewerMobileSheet } from './MapViewerMobileSheet';
 import { MapViewerSidebar } from './MapViewerSidebar';
 import { useMapViewerData } from './useMapViewerData';
-import type { LayerKey, LayerVisibility, MapViewerHighlight } from './types';
+import type { MapViewerHighlight } from './types';
 
 interface MapViewerModalProps {
   open: boolean;
@@ -21,13 +23,17 @@ interface MapViewerModalProps {
   onSelectionChange: (sel: MapViewerHighlight | null) => void;
 }
 
-const DEFAULT_VISIBLE: LayerVisibility = {
-  spawns: true,
-  portals: true,
-  teleports: true,
-  npcs: true,
-  mobs: true,
-};
+const PORTAL_LAYER_META = {
+  spawn: { Icon: Sparkles, color: 'text-emerald-500', label: 'Player spawn' },
+  portal: { Icon: DoorOpen, color: 'text-sky-500', label: 'Portal' },
+  internalTeleport: { Icon: Repeat, color: 'text-violet-500', label: 'Internal teleport' },
+  unknown: { Icon: DoorOpen, color: 'text-zinc-400', label: 'Portal' },
+} as const satisfies Record<string, { Icon: LucideIcon; color: string; label: string }>;
+
+// Very generous bounds — only reject icons that project to wildly off-canvas
+// coordinates (typically malformed WZ geometry). Edge spawns occasionally land
+// a few pixels outside the visible minimap.
+const BOUNDS_MARGIN = 200;
 
 export function MapViewerModal({
   open,
@@ -37,33 +43,17 @@ export function MapViewerModal({
   onSelectionChange,
 }: MapViewerModalProps) {
   const { map, npcs, portals, mobSpawns, isLoading } = useMapViewerData(mapId, open);
-  const isMobile = useIsMobile();
   const showIds = useShowEntityIds((s) => s.enabled);
 
-  const [visible, setVisible] = useState<LayerVisibility>(DEFAULT_VISIBLE);
   // Hover highlight is transient UI state — intentionally NOT in the URL.
   const [hovered, setHovered] = useState<MapViewerHighlight | null>(null);
-  // Mobile-only: the entity browser lives in a bottom sheet behind a FAB.
-  const [browserOpen, setBrowserOpen] = useState(false);
 
-  // Clear stale hover state when the modal re-opens (selection is controlled,
-  // so it's already coming from the URL — nothing to reset there).
-  useEffect(() => {
-    if (open) setHovered(null);
-  }, [open]);
-  // Close the mobile browser sheet when the parent modal closes so it doesn't
-  // reappear stale next session.
-  useEffect(() => {
-    if (!open) setBrowserOpen(false);
-  }, [open]);
-
-  // Same-map teleport graph (`tn` -> `pn` resolution within this map).
-  // Built once per (portals, mapId) and shared with the sidebar (to render
-  // "Same map -> foo" labels) and the canvas (to highlight every portal in
-  // the same teleport chain when one is selected/hovered).
+  // Same-map teleport graph (`tn` -> `pn` resolution within this map), shared
+  // with the sidebar (for "Same map -> foo" labels) and the overlays (to
+  // highlight every portal in the same teleport chain when one is selected).
   const portalGraph = useMemo(() => buildPortalGraph(portals, mapId), [portals, mapId]);
 
-  const counts = useMemo<Record<LayerKey, number>>(() => {
+  const layers = useMemo<LayerDescriptor[]>(() => {
     let spawns = 0;
     let portalCount = 0;
     let teleports = 0;
@@ -75,18 +65,14 @@ export function MapViewerModal({
         else if (layer === 'internalTeleport') teleports += 1;
       }
     }
-    return {
-      spawns,
-      portals: portalCount,
-      teleports,
-      npcs: npcs.length,
-      mobs: mobSpawns.length,
-    };
+    return [
+      { key: 'spawns', label: 'Spawns', Icon: Sparkles, swatch: 'text-emerald-500', count: spawns },
+      { key: 'portals', label: 'Portals', Icon: DoorOpen, swatch: 'text-sky-500', count: portalCount },
+      { key: 'teleports', label: 'Teleports', Icon: Repeat, swatch: 'text-violet-500', count: teleports },
+      { key: 'npcs', label: 'NPCs', Icon: Users, swatch: 'text-amber-500', count: npcs.length },
+      { key: 'mobs', label: 'Mobs', Icon: Skull, swatch: 'text-rose-500', count: mobSpawns.length },
+    ];
   }, [map, portals, npcs.length, mobSpawns.length]);
-
-  const enableLayer = (key: LayerKey) => {
-    setVisible((v) => (v[key] ? v : { ...v, [key]: true }));
-  };
 
   const title = map
     ? map.name
@@ -96,74 +82,170 @@ export function MapViewerModal({
       : `Map ${map.id}`
     : `Map ${mapId}`;
 
+  const centerX = map?.minimapCenterX ?? null;
+  const centerY = map?.minimapCenterY ?? null;
+  const mag = map?.minimapMag ?? null;
+  const geometryReady =
+    !!map?.minimapData && centerX !== null && centerY !== null && mag !== null && mag !== 0;
+
+  const scrollKey = selection ? `${selection.kind}:${selection.key}` : null;
+
   return (
-    <Modal
+    <GraphicViewerModal
       open={open}
       onClose={onClose}
       title={title}
       description={map?.streetName ?? undefined}
-      // Below md, claim the whole viewport — the desktop sidebar+canvas
-      // split doesn't fit on a phone, and the bottom sheet replaces it.
-      panelClassName="w-[95vw] h-[90vh] max-w-[1600px] max-md:h-[100dvh] max-md:w-screen max-md:max-w-none max-md:rounded-none"
-      bodyClassName="flex min-h-0 flex-1 flex-col"
-    >
-      {isLoading || !map ? (
-        <div className="text-muted-foreground flex flex-1 items-center justify-center gap-2 text-sm">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading map…
-        </div>
-      ) : (
-        <div className="relative flex min-h-0 flex-1">
-          {!isMobile && (
-            <MapViewerSidebar
-              mapId={map.id}
-              npcs={npcs}
-              mobSpawns={mobSpawns}
-              portals={portals}
-              portalGraph={portalGraph}
-              selection={selection}
-              onSelect={onSelectionChange}
-              onHover={setHovered}
-              onLayerEnable={enableLayer}
-            />
-          )}
-          <MapViewerCanvas
-            map={map}
+      isLoading={isLoading || !map}
+      loadingMessage="Loading map…"
+      image={geometryReady ? map!.minimapData : null}
+      imageUnavailableMessage="This map has no minimap geometry."
+      imageLoadingMessage="Loading minimap…"
+      ariaLabel={`Map of ${map?.name ?? `Map ${mapId}`}`}
+      scrollKey={scrollKey}
+      layers={layers}
+      mobileSheetTitle="Browse map"
+      sidebar={({ enableLayer, closeMobile }) =>
+        map ? (
+          <MapViewerSidebar
+            mapId={map.id}
             npcs={npcs}
             mobSpawns={mobSpawns}
             portals={portals}
             portalGraph={portalGraph}
-            visible={visible}
             selection={selection}
-            hovered={hovered}
+            onSelect={(sel) => {
+              onSelectionChange(sel);
+              if (sel !== null) closeMobile?.();
+            }}
+            onHover={setHovered}
+            onLayerEnable={enableLayer}
           />
-          {isMobile && (
-            <>
-              <button
-                type="button"
-                onClick={() => setBrowserOpen(true)}
-                aria-label="Browse map entities"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-primary/60 absolute bottom-4 right-4 z-10 inline-flex h-12 w-12 items-center justify-center rounded-full shadow-lg focus-visible:outline-none focus-visible:ring-2"
-              >
-                <List className="h-5 w-5" />
-              </button>
-              <MapViewerMobileSheet
-                open={browserOpen}
-                onOpenChange={setBrowserOpen}
-                mapId={map.id}
-                npcs={npcs}
-                mobSpawns={mobSpawns}
-                portals={portals}
-                portalGraph={portalGraph}
-                selection={selection}
-                onSelectionChange={onSelectionChange}
-                onHover={setHovered}
-                onLayerEnable={enableLayer}
-              />
-            </>
-          )}
-        </div>
-      )}
-      <MapViewerLayerControls value={visible} onChange={setVisible} counts={counts} />
-    </Modal>
+        ) : null
+      }
+      overlays={({ view, visible }) => {
+        if (!map || centerX === null || centerY === null || mag === null || mag === 0) return null;
+        const { w: width, h: height } = view.imageSize;
+        const declaredW = map.minimapWidth ?? width * mag;
+        const declaredH = map.minimapHeight ?? height * mag;
+        const ratioX = declaredW > 0 ? (width * mag) / declaredW : 1;
+        const ratioY = declaredH > 0 ? (height * mag) / declaredH : 1;
+        const project = (gx: number, gy: number) => {
+          const p = gameToPixel(gx, gy, centerX, centerY, mag);
+          return { x: p.x * ratioX, y: p.y * ratioY };
+        };
+        const inBounds = (p: { x: number; y: number }) =>
+          Number.isFinite(p.x) &&
+          Number.isFinite(p.y) &&
+          p.x >= -BOUNDS_MARGIN &&
+          p.y >= -BOUNDS_MARGIN &&
+          p.x <= width + BOUNDS_MARGIN &&
+          p.y <= height + BOUNDS_MARGIN;
+
+        // Hover takes visual priority while present; selection persists otherwise.
+        const effective = hovered ?? selection;
+        const linkedPortalIdxSet =
+          effective?.kind === 'portal'
+            ? (portalGraph.componentOf.get(Number(effective.key)) ?? null)
+            : null;
+        const npcMatches = (id: number) => effective?.kind === 'npc' && effective.key === String(id);
+        const mobMatches = (id: number) => effective?.kind === 'mob' && effective.key === String(id);
+
+        return (
+          <>
+            {visible.mobs &&
+              mobSpawns.map((m, i) => {
+                if (m.x === null || m.y === null) return null;
+                const p = project(m.x, m.y);
+                if (!inBounds(p)) return null;
+                const highlighted = mobMatches(m.mobId);
+                return (
+                  <GraphicViewerIcon
+                    key={`mob-${i}`}
+                    pixelX={p.x}
+                    pixelY={p.y}
+                    parentScale={view.scale}
+                    Icon={Skull}
+                    colorClass="text-rose-500"
+                    ariaLabel={m.name ?? `Mob ${m.mobId}`}
+                    tooltip={<MobHoverCard id={m.mobId} />}
+                    highlighted={highlighted}
+                    dimmed={effective !== null && !highlighted}
+                  />
+                );
+              })}
+
+            {visible.npcs &&
+              npcs.map((n, i) => {
+                if (n.x === null || n.y === null) return null;
+                const p = project(n.x, n.y);
+                if (!inBounds(p)) return null;
+                const highlighted = npcMatches(n.npcId);
+                return (
+                  <GraphicViewerIcon
+                    key={`npc-${i}`}
+                    pixelX={p.x}
+                    pixelY={p.y}
+                    parentScale={view.scale}
+                    Icon={Users}
+                    colorClass="text-amber-500"
+                    ariaLabel={n.name ?? `NPC ${n.npcId}`}
+                    tooltip={<NpcHoverCard id={n.npcId} />}
+                    highlighted={highlighted}
+                    dimmed={effective !== null && !highlighted}
+                  />
+                );
+              })}
+
+            {portals.map((p) => {
+              if (p.x === null || p.y === null) return null;
+              const layer: PortalLayer = classifyPortal(p, map.id);
+              const layerVisible =
+                (layer === 'spawn' && visible.spawns) ||
+                (layer === 'portal' && visible.portals) ||
+                (layer === 'internalTeleport' && visible.teleports) ||
+                (layer === 'unknown' && visible.portals);
+              if (!layerVisible) return null;
+              const projected = project(p.x, p.y);
+              if (!inBounds(projected)) return null;
+              const meta = PORTAL_LAYER_META[layer];
+              const tooltip =
+                layer === 'portal' && p.targetMapId !== null && p.targetMapId !== 999999999 ? (
+                  <MapHoverCard id={p.targetMapId} />
+                ) : (
+                  <div className="text-xs">
+                    <div className="text-foreground font-mono">{p.portalName}</div>
+                    <div className="text-muted-foreground">{meta.label}</div>
+                    {p.targetMapId !== null && p.targetMapId !== 999999999 && (
+                      <div className="text-muted-foreground">→ Map {p.targetMapId}</div>
+                    )}
+                  </div>
+                );
+              const highlighted = effective?.kind === 'portal' && effective.key === String(p.idx);
+              const linked =
+                !highlighted &&
+                linkedPortalIdxSet !== null &&
+                linkedPortalIdxSet.has(p.idx) &&
+                linkedPortalIdxSet.size > 1;
+              return (
+                <GraphicViewerIcon
+                  key={`portal-${p.idx}`}
+                  pixelX={projected.x}
+                  pixelY={projected.y}
+                  parentScale={view.scale}
+                  Icon={meta.Icon}
+                  colorClass={meta.color}
+                  ariaLabel={`${meta.label} ${p.portalName}`}
+                  tooltip={tooltip}
+                  highlighted={highlighted}
+                  linked={linked}
+                  dimmed={effective !== null && !highlighted && !linked}
+                />
+              );
+            })}
+          </>
+        );
+      }}
+    />
   );
 }
