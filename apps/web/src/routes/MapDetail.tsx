@@ -508,6 +508,7 @@ export default function MapDetail() {
             mapId={m.id}
             selection={viewerState.highlight}
             onSelectionChange={setViewerSelection}
+            onNavigateMap={openMapMinimap}
             worldMapPlacements={worldMapPlacements}
             onOpenWorldMap={openWorldMap}
           />

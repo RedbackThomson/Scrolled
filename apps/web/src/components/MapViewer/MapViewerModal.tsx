@@ -30,6 +30,8 @@ interface MapViewerModalProps {
    *  viewer can be deep-linked / restored on reload. */
   selection: MapViewerHighlight | null;
   onSelectionChange: (sel: MapViewerHighlight | null) => void;
+  /** Navigate to another map's minimap viewer (clicking an external portal). */
+  onNavigateMap: (mapId: number) => void;
   /** World maps this map sits on — surfaced as "up to world map" controls. */
   worldMapPlacements?: WorldMapForMap[];
   onOpenWorldMap?: (worldMapId: string) => void;
@@ -53,6 +55,7 @@ export function MapViewerModal({
   mapId,
   selection,
   onSelectionChange,
+  onNavigateMap,
   worldMapPlacements,
   onOpenWorldMap,
 }: MapViewerModalProps) {
@@ -61,6 +64,13 @@ export function MapViewerModal({
 
   // Hover highlight is transient UI state — intentionally NOT in the URL.
   const [hovered, setHovered] = useState<MapViewerHighlight | null>(null);
+
+  // Clicking a canvas icon toggles its sticky selection — re-clicking the
+  // selected entity clears it, mirroring the sidebar rows.
+  const toggleSelect = (sel: MapViewerHighlight) =>
+    onSelectionChange(
+      selection?.kind === sel.kind && selection.key === sel.key ? null : sel,
+    );
 
   // Same-map teleport graph (`tn` -> `pn` resolution within this map), shared
   // with the sidebar (for "Same map -> foo" labels) and the overlays (to
@@ -201,6 +211,7 @@ export function MapViewerModal({
                     tooltip={<MobHoverCard id={m.mobId} />}
                     highlighted={highlighted}
                     dimmed={effective !== null && !highlighted}
+                    onClick={() => toggleSelect({ kind: 'mob', key: String(m.mobId) })}
                   />
                 );
               })}
@@ -223,6 +234,7 @@ export function MapViewerModal({
                     tooltip={<NpcHoverCard id={n.npcId} />}
                     highlighted={highlighted}
                     dimmed={effective !== null && !highlighted}
+                    onClick={() => toggleSelect({ kind: 'npc', key: String(n.npcId) })}
                   />
                 );
               })}
@@ -257,6 +269,13 @@ export function MapViewerModal({
                 linkedPortalIdxSet !== null &&
                 linkedPortalIdxSet.has(p.idx) &&
                 linkedPortalIdxSet.size > 1;
+              // External portals jump to the target map's minimap; spawns and
+              // same-map teleports have nowhere to go, so they toggle-select.
+              const navigates =
+                layer === 'portal' &&
+                p.targetMapId !== null &&
+                p.targetMapId !== 999999999 &&
+                p.targetMapId !== map.id;
               return (
                 <GraphicViewerIcon
                   key={`portal-${p.idx}`}
@@ -270,6 +289,11 @@ export function MapViewerModal({
                   highlighted={highlighted}
                   linked={linked}
                   dimmed={effective !== null && !highlighted && !linked}
+                  onClick={
+                    navigates
+                      ? () => onNavigateMap(p.targetMapId!)
+                      : () => toggleSelect({ kind: 'portal', key: String(p.idx) })
+                  }
                 />
               );
             })}

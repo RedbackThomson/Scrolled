@@ -1,11 +1,15 @@
-import { useMemo, useState } from 'react';
-import { ChevronLeft, MapPin } from 'lucide-react';
+import { useMemo, useState, type ReactNode } from 'react';
+import { MapPin, X } from 'lucide-react';
 import type { WorldMapMarkerWithMaps } from '@/db';
+import { MapHoverCard } from '@/components/entity-links';
+import { HoverPopover } from '@/components/common/HoverPopover';
 import { useEntitySummaryNames } from '@/hooks/useEntitySummaries';
+import { cn } from '@/lib/utils';
 
 interface Props {
   markers: WorldMapMarkerWithMaps[];
-  /** The marker highlighted on the canvas — drives the drill-in view. */
+  /** The marker selected on the canvas — a region drills in, a single-map
+   *  marker just highlights. Cleared with the "x" control. */
   selectedMarkerId: string | null;
   onSelectMarker: (id: string | null) => void;
   /** Transient highlight while hovering a row; pass `null` on mouseleave. */
@@ -79,23 +83,9 @@ export function WorldMapViewerSidebar({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [markers, q, mapNameById]);
 
-  const onPlaceClick = (m: WorldMapMarkerWithMaps) =>
-    isRegion(m) ? onSelectMarker(m.id) : onNavigateMap(m.mapIds[0]!);
-
   return (
     <aside className="border-border bg-card flex w-72 shrink-0 flex-col border-r">
       <div className="border-border flex shrink-0 items-center gap-1.5 border-b px-2 py-1.5">
-        {drilling && (
-          <button
-            type="button"
-            onClick={() => onSelectMarker(null)}
-            aria-label="Back to all regions"
-            title="Back to all regions"
-            className="text-muted-foreground hover:bg-accent hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-        )}
         <input
           type="text"
           value={search}
@@ -103,6 +93,17 @@ export function WorldMapViewerSidebar({
           placeholder={drilling ? 'Search maps…' : 'Search maps or regions…'}
           className="border-input bg-background focus-visible:ring-ring h-7 w-full rounded-md border px-2 text-base focus-visible:outline-none focus-visible:ring-1 sm:text-xs"
         />
+        {selectedMarkerId && (
+          <button
+            type="button"
+            onClick={() => onSelectMarker(null)}
+            aria-label="Clear selection"
+            title="Clear selection"
+            className="text-muted-foreground hover:bg-accent hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
 
       {drilling && selected ? (
@@ -121,6 +122,7 @@ export function WorldMapViewerSidebar({
                     key={row.id}
                     label={row.name}
                     meta={`#${row.id}`}
+                    hoverCard={<MapHoverCard id={row.id} />}
                     onClick={() => onNavigateMap(row.id)}
                     onHoverEnter={() => selected && onHoverMarker(selected.id)}
                     onHoverLeave={() => onHoverMarker(null)}
@@ -145,7 +147,11 @@ export function WorldMapViewerSidebar({
                   Icon={MapPin}
                   label={labelFor(m)}
                   meta={isRegion(m) ? `${m.mapIds.length}` : `#${m.mapIds[0]}`}
-                  onClick={() => onPlaceClick(m)}
+                  selected={m.id === selectedMarkerId}
+                  hoverCard={
+                    m.mapIds[0] !== undefined ? <MapHoverCard id={m.mapIds[0]} /> : undefined
+                  }
+                  onClick={() => onSelectMarker(m.id)}
                   onHoverEnter={() => onHoverMarker(m.id)}
                   onHoverLeave={() => onHoverMarker(null)}
                 />
@@ -160,6 +166,7 @@ export function WorldMapViewerSidebar({
                   key={`map-${row.id}`}
                   label={row.name}
                   meta={row.region}
+                  hoverCard={<MapHoverCard id={row.id} />}
                   onClick={() => onNavigateMap(row.id)}
                   onHoverEnter={() => onHoverMarker(row.markerId)}
                   onHoverLeave={() => onHoverMarker(null)}
@@ -176,6 +183,8 @@ export function WorldMapViewerSidebar({
 function Row({
   label,
   meta,
+  selected,
+  hoverCard,
   onClick,
   onHoverEnter,
   onHoverLeave,
@@ -183,11 +192,21 @@ function Row({
 }: {
   label: string;
   meta?: string;
+  selected?: boolean;
+  hoverCard?: ReactNode;
   onClick: () => void;
   onHoverEnter?: () => void;
   onHoverLeave?: () => void;
   Icon?: typeof MapPin;
 }) {
+  const labelClass = 'min-w-0 flex-1 truncate';
+  const wrappedLabel = hoverCard ? (
+    <HoverPopover content={hoverCard} triggerClassName={labelClass}>
+      {label}
+    </HoverPopover>
+  ) : (
+    <span className={labelClass}>{label}</span>
+  );
   return (
     <li>
       <button
@@ -197,10 +216,14 @@ function Row({
         onMouseLeave={onHoverLeave}
         onFocus={onHoverEnter}
         onBlur={onHoverLeave}
-        className="hover:bg-accent/50 flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs"
+        className={cn(
+          'flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs',
+          selected ? 'bg-accent text-foreground' : 'hover:bg-accent/50',
+        )}
+        aria-pressed={selected}
       >
         {Icon && <Icon className="text-sky-500 h-3.5 w-3.5 shrink-0" />}
-        <span className="min-w-0 flex-1 truncate">{label}</span>
+        {wrappedLabel}
         {meta && <span className="text-muted-foreground shrink-0 text-[10px]">{meta}</span>}
       </button>
     </li>

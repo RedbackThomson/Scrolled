@@ -98,11 +98,20 @@ export function WorldMapViewerModal({
   // Hover wins; otherwise the drilled region, otherwise the focus map's marker.
   const effective = hoveredMarkerId ?? drilledMarkerId ?? focusMarkerId;
 
+  // World map records carry no display name, so title with the most specific
+  // region we can name: the drilled region, else the region the focus map sits
+  // in. Falls back to the generic label with no region context.
+  const regionLabel = useMemo(() => {
+    const byId = (id: string | null) => (id ? (markers.find((m) => m.id === id)?.title ?? null) : null);
+    return byId(drilledMarkerId) ?? byId(focusMarkerId);
+  }, [markers, drilledMarkerId, focusMarkerId]);
+
   return (
     <GraphicViewerModal
       open={open}
       onClose={onClose}
-      title="World Map"
+      title={regionLabel ?? 'World Map'}
+      description={regionLabel ? 'World Map' : undefined}
       isLoading={isLoading || !worldMap}
       loadingMessage="Loading world map…"
       image={worldMap?.baseImageData ?? null}
@@ -123,13 +132,19 @@ export function WorldMapViewerModal({
           </button>
         ) : undefined
       }
-      sidebar={() => (
+      sidebar={({ enableLayer, closeMobile }) => (
         <WorldMapViewerSidebar
           markers={markers}
           selectedMarkerId={drilledMarkerId}
-          onSelectMarker={(id) => onDrillRegion(id ? markerIndexOf(id) : null)}
+          onSelectMarker={(id) => {
+            if (id) enableLayer('markers');
+            onDrillRegion(id ? markerIndexOf(id) : null);
+          }}
           onHoverMarker={setHoveredMarkerId}
-          onNavigateMap={onOpenMap}
+          onNavigateMap={(mapId) => {
+            closeMobile?.();
+            onOpenMap(mapId);
+          }}
         />
       )}
       overlays={({ view, visible, openSidebar }) => {
