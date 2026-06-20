@@ -1,5 +1,5 @@
-import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { lazy, Suspense, useCallback, useMemo } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   Copy,
@@ -74,13 +74,18 @@ export default function MapDetail() {
     enabled: Number.isFinite(id),
   });
   // One entry per distinct world map this map appears on (first containing
-  // marker wins for the label). A map can sit on several world maps.
+  // marker wins for the label). A map can sit on several world maps —
+  // typically a broad overview plus a more specific regional map — so we
+  // default to the deepest (leaf) placement in the parentMap hierarchy and
+  // only surface several when they're genuinely equally specific.
   const worldMapPlacements = useMemo(() => {
     const seen = new Map<string, WorldMapForMap>();
     for (const p of worldMapsQ.data ?? []) if (!seen.has(p.worldMapId)) seen.set(p.worldMapId, p);
-    return [...seen.values()];
+    const all = [...seen.values()];
+    if (all.length === 0) return all;
+    const maxDepth = Math.max(...all.map((p) => p.depth));
+    return all.filter((p) => p.depth === maxDepth);
   }, [worldMapsQ.data]);
-  const [openWorldMapId, setOpenWorldMapId] = useState<string | null>(null);
   const npcsQ = useQuery({
     queryKey: ['db', 'map', id, 'npcs'],
     queryFn: () => client.getMapNpcs(id),
@@ -144,11 +149,22 @@ export default function MapDetail() {
     },
   ]);
 
-  // Viewer open + selection live in the URL (`?viewer=1`, `?viewer=npc:1234`,
-  // …) so the modal can be hard-linked and restored on reload.
+  // The whole viewer lives in the URL so every level — minimap, world map,
+  // a drilled region — is hard-linkable and recalled by browser back/forward.
+  //   ?viewer=1|npc:..|…   → minimap viewer for this route's map
+  //   ?worldmap=<id>       → world map viewer (focused on this route's map)
+  //   &region=<index>      → drilled into that world map's marker
+  // The two views are mutually exclusive; opening one clears the other.
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const viewerParam = searchParams.get('viewer');
   const viewerState = useMemo(() => parseViewerParam(viewerParam), [viewerParam]);
+  const worldMapId = searchParams.get('worldmap');
+  const regionParam = searchParams.get('region');
+  const regionMarkerIndex =
+    regionParam !== null && regionParam !== '' && Number.isFinite(Number(regionParam))
+      ? Number(regionParam)
+      : null;
 
   const writeViewerParam = useCallback(
     (next: { open: boolean; highlight: MapViewerHighlight | null }, opts: { replace: boolean }) => {
@@ -156,8 +172,14 @@ export default function MapDetail() {
         (prev) => {
           const params = new URLSearchParams(prev);
           const serialized = serializeViewerParam(next.open, next.highlight);
-          if (serialized === null) params.delete('viewer');
-          else params.set('viewer', serialized);
+          if (serialized === null) {
+            params.delete('viewer');
+          } else {
+            params.set('viewer', serialized);
+            // Minimap and world map are mutually exclusive.
+            params.delete('worldmap');
+            params.delete('region');
+          }
           return params;
         },
         { replace: opts.replace },
@@ -174,6 +196,54 @@ export default function MapDetail() {
   const closeViewer = () => writeViewerParam({ open: false, highlight: null }, { replace: false });
   const setViewerSelection = (highlight: MapViewerHighlight | null) =>
     writeViewerParam({ open: true, highlight }, { replace: true });
+
+  // World map navigation — each step pushes a history entry.
+  const openWorldMap = useCallback(
+    (wmId: string) =>
+      setSearchParams(
+        (prev) => {
+          const params = new URLSearchParams(prev);
+          params.delete('viewer');
+          params.delete('region');
+          params.set('worldmap', wmId);
+          return params;
+        },
+        { replace: false },
+      ),
+    [setSearchParams],
+  );
+  const navigateWorldMap = (wmId: string) =>
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        params.delete('region');
+        params.set('worldmap', wmId);
+        return params;
+      },
+      { replace: false },
+    );
+  const drillRegion = (markerIndex: number | null) =>
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (markerIndex === null) params.delete('region');
+        else params.set('region', String(markerIndex));
+        return params;
+      },
+      { replace: false },
+    );
+  const closeWorldMap = () =>
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        params.delete('worldmap');
+        params.delete('region');
+        return params;
+      },
+      { replace: false },
+    );
+  // Clicking a map in the world map hard-links to its minimap viewer.
+  const openMapMinimap = (mapId: number) => navigate(`/maps/${mapId}?viewer=1`);
 
   const paletteItems = useMemo<CommandItem[]>(
     () => [
@@ -193,7 +263,7 @@ export default function MapDetail() {
               label: 'Open world map',
               keywords: ['world', 'map', 'region', 'overview'],
               icon: Globe2,
-              onSelect: () => setOpenWorldMapId(worldMapPlacements[0]!.worldMapId),
+              onSelect: () => openWorldMap(worldMapPlacements[0]!.worldMapId),
             },
           ]
         : []),
@@ -206,7 +276,7 @@ export default function MapDetail() {
         onSelect: () => navigator.clipboard.writeText(String(id)),
       },
     ],
-    [id, writeViewerParam, worldMapPlacements],
+    [id, writeViewerParam, worldMapPlacements, openWorldMap],
   );
   useDetailPalette({ entity: 'map', id, name: mapQ.data?.name, items: paletteItems });
 
@@ -294,37 +364,6 @@ export default function MapDetail() {
                 <MapPin className="h-3.5 w-3.5" /> Show map details
               </button>
             </div>
-          </section>
-        )}
-
-        {worldMapPlacements.length > 0 && (
-          <section>
-            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide">World map</h2>
-            {worldMapPlacements.length === 1 ? (
-              <button
-                type="button"
-                onClick={() => setOpenWorldMapId(worldMapPlacements[0]!.worldMapId)}
-                className="text-primary inline-flex items-center gap-1 text-xs hover:underline"
-              >
-                <Globe2 className="h-3.5 w-3.5" /> View on world map
-              </button>
-            ) : (
-              <div className="flex flex-col items-start gap-1">
-                <span className="text-muted-foreground text-xs">
-                  Appears on {worldMapPlacements.length} world maps:
-                </span>
-                {worldMapPlacements.map((p) => (
-                  <button
-                    key={p.worldMapId}
-                    type="button"
-                    onClick={() => setOpenWorldMapId(p.worldMapId)}
-                    className="text-primary inline-flex items-center gap-1 text-xs hover:underline"
-                  >
-                    <Globe2 className="h-3.5 w-3.5" /> {p.markerTitle ?? p.worldMapId}
-                  </button>
-                ))}
-              </div>
-            )}
           </section>
         )}
 
@@ -469,17 +508,23 @@ export default function MapDetail() {
             mapId={m.id}
             selection={viewerState.highlight}
             onSelectionChange={setViewerSelection}
+            worldMapPlacements={worldMapPlacements}
+            onOpenWorldMap={openWorldMap}
           />
         </Suspense>
       ) : null}
 
-      {openWorldMapId ? (
+      {worldMapId && !viewerState.open ? (
         <Suspense fallback={null}>
           <WorldMapViewerModal
-            open={openWorldMapId !== null}
-            onClose={() => setOpenWorldMapId(null)}
-            worldMapId={openWorldMapId}
+            open
+            onClose={closeWorldMap}
+            worldMapId={worldMapId}
             focusMapId={m.id}
+            regionMarkerIndex={regionMarkerIndex}
+            onOpenMap={openMapMinimap}
+            onNavigateWorldMap={navigateWorldMap}
+            onDrillRegion={drillRegion}
           />
         </Suspense>
       ) : null}

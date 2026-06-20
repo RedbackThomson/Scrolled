@@ -286,11 +286,14 @@ export interface WorldMapMarkerWithMaps extends WorldMapMarkerRecord {
 
 /** A placement of a map on a world map: which world map, which marker, and
  *  the marker's region title (for labelling the switcher). A map can have
- *  several — it may appear on more than one world map. */
+ *  several — it may appear on more than one world map. `depth` is the
+ *  placement's distance from the root of the `parentMap` hierarchy; the
+ *  deepest placement is the most specific (leaf) world map for the map. */
 export interface WorldMapForMap {
   worldMapId: string;
   markerId: string;
   markerTitle: string | null;
+  depth: number;
 }
 
 /**

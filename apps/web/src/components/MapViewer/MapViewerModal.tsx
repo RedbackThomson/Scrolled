@@ -1,7 +1,16 @@
 import { useMemo, useState } from 'react';
-import { DoorOpen, Repeat, Skull, Sparkles, Users, type LucideIcon } from 'lucide-react';
+import {
+  DoorOpen,
+  Globe2,
+  Repeat,
+  Skull,
+  Sparkles,
+  Users,
+  type LucideIcon,
+} from 'lucide-react';
 import { GraphicViewerModal, GraphicViewerIcon, type LayerDescriptor } from '@/components/GraphicViewer';
 import { MapHoverCard, MobHoverCard, NpcHoverCard } from '@/components/entity-links';
+import type { WorldMapForMap } from '@/db';
 import {
   buildPortalGraph,
   classifyPortal,
@@ -21,6 +30,9 @@ interface MapViewerModalProps {
    *  viewer can be deep-linked / restored on reload. */
   selection: MapViewerHighlight | null;
   onSelectionChange: (sel: MapViewerHighlight | null) => void;
+  /** World maps this map sits on — surfaced as "up to world map" controls. */
+  worldMapPlacements?: WorldMapForMap[];
+  onOpenWorldMap?: (worldMapId: string) => void;
 }
 
 const PORTAL_LAYER_META = {
@@ -41,6 +53,8 @@ export function MapViewerModal({
   mapId,
   selection,
   onSelectionChange,
+  worldMapPlacements,
+  onOpenWorldMap,
 }: MapViewerModalProps) {
   const { map, npcs, portals, mobSpawns, isLoading } = useMapViewerData(mapId, open);
   const showIds = useShowEntityIds((s) => s.enabled);
@@ -105,6 +119,22 @@ export function MapViewerModal({
       scrollKey={scrollKey}
       layers={layers}
       mobileSheetTitle="Browse map"
+      toolbar={
+        worldMapPlacements && worldMapPlacements.length > 0 && onOpenWorldMap ? (
+          <div className="flex flex-col items-start gap-1">
+            {worldMapPlacements.map((p) => (
+              <button
+                key={p.worldMapId}
+                type="button"
+                onClick={() => onOpenWorldMap(p.worldMapId)}
+                className="border-border bg-card/90 text-foreground hover:bg-card inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs shadow-sm backdrop-blur"
+              >
+                <Globe2 className="h-3.5 w-3.5" /> {p.markerTitle ?? 'World map'}
+              </button>
+            ))}
+          </div>
+        ) : undefined
+      }
       sidebar={({ enableLayer, closeMobile }) =>
         map ? (
           <MapViewerSidebar

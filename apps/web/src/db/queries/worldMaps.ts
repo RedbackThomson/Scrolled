@@ -115,12 +115,25 @@ export function getWorldMapMarkers(sql: Sqlite, worldMapId: string): WorldMapMar
 }
 
 export function findWorldMapsForMap(sql: Sqlite, mapId: number): WorldMapForMap[] {
+  // `depth` walks the parentMap chain from the roots so the deepest (most
+  // specific / leaf) placement can be preferred. The `c.depth < 32` guard
+  // keeps a malformed parent cycle from looping forever.
   return sql.selectObjects<WorldMapForMap & Row>(
-    `SELECT m.world_map_id AS worldMapId, mm.marker_id AS markerId, m.title AS markerTitle
+    `WITH RECURSIVE chain(id, depth) AS (
+       SELECT id, 0 FROM world_maps WHERE parent_id IS NULL
+       UNION ALL
+       SELECT w.id, c.depth + 1
+         FROM world_maps w
+         JOIN chain c ON w.parent_id = c.id
+        WHERE c.depth < 32
+     )
+     SELECT m.world_map_id AS worldMapId, mm.marker_id AS markerId, m.title AS markerTitle,
+            COALESCE(ch.depth, 0) AS depth
        FROM world_map_marker_maps mm
        JOIN world_map_markers m ON m.id = mm.marker_id
+       LEFT JOIN chain ch ON ch.id = m.world_map_id
       WHERE mm.map_id = ?
-      ORDER BY m.world_map_id, m.marker_index`,
+      ORDER BY depth DESC, m.world_map_id, m.marker_index`,
     [mapId],
   );
 }
