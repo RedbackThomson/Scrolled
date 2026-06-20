@@ -20,6 +20,7 @@ import { importBackupBytes } from '@/hooks/useBackup';
 import { createLogger, describeError } from '@scrolled/extractor/lib/logger';
 import { cn } from '@/lib/utils';
 import { useWizardMode } from '@/hooks/useWizardMode';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import { acceptForDesktop } from '@/lib/filePickerAccept';
 import { detectServerProfile } from '@scrolled/extractor/serverProfiles';
 import { getParserClient, type DataSourceKind, type WzMapleVersionName } from '@/parser';
@@ -108,6 +109,7 @@ export default function SetupRoute() {
 }
 
 function SetupWizard() {
+  usePageTitle('Setup');
   const { mode, isReady, features, setRestore } = useWizardMode();
   const location = useLocation();
   // Set when the user was bounced here because their stored library is too old

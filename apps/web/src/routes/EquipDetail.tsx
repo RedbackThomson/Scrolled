@@ -19,6 +19,7 @@ import { EQUIP_FLAG_ORDER } from '@/components/entity-display/metadataFlags';
 import { ListSortControl } from '@/components/common/ListSortControl';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/hooks/useFeatures';
@@ -77,6 +78,7 @@ export default function EquipDetail() {
     [id],
   );
   useDetailPalette({ entity: 'equip', id, name: equipQ.data?.name, items: paletteItems });
+  usePageTitle(equipQ.data?.name);
 
   if (equipQ.isLoading) return <DetailPageLoading entity="Equip" id={id} />;
   if (equipQ.error) {

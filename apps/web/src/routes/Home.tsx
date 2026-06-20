@@ -22,6 +22,7 @@ import { useHomeLayout } from '@/components/home/useHomeLayout';
 import type { HomeSectionId } from '@/components/home/layout';
 import { useFeatures, type Features } from '@/hooks/useFeatures';
 import { useInstalledDataset } from '@/hooks/dataset/useInstalledDataset';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import { appConfig } from '@/config';
 
 const HomeEditor = lazy(() =>
@@ -29,6 +30,7 @@ const HomeEditor = lazy(() =>
 );
 
 export default function Home() {
+  usePageTitle();
   const features = useFeatures();
   const layout = useHomeLayout();
   const hostedName = useInstalledDataset()?.displayName ?? null;

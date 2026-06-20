@@ -16,6 +16,7 @@ import { EntityRow } from '@/components/entity-display/EntityRow';
 import { ListSortControl } from '@/components/common/ListSortControl';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/hooks/useFeatures';
@@ -68,6 +69,7 @@ export default function NpcDetail() {
     [id],
   );
   useDetailPalette({ entity: 'npc', id, name: npcQ.data?.name, items: paletteItems });
+  usePageTitle(npcQ.data?.name);
 
   if (npcQ.isLoading) return <DetailPageLoading entity="NPC" id={id} />;
   if (!npcQ.data) return <DetailPageNotFound entity="NPC" id={id} />;

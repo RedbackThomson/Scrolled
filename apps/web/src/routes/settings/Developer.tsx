@@ -18,6 +18,7 @@ import { getParserClient, type WzNodeInfo, type WzMapleVersionName } from '@/par
 import { getDbClient } from '@/db';
 import { cn } from '@/lib/utils';
 import { buildReport } from '@/lib/diagnosticsReport';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import type { ProgressUpdate } from '@scrolled/extractor/lib/progress';
 
 const VERSIONS: WzMapleVersionName[] = ['GMS', 'BMS', 'EMS', 'CLASSIC'];
@@ -28,6 +29,7 @@ interface LoadState {
 }
 
 export default function SettingsDeveloper() {
+  usePageTitle('Developer');
   const [version, setVersion] = useState<WzMapleVersionName>('GMS');
   const [busy, setBusy] = useState(false);
   const [loadState, setLoadState] = useState<LoadState | null>(null);

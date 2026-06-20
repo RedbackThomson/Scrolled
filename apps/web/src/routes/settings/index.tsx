@@ -7,8 +7,10 @@ import { PrivacySection } from '@/components/settings/PrivacySection';
 import { CollectionsSection } from '@/components/settings/CollectionsSection';
 import { BridgeSettingsPanel } from '@/mcp';
 import { appConfig } from '@/config';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 export default function SettingsIndex() {
+  usePageTitle('Settings');
   // Game Data (file management) and Server (profile) are import-only concerns —
   // on a fixed-dataset deployment the dataset is prebuilt and not user-editable.
   const canImport = appConfig.features.enableUserImport;

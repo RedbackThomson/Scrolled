@@ -25,6 +25,7 @@ import {
 import { QuestChainLink, QuestLink } from '@/components/entity-links';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient } from '@/db';
 import type { QuestChainExternalEdgeWithName, QuestChainMemberWithName } from '@/db';
@@ -79,6 +80,7 @@ export default function QuestChainDetail() {
     name: chainQ.data?.chain.name,
     items: paletteItems,
   });
+  usePageTitle(chainQ.data?.chain.name);
 
   if (chainQ.isLoading) return <DetailPageLoading entity="Quest Chain" id={id} />;
   if (!chainQ.data) return <DetailPageNotFound entity="Quest Chain" id={id} />;

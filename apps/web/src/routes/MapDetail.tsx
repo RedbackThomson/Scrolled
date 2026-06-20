@@ -36,6 +36,7 @@ const WorldMapViewerModal = lazy(() =>
   import('@/components/WorldMapViewer').then((m) => ({ default: m.WorldMapViewerModal })),
 );
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient, type WorldMapForMap } from '@/db';
 import { classifyPortal, isUsefulPortal, type PortalLayer } from '@scrolled/extractor/domain/portal-types';
@@ -292,6 +293,7 @@ export default function MapDetail() {
     [id, writeViewerParam, worldMapPlacements, openWorldMap],
   );
   useDetailPalette({ entity: 'map', id, name: mapQ.data?.name, items: paletteItems });
+  usePageTitle(mapQ.data?.name);
 
   if (mapQ.isLoading) return <DetailPageLoading entity="Map" id={id} />;
   if (!mapQ.data) return <DetailPageNotFound entity="Map" id={id} />;

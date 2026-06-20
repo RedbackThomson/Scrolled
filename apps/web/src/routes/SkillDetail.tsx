@@ -15,6 +15,7 @@ import { EntityIcon } from '@/components/entity-display/EntityIcon';
 import { EntityRow } from '@/components/entity-display/EntityRow';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient, type SkillLevelRecord } from '@/db';
 import { useFeatures } from '@/hooks/useFeatures';
@@ -115,6 +116,7 @@ export default function SkillDetail() {
     name: skillQ.data?.name ?? undefined,
     items: paletteItems,
   });
+  usePageTitle(skillQ.data?.name);
 
   if (skillQ.isLoading) return <DetailPageLoading entity="Skill" id={id} />;
   if (skillQ.error) {

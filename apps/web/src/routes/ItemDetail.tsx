@@ -20,6 +20,7 @@ import { ITEM_FLAG_ORDER } from '@/components/entity-display/metadataFlags';
 import { ListSortControl } from '@/components/common/ListSortControl';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/hooks/useFeatures';
@@ -88,6 +89,7 @@ export default function ItemDetail() {
     [id],
   );
   useDetailPalette({ entity: 'item', id, name: itemQ.data?.name, items: paletteItems });
+  usePageTitle(itemQ.data?.name);
 
   if (itemQ.isLoading) return <DetailPageLoading entity="Item" id={id} />;
   if (itemQ.error) {

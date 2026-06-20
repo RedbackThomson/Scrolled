@@ -29,6 +29,7 @@ import {
 import { CollectionMembersBoard } from '@/components/collections/CollectionMembersBoard';
 import { CollectionDisplayOptionsMenu } from '@/components/collections/CollectionDisplayOptionsMenu';
 import { usePaletteRegistration } from '@/components/command-palette/usePaletteContext';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient, type EntitySummary } from '@/db';
 import {
@@ -139,6 +140,7 @@ export default function CollectionDetail() {
   }, [id, collectionQ.data, groups, createGroupM]);
 
   usePaletteRegistration({ items: paletteItems });
+  usePageTitle(collectionQ.data?.name);
 
   if (!Number.isFinite(id)) {
     return <NotFound />;

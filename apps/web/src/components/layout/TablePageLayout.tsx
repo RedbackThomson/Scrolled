@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { appConfig } from '@/config';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 interface TablePageLayoutProps {
   title: string;
@@ -19,6 +20,7 @@ export function TablePageLayout({
   entityPlural,
   children,
 }: TablePageLayoutProps) {
+  usePageTitle(title);
   return (
     <div className="max-w-6xl space-y-3">
       <header>

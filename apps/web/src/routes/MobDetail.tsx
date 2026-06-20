@@ -18,6 +18,7 @@ import { ExpValue } from '@/components/entity-display/ExpValue';
 import { ListSortControl } from '@/components/common/ListSortControl';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/hooks/useFeatures';
@@ -81,6 +82,7 @@ export default function MobDetail() {
     [id],
   );
   useDetailPalette({ entity: 'mob', id, name: mobQ.data?.name, items: paletteItems });
+  usePageTitle(mobQ.data?.name);
 
   if (mobQ.isLoading) return <DetailPageLoading entity="Mob" id={id} />;
   if (mobQ.error) {

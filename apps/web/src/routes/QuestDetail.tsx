@@ -37,6 +37,7 @@ import type { QuestRequirementWithName, QuestRewardWithName } from '@/db';
 import { NpcLink, QuestChainLink } from '@/components/entity-links';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import type { CommandItem } from '@/components/command-palette/types';
 import { useFeatures } from '@/hooks/useFeatures';
 import { useShowEntityIds } from '@/stores/showEntityIds';
@@ -103,6 +104,7 @@ export default function QuestDetail() {
     [id],
   );
   useDetailPalette({ entity: 'quest', id, name: questQ.data?.name, items: paletteItems });
+  usePageTitle(questQ.data?.name);
 
   // Character-prefs selector and reward-grouping memo live above the
   // loading guards: hooks must run in a stable order each render.

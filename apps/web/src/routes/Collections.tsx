@@ -9,10 +9,12 @@ import {
   resolveCollectionIcon,
 } from '@/components/collections';
 import { useCollectionsList } from '@/hooks/useCollections';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import type { CollectionRecord } from '@/db/user';
 import { cn } from '@/lib/utils';
 
 export default function Collections() {
+  usePageTitle('Collections');
   const collectionsQ = useCollectionsList();
   const [createOpen, setCreateOpen] = useState(false);
 
