@@ -108,9 +108,9 @@ export function GraphicViewerModal({
           <Loader2 className="h-4 w-4 animate-spin" /> {loadingMessage}
         </div>
       ) : (
-        <div className="relative flex min-h-0 flex-1">
+        <div className="relative flex min-h-0 min-w-0 flex-1">
           {!isMobile && sidebar && sidebar({ visible, enableLayer })}
-          <div className="relative flex min-h-0 flex-1">
+          <div className="relative flex min-h-0 min-w-0 flex-1">
             {toolbar && <div className="absolute left-3 top-3 z-20">{toolbar}</div>}
             <GraphicViewerCanvas
               image={image}
