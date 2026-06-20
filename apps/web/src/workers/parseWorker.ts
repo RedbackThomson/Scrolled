@@ -1,8 +1,8 @@
 /// <reference lib="WebWorker" />
 import { expose } from 'comlink';
-import { WzDataSource } from '@/parser/WzDataSource';
-import { ImgDataSource } from '@/parser/ImgDataSource';
-import { ensureWzInit } from '@/parser/wzInit';
+import { WzDataSource } from '@scrolled/extractor/parser/WzDataSource';
+import { ImgDataSource } from '@scrolled/extractor/parser/ImgDataSource';
+import { ensureWzInit } from '@scrolled/extractor/parser/wzInit';
 import {
   extractItems,
   extractChairs,
@@ -14,15 +14,15 @@ import {
   extractQuests,
   extractSkills,
   extractJobs,
-} from '@/extractors';
-import { createLogger, describeError } from '@/lib/logger';
-import { throttleProgress, type ProgressFn } from '@/lib/progress';
+} from '@scrolled/extractor/extractors';
+import { createLogger, describeError } from '@scrolled/extractor/lib/logger';
+import { throttleProgress, type ProgressFn } from '@scrolled/extractor/lib/progress';
 import type {
   DataSourceKind,
   GameDataSource,
   LoadFileSpec,
   WzMapleVersionName,
-} from '@/parser/types';
+} from '@scrolled/extractor/parser/types';
 import type {
   ExtractItemsResult,
   ExtractChairsResult,
@@ -34,7 +34,7 @@ import type {
   ExtractQuestsResult,
   ExtractSkillsResult,
   ExtractJobsResult,
-} from '@/extractors';
+} from '@scrolled/extractor/extractors';
 
 const log = createLogger('worker');
 log.info('worker started');

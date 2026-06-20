@@ -1,73 +1,9 @@
-// Database layer.
+// Database layer (web app surface).
 //
-// Public surface: types + a comlink-wrapped client that talks to the DB
-// worker. The worker owns the SQLite-WASM engine and OPFS persistence.
+// Re-exports the engine db surface (record types, data-revision contract,
+// Sqlite, DbApi) from @scrolled/extractor and adds the comlink-wrapped client
+// that talks to the DB worker. The worker owns the SQLite-WASM engine and OPFS
+// persistence.
 
-export type {
-  CategoryCount,
-  ChairRecord,
-  ColumnFilter,
-  StringFilterMode,
-  DatasetFileRef,
-  DatasetRecord,
-  DbStatus,
-  ExtractorResultRecord,
-  EntityKind,
-  EntitySummary,
-  EquipRecord,
-  GameDatabase,
-  InstalledDatasetRecord,
-  ItemRecord,
-  JobRecord,
-  LevelBandCount,
-  ListOptsBase,
-  MapMarkRecord,
-  MapMobRecord,
-  MapMobSpawnRecord,
-  MapMobSpawnWithName,
-  MapMobWithName,
-  MapNpcRecord,
-  MapNpcWithName,
-  MapPortalRecord,
-  MapPortalWithName,
-  MapRecord,
-  MobDropRecord,
-  MobDropWithName,
-  MobRecord,
-  NpcRecord,
-  PageResult,
-  QuestChainDetail,
-  QuestChainEdgeRecord,
-  QuestChainExternalEdgeRecord,
-  QuestChainExternalEdgeWithName,
-  QuestChainListRow,
-  QuestChainMemberRecord,
-  QuestChainMemberWithName,
-  QuestChainRecord,
-  QuestRecord,
-  QuestRequirementRecord,
-  QuestRequirementWithName,
-  QuestRewardRecord,
-  QuestRewardWithName,
-  QuestSummary,
-  SearchEntry,
-  SkillLevelRecord,
-  SkillPrerequisiteRecord,
-  SkillPrerequisiteWithName,
-  SkillRecord,
-  SkillSummary,
-  SortDir,
-  WorldMapRecord,
-  WorldMapMarkerRecord,
-  WorldMapMarkerMapRecord,
-  WorldMapMarkerWithMaps,
-  WorldMapLinkRecord,
-  WorldMapForMap,
-} from './types';
-export {
-  CURRENT_DATA_REVISION,
-  MINIMUM_SUPPORTED_DATA_REVISION,
-  evaluateDataState,
-  type DataState,
-} from './dataVersion';
+export * from '@scrolled/extractor/db';
 export { getDbClient, terminateDbClient } from './client';

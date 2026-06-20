@@ -3,7 +3,7 @@ import {
   ELEMENT_STATUS_CLASSES,
   ELEMENT_STATUS_LABELS,
   parseMobElements,
-} from '@/domain/mobElements';
+} from '@scrolled/extractor/domain/mobElements';
 import { cn } from '@/lib/utils';
 
 export function MobElementsSection({ element }: { element: string | null }) {

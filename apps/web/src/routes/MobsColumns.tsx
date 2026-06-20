@@ -9,7 +9,7 @@ import {
   ELEMENT_STATUS_CLASSES,
   elementsByStatus,
   type ElementStatus,
-} from '@/domain/mobElements';
+} from '@scrolled/extractor/domain/mobElements';
 
 /** Statuses that get their own column in the listing. Maps each to the
  *  public column id used in URL state and filter keys. */

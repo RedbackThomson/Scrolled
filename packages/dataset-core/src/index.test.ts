@@ -8,6 +8,7 @@ describe('datasetManifestSchema', () => {
       family: 'local',
       version: '2026-06-20',
       displayName: 'Local Dataset',
+      serverProfileId: 'vanilla-v83',
       artifact: { url: 'local/2026-06-20/game.scrolled-backup' },
     });
     expect(manifest.dataRevision).toBeUndefined();
@@ -21,6 +22,19 @@ describe('datasetManifestSchema', () => {
         family: 'local',
         version: '1',
         displayName: 'X',
+        serverProfileId: 'vanilla-v83',
+      }),
+    ).toThrow();
+  });
+
+  it('rejects a manifest missing the server profile', () => {
+    expect(() =>
+      datasetManifestSchema.parse({
+        id: 'x',
+        family: 'local',
+        version: '1',
+        displayName: 'X',
+        artifact: { url: 'local/1/game.scrolled-backup' },
       }),
     ).toThrow();
   });

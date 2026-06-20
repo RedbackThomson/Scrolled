@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
-import { clamp } from '@/lib/math';
-import type { ProgressUpdate } from '@/lib/progress';
+import { clamp } from '@scrolled/extractor/lib/math';
+import type { ProgressUpdate } from '@scrolled/extractor/lib/progress';
 
 interface Props {
   progress: ProgressUpdate | null;

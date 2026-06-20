@@ -37,8 +37,8 @@ import {
   type ExtractorResultRecord,
   type GameDatabase,
 } from '@/db';
-import { createLogger, describeError } from '@/lib/logger';
-import type { ProgressUpdate } from '@/lib/progress';
+import { createLogger, describeError } from '@scrolled/extractor/lib/logger';
+import type { ProgressUpdate } from '@scrolled/extractor/lib/progress';
 import {
   ALL_EXTRACTOR_KEYS,
   POST_EXTRACTOR_KEYS,

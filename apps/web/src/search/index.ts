@@ -1,7 +1,7 @@
 import MiniSearch, { type SearchResult } from 'minisearch';
 import { getDbClient } from '@/db';
 import type { SearchEntry } from '@/db';
-import { createLogger } from '@/lib/logger';
+import { createLogger } from '@scrolled/extractor/lib/logger';
 
 const log = createLogger('search');
 

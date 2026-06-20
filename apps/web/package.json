@@ -23,6 +23,7 @@
     "@scrolled/dataset-client": "workspace:*",
     "@scrolled/dataset-core": "workspace:*",
     "@scrolled/dataset-repository": "workspace:*",
+    "@scrolled/extractor": "workspace:*",
     "@scrolled/mcp-protocol": "workspace:*",
     "@scrolled/wz": "workspace:*",
     "@sqlite.org/sqlite-wasm": "3.53.0-build1",

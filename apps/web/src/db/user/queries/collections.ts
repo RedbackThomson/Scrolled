@@ -1,4 +1,4 @@
-import type { Sqlite, Row } from '../../sqlite';
+import type { Sqlite, Row } from '@scrolled/extractor/db/sqlite';
 import {
   COLLECTIONS_JSON_VERSION,
   collectionsExportSchema,

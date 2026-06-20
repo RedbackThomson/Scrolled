@@ -1,6 +1,6 @@
 /// <reference lib="WebWorker" />
 import { expose } from 'comlink';
-import { createLogger, describeError } from '@/lib/logger';
+import { createLogger, describeError } from '@scrolled/extractor/lib/logger';
 
 const log = createLogger('hash-worker');
 log.info('hash worker started');

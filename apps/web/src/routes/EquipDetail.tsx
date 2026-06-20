@@ -22,9 +22,9 @@ import { useDetailPalette } from '@/components/command-palette/useDetailPalette'
 import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/hooks/useFeatures';
-import { ABILITY_STAT_FIELDS } from '@/domain/abilityStats';
-import { labelForEquipSlot, labelForEquipType } from '@/domain/equipTypes';
-import { formatEquipJobs, parseEquipReqJob } from '@/domain/equipJobs';
+import { ABILITY_STAT_FIELDS } from '@scrolled/extractor/domain/abilityStats';
+import { labelForEquipSlot, labelForEquipType } from '@scrolled/extractor/domain/equipTypes';
+import { formatEquipJobs, parseEquipReqJob } from '@scrolled/extractor/domain/equipJobs';
 import { useListSort } from '@/hooks/useListSort';
 import { useServerProfile } from '@/hooks/useServerProfile';
 import { useShowEntityIds } from '@/stores/showEntityIds';

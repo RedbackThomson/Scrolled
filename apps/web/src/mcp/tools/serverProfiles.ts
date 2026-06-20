@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { BUILTIN_PROFILES, resolveServerProfile } from '@/serverProfiles';
+import { BUILTIN_PROFILES, resolveServerProfile } from '@scrolled/extractor/serverProfiles';
 import { NotFoundError } from '../errors';
 import type { ToolDefinition } from '../types';
 import { READ, WRITE_IDEMPOTENT } from './annotations';

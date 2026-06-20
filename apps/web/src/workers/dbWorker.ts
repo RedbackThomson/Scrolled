@@ -1,9 +1,9 @@
 /// <reference lib="WebWorker" />
 import { expose } from 'comlink';
-import { Sqlite } from '@/db/sqlite';
-import { DbApi, gameDataPreMigrateReset } from '@/db/queries';
+import { Sqlite } from '@scrolled/extractor/db/sqlite';
+import { DbApi, gameDataPreMigrateReset } from '@scrolled/extractor/db/queries';
 import { GAME_OPFS_FILENAME, GAME_POOL_NAME } from '@/db/opfsNamespace';
-import { createLogger } from '@/lib/logger';
+import { createLogger } from '@scrolled/extractor/lib/logger';
 import { lazyOpenProxy } from '@/lib/lazyOpenProxy';
 
 const log = createLogger('db-worker');

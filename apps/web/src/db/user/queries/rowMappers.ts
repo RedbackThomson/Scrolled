@@ -1,4 +1,4 @@
-import type { Row } from '../../sqlite';
+import type { Row } from '@scrolled/extractor/db/sqlite';
 import {
   COLLECTION_GROUPINGS,
   COLLECTION_SORT_DIRS,

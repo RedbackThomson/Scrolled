@@ -55,9 +55,9 @@ apps/web/public/datasets/
 
 # Local test fixtures (real WZ archives and .img dumps) — never committed. The
 # README and .gitkeep inside each are the only tracked files.
-apps/web/test/fixtures/wz/*
-!apps/web/test/fixtures/wz/README.md
-!apps/web/test/fixtures/wz/.gitkeep
-apps/web/test/fixtures/img/*
-!apps/web/test/fixtures/img/README.md
-!apps/web/test/fixtures/img/.gitkeep
+packages/extractor/test/fixtures/wz/*
+!packages/extractor/test/fixtures/wz/README.md
+!packages/extractor/test/fixtures/wz/.gitkeep
+packages/extractor/test/fixtures/img/*
+!packages/extractor/test/fixtures/img/README.md
+!packages/extractor/test/fixtures/img/.gitkeep

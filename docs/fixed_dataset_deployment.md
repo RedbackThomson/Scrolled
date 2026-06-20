@@ -30,6 +30,10 @@ committed to `scrolled`. See `CLAUDE.md` and `docs/writing_conventions.md`.
 - On first load with an empty library, `DatasetInstallScreen` resolves the
   channel, downloads + verifies the artifact, and restores it into OPFS via the
   existing backup importer. Later visits open from OPFS; the site is offline.
+- The manifest declares the dataset's required `serverProfileId`. The app pins it
+  on install (overriding whatever the backup carried) so the data always renders
+  under the right rules, and refuses — before downloading — if the build doesn't
+  ship that profile. The profile picker UI stays hidden; the dataset decides it.
 - OPFS storage is namespaced per deployment (`db/opfsNamespace.ts`), so the
   generic site and each fixed dataset keep separate databases on one origin.
 - A newer published version surfaces a `DatasetUpdatePrompt` (distinct from the
@@ -73,7 +77,7 @@ datasets/
   <family>/
     latest.json                       # channel -> concrete version
     <version>/
-      manifest.json                   # id, version, displayName, artifact{url,sha256,sizeBytes}
+      manifest.json                   # id, version, displayName, serverProfileId, artifact{url,sha256,sizeBytes}
       checksums.json
       <artifact>.scrolled-backup      # the prebuilt library
 ```
@@ -95,7 +99,8 @@ The artifact is the generic site's own backup export, packaged by
    nix develop -c pnpm dataset:build \
      --input ~/Downloads/scrolled-game-2026-06-20.scrolled-backup \
      --out <deployment-repo>/datasets \
-     --family mapleroyals --version 2026-06-20 --display-name "MapleRoyals"
+     --family mapleroyals --version 2026-06-20 --display-name "MapleRoyals" \
+     --server-profile mapleroyals
    ```
 
    Re-running with a new `--version` adds a version and repoints `latest.json`;
@@ -111,7 +116,8 @@ committed `apps/web/.env.fixed` uses `family=local`.
 nix develop -c pnpm dataset:build \
   --input ~/Downloads/scrolled-game-2026-06-20.scrolled-backup \
   --out apps/web/public/datasets \
-  --family local --version 2026-06-20 --display-name "Local Dataset"
+  --family local --version 2026-06-20 --display-name "Local Dataset" \
+  --server-profile vanilla-v83
 
 # 2. Run the fixed deployment (loads .env.fixed)
 nix develop -c pnpm dev:fixed

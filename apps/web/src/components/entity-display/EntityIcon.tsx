@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { AlertTriangle, type LucideIcon } from 'lucide-react';
 import { useIcon, type IconRef } from '@/hooks/useIcon';
-import { createLogger } from '@/lib/logger';
+import { createLogger } from '@scrolled/extractor/lib/logger';
 import { cn } from '@/lib/utils';
 
 const log = createLogger('entity-icon');

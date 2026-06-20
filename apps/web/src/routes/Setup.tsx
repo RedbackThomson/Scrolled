@@ -17,11 +17,11 @@ import { StepRestore, type RestoreState } from '@/components/wizard/StepRestore'
 import { buildPlan } from '@/components/wizard/plan';
 import { getDbClient } from '@/db';
 import { importBackupBytes } from '@/hooks/useBackup';
-import { createLogger, describeError } from '@/lib/logger';
+import { createLogger, describeError } from '@scrolled/extractor/lib/logger';
 import { cn } from '@/lib/utils';
 import { useWizardMode } from '@/hooks/useWizardMode';
 import { acceptForDesktop } from '@/lib/filePickerAccept';
-import { detectServerProfile } from '@/serverProfiles';
+import { detectServerProfile } from '@scrolled/extractor/serverProfiles';
 import { getParserClient, type DataSourceKind, type WzMapleVersionName } from '@/parser';
 import { appConfig } from '@/config';
 

@@ -17,9 +17,9 @@ import {
   packBackup,
   readBackup,
   type BackupParts,
-} from '@/db/backup';
+} from '@scrolled/extractor/db/backup';
 import { downloadBytes, todayStamp } from '@/components/collections';
-import { createLogger, describeError } from '@/lib/logger';
+import { createLogger, describeError } from '@scrolled/extractor/lib/logger';
 
 const log = createLogger('backup');
 

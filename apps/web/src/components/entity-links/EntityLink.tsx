@@ -7,7 +7,7 @@ import { NpcLink } from './NpcLink';
 import { QuestLink } from './QuestLink';
 import { QuestChainLink } from './QuestChainLink';
 import { SkillLink } from './SkillLink';
-import type { EntityKind } from '@/db/types';
+import type { EntityKind } from '@scrolled/extractor/db/types';
 
 interface Props {
   entity: EntityKind;

@@ -5,8 +5,8 @@
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { BackupIncompatibleError } from '@/db/backup';
 import { useDatasetUpdate } from '@/hooks/dataset/useDatasetUpdate';
+import { isAppUpdateRequired } from '@/hooks/dataset/errors';
 
 export function DatasetUpdatePrompt() {
   const { available, displayName, applying, error, apply } = useDatasetUpdate();
@@ -17,7 +17,7 @@ export function DatasetUpdatePrompt() {
   const name = displayName ?? 'dataset';
   // The newer dataset needs a newer app; applying would just re-fail. The PWA
   // update prompt (also mounted in AppShell) is how the user gets the new app.
-  const needsAppUpdate = error instanceof BackupIncompatibleError && error.kind === 'app-too-old';
+  const needsAppUpdate = isAppUpdateRequired(error);
 
   return (
     <div

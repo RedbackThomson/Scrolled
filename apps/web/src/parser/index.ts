@@ -1,3 +1,8 @@
+// Parser layer (web app surface).
+//
+// Re-exports the engine parser from @scrolled/extractor and adds the
+// browser-only Worker pool + comlink client that live in this app.
+
 export type {
   DataSourceKind,
   Diagnostics,
@@ -9,9 +14,13 @@ export type {
   WzNodeKind,
   WzNodeTree,
   WzPropertyKind,
-} from './types';
-export { WzDataSource } from './WzDataSource';
-export { ImgDataSource } from './ImgDataSource';
+} from '@scrolled/extractor/parser';
+export {
+  WzDataSource,
+  ImgDataSource,
+  ensureWzInit,
+  getAesSmokeTestResult,
+} from '@scrolled/extractor/parser';
 export { getParserClient, terminateParserClient, type ParserWorkerApi } from './client';
 export {
   getPoolWorker,

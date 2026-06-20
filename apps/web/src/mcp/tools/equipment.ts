@@ -4,7 +4,7 @@ import {
   calculateEquipRanges,
   resolveServerProfile,
   type EquipBaseStats,
-} from '@/serverProfiles';
+} from '@scrolled/extractor/serverProfiles';
 import { NotFoundError } from '../errors';
 import type { ToolDefinition } from '../types';
 import { READ } from './annotations';

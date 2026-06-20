@@ -1,5 +1,5 @@
 import { wrap, type Remote } from 'comlink';
-import type { GameDataSource } from './types';
+import type { GameDataSource } from '@scrolled/extractor/parser/types';
 import type {
   ExtractItemsResult,
   ExtractChairsResult,
@@ -11,8 +11,8 @@ import type {
   ExtractQuestsResult,
   ExtractSkillsResult,
   ExtractJobsResult,
-} from '@/extractors';
-import type { ProgressFn } from '@/lib/progress';
+} from '@scrolled/extractor/extractors';
+import type { ProgressFn } from '@scrolled/extractor/lib/progress';
 
 /**
  * The full worker surface. Extends the public `GameDataSource` with

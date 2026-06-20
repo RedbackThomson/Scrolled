@@ -10,8 +10,8 @@ import { installDataset, type InstallProgress } from '@scrolled/dataset-client';
 import { StaticHttpDatasetRepository } from '@scrolled/dataset-repository';
 import { appConfig } from '@/config';
 import { importBackupBytes } from '@/hooks/useBackup';
-import { recordInstalledDataset } from '@/hooks/dataset/registry';
-import { createLogger, describeError } from '@/lib/logger';
+import { applyInstalledDataset, assertDatasetSupported } from '@/hooks/dataset/registry';
+import { createLogger, describeError } from '@scrolled/extractor/lib/logger';
 
 const log = createLogger('dataset-install');
 
@@ -43,6 +43,8 @@ export function useFixedDatasetInstall(): FixedDatasetInstall {
       const manifest = await installDataset({
         repository,
         ref: { family: fixed.family, channel: fixed.channel },
+        // Fail before downloading if this build can't support the dataset.
+        onManifest: assertDatasetSupported,
         sink: {
           install: async (bytes) => {
             await importBackupBytes(bytes);
@@ -50,9 +52,10 @@ export function useFixedDatasetInstall(): FixedDatasetInstall {
         },
         onProgress: setProgress,
       });
-      // Record the installed version (the import replaced the whole DB, so this
-      // must run after) so later visits can detect a newer published version.
-      await recordInstalledDataset(manifest);
+      // Pin the dataset's server profile and record the version. Runs after the
+      // import (which replaced the whole DB) so it sticks and later visits can
+      // detect a newer published version.
+      await applyInstalledDataset(manifest);
       await qc.invalidateQueries({ queryKey: ['db'] });
       setStatus('done');
     } catch (e) {

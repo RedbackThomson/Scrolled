@@ -18,7 +18,7 @@ import { getParserClient, type WzNodeInfo, type WzMapleVersionName } from '@/par
 import { getDbClient } from '@/db';
 import { cn } from '@/lib/utils';
 import { buildReport } from '@/lib/diagnosticsReport';
-import type { ProgressUpdate } from '@/lib/progress';
+import type { ProgressUpdate } from '@scrolled/extractor/lib/progress';
 
 const VERSIONS: WzMapleVersionName[] = ['GMS', 'BMS', 'EMS', 'CLASSIC'];
 

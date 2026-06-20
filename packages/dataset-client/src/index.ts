@@ -26,14 +26,21 @@ export interface InstallDatasetOptions {
   ref: DatasetRef;
   sink: DatasetSink;
   onProgress?: (p: InstallProgress) => void;
+  /**
+   * Validate the resolved manifest before the (large) download — throw to abort.
+   * Used to fail fast when the app can't support the dataset (e.g. it requires a
+   * server profile this build doesn't ship).
+   */
+  onManifest?: (manifest: DatasetManifest) => void | Promise<void>;
 }
 
-/** Resolve → download → install. Returns the resolved manifest. */
+/** Resolve → validate → download → install. Returns the resolved manifest. */
 export async function installDataset(opts: InstallDatasetOptions): Promise<DatasetManifest> {
-  const { repository, ref, sink, onProgress } = opts;
+  const { repository, ref, sink, onProgress, onManifest } = opts;
 
   onProgress?.({ phase: 'resolving' });
   const manifest = await repository.resolveChannel(ref);
+  if (onManifest) await onManifest(manifest);
 
   onProgress?.({
     phase: 'downloading',

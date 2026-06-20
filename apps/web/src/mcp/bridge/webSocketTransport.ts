@@ -6,7 +6,7 @@
 // Settings calls `close()` which suppresses retries.
 
 import { bridgeEnvelopeSchema, type BridgeEnvelope } from '@scrolled/mcp-protocol';
-import { createLogger } from '@/lib/logger';
+import { createLogger } from '@scrolled/extractor/lib/logger';
 import type { BridgeStatus, BridgeTransport } from './transport';
 
 const log = createLogger('mcp/ws');

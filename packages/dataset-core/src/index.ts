@@ -26,6 +26,12 @@ export const datasetManifestSchema = z.object({
   version: z.string().min(1),
   /** Human-facing name shown in install UI. Lives in data, never in app source. */
   displayName: z.string().min(1),
+  /**
+   * Server profile the dataset requires (EXP rate, stat-range calculator, …).
+   * The app pins this on install so a fixed dataset always renders under the
+   * right rules; the app build must ship a profile with this id.
+   */
+  serverProfileId: z.string().min(1),
   /** Extracted-data revision the artifact was built at (informational). */
   dataRevision: z.number().int().optional(),
   buildTimestamp: z.string().optional(),

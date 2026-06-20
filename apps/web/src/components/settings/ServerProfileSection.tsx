@@ -1,6 +1,6 @@
 import { Gamepad2 } from 'lucide-react';
 import { useSettingsSection } from '@/components/settings/SettingsScrollSpy';
-import { BUILTIN_PROFILES } from '@/serverProfiles';
+import { BUILTIN_PROFILES } from '@scrolled/extractor/serverProfiles';
 import { useServerProfile, useSetServerProfile } from '@/hooks/useServerProfile';
 import { cn } from '@/lib/utils';
 

@@ -10,8 +10,8 @@ import { StaticHttpDatasetRepository } from '@scrolled/dataset-repository';
 import { appConfig } from '@/config';
 import { getDbClient } from '@/db';
 import { importBackupBytes } from '@/hooks/useBackup';
-import { recordInstalledDataset } from '@/hooks/dataset/registry';
-import { createLogger, describeError } from '@/lib/logger';
+import { applyInstalledDataset, assertDatasetSupported } from '@/hooks/dataset/registry';
+import { createLogger, describeError } from '@scrolled/extractor/lib/logger';
 
 const log = createLogger('dataset-update');
 
@@ -53,13 +53,14 @@ export function useDatasetUpdate(): DatasetUpdate {
       const manifest = await installDataset({
         repository,
         ref: { family: fixed.family, channel: fixed.channel },
+        onManifest: assertDatasetSupported,
         sink: {
           install: async (bytes) => {
             await importBackupBytes(bytes);
           },
         },
       });
-      await recordInstalledDataset(manifest);
+      await applyInstalledDataset(manifest);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['db'] });

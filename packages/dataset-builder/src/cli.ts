@@ -9,7 +9,7 @@
 
 import { buildDataset, type BuildDatasetOptions } from './index.ts';
 
-const REQUIRED = ['input', 'out', 'family', 'version', 'display-name'] as const;
+const REQUIRED = ['input', 'out', 'family', 'version', 'display-name', 'server-profile'] as const;
 
 function parseArgs(argv: string[]): Record<string, string> {
   const out: Record<string, string> = {};
@@ -30,7 +30,8 @@ function parseArgs(argv: string[]): Record<string, string> {
 
 function usage(): never {
   console.error(
-    'Usage: scrolled-dataset --input <backup> --out <dir> --family <name> --version <ver> --display-name <name>\n' +
+    'Usage: scrolled-dataset --input <backup> --out <dir> --family <name> --version <ver>\n' +
+      '                        --display-name <name> --server-profile <id>\n' +
       '                        [--channel latest] [--id <id>] [--data-revision <n>] [--build-timestamp <iso>]',
   );
   process.exit(1);
@@ -50,6 +51,7 @@ async function main(): Promise<void> {
     family: args.family,
     version: args.version,
     displayName: args['display-name'],
+    serverProfile: args['server-profile'],
     channel: args.channel,
     id: args.id,
     dataRevision: args['data-revision'] ? Number(args['data-revision']) : undefined,

@@ -1,6 +1,6 @@
 import type { Diagnostics } from '@/parser';
 import type { DatasetRecord } from '@/db';
-import { getLogEntries, type LogEntry } from '@/lib/logger';
+import { getLogEntries, type LogEntry } from '@scrolled/extractor/lib/logger';
 import { shortHash } from '@/lib/hashFile';
 
 interface ReportInput {

@@ -16,7 +16,7 @@
 
 import { wrap, type Remote } from 'comlink';
 import type { ParserWorkerApi } from './client';
-import { createLogger } from '@/lib/logger';
+import { createLogger } from '@scrolled/extractor/lib/logger';
 
 const log = createLogger('parser-pool');
 

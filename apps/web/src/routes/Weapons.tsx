@@ -5,8 +5,8 @@ import { CollectionsBulkAddMenu } from '@/components/collections';
 import { PinnedSearchesMenu } from '@/components/pinned-searches';
 import { TablePageLayout } from '@/components/layout/TablePageLayout';
 import { getDbClient } from '@/db';
-import { labelForEquipType } from '@/domain/equipTypes';
-import { ALL_EQUIP_CLASSES } from '@/domain/equipJobs';
+import { labelForEquipType } from '@scrolled/extractor/domain/equipTypes';
+import { ALL_EQUIP_CLASSES } from '@scrolled/extractor/domain/equipJobs';
 import {
   columns,
   defaultSort,

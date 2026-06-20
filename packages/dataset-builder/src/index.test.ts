@@ -28,10 +28,12 @@ describe('buildDataset', () => {
       family: 'local',
       version: '2026-06-20',
       displayName: 'Local Dataset',
+      serverProfile: 'vanilla-v83',
     });
 
     const expectedSha = createHash('sha256').update(payload).digest('hex');
     expect(result.manifest.id).toBe('local-2026-06-20');
+    expect(result.manifest.serverProfileId).toBe('vanilla-v83');
     expect(result.manifest.artifact.sha256).toBe(expectedSha);
     expect(result.manifest.artifact.url).toBe('local/2026-06-20/game.scrolled-backup');
 

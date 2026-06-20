@@ -1,0 +1,36 @@
+{
+  "name": "@scrolled/extractor",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "WZ → typed records → SQLite extraction engine. Shared by the web app and the headless dataset-build CLI.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./parser": "./src/parser/index.ts",
+    "./extractors": "./src/extractors/index.ts",
+    "./serverProfiles": "./src/serverProfiles/index.ts",
+    "./db": "./src/db/index.ts",
+    "./db/queries": "./src/db/queries/index.ts",
+    "./db/backup": "./src/db/backup/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@scrolled/dataset-core": "workspace:*",
+    "@scrolled/wz": "workspace:*",
+    "@sqlite.org/sqlite-wasm": "3.53.0-build1",
+    "comlink": "^4.4.2",
+    "fflate": "^0.8.2",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.4",
+    "vite": "^5.4.8",
+    "vite-node": "^2.1.2",
+    "vitest": "^2.1.2"
+  }
+}

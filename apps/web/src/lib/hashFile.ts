@@ -17,7 +17,7 @@
 //      digest phases on the worker's event loop.
 
 import { wrap, type Remote } from 'comlink';
-import { createLogger, describeError } from '@/lib/logger';
+import { createLogger, describeError } from '@scrolled/extractor/lib/logger';
 import type { HashApi } from '@/workers/hashWorker';
 
 const log = createLogger('hash-client');

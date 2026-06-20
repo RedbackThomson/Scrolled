@@ -13,7 +13,7 @@ import {
   type BridgeEnvelope,
   type ToolError,
 } from '@scrolled/mcp-protocol';
-import { createLogger } from '@/lib/logger';
+import { createLogger } from '@scrolled/extractor/lib/logger';
 import { ToolExecutionError } from '../errors';
 import type { ToolRegistry } from '../registry';
 import type { ToolContext } from '../types';

@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { clamp } from '@/lib/math';
+import { clamp } from '@scrolled/extractor/lib/math';
 import { bytesToUrl } from '@/lib/blob';
 import { cn } from '@/lib/utils';
 import type { GraphicViewerView } from './types';

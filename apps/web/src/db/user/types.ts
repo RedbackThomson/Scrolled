@@ -5,7 +5,7 @@
 // independently. These types cross the worker boundary, so they must be
 // structured-cloneable.
 
-import type { EntityKind } from '../types';
+import type { EntityKind } from '@scrolled/extractor/db/types';
 import type { CollectionsExportJson, ImportConflictMode, ImportReport } from './collectionsJson';
 
 export type CollectionEntityType = Extract<

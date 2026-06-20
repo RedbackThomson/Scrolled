@@ -6,8 +6,8 @@
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { Button } from '@/components/ui/button';
-import { BackupIncompatibleError } from '@/db/backup';
 import { useFixedDatasetInstall } from '@/hooks/dataset/useFixedDatasetInstall';
+import { isAppUpdateRequired } from '@/hooks/dataset/errors';
 import { reloadForUpdate } from '@/lib/swReload';
 
 function formatMb(bytes: number): string {
@@ -19,11 +19,10 @@ export function DatasetInstallScreen() {
   const { updateServiceWorker } = useRegisterSW();
   const name = progress?.manifest?.displayName ?? 'your library';
 
-  // The dataset was built by a newer app than this (cached) build. Retrying
-  // can't help — the app itself must update. The PWA prompt isn't rendered on
-  // this blocking screen, so offer the update here.
-  const needsAppUpdate =
-    error instanceof BackupIncompatibleError && error.kind === 'app-too-old';
+  // The dataset needs a newer/more-complete app than this (cached) build (newer
+  // data, or a server profile this build lacks). Retrying can't help — the app
+  // must update. The PWA prompt isn't on this blocking screen, so offer it here.
+  const needsAppUpdate = isAppUpdateRequired(error);
 
   const download = progress?.download;
   const percent =

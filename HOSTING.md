@@ -81,14 +81,15 @@ pnpm dataset:build \
   --out ./scrolled/apps/web/public/datasets \
   --family your-server \
   --version 2026-06-01 \
-  --display-name "Your Server"
+  --display-name "Your Server" \
+  --server-profile your-server
 ```
 
 Produces:
 
 ```
 datasets/your-server/latest.json                      # channel -> concrete version
-datasets/your-server/2026-06-01/manifest.json         # id, version, displayName, artifact{url,sha256,sizeBytes}
+datasets/your-server/2026-06-01/manifest.json         # id, version, displayName, serverProfileId, artifact{url,sha256,sizeBytes}
 datasets/your-server/2026-06-01/checksums.json
 datasets/your-server/2026-06-01/game.scrolled-backup  # copy of the artifact
 ```
@@ -96,6 +97,13 @@ datasets/your-server/2026-06-01/game.scrolled-backup  # copy of the artifact
 - `--version` should be immutable (a date or content hash). Re-running with a new
   `--version` **adds** a version and repoints `latest.json`; published versions
   are never rewritten.
+- `--server-profile` is **required**: it names the rules (EXP rate, equip
+  stat-range calculator) the data should render under, and the app pins it on
+  install — so the dataset always uses the right profile regardless of what was
+  selected when the backup was exported. The id must be one the app build ships
+  (a JSON in `apps/web/src/serverProfiles/profiles/`, e.g. `mapleroyals`, or the
+  baseline `vanilla-v83`). If your server needs a profile that doesn't exist yet,
+  add it to `scrolled` first — profiles are open-source config, not game data.
 - Writing into `apps/web/public/datasets` means the next site build copies the
   tree into the output automatically.
 
@@ -140,6 +148,7 @@ env:
   DATASET_FAMILY: your-server
   DATASET_VERSION: '2026-06-01'
   DATASET_DISPLAY_NAME: Your Server
+  DATASET_SERVER_PROFILE: your-server # must match a profile shipped by SCROLLED_REF
 
 jobs:
   build:
@@ -180,7 +189,8 @@ jobs:
             --out apps/web/public/datasets \
             --family "$DATASET_FAMILY" \
             --version "$DATASET_VERSION" \
-            --display-name "$DATASET_DISPLAY_NAME"
+            --display-name "$DATASET_DISPLAY_NAME" \
+            --server-profile "$DATASET_SERVER_PROFILE"
 
       - name: Build site
         working-directory: scrolled
@@ -257,19 +267,22 @@ corrupting**.
 
 ## Version compatibility (the sync contract)
 
-The dataset is a database export, so it carries two version contracts that must
-match the app build that opens it (see [CLAUDE.md](CLAUDE.md) → schema vs. data
-revisions):
+The dataset is a database export, so it carries contracts that must match the app
+build that opens it (see [CLAUDE.md](CLAUDE.md) → schema vs. data revisions):
 
 - **schema version** (`_migrations`) — the app migrates an older schema up, never
   down.
 - **data revision** (`app_meta.data_revision`) — the data contract the app
   understands; readable down to `MINIMUM_SUPPORTED_DATA_REVISION`.
+- **server profile** (`serverProfileId` in the manifest) — the app build must
+  ship a profile with that id, and pins it on install.
 
-Both ride inside the artifact, and the app checks them on install/update
-(`evaluateBackupImport`). A dataset newer than the app, or older than the app can
-read, is **refused with an "update the app" message** instead of loading corrupt
-data. So the worst case is a clear prompt, not a broken wiki.
+The schema/data contracts ride inside the artifact and are checked on
+install/update (`evaluateBackupImport`); the server profile is checked from the
+manifest **before downloading**. A dataset newer than the app, older than the app
+can read, or naming a profile the build doesn't ship is **refused with an "update
+the app" message** instead of loading wrong or corrupt data. So the worst case is
+a clear prompt, not a broken wiki.
 
 What that means per change:
 
@@ -278,6 +291,7 @@ What that means per change:
 | App patch, no data-revision change                                                       | ✅ Yes                           | Bump the pin, rebuild — done                                                |
 | App update, **additive** data-revision bump                                              | ✅ Yes (new fields render blank) | Rebuild now; refresh the dataset later if you want the new fields populated |
 | App update, **breaking** bump (`MINIMUM_SUPPORTED_DATA_REVISION` rises past the dataset) | ❌ No (app refuses)              | Re-export the dataset from the new app build (Step 1), then publish         |
+| App update drops the dataset's server profile                                            | ❌ No (app refuses)              | Restore the profile JSON in `scrolled`, or repin to a build that has it     |
 | Game data update                                                                         | n/a (new content)                | Re-export (Step 1), publish a new `--version`                               |
 
 **Recommended CI gate:** after building, run a quick headless smoke test — serve

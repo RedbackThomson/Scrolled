@@ -3,8 +3,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { proxy } from 'comlink';
 import { getParserClient } from '@/parser';
 import { getDbClient, type DatasetFileRef } from '@/db';
-import { createLogger, describeError } from '@/lib/logger';
-import type { ProgressUpdate } from '@/lib/progress';
+import { createLogger, describeError } from '@scrolled/extractor/lib/logger';
+import type { ProgressUpdate } from '@scrolled/extractor/lib/progress';
 import {
   ExtractorTracker,
   buildExtractStats,

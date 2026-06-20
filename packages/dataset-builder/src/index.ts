@@ -27,6 +27,8 @@ export interface BuildDatasetOptions {
   family: string;
   version: string;
   displayName: string;
+  /** Server profile the dataset requires; the app pins it on install. */
+  serverProfile: string;
   /** Channel to (re)point at this version. Defaults to "latest". */
   channel?: string;
   /** Dataset id. Defaults to `${family}-${version}`. */
@@ -60,6 +62,7 @@ export async function buildDataset(opts: BuildDatasetOptions): Promise<BuildData
     family: opts.family,
     version: opts.version,
     displayName: opts.displayName,
+    serverProfileId: opts.serverProfile,
     dataRevision: opts.dataRevision,
     buildTimestamp: opts.buildTimestamp,
     artifact: {
