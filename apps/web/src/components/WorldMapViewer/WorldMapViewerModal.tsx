@@ -95,8 +95,10 @@ export function WorldMapViewerModal({
   }, [markers]);
   const mapNameById = useEntitySummaryNames('map', representativeMapIds);
 
-  // Hover wins; otherwise the drilled region, otherwise the focus map's marker.
-  const effective = hoveredMarkerId ?? drilledMarkerId ?? focusMarkerId;
+  // An *active* highlight comes from hovering a row or drilling a region — it
+  // rings the target and dims the rest. The focus marker (the page you came
+  // from) is a passive "you are here": a distinct colour, never dimming others.
+  const activeMarkerId = hoveredMarkerId ?? drilledMarkerId;
 
   // World map records carry no display name, so title with the most specific
   // region we can name: the drilled region, else the region the focus map sits
@@ -175,6 +177,8 @@ export function WorldMapViewerModal({
             firstId !== undefined
               ? (mapNameById.get(firstId) ?? `Map ${firstId}`)
               : (m.title ?? 'Marker');
+          const isActive = activeMarkerId !== null && m.id === activeMarkerId;
+          const isFocus = m.id === focusMarkerId;
           return (
             <GraphicViewerIcon
               key={m.id}
@@ -182,7 +186,7 @@ export function WorldMapViewerModal({
               pixelY={worldMap.originY + m.wzY}
               parentScale={view.scale}
               Icon={MapPin}
-              colorClass="text-sky-500"
+              colorClass={isFocus ? 'text-emerald-500' : 'text-sky-500'}
               ariaLabel={label}
               tooltip={
                 firstId !== undefined ? (
@@ -196,8 +200,8 @@ export function WorldMapViewerModal({
                   <div className="text-muted-foreground text-xs">{m.title ?? 'Marker'}</div>
                 )
               }
-              highlighted={m.id === effective}
-              dimmed={effective !== null && m.id !== effective}
+              highlighted={isActive || (activeMarkerId === null && isFocus)}
+              dimmed={activeMarkerId !== null && !isActive}
               onClick={
                 single
                   ? () => onOpenMap(m.mapIds[0]!)
