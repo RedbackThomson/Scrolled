@@ -21,6 +21,7 @@ import {
 import { useHomeLayout } from '@/components/home/useHomeLayout';
 import type { HomeSectionId } from '@/components/home/layout';
 import { useFeatures, type Features } from '@/hooks/useFeatures';
+import { useInstalledDataset } from '@/hooks/dataset/useInstalledDataset';
 import { appConfig } from '@/config';
 
 const HomeEditor = lazy(() =>
@@ -30,6 +31,7 @@ const HomeEditor = lazy(() =>
 export default function Home() {
   const features = useFeatures();
   const layout = useHomeLayout();
+  const hostedName = useInstalledDataset()?.displayName ?? null;
   const [editing, setEditing] = useState(false);
 
   if (!features.ready) {
@@ -50,7 +52,12 @@ export default function Home() {
   return (
     <div className="max-w-5xl space-y-8">
       <header className="flex items-center justify-between gap-3">
-        <h1 className="text-3xl font-semibold tracking-tight">Scrolled</h1>
+        <div className="min-w-0">
+          <h1 className="text-3xl font-semibold tracking-tight">Scrolled</h1>
+          {hostedName && (
+            <p className="text-muted-foreground mt-1 truncate text-sm">{hostedName}</p>
+          )}
+        </div>
         <button
           type="button"
           onClick={() => setEditing((v) => !v)}

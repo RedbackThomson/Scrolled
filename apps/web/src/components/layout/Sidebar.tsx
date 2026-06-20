@@ -36,6 +36,7 @@ import { getUserDbClient } from '@/db/user';
 import { resolveCollectionColor } from '@/components/collections/colorRegistry';
 import { resolveCollectionIcon } from '@/components/collections/iconRegistry';
 import { DatasetVersionTag } from '@/components/dataset/DatasetVersionTag';
+import { useInstalledDataset } from '@/hooks/dataset/useInstalledDataset';
 import { cn } from '@/lib/utils';
 import { appConfig } from '@/config';
 
@@ -83,6 +84,7 @@ export interface SidebarProps {
 
 export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
   const features = useFeatures();
+  const hostedName = useInstalledDataset()?.displayName ?? null;
   const db = useMemo(() => getDbClient(), []);
   const userDb = useMemo(() => getUserDbClient(), []);
   const location = useLocation();
@@ -240,7 +242,14 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
               aria-hidden
               className="h-7 w-7 shrink-0 rounded"
             />
-            <span className="font-semibold tracking-tight">Scrolled</span>
+            <div className="flex min-w-0 flex-col leading-tight">
+              <span className="font-semibold tracking-tight">Scrolled</span>
+              {hostedName && (
+                <span className="text-sidebar-muted truncate text-[11px]" title={hostedName}>
+                  {hostedName}
+                </span>
+              )}
+            </div>
           </>
         )}
         {showCollapseToggle && (
