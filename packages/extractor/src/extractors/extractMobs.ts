@@ -1,8 +1,8 @@
 import type { GameDataSource } from '../parser';
 import { pathToNumber } from './wzCoerce';
-import type { MobDropRecord, MobRecord } from '../db';
-import { createLogger } from '../lib/logger';
-import type { ProgressFn } from '../lib/progress';
+import type { MobDropRecord, MobRecord } from '@scrolled/game-db/db';
+import { createLogger } from '@scrolled/game-db/lib/logger';
+import type { ProgressFn } from '@scrolled/game-db/lib/progress';
 import { pickSprite } from './sprites';
 import { buildMobStringIndex } from './stringIndex';
 

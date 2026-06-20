@@ -7,7 +7,7 @@
 
 import { z } from 'zod';
 
-/** A downloadable dataset artifact (today: a `.scrolled-backup` container). */
+/** A downloadable dataset artifact (a `.scrolled-dataset` container; see ./dataset.ts). */
 export const datasetArtifactSchema = z.object({
   /** URL relative to the repository base, or an absolute http(s) URL. */
   url: z.string().min(1),
@@ -63,3 +63,25 @@ export interface DatasetRef {
   family: string;
   channel: string;
 }
+
+// The .scrolled-dataset container format + the shared tar/gzip codec.
+export {
+  DATASET_FORMAT,
+  DATASET_FORMAT_VERSION,
+  datasetContainerManifestSchema,
+  looksLikeDataset,
+  packDataset,
+  readDataset,
+  type DatasetContainerManifest,
+  type PackDatasetParts,
+  type DatasetContents,
+} from './dataset';
+export {
+  packTar,
+  unpackTar,
+  looksLikeGzip,
+  gzipAsync,
+  gunzipAsync,
+  sha256Hex,
+  type TarEntry,
+} from './container';

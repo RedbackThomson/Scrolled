@@ -14,9 +14,9 @@ import type {
   WzNodeInfo,
   WzNodeTree,
 } from './types';
-import { createLogger, describeError, getLogEntries } from '../lib/logger';
+import { createLogger, describeError, getLogEntries } from '@scrolled/game-db/lib/logger';
 import { ensureWzInit, getAesSmokeTestResult } from './wzInit';
-import type { ProgressFn } from '../lib/progress';
+import type { ProgressFn } from '@scrolled/game-db/lib/progress';
 import { buildImgDataset, type ImgDataset, type ImgTreeNode } from './imgTree';
 import { buildSubtree, makeProperty, resolveToCanvas, walkProperties } from './wzResolve';
 import { propertyToNodeInfo } from './nodeInfo';

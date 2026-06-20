@@ -17,9 +17,9 @@ import {
   packBackup,
   readBackup,
   type BackupParts,
-} from '@scrolled/extractor/db/backup';
+} from '@scrolled/game-db/db/backup';
 import { downloadBytes, todayStamp } from '@/components/collections';
-import { createLogger, describeError } from '@scrolled/extractor/lib/logger';
+import { createLogger, describeError } from '@scrolled/game-db/lib/logger';
 
 const log = createLogger('backup');
 

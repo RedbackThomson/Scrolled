@@ -6,7 +6,7 @@ import { getDbClient, type EntityKind } from '@/db';
 import { getSearchIndex, querySearch, type SearchHit } from '@/search';
 import { labelForEntityKind, routeForEntity } from '@/lib/entityRoutes';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
-import { labelForEquipSlot } from '@scrolled/extractor/domain/equipTypes';
+import { labelForEquipSlot } from '@scrolled/game-db/domain/equipTypes';
 import { useRecentQueries } from '@/lib/recents';
 import { useCommandPalette } from '@/stores/useCommandPalette';
 import { useFeatures } from '@/hooks/useFeatures';

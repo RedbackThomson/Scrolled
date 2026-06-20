@@ -14,9 +14,9 @@ import {
 import { ItemIcon } from '@/components/entity-display/ItemIcon';
 import { EquipLink } from '@/components/entity-links';
 import type { EquipRecord } from '@/db';
-import { ABILITY_STAT_FIELDS } from '@scrolled/extractor/domain/abilityStats';
-import { labelForEquipSlot } from '@scrolled/extractor/domain/equipTypes';
-import { isAnyClass, parseEquipReqJob } from '@scrolled/extractor/domain/equipJobs';
+import { ABILITY_STAT_FIELDS } from '@scrolled/game-db/domain/abilityStats';
+import { labelForEquipSlot } from '@scrolled/game-db/domain/equipTypes';
+import { isAnyClass, parseEquipReqJob } from '@scrolled/game-db/domain/equipJobs';
 
 const num = (v: number | null) => (v === null ? '—' : v.toLocaleString());
 

@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { gunzip } from 'fflate';
-import { unpackTar } from '../../lib/tar';
+import { gunzipAsync, gzipAsync, unpackTar } from '@scrolled/dataset-core';
 import { CURRENT_DATA_REVISION } from '../dataVersion';
 import { looksLikeBackup, packBackup, readBackup } from './format';
 
@@ -10,12 +9,6 @@ const versions = {
   game: { schemaVersion: 17, dataRevision: CURRENT_DATA_REVISION },
   user: { schemaVersion: 2 },
 };
-
-function gunzipAsync(bytes: Uint8Array): Promise<Uint8Array> {
-  return new Promise((resolve, reject) =>
-    gunzip(bytes, (err, data) => (err ? reject(err) : resolve(data))),
-  );
-}
 
 describe('backup format', () => {
   it('packs both databases and reads them back intact', async () => {
@@ -57,7 +50,7 @@ describe('backup format', () => {
     const at = indexOfSeq(tar, game);
     expect(at).toBeGreaterThanOrEqual(0);
     tar[at] ^= 0xff;
-    await expect(readBackup(await reGzip(tar))).rejects.toThrow(/corrupt/);
+    await expect(readBackup(await gzipAsync(tar))).rejects.toThrow(/corrupt/);
   });
 });
 
@@ -71,11 +64,4 @@ function indexOfSeq(haystack: Uint8Array, needle: Uint8Array): number {
     return i;
   }
   return -1;
-}
-
-async function reGzip(bytes: Uint8Array): Promise<Uint8Array> {
-  const { gzip } = await import('fflate');
-  return new Promise((resolve, reject) =>
-    gzip(bytes, (err, data) => (err ? reject(err) : resolve(data))),
-  );
 }

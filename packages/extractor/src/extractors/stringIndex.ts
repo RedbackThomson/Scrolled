@@ -1,5 +1,5 @@
 import type { GameDataSource, WzNodeTree } from '../parser';
-import { createLogger } from '../lib/logger';
+import { createLogger } from '@scrolled/game-db/lib/logger';
 import { unescapeWzString } from './wzText';
 
 const log = createLogger('string-index');

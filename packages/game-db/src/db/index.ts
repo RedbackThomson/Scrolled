@@ -20,3 +20,9 @@ export {
   type Row,
 } from './sqlite';
 export { DbApi, gameDataPreMigrateReset } from './queries';
+export {
+  evaluateGameDataImport,
+  evaluateDatasetImport,
+  type GameDataImportDecision,
+  type GameDataBlockKind,
+} from './importCompat';

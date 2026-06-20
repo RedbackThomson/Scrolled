@@ -9,7 +9,7 @@ import { ArrowRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { getDbClient, type CategoryCount, type EntityKind } from '@/db';
-import { labelForEquipSlot } from '@scrolled/extractor/domain/equipTypes';
+import { labelForEquipSlot } from '@scrolled/game-db/domain/equipTypes';
 import { iconForEntity, listingRouteForEntity } from '@/lib/entityRoutes';
 import type { Features } from '@/hooks/useFeatures';
 import { HomeSection } from './HomeSection';

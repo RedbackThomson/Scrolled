@@ -1,8 +1,8 @@
 import type { GameDataSource, WzNodeInfo } from '../parser';
 import { nodeToNumber } from './wzCoerce';
-import type { ItemRecord } from '../db';
-import { createLogger } from '../lib/logger';
-import type { ProgressFn } from '../lib/progress';
+import type { ItemRecord } from '@scrolled/game-db/db';
+import { createLogger } from '@scrolled/game-db/lib/logger';
+import type { ProgressFn } from '@scrolled/game-db/lib/progress';
 import { buildItemStringIndex, type StringIndex } from './stringIndex';
 
 const log = createLogger('extract-items');

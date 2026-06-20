@@ -6,7 +6,7 @@ import {
   buildMapStringIndex,
   buildQuestStringIndex,
 } from './stringIndex';
-import { clearLog, getLogEntries } from '../lib/logger';
+import { clearLog, getLogEntries } from '@scrolled/game-db/lib/logger';
 import type { GameDataSource, WzNodeInfo, WzNodeTree } from '../parser';
 
 /**

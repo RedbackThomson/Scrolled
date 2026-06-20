@@ -21,16 +21,16 @@ import { ensureWzInit } from '../parser/wzInit';
 import { WzDataSource } from '../parser/WzDataSource';
 import { ImgDataSource } from '../parser/ImgDataSource';
 import type { DataSourceKind, GameDataSource, LoadFileSpec, WzMapleVersionName } from '../parser';
-import { Sqlite } from '../db/sqlite';
-import { DbApi } from '../db/queries';
-import { packBackup } from '../db/backup';
+import { Sqlite } from '@scrolled/game-db/db/sqlite';
+import { DbApi } from '@scrolled/game-db/db/queries';
+import { packDataset } from '@scrolled/dataset-core';
 import {
   resolveServerProfile,
   serverProfileExists,
   serverProfileSchema,
   type ServerProfile,
-} from '../serverProfiles';
-import { createLogger, describeError } from '../lib/logger';
+} from '@scrolled/game-db/serverProfiles';
+import { createLogger, describeError } from '@scrolled/game-db/lib/logger';
 import { runExtraction } from './runExtraction';
 import { detectKind, gatherSourceFiles } from './files';
 import { writeDatasetRepo } from './pack';
@@ -224,13 +224,13 @@ async function main() {
   const status = await db.status();
   await source.dispose();
 
-  // The bundle is the game SQLite in the existing tar+gzip container.
+  // The bundle is the game SQLite in a `.scrolled-dataset` container.
   process.stdout.write('  Packing bundle\n');
-  const bundle = await packBackup({
+  const bundle = await packDataset({
     game: gameBytes,
-    versions: {
-      game: { schemaVersion: status.schemaVersion, dataRevision: status.dataRevision },
-    },
+    schemaVersion: status.schemaVersion,
+    dataRevision: status.dataRevision,
+    createdAt: new Date().toISOString(),
   });
 
   const { manifest, artifactPath, channelPath } = writeDatasetRepo({

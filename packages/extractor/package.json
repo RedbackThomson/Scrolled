@@ -8,10 +8,6 @@
     ".": "./src/index.ts",
     "./parser": "./src/parser/index.ts",
     "./extractors": "./src/extractors/index.ts",
-    "./serverProfiles": "./src/serverProfiles/index.ts",
-    "./db": "./src/db/index.ts",
-    "./db/queries": "./src/db/queries/index.ts",
-    "./db/backup": "./src/db/backup/index.ts",
     "./*": "./src/*.ts"
   },
   "scripts": {
@@ -22,6 +18,7 @@
   },
   "dependencies": {
     "@scrolled/dataset-core": "workspace:*",
+    "@scrolled/game-db": "workspace:*",
     "@scrolled/wz": "workspace:*",
     "@sqlite.org/sqlite-wasm": "3.53.0-build1",
     "comlink": "^4.4.2",

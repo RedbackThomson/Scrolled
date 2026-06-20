@@ -4,7 +4,7 @@ import type { MapMobSpawnWithName, MapNpcWithName, MapPortalRecord } from '@/db'
 import { useEntitySummaryNames } from '@/hooks/useEntitySummaries';
 import { MobHoverCard, NpcHoverCard } from '@/components/entity-links';
 import { HoverPopover } from '@/components/common/HoverPopover';
-import { classifyPortal, type PortalGraph } from '@scrolled/extractor/domain/portal-types';
+import { classifyPortal, type PortalGraph } from '@scrolled/game-db/domain/portal-types';
 import { cn } from '@/lib/utils';
 import { useShowEntityIds } from '@/stores/showEntityIds';
 import type { LayerVisibility, MapViewerHighlight } from './types';

@@ -43,7 +43,7 @@ import { useFeatures } from '@/hooks/useFeatures';
 import { useShowEntityIds } from '@/stores/showEntityIds';
 import { useCharacterPreferences } from '@/stores/characterPreferences';
 import { formatDurationSeconds } from '@/lib/duration';
-import { parseRewardJob, formatEquipJobs, isAnyClass } from '@scrolled/extractor/domain/equipJobs';
+import { parseRewardJob, formatEquipJobs, isAnyClass } from '@scrolled/game-db/domain/equipJobs';
 import { filterGroupedRewards, groupItemRewards, type GroupedItemReward } from '@/lib/questRewards';
 
 export default function QuestDetail() {

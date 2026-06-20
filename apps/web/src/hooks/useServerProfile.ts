@@ -11,7 +11,7 @@ import {
   type EquipStatKey,
   type EquipStatRange,
   type ServerProfile,
-} from '@scrolled/extractor/serverProfiles';
+} from '@scrolled/game-db/serverProfiles';
 
 const QUERY_KEY = ['db', 'server-profile'] as const;
 

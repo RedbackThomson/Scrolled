@@ -8,7 +8,7 @@ import { HoverCardSaveFooter } from '@/components/collections';
 import { getDbClient } from '@/db';
 import { useJobsMap } from '@/hooks/useJobs';
 import { useShowEntityIds } from '@/stores/showEntityIds';
-import { decodeRequiredWeapon, decodeSkillElement } from '@scrolled/extractor/domain/skillElements';
+import { decodeRequiredWeapon, decodeSkillElement } from '@scrolled/game-db/domain/skillElements';
 
 interface SkillLinkProps {
   id: number;

@@ -6,7 +6,7 @@
 // per-extractor records, the rolled-up ExtractStats, and how load errors get
 // merged into the recorded dataset files. That's all here.
 
-import type { DatasetFileRef, ExtractorResultRecord } from '../db';
+import type { DatasetFileRef, ExtractorResultRecord } from '@scrolled/game-db/db';
 
 export const ALL_EXTRACTOR_KEYS = [
   'item',

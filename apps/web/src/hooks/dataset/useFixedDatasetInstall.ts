@@ -1,6 +1,6 @@
 // Drives the one-time install of the fixed deployment's hosted dataset: resolve
-// the channel, download the artifact, and restore it into the local databases
-// via the existing backup importer (which runs migrations and the data-revision
+// the channel, download the artifact, and install it into the local game
+// database via the dataset importer (which runs migrations and the data-revision
 // gate). On success it invalidates the db queries so AppShell re-evaluates and
 // swaps the install screen for the app.
 
@@ -9,9 +9,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { installDataset, type InstallProgress } from '@scrolled/dataset-client';
 import { StaticHttpDatasetRepository } from '@scrolled/dataset-repository';
 import { appConfig } from '@/config';
-import { importBackupBytes } from '@/hooks/useBackup';
+import { importDatasetBytes } from '@/hooks/dataset/importDataset';
 import { applyInstalledDataset, assertDatasetSupported } from '@/hooks/dataset/registry';
-import { createLogger, describeError } from '@scrolled/extractor/lib/logger';
+import { createLogger, describeError } from '@scrolled/game-db/lib/logger';
 
 const log = createLogger('dataset-install');
 
@@ -47,7 +47,7 @@ export function useFixedDatasetInstall(): FixedDatasetInstall {
         onManifest: assertDatasetSupported,
         sink: {
           install: async (bytes) => {
-            await importBackupBytes(bytes);
+            await importDatasetBytes(bytes);
           },
         },
         onProgress: setProgress,

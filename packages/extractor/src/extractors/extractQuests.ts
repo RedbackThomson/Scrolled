@@ -1,8 +1,8 @@
 import type { GameDataSource } from '../parser';
 import { pathToNumber, scalarToNumber } from './wzCoerce';
-import type { QuestRecord, QuestRequirementRecord, QuestRewardRecord } from '../db';
-import { createLogger } from '../lib/logger';
-import type { ProgressFn } from '../lib/progress';
+import type { QuestRecord, QuestRequirementRecord, QuestRewardRecord } from '@scrolled/game-db/db';
+import { createLogger } from '@scrolled/game-db/lib/logger';
+import type { ProgressFn } from '@scrolled/game-db/lib/progress';
 import { unescapeWzString } from './wzText';
 import { buildQuestStringIndex } from './stringIndex';
 

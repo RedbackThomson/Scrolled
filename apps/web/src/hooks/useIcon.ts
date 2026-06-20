@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getDbClient, type GameDatabase } from '@/db';
 import type { Remote } from 'comlink';
-import { createLogger, describeError } from '@scrolled/extractor/lib/logger';
+import { createLogger, describeError } from '@scrolled/game-db/lib/logger';
 import { bytesToUrl } from '@/lib/blob';
 
 const log = createLogger('icons-client');

@@ -7,7 +7,7 @@
 // it for re-extraction / debugging.
 
 import type { GameDataSource } from '../parser';
-import { createLogger, describeError } from '../lib/logger';
+import { createLogger, describeError } from '@scrolled/game-db/lib/logger';
 
 const log = createLogger('extract-sprites');
 

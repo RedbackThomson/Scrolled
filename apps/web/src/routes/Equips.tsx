@@ -6,8 +6,8 @@ import { CollectionsBulkAddMenu } from '@/components/collections';
 import { PinnedSearchesMenu } from '@/components/pinned-searches';
 import { TablePageLayout } from '@/components/layout/TablePageLayout';
 import { getDbClient } from '@/db';
-import { labelForEquipSlot } from '@scrolled/extractor/domain/equipTypes';
-import { ALL_EQUIP_CLASSES } from '@scrolled/extractor/domain/equipJobs';
+import { labelForEquipSlot } from '@scrolled/game-db/domain/equipTypes';
+import { ALL_EQUIP_CLASSES } from '@scrolled/game-db/domain/equipJobs';
 import { columns, defaultSort, defaultVisible, mobileCard, pinnedColumns } from './EquipsColumns';
 
 const DEFAULT_PAGE_SIZE = 50;

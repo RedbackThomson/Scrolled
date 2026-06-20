@@ -24,7 +24,7 @@ Four principles motivate the hard and architectural rules below. They're philoso
 
 ## Architectural rules
 
-4. **Respect the layer boundary.** The pipeline is `parser/` → `extractors/` → `db/` → `search/` + `routes/`/`components/`. UI code must not import from `parser/` or `extractors/`. The parser must not know about React or SQLite. This boundary is what makes a future Tauri/local-server backend a swap, not a rewrite.
+4. **Respect the layer boundary.** Canonical spec: [`docs/data_boundaries.md`](docs/data_boundaries.md) — which package owns which domain and who may import whom. In short: the **write path** is `@scrolled/wz` → `@scrolled/extractor` (parser → extractors → builder) → `@scrolled/game-db` (storage); the **read path** is `@scrolled/game-db` (queries, types, domain decoders, server profiles) → the web app. The web app depends on the read contract for everything it displays and on the write path (`@scrolled/extractor`) **only** from the extraction layer (`workers/`, `hooks/extraction/`, `parser/`, `components/wizard/`). Display/read code (`components/`, `routes/`, `lib/`, `search/`) must not import the extractor — lint enforces this. The parser must not know about React or SQLite. This boundary is what makes a future Tauri/local-server backend a swap, not a rewrite.
 5. **Heavy work runs in a Worker.** WZ parsing and SQLite live in Workers, addressed via `comlink`. The main thread doesn't block on parsing or queries.
 6. **Validate at the parser/domain boundary.** Use Zod schemas where raw parsed data becomes typed domain records. Don't propagate untyped tree shapes into the UI.
 
@@ -50,11 +50,12 @@ Don't switch these without updating `docs/technical_requirements.md` first.
 
 - Strict TS. `any` only at FFI boundaries, with a justification comment.
 - Path alias: a single `@/*` → `apps/web/src/*` (tsconfig + vite). Every top-level `src/` dir is therefore importable as `@/<dir>`; the list below is the source layout, not separate aliases.
-- Source layout under `apps/web/src/` — put a file where its kind belongs:
-  - `parser/` WZ parsing · `extractors/` raw-tree → domain records · `db/` schema/migrations/queries · `search/` MiniSearch · `workers/` comlink worker entries — when decoding new WZ structures here, the reverse-engineering reference sources are collected in [`docs/format_sources.md`](docs/format_sources.md)
-  - `serverProfiles/` server-config subsystem · `analytics/` §2.7 gated telemetry
-  - `domain/` static game-domain constants/enums (no React) · `lib/` pure framework-agnostic utils/codecs (worker-safe `logger`/`progress` live here)
-  - `hooks/` shared React hooks (`hooks/extraction/` = ingestion pipeline) · `stores/` Zustand client state
+- Game-data domains live in **packages**, not the web app — see [`docs/data_boundaries.md`](docs/data_boundaries.md). WZ parsing + extraction (`@scrolled/extractor`: `parser/`, `extractors/`, `builder/`), and the storage/read contract (`@scrolled/game-db`: `db/` schema/migrations/queries/types, `domain/` decoders, `serverProfiles/`, versioning, `.scrolled-backup`). When decoding new WZ structures, the reverse-engineering reference sources are in [`docs/format_sources.md`](docs/format_sources.md).
+- Source layout under `apps/web/src/` — the app drives extraction and reads/displays data; put a file where its kind belongs:
+  - `workers/` comlink worker entries · `parser/` worker pool/client to the extractor · `db/` comlink client to game-db, plus `db/user/` the app's own user DB (collections, pinned searches, prefs) · `search/` MiniSearch index over read data
+  - `analytics/` §2.7 gated telemetry · `config/` build/deploy config · `mcp/` MCP bridge + read-only tools
+  - `lib/` pure framework-agnostic UI utils/codecs
+  - `hooks/` shared React hooks (`hooks/extraction/` drives the ingestion pipeline; `hooks/dataset/` install/update) · `stores/` Zustand client state
   - `routes/` page components · `components/` UI grouped by concern (`ui/`, `layout/`, `common/`, `entity-display/`, `entity-links/`, `data/`, `collections/`, `command-palette/`, `data-table/`, `wizard/`, `home/`, `MapViewer/`)
 - Named exports by default; one default export per route component.
 - Tests colocated as `*.test.ts`.
@@ -67,9 +68,9 @@ The library is a derived cache of the user's game files, guarded by two
 independent versions. Know which one a change needs. Mechanics: `DEVELOPMENT.md`
 → "Schema and data versioning".
 
-- **Schema version** (`_migrations`, `db/migrations.ts`): the SQL shape. Add a
+- **Schema version** (`_migrations`, `@scrolled/game-db` → `db/migrations.ts`): the SQL shape. Add a
   migration for any DDL change. Forward-only — append, never edit or reorder.
-- **Data revision** (`db/dataVersion.ts`): the extracted-data contract. Bump it
+- **Data revision** (`@scrolled/game-db` → `db/dataVersion.ts`): the extracted-data contract. Bump it
   when extraction output changes (new extraction-fed column, reinterpreted field,
   changed extractor); a migration changes the shape, the bump refills the rows.
 

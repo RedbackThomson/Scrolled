@@ -25,7 +25,7 @@
 // If filtering removes every item from a random pool, the pool itself
 // disappears too — the user would never see any of those rewards.
 
-import { parseRewardJob, type EquipClass } from '@scrolled/extractor/domain/equipJobs';
+import { parseRewardJob, type EquipClass } from '@scrolled/game-db/domain/equipJobs';
 import type { Gender } from '@/stores/characterPreferences';
 import type { QuestRewardWithName } from '@/db';
 

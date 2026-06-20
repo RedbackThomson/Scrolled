@@ -5,7 +5,7 @@
 
 import { z } from 'zod';
 import { getUserDbClient } from '@/db/user';
-import { createLogger } from '@scrolled/extractor/lib/logger';
+import { createLogger } from '@scrolled/game-db/lib/logger';
 
 const log = createLogger('mcp/settings');
 

@@ -5,7 +5,7 @@
 // the end. The user DB is independent of the game DB — schema versions
 // don't share a numbering namespace.
 
-import type { Migration } from '@scrolled/extractor/db/migrations';
+import type { Migration } from '@scrolled/game-db/db/migrations';
 
 export const USER_MIGRATIONS: readonly Migration[] = [
   {

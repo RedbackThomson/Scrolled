@@ -7,9 +7,9 @@ import type {
   MapNpcRecord,
   MapPortalRecord,
   MapRecord,
-} from '../db';
-import { createLogger, describeError } from '../lib/logger';
-import type { ProgressFn } from '../lib/progress';
+} from '@scrolled/game-db/db';
+import { createLogger, describeError } from '@scrolled/game-db/lib/logger';
+import type { ProgressFn } from '@scrolled/game-db/lib/progress';
 import { buildMapStringIndex } from './stringIndex';
 
 const log = createLogger('extract-maps');

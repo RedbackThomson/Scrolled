@@ -40,7 +40,7 @@ import { useDetailPalette } from '@/components/command-palette/useDetailPalette'
 import { usePageTitle } from '@/hooks/usePageTitle';
 import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient, type WorldMapForMap } from '@/db';
-import { classifyPortal, isUsefulPortal, type PortalLayer } from '@scrolled/extractor/domain/portal-types';
+import { classifyPortal, isUsefulPortal, type PortalLayer } from '@scrolled/game-db/domain/portal-types';
 import { useFeatures } from '@/hooks/useFeatures';
 import { useListSort } from '@/hooks/useListSort';
 import { useEntitySummaryNames } from '@/hooks/useEntitySummaries';

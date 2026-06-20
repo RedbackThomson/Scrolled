@@ -1,5 +1,5 @@
-import { createLogger } from '../lib/logger';
-import type { ProgressFn } from '../lib/progress';
+import { createLogger } from '@scrolled/game-db/lib/logger';
+import type { ProgressFn } from '@scrolled/game-db/lib/progress';
 
 const log = createLogger('to-bytes');
 

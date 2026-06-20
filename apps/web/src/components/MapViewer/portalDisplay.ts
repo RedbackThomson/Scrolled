@@ -1,4 +1,4 @@
-import type { PortalLayer } from '@scrolled/extractor/domain/portal-types';
+import type { PortalLayer } from '@scrolled/game-db/domain/portal-types';
 
 /** WZ sentinel for "no target map" on return/forced-return/portal fields. */
 export const NO_TARGET = 999999999;

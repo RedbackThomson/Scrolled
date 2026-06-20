@@ -19,7 +19,7 @@ import { getDbClient } from '@/db';
 import { cn } from '@/lib/utils';
 import { buildReport } from '@/lib/diagnosticsReport';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import type { ProgressUpdate } from '@scrolled/extractor/lib/progress';
+import type { ProgressUpdate } from '@scrolled/game-db/lib/progress';
 
 const VERSIONS: WzMapleVersionName[] = ['GMS', 'BMS', 'EMS', 'CLASSIC'];
 

@@ -1,7 +1,7 @@
 // Errors that mean "this app build can't serve this dataset — update the app",
 // and a classifier the install/update UI uses to choose its messaging.
 
-import { BackupIncompatibleError } from '@scrolled/extractor/db/backup';
+import { BackupIncompatibleError } from '@scrolled/game-db/db/backup';
 
 /** The dataset requires something this build doesn't provide (e.g. a server profile). */
 export class DatasetUnsupportedError extends Error {

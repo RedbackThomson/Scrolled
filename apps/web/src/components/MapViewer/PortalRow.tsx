@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Repeat, Sparkles } from 'lucide-react';
 import { MapHoverCard } from '@/components/entity-links';
 import { HoverPopover } from '@/components/common/HoverPopover';
-import type { PortalLayer } from '@scrolled/extractor/domain/portal-types';
+import type { PortalLayer } from '@scrolled/game-db/domain/portal-types';
 import type { MapPortalRecord } from '@/db';
 import { cn } from '@/lib/utils';
 import { NO_TARGET, PORTAL_LAYER_LABEL } from './portalDisplay';

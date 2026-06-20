@@ -17,7 +17,7 @@ import {
   gameToPixel,
   isUsefulPortal,
   type PortalLayer,
-} from '@scrolled/extractor/domain/portal-types';
+} from '@scrolled/game-db/domain/portal-types';
 import { useShowEntityIds } from '@/stores/showEntityIds';
 import { useHideMinorPortals } from '@/stores/hideMinorPortals';
 import { MapViewerSidebar } from './MapViewerSidebar';

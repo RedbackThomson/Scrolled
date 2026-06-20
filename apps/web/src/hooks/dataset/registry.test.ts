@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { DatasetManifest } from '@scrolled/dataset-core';
-import { CURRENT_DATA_REVISION } from '@scrolled/extractor/db';
-import { LATEST_SCHEMA_VERSION } from '@scrolled/extractor/db/migrations';
+import { CURRENT_DATA_REVISION } from '@scrolled/game-db/db';
+import { LATEST_SCHEMA_VERSION } from '@scrolled/game-db/db/migrations';
 import { assertDatasetSupported } from './registry';
 import { isAppUpdateRequired } from './errors';
 

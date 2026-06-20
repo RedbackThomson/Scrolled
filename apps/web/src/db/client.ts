@@ -1,5 +1,5 @@
 import { wrap, type Remote } from 'comlink';
-import type { GameDatabase } from '@scrolled/extractor/db/types';
+import type { GameDatabase } from '@scrolled/game-db/db/types';
 
 let cached: { worker: Worker; proxy: Remote<GameDatabase> } | null = null;
 

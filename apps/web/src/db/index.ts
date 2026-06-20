@@ -5,5 +5,5 @@
 // that talks to the DB worker. The worker owns the SQLite-WASM engine and OPFS
 // persistence.
 
-export * from '@scrolled/extractor/db';
+export * from '@scrolled/game-db/db';
 export { getDbClient, terminateDbClient } from './client';

@@ -16,9 +16,9 @@
 // implementation uses `createImageBitmap` + `OffscreenCanvas` + `encodeAnimatedWebp`.
 
 import type { GameDataSource, WzNodeInfo } from '../parser';
-import type { ChairRecord } from '../db';
-import { createLogger, describeError } from '../lib/logger';
-import type { ProgressFn } from '../lib/progress';
+import type { ChairRecord } from '@scrolled/game-db/db';
+import { createLogger, describeError } from '@scrolled/game-db/lib/logger';
+import type { ProgressFn } from '@scrolled/game-db/lib/progress';
 import { nodeToNumber, pathToNumber } from './wzCoerce';
 import {
   encodeAnimatedWebp,

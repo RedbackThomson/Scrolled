@@ -4,7 +4,7 @@
 // comlink with no separate registration step — which is the property the
 // old hand-written facades kept losing.
 
-import { describeError, type Logger } from '@scrolled/extractor/lib/logger';
+import { describeError, type Logger } from '@scrolled/game-db/lib/logger';
 
 export interface OpenableApi {
   /** Idempotent: implementations must safely tolerate a duplicate call

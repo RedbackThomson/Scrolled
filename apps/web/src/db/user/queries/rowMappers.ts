@@ -1,4 +1,4 @@
-import type { Row } from '@scrolled/extractor/db/sqlite';
+import type { Row } from '@scrolled/game-db/db/sqlite';
 import {
   COLLECTION_GROUPINGS,
   COLLECTION_SORT_DIRS,

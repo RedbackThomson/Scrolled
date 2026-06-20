@@ -11,9 +11,9 @@ import type {
   WorldMapMarkerMapRecord,
   WorldMapMarkerRecord,
   WorldMapRecord,
-} from '../db';
-import { createLogger } from '../lib/logger';
-import type { ProgressFn } from '../lib/progress';
+} from '@scrolled/game-db/db';
+import { createLogger } from '@scrolled/game-db/lib/logger';
+import type { ProgressFn } from '@scrolled/game-db/lib/progress';
 
 const log = createLogger('extract-world-maps');
 

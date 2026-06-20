@@ -9,9 +9,9 @@ import { installDataset } from '@scrolled/dataset-client';
 import { StaticHttpDatasetRepository } from '@scrolled/dataset-repository';
 import { appConfig } from '@/config';
 import { getDbClient } from '@/db';
-import { importBackupBytes } from '@/hooks/useBackup';
+import { importDatasetBytes } from '@/hooks/dataset/importDataset';
 import { applyInstalledDataset, assertDatasetSupported } from '@/hooks/dataset/registry';
-import { createLogger, describeError } from '@scrolled/extractor/lib/logger';
+import { createLogger, describeError } from '@scrolled/game-db/lib/logger';
 
 const log = createLogger('dataset-update');
 
@@ -58,7 +58,7 @@ export function useDatasetUpdate(): DatasetUpdate {
         onManifest: assertDatasetSupported,
         sink: {
           install: async (bytes) => {
-            await importBackupBytes(bytes);
+            await importDatasetBytes(bytes);
           },
         },
       });

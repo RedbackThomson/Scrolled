@@ -1,0 +1,30 @@
+{
+  "name": "@scrolled/game-db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The read + storage contract: SQLite schema/migrations/queries, domain decoders, server profiles, versioning, and the .scrolled-backup format. The web app reads through this; the extractor writes into it.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./db": "./src/db/index.ts",
+    "./db/queries": "./src/db/queries/index.ts",
+    "./db/backup": "./src/db/backup/index.ts",
+    "./serverProfiles": "./src/serverProfiles/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@scrolled/dataset-core": "workspace:*",
+    "@sqlite.org/sqlite-wasm": "3.53.0-build1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.4",
+    "vite": "^5.4.8",
+    "vitest": "^2.1.2"
+  }
+}

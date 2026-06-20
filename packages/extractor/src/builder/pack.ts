@@ -5,10 +5,10 @@
 //   <out>/<family>/<version>/<artifact>        (the .scrolled-dataset bundle)
 //   <out>/<family>/<version>/checksums.json
 //
-// The `.scrolled-dataset` bundle is the existing tar+gzip container (see
-// db/backup/format.ts) carrying the game SQLite + the inline server profile.
-// The host-side manifest.json is *generated from* the bundle so its
-// compatibility fields can't drift from what the artifact actually contains.
+// The `.scrolled-dataset` bundle is the tar+gzip container defined by
+// @scrolled/dataset-core (packDataset), carrying the game SQLite + the inline
+// server profile. The host-side manifest.json is *generated from* the bundle so
+// its compatibility fields can't drift from what the artifact actually contains.
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';

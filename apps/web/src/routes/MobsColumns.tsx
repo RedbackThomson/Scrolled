@@ -9,7 +9,7 @@ import {
   ELEMENT_STATUS_CLASSES,
   elementsByStatus,
   type ElementStatus,
-} from '@scrolled/extractor/domain/mobElements';
+} from '@scrolled/game-db/domain/mobElements';
 
 /** Statuses that get their own column in the listing. Maps each to the
  *  public column id used in URL state and filter keys. */

@@ -1,6 +1,6 @@
 import { getKeystream } from '@scrolled/wz';
 import type { WzVersion } from '@scrolled/wz';
-import { createLogger, describeError } from '../lib/logger';
+import { createLogger, describeError } from '@scrolled/game-db/lib/logger';
 import type { WzMapleVersionName } from './types';
 
 const log = createLogger('wz-init');

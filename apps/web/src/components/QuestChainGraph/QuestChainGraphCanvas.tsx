@@ -6,7 +6,7 @@ import type {
   QuestChainMemberWithName,
 } from '@/db';
 import { useShowEntityIds } from '@/stores/showEntityIds';
-import { clamp } from '@scrolled/extractor/lib/math';
+import { clamp } from '@scrolled/game-db/lib/math';
 import { QuestChainGraphNode } from './QuestChainGraphNode';
 import { useDagreLayout, type DagreEdge } from './useDagreLayout';
 

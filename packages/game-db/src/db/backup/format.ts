@@ -11,8 +11,14 @@
 // Operates only on byte buffers — no React, no SQLite, no parser/extractor
 // imports — so it sits cleanly in the db layer below the worker boundary.
 
-import { gzip, gunzip } from 'fflate';
-import { packTar, unpackTar } from '../../lib/tar';
+import {
+  gzipAsync,
+  gunzipAsync,
+  looksLikeGzip,
+  packTar,
+  sha256Hex,
+  unpackTar,
+} from '@scrolled/dataset-core';
 import { MINIMUM_SUPPORTED_DATA_REVISION } from '../dataVersion';
 import {
   BACKUP_FORMAT,
@@ -45,27 +51,7 @@ export interface BackupContents {
 
 /** True when the bytes start with the gzip magic — i.e. look like our container. */
 export function looksLikeBackup(bytes: Uint8Array): boolean {
-  return bytes.byteLength >= 2 && bytes[0] === 0x1f && bytes[1] === 0x8b;
-}
-
-async function sha256Hex(bytes: Uint8Array): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', bytes as Uint8Array<ArrayBuffer>);
-  let hex = '';
-  for (const b of new Uint8Array(digest)) hex += b.toString(16).padStart(2, '0');
-  return hex;
-}
-
-// fflate's async helpers offload to their own worker, so a multi-hundred-MB
-// game database doesn't freeze the UI thread while it (de)compresses.
-function gzipAsync(bytes: Uint8Array): Promise<Uint8Array> {
-  return new Promise((resolve, reject) =>
-    gzip(bytes, { level: 6 }, (err, data) => (err ? reject(err) : resolve(data))),
-  );
-}
-function gunzipAsync(bytes: Uint8Array): Promise<Uint8Array> {
-  return new Promise((resolve, reject) =>
-    gunzip(bytes, (err, data) => (err ? reject(err) : resolve(data))),
-  );
+  return looksLikeGzip(bytes);
 }
 
 export async function packBackup(parts: BackupParts): Promise<Uint8Array> {

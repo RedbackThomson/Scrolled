@@ -12,7 +12,7 @@ import type {
   ExtractSkillsResult,
   ExtractJobsResult,
 } from '@scrolled/extractor/extractors';
-import type { ProgressFn } from '@scrolled/extractor/lib/progress';
+import type { ProgressFn } from '@scrolled/game-db/lib/progress';
 
 /**
  * The full worker surface. Extends the public `GameDataSource` with

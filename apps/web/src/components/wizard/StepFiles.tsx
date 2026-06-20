@@ -13,12 +13,12 @@ import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { getDbClient } from '@/db';
 import { sha256OfFile } from '@/lib/hashFile';
-import { createLogger, describeError } from '@scrolled/extractor/lib/logger';
+import { createLogger, describeError } from '@scrolled/game-db/lib/logger';
 import type { Features } from '@/hooks/useFeatures';
 import { cn } from '@/lib/utils';
 import { acceptForDesktop } from '@/lib/filePickerAccept';
 import type { DataSourceKind, WzMapleVersionName } from '@/parser';
-import { BUILTIN_PROFILES } from '@scrolled/extractor/serverProfiles';
+import { BUILTIN_PROFILES } from '@scrolled/game-db/serverProfiles';
 import {
   asRelFiles,
   datasetKind,

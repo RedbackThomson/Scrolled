@@ -3,7 +3,7 @@ import { Briefcase, Flame, Gauge, Hash, Sparkles, Swords } from 'lucide-react';
 import { EntityIcon } from '@/components/entity-display/EntityIcon';
 import { SkillLink } from '@/components/entity-links';
 import type { SkillRecord } from '@/db';
-import { decodeRequiredWeapon, decodeSkillElement } from '@scrolled/extractor/domain/skillElements';
+import { decodeRequiredWeapon, decodeSkillElement } from '@scrolled/game-db/domain/skillElements';
 import { useJobsMap } from '@/hooks/useJobs';
 import { useShowEntityIds } from '@/stores/showEntityIds';
 

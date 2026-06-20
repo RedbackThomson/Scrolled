@@ -123,8 +123,8 @@ export interface LoadResult {
   errors: { name: string; message: string }[];
 }
 
-import type { LogEntry } from '../lib/logger';
-import type { ProgressFn } from '../lib/progress';
+import type { LogEntry } from '@scrolled/game-db/lib/logger';
+import type { ProgressFn } from '@scrolled/game-db/lib/progress';
 
 /**
  * Snapshot of the parser-side log buffer and a synchronous smoke test of the

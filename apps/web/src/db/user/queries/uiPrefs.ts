@@ -5,7 +5,7 @@
 // dumb means a malformed value never crashes the worker, just resolves to
 // `null` on the read side.
 
-import type { Sqlite, Row } from '@scrolled/extractor/db/sqlite';
+import type { Sqlite, Row } from '@scrolled/game-db/db/sqlite';
 
 export interface UiPrefRow {
   key: string;

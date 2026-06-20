@@ -21,12 +21,12 @@ import { getDbClient, type SkillLevelRecord } from '@/db';
 import { useFeatures } from '@/hooks/useFeatures';
 import { useJobsMap } from '@/hooks/useJobs';
 import { useShowEntityIds } from '@/stores/showEntityIds';
-import { decodeRequiredWeapon, decodeSkillElement } from '@scrolled/extractor/domain/skillElements';
+import { decodeRequiredWeapon, decodeSkillElement } from '@scrolled/game-db/domain/skillElements';
 import {
   buildSkillTemplateValues,
   hasSkillPlaceholders,
   renderSkillTemplate,
-} from '@scrolled/extractor/domain/skillTemplate';
+} from '@scrolled/game-db/domain/skillTemplate';
 import { formatDurationSeconds } from '@/lib/duration';
 
 /**

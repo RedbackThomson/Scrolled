@@ -15,8 +15,8 @@ import {
   extractSkills,
   extractJobs,
 } from '@scrolled/extractor/extractors';
-import { createLogger, describeError } from '@scrolled/extractor/lib/logger';
-import { throttleProgress, type ProgressFn } from '@scrolled/extractor/lib/progress';
+import { createLogger, describeError } from '@scrolled/game-db/lib/logger';
+import { throttleProgress, type ProgressFn } from '@scrolled/game-db/lib/progress';
 import type {
   DataSourceKind,
   GameDataSource,

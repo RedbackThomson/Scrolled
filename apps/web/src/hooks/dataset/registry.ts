@@ -4,16 +4,16 @@
 
 import type { DatasetManifest } from '@scrolled/dataset-core';
 import { getDbClient } from '@/db';
-import { equipStatCalculatorExists } from '@scrolled/extractor/serverProfiles';
-import { CURRENT_DATA_REVISION } from '@scrolled/extractor/db';
-import { LATEST_SCHEMA_VERSION } from '@scrolled/extractor/db/migrations';
+import { equipStatCalculatorExists } from '@scrolled/game-db/serverProfiles';
+import { CURRENT_DATA_REVISION } from '@scrolled/game-db/db';
+import { LATEST_SCHEMA_VERSION } from '@scrolled/game-db/db/migrations';
 import { DatasetUnsupportedError } from '@/hooks/dataset/errors';
 
 /**
  * Reject — before the (large) download — a dataset this build can't render, so a
  * stale app fails fast with an "update the app" message instead of fetching data
  * it can't use. The manifest carries the full compatibility contract; the
- * at-import `evaluateBackupImport` is the backstop for the data inside.
+ * at-install `evaluateDatasetImport` is the backstop for the data inside.
  *
  * The server *profile* is not checked: it travels inside the bundle and is
  * applied on install, so a dataset can name a profile this build has never seen.

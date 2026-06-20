@@ -77,6 +77,9 @@ importers:
       '@scrolled/extractor':
         specifier: workspace:*
         version: link:../../packages/extractor
+      '@scrolled/game-db':
+        specifier: workspace:*
+        version: link:../../packages/game-db
       '@scrolled/mcp-protocol':
         specifier: workspace:*
         version: link:../../packages/mcp-protocol
@@ -220,6 +223,9 @@ importers:
 
   packages/dataset-core:
     dependencies:
+      fflate:
+        specifier: ^0.8.2
+        version: 0.8.3
       zod:
         specifier: ^3.23.8
         version: 3.25.76
@@ -249,6 +255,9 @@ importers:
       '@scrolled/dataset-core':
         specifier: workspace:*
         version: link:../dataset-core
+      '@scrolled/game-db':
+        specifier: workspace:*
+        version: link:../game-db
       '@scrolled/wz':
         specifier: workspace:*
         version: link:../wz
@@ -274,6 +283,28 @@ importers:
       vite-node:
         specifier: ^2.1.2
         version: 2.1.9(@types/node@22.19.19)(terser@5.48.0)
+      vitest:
+        specifier: ^2.1.2
+        version: 2.1.9(@types/node@22.19.19)(jsdom@25.0.1)(terser@5.48.0)
+
+  packages/game-db:
+    dependencies:
+      '@scrolled/dataset-core':
+        specifier: workspace:*
+        version: link:../dataset-core
+      '@sqlite.org/sqlite-wasm':
+        specifier: 3.53.0-build1
+        version: 3.53.0-build1
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: ^22.7.4
+        version: 22.19.19
+      vite:
+        specifier: ^5.4.8
+        version: 5.4.21(@types/node@22.19.19)(terser@5.48.0)
       vitest:
         specifier: ^2.1.2
         version: 2.1.9(@types/node@22.19.19)(jsdom@25.0.1)(terser@5.48.0)

@@ -18,8 +18,8 @@
 // Unknown keys fall back to free-text terms.
 
 import type { EntityKind } from '@/db';
-import { ELEMENT_ORDER } from '@scrolled/extractor/domain/mobElements';
-import { SKILL_ELEMENT_ORDER } from '@scrolled/extractor/domain/skillElements';
+import { ELEMENT_ORDER } from '@scrolled/game-db/domain/mobElements';
+import { SKILL_ELEMENT_ORDER } from '@scrolled/game-db/domain/skillElements';
 
 type EntityScope = EntityKind;
 

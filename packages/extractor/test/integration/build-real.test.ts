@@ -6,13 +6,12 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { WzDataSource } from '../../src/parser/WzDataSource';
 import type { GameDataSource } from '../../src/parser';
-import { Sqlite } from '../../src/db/sqlite';
-import { DbApi } from '../../src/db/queries';
-import { packBackup, readBackup } from '../../src/db/backup';
+import { Sqlite } from '@scrolled/game-db/db/sqlite';
+import { DbApi } from '@scrolled/game-db/db/queries';
 import { runExtraction } from '../../src/builder/runExtraction';
 import { gatherSourceFiles } from '../../src/builder/files';
 import { writeDatasetRepo } from '../../src/builder/pack';
-import { datasetManifestSchema } from '@scrolled/dataset-core';
+import { datasetManifestSchema, packDataset, readDataset } from '@scrolled/dataset-core';
 import { wzVersionFromEnv } from '../helpers/localFixtures';
 
 /**
@@ -88,9 +87,11 @@ describe.skipIf(!hasEnough)('headless build — real WZ fixtures', () => {
     const gameBytes = await db.exportBytes();
     const status = await db.status();
 
-    const bundle = await packBackup({
+    const bundle = await packDataset({
       game: gameBytes,
-      versions: { game: { schemaVersion: status.schemaVersion, dataRevision: status.dataRevision } },
+      schemaVersion: status.schemaVersion,
+      dataRevision: status.dataRevision,
+      createdAt: new Date().toISOString(),
     });
 
     // Generate the host-side repo layout from the bundle.
@@ -119,10 +120,10 @@ describe.skipIf(!hasEnough)('headless build — real WZ fixtures', () => {
       // Reinstalling the bundle's game bytes into a fresh DB yields populated
       // tables AND the baked-in profile — no separate apply step.
       const onDisk = new Uint8Array(readFileSync(artifactPath));
-      const contents = await readBackup(onDisk);
+      const contents = await readDataset(onDisk);
       const fresh = new DbApi(new Sqlite({ logTag: 'reinstall-test' }));
       await fresh.open();
-      await fresh.importBytes(contents.game!);
+      await fresh.importBytes(contents.game);
       const freshStatus = await fresh.status();
       expect(freshStatus.counts.items).toBeGreaterThan(0);
       expect(freshStatus.dataRevision).toBe(status.dataRevision);

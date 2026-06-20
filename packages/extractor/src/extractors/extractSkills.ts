@@ -6,9 +6,9 @@ import type {
   SkillLevelRecord,
   SkillPrerequisiteRecord,
   SkillRecord,
-} from '../db';
-import { createLogger } from '../lib/logger';
-import type { ProgressFn } from '../lib/progress';
+} from '@scrolled/game-db/db';
+import { createLogger } from '@scrolled/game-db/lib/logger';
+import type { ProgressFn } from '@scrolled/game-db/lib/progress';
 import { pickSprite } from './sprites';
 
 const log = createLogger('extract-skills');

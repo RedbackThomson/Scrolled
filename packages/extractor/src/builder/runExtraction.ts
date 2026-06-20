@@ -12,9 +12,9 @@
 // revision).
 
 import type { GameDataSource } from '../parser';
-import type { DatasetFileRef, GameDatabase } from '../db';
-import { createLogger, describeError } from '../lib/logger';
-import type { ProgressFn, ProgressUpdate } from '../lib/progress';
+import type { DatasetFileRef, GameDatabase } from '@scrolled/game-db/db';
+import { createLogger, describeError } from '@scrolled/game-db/lib/logger';
+import type { ProgressFn, ProgressUpdate } from '@scrolled/game-db/lib/progress';
 import {
   extractItems,
   extractChairs,

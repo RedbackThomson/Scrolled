@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { packTar, unpackTar } from './tar';
+import { packTar, unpackTar } from './container';
 
 function bytes(...nums: number[]): Uint8Array {
   return new Uint8Array(nums);

@@ -17,12 +17,12 @@ import { StepRestore, type RestoreState } from '@/components/wizard/StepRestore'
 import { buildPlan } from '@/components/wizard/plan';
 import { getDbClient } from '@/db';
 import { importBackupBytes } from '@/hooks/useBackup';
-import { createLogger, describeError } from '@scrolled/extractor/lib/logger';
+import { createLogger, describeError } from '@scrolled/game-db/lib/logger';
 import { cn } from '@/lib/utils';
 import { useWizardMode } from '@/hooks/useWizardMode';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { acceptForDesktop } from '@/lib/filePickerAccept';
-import { detectServerProfile } from '@scrolled/extractor/serverProfiles';
+import { detectServerProfile } from '@scrolled/game-db/serverProfiles';
 import { getParserClient, type DataSourceKind, type WzMapleVersionName } from '@/parser';
 import { appConfig } from '@/config';
 

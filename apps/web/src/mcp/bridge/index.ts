@@ -4,7 +4,7 @@
 // Settings panel — flip the toggle, the bridge restarts in place without
 // requiring a reload.
 
-import { createLogger } from '@scrolled/extractor/lib/logger';
+import { createLogger } from '@scrolled/game-db/lib/logger';
 import { buildToolContext } from '../context';
 import { getToolRegistry, type ToolRegistry } from '../registry';
 import type { ToolContext } from '../types';

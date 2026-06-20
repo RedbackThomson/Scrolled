@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Shared dataset types and Zod schemas: manifests, channels, and references for hosted datasets.",
+  "description": "Hosted-dataset distribution: manifest/channel schemas, the .scrolled-dataset container format, and the shared tar/gzip codec.",
   "exports": {
     ".": "./src/index.ts"
   },
@@ -13,6 +13,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "fflate": "^0.8.2",
     "zod": "^3.23.8"
   },
   "devDependencies": {

@@ -1,5 +1,5 @@
 import { InfoRow } from '@/components/layout/DetailPageLayout';
-import type { EquipStatRange } from '@scrolled/extractor/serverProfiles';
+import type { EquipStatRange } from '@scrolled/game-db/serverProfiles';
 
 export function StatRow({ label, value }: { label: string; value: number | null }) {
   if (value === null || value === 0) return null;

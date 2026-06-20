@@ -1,7 +1,7 @@
 import type { GameDataSource } from '../parser';
-import type { NpcRecord } from '../db';
-import { createLogger } from '../lib/logger';
-import type { ProgressFn } from '../lib/progress';
+import type { NpcRecord } from '@scrolled/game-db/db';
+import { createLogger } from '@scrolled/game-db/lib/logger';
+import type { ProgressFn } from '@scrolled/game-db/lib/progress';
 import { pickSprite } from './sprites';
 import { unescapeWzString } from './wzText';
 import { buildNpcStringIndex } from './stringIndex';

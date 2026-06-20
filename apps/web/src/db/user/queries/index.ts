@@ -5,7 +5,7 @@
 // delegates to a free function so the comlink passthrough in
 // `workers/userDbWorker.ts` keeps a stable, uniform shape.
 
-import { Sqlite } from '@scrolled/extractor/db/sqlite';
+import { Sqlite } from '@scrolled/game-db/db/sqlite';
 import { USER_OPFS_FILENAME, USER_POOL_NAME } from '../../opfsNamespace';
 import { USER_MIGRATIONS } from '../migrations';
 import type { CollectionsExportJson, ImportConflictMode, ImportReport } from '../collectionsJson';

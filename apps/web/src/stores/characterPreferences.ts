@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { ALL_EQUIP_CLASSES, type EquipClass } from '@scrolled/extractor/domain/equipJobs';
+import { ALL_EQUIP_CLASSES, type EquipClass } from '@scrolled/game-db/domain/equipJobs';
 
 /**
  * Persistent "who am I playing" preferences. The reward filter on quest

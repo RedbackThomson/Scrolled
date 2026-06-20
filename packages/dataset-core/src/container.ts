@@ -1,8 +1,13 @@
-// Minimal USTAR tar reader/writer over Uint8Array. No dependencies.
+// Shared serialization primitives for the gzip-compressed tar containers used by
+// both dataset artifacts: the `.scrolled-dataset` (hosted distribution, here)
+// and the `.scrolled-backup` (user db backup, in @scrolled/game-db). Operates
+// only on byte buffers — no DB, no schema knowledge.
 //
-// Only what the backup format needs: a handful of regular files with short
-// ASCII names, stored uncompressed and contiguous. Not a general-purpose tar —
-// no symlinks, directories, or long-name (PAX/GNU) extensions.
+// The tar layer is a minimal USTAR reader/writer: a handful of regular files
+// with short ASCII names, stored uncompressed and contiguous. Not a
+// general-purpose tar — no symlinks, directories, or long-name extensions.
+
+import { gzip, gunzip } from 'fflate';
 
 const BLOCK = 512;
 
@@ -87,4 +92,30 @@ export function unpackTar(bytes: Uint8Array): TarEntry[] {
     pos += paddedSize(size);
   }
   return entries;
+}
+
+/** True when the bytes start with the gzip magic — i.e. look like a container. */
+export function looksLikeGzip(bytes: Uint8Array): boolean {
+  return bytes.byteLength >= 2 && bytes[0] === 0x1f && bytes[1] === 0x8b;
+}
+
+// fflate's async helpers offload to their own worker, so a multi-hundred-MB
+// database doesn't freeze the UI thread while it (de)compresses.
+export function gzipAsync(bytes: Uint8Array): Promise<Uint8Array> {
+  return new Promise((resolve, reject) =>
+    gzip(bytes, { level: 6 }, (err, data) => (err ? reject(err) : resolve(data))),
+  );
+}
+
+export function gunzipAsync(bytes: Uint8Array): Promise<Uint8Array> {
+  return new Promise((resolve, reject) =>
+    gunzip(bytes, (err, data) => (err ? reject(err) : resolve(data))),
+  );
+}
+
+export async function sha256Hex(bytes: Uint8Array): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', bytes as Uint8Array<ArrayBuffer>);
+  let hex = '';
+  for (const b of new Uint8Array(digest)) hex += b.toString(16).padStart(2, '0');
+  return hex;
 }

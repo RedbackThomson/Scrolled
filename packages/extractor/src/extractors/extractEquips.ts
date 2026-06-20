@@ -1,9 +1,9 @@
 import type { GameDataSource, WzNodeTree } from '../parser';
 import { nodeToNumber } from './wzCoerce';
-import type { EquipRecord } from '../db';
-import { createLogger } from '../lib/logger';
-import type { ProgressFn } from '../lib/progress';
-import { normalizeEquipSlot, resolveEquipType } from '../domain/equipTypes';
+import type { EquipRecord } from '@scrolled/game-db/db';
+import { createLogger } from '@scrolled/game-db/lib/logger';
+import type { ProgressFn } from '@scrolled/game-db/lib/progress';
+import { normalizeEquipSlot, resolveEquipType } from '@scrolled/game-db/domain/equipTypes';
 import { buildEquipStringIndex } from './stringIndex';
 
 const log = createLogger('extract-equips');

@@ -11,7 +11,7 @@ import {
   ELEMENT_GROUP_LABELS,
   ELEMENT_STATUS_CLASSES,
   elementsByStatus,
-} from '@scrolled/extractor/domain/mobElements';
+} from '@scrolled/game-db/domain/mobElements';
 
 const HOVER_CARD_STATUSES = ['immune', 'resistant', 'weak'] as const;
 

@@ -5,7 +5,7 @@ import { CollectionsBulkAddMenu } from '@/components/collections';
 import { PinnedSearchesMenu } from '@/components/pinned-searches';
 import { TablePageLayout } from '@/components/layout/TablePageLayout';
 import { getDbClient } from '@/db';
-import { ELEMENT_ORDER } from '@scrolled/extractor/domain/mobElements';
+import { ELEMENT_ORDER } from '@scrolled/game-db/domain/mobElements';
 import { columns, defaultSort, defaultVisible, mobileCard, pinnedColumns } from './MobsColumns';
 
 const ELEMENT_ENUM_OPTIONS: readonly string[] = ELEMENT_ORDER;

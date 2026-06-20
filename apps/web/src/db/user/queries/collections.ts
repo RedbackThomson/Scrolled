@@ -1,4 +1,4 @@
-import type { Sqlite, Row } from '@scrolled/extractor/db/sqlite';
+import type { Sqlite, Row } from '@scrolled/game-db/db/sqlite';
 import {
   COLLECTIONS_JSON_VERSION,
   collectionsExportSchema,

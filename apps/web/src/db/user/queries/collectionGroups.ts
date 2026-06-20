@@ -6,7 +6,7 @@
 // Positions are dense within `(collection_id, group_id)` so a manual
 // reorder always re-densifies the bucket(s) it touches.
 
-import type { Sqlite, Row } from '@scrolled/extractor/db/sqlite';
+import type { Sqlite, Row } from '@scrolled/game-db/db/sqlite';
 import type {
   CollectionEntityType,
   CollectionGroup,

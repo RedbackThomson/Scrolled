@@ -1,9 +1,9 @@
 import type { GameDataSource } from '../parser';
 import { scalarToString } from './wzCoerce';
-import type { JobRecord } from '../db';
-import { JOB_NAMES_FALLBACK } from '../domain/jobs';
-import { createLogger } from '../lib/logger';
-import type { ProgressFn } from '../lib/progress';
+import type { JobRecord } from '@scrolled/game-db/db';
+import { JOB_NAMES_FALLBACK } from '@scrolled/game-db/domain/jobs';
+import { createLogger } from '@scrolled/game-db/lib/logger';
+import type { ProgressFn } from '@scrolled/game-db/lib/progress';
 
 const log = createLogger('extract-jobs');
 

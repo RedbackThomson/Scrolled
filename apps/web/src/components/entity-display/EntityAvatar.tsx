@@ -1,7 +1,7 @@
 import { GitBranch, Map as MapIcon, ScrollText, Skull, Sparkles, Users } from 'lucide-react';
 import { EntityIcon } from '@/components/entity-display/EntityIcon';
 import { ItemIcon } from '@/components/entity-display/ItemIcon';
-import type { EntityKind } from '@scrolled/extractor/db/types';
+import type { EntityKind } from '@scrolled/game-db/db/types';
 import { cn } from '@/lib/utils';
 
 interface Props {
