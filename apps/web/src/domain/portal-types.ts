@@ -33,6 +33,28 @@ export function classifyPortal(p: MapPortalRecord, thisMapId: number): PortalLay
   return 'unknown';
 }
 
+// GM teleport portals (`gm`, `gm0`, `gm1`, …) exist for staff, not players.
+const GM_PORTAL_NAME = /^gm\d*$/i;
+
+/**
+ * Whether a portal is one a visitor can actually travel through — an inter-map
+ * doorway or a working in-map teleport. Excludes spawn points, GM-only portals,
+ * and dead-end portals (e.g. unused `tp` entries) that resolve to no real
+ * destination. Drives the "hide minor portals" toggle on the map detail page.
+ */
+export function isUsefulPortal(p: MapPortalRecord, thisMapId: number): boolean {
+  if (GM_PORTAL_NAME.test(p.portalName)) return false;
+  const layer = classifyPortal(p, thisMapId);
+  if (layer === 'portal') return true;
+  if (layer === 'internalTeleport') {
+    // Useful only if it lands somewhere in this map or runs a script. The
+    // NO_TARGET placeholder (a `tp` portal with no destination) does neither.
+    return p.targetMapId === thisMapId || Boolean(p.script);
+  }
+  // spawn + unknown: not navigable.
+  return false;
+}
+
 export function gameToPixel(
   gameX: number,
   gameY: number,

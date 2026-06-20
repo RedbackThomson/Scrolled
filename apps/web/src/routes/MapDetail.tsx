@@ -38,11 +38,12 @@ const WorldMapViewerModal = lazy(() =>
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
 import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient, type WorldMapForMap } from '@/db';
-import { classifyPortal, type PortalLayer } from '@/domain/portal-types';
+import { classifyPortal, isUsefulPortal, type PortalLayer } from '@/domain/portal-types';
 import { useFeatures } from '@/hooks/useFeatures';
 import { useListSort } from '@/hooks/useListSort';
 import { useEntitySummaryNames } from '@/hooks/useEntitySummaries';
 import { useShowEntityIds } from '@/stores/showEntityIds';
+import { useHideMinorPortals } from '@/stores/hideMinorPortals';
 
 // Sentinel value the WZ data uses to mean "no map" for return / target fields.
 const NO_TARGET = 999999999;
@@ -137,7 +138,19 @@ export default function MapDetail() {
       return ra !== rb ? ra - rb : a.idx - b.idx;
     });
   }, [portalsQ.data, id]);
-  const portalsSort = useListSort(portalsOrdered, [
+  // Spawn points, GM portals, and dead-end teleports clutter the list without
+  // telling a visitor anything they can act on. Hidden by default; the toggle
+  // only appears when there's actually something to hide.
+  const hideMinorPortals = useHideMinorPortals((s) => s.enabled);
+  const minorPortalCount = useMemo(
+    () => portalsOrdered?.reduce((n, p) => (isUsefulPortal(p, id) ? n : n + 1), 0) ?? 0,
+    [portalsOrdered, id],
+  );
+  const portalsVisible = useMemo(() => {
+    if (!portalsOrdered) return undefined;
+    return hideMinorPortals ? portalsOrdered.filter((p) => isUsefulPortal(p, id)) : portalsOrdered;
+  }, [portalsOrdered, hideMinorPortals, id]);
+  const portalsSort = useListSort(portalsVisible, [
     { id: 'portal', label: 'Portal name', get: (p) => p.portalName },
     {
       id: 'target',
@@ -471,10 +484,15 @@ export default function MapDetail() {
         <DetailListSection
           icon={DoorOpen}
           title="Portals"
-          count={portalsQ.data?.length}
-          isEmpty={portalsQ.data?.length === 0}
+          count={portalsVisible?.length}
+          isEmpty={portalsVisible?.length === 0}
+          emptyLabel={
+            hideMinorPortals && minorPortalCount > 0
+              ? 'Only spawn and system portals here, hidden by your settings.'
+              : 'None.'
+          }
           action={
-            portalsQ.data && portalsQ.data.length > 0 ? (
+            portalsVisible && portalsVisible.length > 0 ? (
               <ListSortControl
                 fields={portalsSort.fieldOptions}
                 value={portalsSort.sort}

@@ -15,9 +15,11 @@ import {
   buildPortalGraph,
   classifyPortal,
   gameToPixel,
+  isUsefulPortal,
   type PortalLayer,
 } from '@/domain/portal-types';
 import { useShowEntityIds } from '@/stores/showEntityIds';
+import { useHideMinorPortals } from '@/stores/hideMinorPortals';
 import { MapViewerSidebar } from './MapViewerSidebar';
 import { useMapViewerData } from './useMapViewerData';
 import type { MapViewerHighlight } from './types';
@@ -59,8 +61,16 @@ export function MapViewerModal({
   worldMapPlacements,
   onOpenWorldMap,
 }: MapViewerModalProps) {
-  const { map, npcs, portals, mobSpawns, isLoading } = useMapViewerData(mapId, open);
+  const { map, npcs, portals: allPortals, mobSpawns, isLoading } = useMapViewerData(mapId, open);
   const showIds = useShowEntityIds((s) => s.enabled);
+  // Mirror the Portals list on the detail page: when the "hide minor portals"
+  // setting is on, keep only the portals a visitor can travel through. Filtering
+  // here flows through to the layer counts, sidebar, teleport graph, and overlays.
+  const hideMinorPortals = useHideMinorPortals((s) => s.enabled);
+  const portals = useMemo(
+    () => (hideMinorPortals ? allPortals.filter((p) => isUsefulPortal(p, mapId)) : allPortals),
+    [allPortals, hideMinorPortals, mapId],
+  );
 
   // Hover highlight is transient UI state — intentionally NOT in the URL.
   const [hovered, setHovered] = useState<MapViewerHighlight | null>(null);
