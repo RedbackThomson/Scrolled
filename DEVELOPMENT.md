@@ -41,15 +41,63 @@ All scripts in this repo are expected to run inside the flake dev shell. If you'
 
 ## Scripts
 
-| Script           | What it does                               |
-| ---------------- | ------------------------------------------ |
-| `pnpm dev`       | Start the Vite dev server for the web app. |
-| `pnpm build`     | Production build.                          |
-| `pnpm preview`   | Preview the production build locally.      |
-| `pnpm typecheck` | Run TypeScript in all packages.            |
-| `pnpm lint`      | Run ESLint in all packages.                |
-| `pnpm test`      | Run Vitest in all packages.                |
-| `pnpm format`    | Format the repo with Prettier.             |
+| Script               | What it does                                                                    |
+| -------------------- | ------------------------------------------------------------------------------- |
+| `pnpm dev`           | Start the Vite dev server for the web app (generic profile: user imports files). |
+| `pnpm dev:fixed`     | Start the dev server in fixed hosted-dataset mode. See below.                   |
+| `pnpm build`         | Production build.                                                               |
+| `pnpm build:fixed`   | Production build in fixed hosted-dataset mode (`dist-fixed`).                   |
+| `pnpm dataset:build` | Headless dataset builder — WZ files → `.scrolled-dataset` bundle.               |
+| `pnpm preview`       | Preview the production build locally.                                           |
+| `pnpm typecheck`     | Run TypeScript in all packages.                                                 |
+| `pnpm lint`          | Run ESLint in all packages.                                                     |
+| `pnpm test`          | Run Vitest in all packages.                                                     |
+| `pnpm format`        | Format the repo with Prettier.                                                  |
+
+## Fixed-dataset local dev
+
+`pnpm dev` runs the **generic** profile: an empty library that expects the user to
+import their own game files in the browser. `pnpm dev:fixed` instead runs the
+**fixed hosted-dataset** profile — the import flow is disabled and the app
+installs a prebuilt dataset served from `/datasets`. To exercise that path
+locally you first have to generate the dataset the dev server will serve.
+
+The settings in [`apps/web/.env.fixed`](apps/web/.env.fixed) (loaded by
+`--mode fixed`) decide where the app looks: family `local`, channel `latest`,
+repository `/datasets`. Vite serves `apps/web/public/datasets/` at `/datasets`,
+so the build has to land there under the `local` family. That directory is
+git-ignored — it holds your own derived data, never committed.
+
+**1. Build the dataset** from a directory of your `.wz` archives (or a tree of
+`.img` files). Match the `.env.fixed` family/channel so the app can find it:
+
+```bash
+pnpm dataset:build /path/to/wz \
+  --profile mapleroyals-compatible \
+  --version 2026-06-20 \
+  --family local \
+  --out apps/web/public/datasets
+```
+
+This writes `apps/web/public/datasets/local/2026-06-20/` (the bundle, manifest,
+and checksums) and points `apps/web/public/datasets/local/latest.json` at it.
+`--version` is any immutable label; `--out` and `--family` must resolve to that
+`public/datasets/local` location. Pass `--wz-version <BMS|GMS|EMS|CLASSIC>` if
+auto-detection can't determine the encryption version, and `--profile-file
+<path>` to use a custom server profile instead of a built-in id.
+
+**2. Start the server** in fixed mode:
+
+```bash
+pnpm dev:fixed
+```
+
+Open the printed URL; the app installs the `local/latest` dataset into OPFS on
+first load. Rebuild step 1 with a new `--version` and refresh to pick up changes.
+
+> Per [CLAUDE.md](CLAUDE.md), `.wz` files and the datasets derived from them are
+> never committed — the source files stay on your machine and `public/datasets/`
+> is git-ignored.
 
 ## Layout
 
