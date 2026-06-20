@@ -4,7 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { CommandGroup, CommandItem as CommandItemPrimitive } from '@/components/ui/command';
 import { getDbClient, type EntityKind } from '@/db';
 import { getSearchIndex, querySearch, type SearchHit } from '@/search';
-import { iconForEntity, labelForEntityKind, routeForEntity } from '@/lib/entityRoutes';
+import { labelForEntityKind, routeForEntity } from '@/lib/entityRoutes';
+import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 import { labelForEquipSlot } from '@/domain/equipTypes';
 import { useRecentQueries } from '@/lib/recents';
 import { useCommandPalette } from '@/stores/useCommandPalette';
@@ -107,7 +108,6 @@ export function GlobalSearchProvider() {
   return (
     <CommandGroup heading={scope ? `${labelForEntityKind(scope, true)} matching` : 'Results'}>
       {rows.map((hit) => {
-        const Icon = iconForEntity(hit.entity);
         const subtitle =
           hit.category != null
             ? hit.entity === 'equip'
@@ -125,7 +125,7 @@ export function GlobalSearchProvider() {
               setOpen(false);
             }}
           >
-            <Icon className="text-muted-foreground h-4 w-4" />
+            <EntityAvatar entity={hit.entity} id={hit.id} size={20} alt={hit.name} />
             <span className="min-w-0 flex-1 truncate">{hit.name}</span>
             {showIds && (
               <span className="text-muted-foreground shrink-0 font-mono text-xs">{hit.id}</span>
