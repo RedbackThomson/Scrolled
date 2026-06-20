@@ -409,8 +409,6 @@ export interface SkillRecord {
    * skills where `masterLevel < maxLevel` until raised in-game).
    */
   masterLevel: number | null;
-  /** `common/invisible === 1` in the WZ tree. */
-  hidden: boolean;
   /** Raw element code (e.g. `"F"`). Decode via `decodeSkillElement`. */
   element: string | null;
   /** Raw `weapon` code, stored as a string. Decode via `decodeRequiredWeapon`. */

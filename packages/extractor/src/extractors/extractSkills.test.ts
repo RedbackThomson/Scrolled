@@ -130,7 +130,6 @@ describe('extractSkills', () => {
     expect(skill.description).toBe('Hurls magical bolts.');
     expect(skill.tooltip).toBe('MP -#mpCon. Hits #attackCount times.');
     expect(skill.maxLevel).toBe(20);
-    expect(skill.hidden).toBe(false);
     expect(skill.element).toBe('F');
     expect(skill.requiredWeapon).toBe('37');
 
@@ -289,28 +288,6 @@ describe('extractSkills', () => {
     const result = await extractSkills(source);
     expect(result.skills).toHaveLength(1);
     expect(result.skills[0].jobId).toBe(400);
-  });
-
-  it('records hidden=true when common/invisible is 1', async () => {
-    const source = makeSource(
-      {
-        'Skill.wz': [
-          { name: '500.img', fullPath: 'Skill.wz/500.img', kind: 'image', hasChildren: true },
-        ],
-        'Skill.wz/500.img/skill': [
-          { name: '5000000', fullPath: 'Skill.wz/500.img/skill/5000000', kind: 'property', hasChildren: true },
-        ],
-        'Skill.wz/500.img/skill/5000000/req': [],
-        'Skill.wz/500.img/skill/5000000/level': [],
-      },
-      {
-        'String.wz/Skill.img/5000000/name': leaf('name', '', 'Hidden Buff', 'string'),
-        'Skill.wz/500.img/skill/5000000/common/invisible': leaf('invisible', '', 1),
-      },
-    );
-
-    const result = await extractSkills(source);
-    expect(result.skills[0].hidden).toBe(true);
   });
 
   it('returns empty result when Skill.wz is absent', async () => {

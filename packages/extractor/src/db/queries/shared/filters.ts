@@ -117,9 +117,6 @@ export const SKILL_FILTER: Record<string, FilterSpec> = {
   maxLevel: { col: 'max_level', type: 'number' },
   element: { col: 'element', type: 'string' },
   requiredWeapon: { col: 'required_weapon', type: 'string' },
-  // hidden is INTEGER 0/1; mirrors mobs.is_boss — boolean filter values
-  // ({min:1,max:1}) collapse cleanly to col = ?.
-  hidden: { col: 'hidden', type: 'number' },
   id: { col: 'id', type: 'string' },
 };
 

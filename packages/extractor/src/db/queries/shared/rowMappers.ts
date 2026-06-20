@@ -246,7 +246,6 @@ export interface SkillRow extends Row {
   tooltip: string | null;
   max_level: number | null;
   master_level: number | null;
-  hidden: number;
   element: string | null;
   required_weapon: string | null;
   icon_path: string | null;
@@ -303,7 +302,6 @@ export function rowToSkill(r: SkillRow): SkillRecord {
     tooltip: r.tooltip,
     maxLevel: r.max_level,
     masterLevel: r.master_level,
-    hidden: r.hidden === 1,
     element: r.element,
     requiredWeapon: r.required_weapon,
     iconPath: r.icon_path,

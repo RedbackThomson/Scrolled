@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { Briefcase, EyeOff, Flame, Gauge, Hash, Sparkles, Swords } from 'lucide-react';
+import { Briefcase, Flame, Gauge, Hash, Sparkles, Swords } from 'lucide-react';
 import { EntityIcon } from '@/components/entity-display/EntityIcon';
 import { SkillLink } from '@/components/entity-links';
 import type { SkillRecord } from '@/db';
@@ -71,25 +71,6 @@ export const columns: ColumnDef<SkillRecord>[] = [
       const decoded = decodeRequiredWeapon(row.original.requiredWeapon);
       return decoded ?? row.original.requiredWeapon ?? '—';
     },
-  },
-  {
-    id: 'hidden',
-    accessorFn: (s) => s.hidden,
-    header: 'Hidden',
-    meta: {
-      filter: 'boolean',
-      booleanLabels: { trueLabel: 'Hidden', falseLabel: 'Visible' },
-      icon: EyeOff,
-    },
-    cell: ({ row }) =>
-      row.original.hidden ? (
-        <span className="inline-flex items-center gap-0.5 rounded bg-zinc-500/15 px-1.5 py-0.5 text-[10px] font-medium text-zinc-700 dark:text-zinc-300">
-          <EyeOff className="h-3 w-3" />
-          Hidden
-        </span>
-      ) : (
-        '—'
-      ),
   },
   {
     id: 'id',

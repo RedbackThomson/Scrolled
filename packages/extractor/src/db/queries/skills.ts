@@ -29,8 +29,8 @@ export function upsertSkills(sql: Sqlite, skills: SkillRecord[]): number {
       sql.exec(
         `INSERT INTO skills (
           id, job_id, name, description, tooltip, max_level, master_level,
-          hidden, element, required_weapon, icon_path, icon_data, source_path
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          element, required_weapon, icon_path, icon_data, source_path
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
           job_id          = excluded.job_id,
           name            = excluded.name,
@@ -38,7 +38,6 @@ export function upsertSkills(sql: Sqlite, skills: SkillRecord[]): number {
           tooltip         = excluded.tooltip,
           max_level       = excluded.max_level,
           master_level    = excluded.master_level,
-          hidden          = excluded.hidden,
           element         = excluded.element,
           required_weapon = excluded.required_weapon,
           icon_path       = excluded.icon_path,
@@ -54,7 +53,6 @@ export function upsertSkills(sql: Sqlite, skills: SkillRecord[]): number {
           s.tooltip,
           s.maxLevel,
           s.masterLevel,
-          s.hidden ? 1 : 0,
           s.element,
           s.requiredWeapon,
           s.iconPath,
@@ -102,7 +100,7 @@ export function listSkills(sql: Sqlite, opts: ListOptsBase = {}): PageResult<Ski
     const rows = sql
       .selectObjects<SkillRow>(
         `SELECT id, job_id, name, description, tooltip, max_level, master_level,
-                hidden, element, required_weapon, icon_path, NULL AS icon_data, source_path
+                element, required_weapon, icon_path, NULL AS icon_data, source_path
          FROM skills ${clause}
          ORDER BY ${order.col} ${order.dir === 'desc' ? 'DESC' : 'ASC'} NULLS LAST, id ASC
          LIMIT ? OFFSET ?`,

@@ -130,10 +130,9 @@ export async function extractSkills(
 
     const skillPath = `${jobImg}/skill/${skillId}`;
 
-    const [maxLevelN, masterLevelN, invisibleN, elemNode, weaponNode] = await Promise.all([
+    const [maxLevelN, masterLevelN, elemNode, weaponNode] = await Promise.all([
       pathToNumber(source, `${skillPath}/common/maxLevel`),
       pathToNumber(source, `${skillPath}/common/masterLevel`),
-      pathToNumber(source, `${skillPath}/common/invisible`),
       source.getNode(`${skillPath}/elemAttr`),
       source.getNode(`${skillPath}/weapon`),
     ]);
@@ -244,7 +243,6 @@ export async function extractSkills(
       tooltip,
       maxLevel: maxLevelN ?? highestLevel,
       masterLevel: masterLevelN,
-      hidden: invisibleN === 1,
       element,
       requiredWeapon,
       iconPath,

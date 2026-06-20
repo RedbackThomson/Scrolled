@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Copy, EyeOff, GitBranch, ScrollText, Sparkles } from 'lucide-react';
+import { Copy, GitBranch, ScrollText, Sparkles } from 'lucide-react';
 import { DetailListSection } from '@/components/layout/DetailListSection';
 import {
   DetailPageLayout,
@@ -152,11 +152,6 @@ export default function SkillDetail() {
               >
                 {displayName}
               </h1>
-              {s.hidden && (
-                <span className="inline-flex items-center gap-0.5 rounded bg-zinc-500/15 px-2 py-0.5 text-xs font-medium text-zinc-700 dark:text-zinc-300">
-                  <EyeOff className="h-3 w-3" /> Hidden
-                </span>
-              )}
             </div>
             {showIds && <p className="text-muted-foreground font-mono text-xs">{s.id}</p>}
             {s.description && (
@@ -204,7 +199,6 @@ export default function SkillDetail() {
             {(weaponLabel ?? s.requiredWeapon) && (
               <InfoRow label="Weapon" value={weaponLabel ?? s.requiredWeapon ?? ''} />
             )}
-            {s.hidden && <InfoRow label="Hidden" value="Yes" />}
           </InfoSection>
           <SourceSection path={s.sourcePath} />
         </>

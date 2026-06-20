@@ -958,6 +958,17 @@ export const MIGRATIONS: readonly Migration[] = [
       ALTER TABLE server_profile ADD COLUMN profile_json TEXT;
     `,
   },
+  {
+    version: 34,
+    name: 'drop skills.hidden',
+    sql: `
+      -- The "hidden" flag (WZ common/invisible) was surfaced as a table
+      -- column and detail badge but carried no real value for browsing, so
+      -- it's gone. DROP COLUMN transforms existing libraries in place — no
+      -- re-extraction needed, so the data revision stays put.
+      ALTER TABLE skills DROP COLUMN hidden;
+    `,
+  },
 ];
 
 /**
