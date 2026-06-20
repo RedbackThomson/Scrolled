@@ -1,6 +1,8 @@
-import { Activity, Database, Loader2 } from 'lucide-react';
+import { Activity, Database, Loader2, Package, RefreshCw } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useSettingsSection } from '@/components/settings/SettingsScrollSpy';
+import { Badge } from '@/components/ui/badge';
+import { useDatasetUpdate } from '@/hooks/dataset/useDatasetUpdate';
 import { getDbClient } from '@/db';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
@@ -12,6 +14,7 @@ export function LibraryStatusSection() {
     queryKey: ['db', 'status'],
     queryFn: () => db.status(),
   });
+  const dataset = useDatasetUpdate();
 
   return (
     <section {...sectionProps} className="scroll-mt-20 space-y-3">
@@ -71,6 +74,34 @@ export function LibraryStatusSection() {
             </dl>
           </>
         ) : null}
+
+        {dataset.installedVersion && (
+          <div className="border-border mt-3 flex flex-col gap-2 border-t pt-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
+              <Package className="h-4 w-4 shrink-0" />
+              <span>{dataset.displayName ?? 'Hosted dataset'}</span>
+              <Badge tone="slate">version {dataset.installedVersion}</Badge>
+            </div>
+            <div className="sm:ml-auto">
+              {dataset.applying ? (
+                <span className="text-muted-foreground inline-flex items-center gap-1 text-xs">
+                  <Loader2 className="h-3 w-3 animate-spin" aria-hidden /> Updating…
+                </span>
+              ) : dataset.available ? (
+                <button
+                  type="button"
+                  onClick={dataset.apply}
+                  className="inline-flex items-center gap-1.5 rounded bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-500/25 dark:text-amber-300"
+                >
+                  <RefreshCw className="h-3 w-3 shrink-0" aria-hidden />
+                  Update to {dataset.latestVersion}
+                </button>
+              ) : (
+                <span className="text-muted-foreground text-xs">Up to date</span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

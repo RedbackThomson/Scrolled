@@ -17,6 +17,8 @@ const log = createLogger('dataset-update');
 
 export interface DatasetUpdate {
   available: boolean;
+  /** The version currently installed, or null on a generic build / before install. */
+  installedVersion: string | null;
   latestVersion: string | null;
   displayName: string | null;
   applying: boolean;
@@ -78,6 +80,7 @@ export function useDatasetUpdate(): DatasetUpdate {
 
   return {
     available,
+    installedVersion: installed?.version ?? null,
     latestVersion: latest?.version ?? null,
     displayName: latest?.displayName ?? installed?.displayName ?? null,
     applying: applyM.isPending,

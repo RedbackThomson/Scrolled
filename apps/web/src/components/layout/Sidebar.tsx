@@ -35,6 +35,7 @@ import { getDbClient } from '@/db';
 import { getUserDbClient } from '@/db/user';
 import { resolveCollectionColor } from '@/components/collections/colorRegistry';
 import { resolveCollectionIcon } from '@/components/collections/iconRegistry';
+import { DatasetVersionTag } from '@/components/dataset/DatasetVersionTag';
 import { cn } from '@/lib/utils';
 import { appConfig } from '@/config';
 
@@ -363,6 +364,7 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
       <div className="border-border border-t">
         <OfflineIndicator collapsed={collapsed} />
         <DbStatusIndicator collapsed={collapsed} />
+        <DatasetVersionTag collapsed={collapsed} />
       </div>
       {!collapsed && (
         <div className="text-sidebar-muted flex items-center justify-between px-3 pb-3 text-[10px]">
