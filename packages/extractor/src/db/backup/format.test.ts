@@ -39,6 +39,24 @@ describe('backup format', () => {
     expect(contents.manifest.databases.game).toBeUndefined();
   });
 
+  it('carries an inline server profile and reads it back', async () => {
+    const profile = { id: 'mapleroyals', name: 'MapleRoyals', rates: { exp: 4 } };
+    const archive = await packBackup({ game, versions: { game: versions.game }, serverProfile: profile });
+
+    const names = unpackTar(await gunzipAsync(archive)).map((e) => e.name);
+    expect(names).toContain('server-profile.json');
+
+    const contents = await readBackup(archive);
+    expect(contents.serverProfile).toEqual(profile);
+    expect(contents.manifest.serverProfile?.file).toBe('server-profile.json');
+  });
+
+  it('omits the profile member for ordinary backups', async () => {
+    const contents = await readBackup(await packBackup({ game, user, versions }));
+    expect(contents.serverProfile).toBeUndefined();
+    expect(contents.manifest.serverProfile).toBeUndefined();
+  });
+
   it('orders the manifest first in the archive', async () => {
     const archive = await packBackup({ game, user, versions });
     const names = unpackTar(await gunzipAsync(archive)).map((e) => e.name);

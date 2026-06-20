@@ -32,8 +32,17 @@ export const datasetManifestSchema = z.object({
    * right rules; the app build must ship a profile with this id.
    */
   serverProfileId: z.string().min(1),
-  /** Extracted-data revision the artifact was built at (informational). */
-  dataRevision: z.number().int().optional(),
+  /**
+   * The profile's equip-stat *calculator* id. Unlike the profile config (which
+   * now travels in the bundle), the calculator is code keyed by id — a brand-new
+   * algorithm needs an app release. The app checks this against its registry to
+   * decide, pre-download, whether it can render the dataset.
+   */
+  calculatorId: z.string().min(1),
+  /** Extracted-data revision the artifact was built at. Gates compatibility. */
+  dataRevision: z.number().int().nonnegative(),
+  /** SQLite schema version the artifact was built at. Gates compatibility. */
+  schemaVersion: z.number().int().nonnegative(),
   buildTimestamp: z.string().optional(),
   artifact: datasetArtifactSchema,
 });

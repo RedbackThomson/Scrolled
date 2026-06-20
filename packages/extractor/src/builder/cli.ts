@@ -10,7 +10,7 @@
 // sqlite-wasm asset resolve exactly as they do under Vitest:
 //   pnpm dataset:build <wz-dir> --profile <id> --version <label> --out <dir>
 
-import { existsSync, readFileSync, mkdirSync, writeFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { resolve, basename } from 'node:path';
 
 import { detectVersion, detectImageVersion } from '@scrolled/wz';
@@ -20,6 +20,7 @@ import { ImgDataSource } from '../parser/ImgDataSource';
 import type { DataSourceKind, GameDataSource, LoadFileSpec, WzMapleVersionName } from '../parser';
 import { Sqlite } from '../db/sqlite';
 import { DbApi } from '../db/queries';
+import { packBackup } from '../db/backup';
 import {
   resolveServerProfile,
   serverProfileExists,
@@ -29,6 +30,7 @@ import {
 import { createLogger, describeError } from '../lib/logger';
 import { runExtraction } from './runExtraction';
 import { detectKind, gatherSourceFiles } from './files';
+import { writeDatasetRepo } from './pack';
 
 const log = createLogger('dataset-cli');
 
@@ -41,6 +43,8 @@ interface CliArgs {
   version: string;
   displayName?: string;
   out: string;
+  family?: string;
+  channel?: string;
   kind?: DataSourceKind;
   wzVersion?: WzMapleVersionName;
 }
@@ -85,6 +89,8 @@ function parseArgs(argv: string[]): CliArgs {
     version: opts.version,
     displayName: opts['display-name'],
     out: resolve(opts.out),
+    family: opts.family,
+    channel: opts.channel,
     kind,
     wzVersion,
   };
@@ -144,7 +150,12 @@ async function main() {
   if (!existsSync(args.wzDir)) fail(`Source directory not found: ${args.wzDir}`);
 
   const profile = loadProfile(args);
+  const calculatorId = profile.systems.equipStatCalculation;
+  if (!calculatorId) {
+    fail(`Profile '${profile.id}' declares no equip-stat calculator (systems.equipStatCalculation).`);
+  }
   const displayName = args.displayName ?? profile.name;
+  const family = args.family ?? profile.id;
   const kind = detectKind(args.wzDir, args.kind);
   const files = gatherSourceFiles(args.wzDir, kind);
   if (files.length === 0) fail(`No ${kind === 'wz' ? '.wz' : '.img'} files found in ${args.wzDir}`);
@@ -193,16 +204,45 @@ async function main() {
     onStage: (s) => process.stdout.write(`  ${s}\n`),
   });
 
-  const bytes = await db.exportBytes();
+  const gameBytes = await db.exportBytes();
+  const status = await db.status();
   await source.dispose();
 
-  mkdirSync(args.out, { recursive: true });
-  const dbPath = resolve(args.out, 'game.sqlite3');
-  writeFileSync(dbPath, bytes);
+  // Pack the self-contained bundle: the game SQLite + the inline server
+  // profile, in the existing tar+gzip container.
+  process.stdout.write('  Packing bundle\n');
+  const bundle = await packBackup({
+    game: gameBytes,
+    versions: {
+      game: { schemaVersion: status.schemaVersion, dataRevision: status.dataRevision },
+    },
+    serverProfile: profile,
+  });
 
-  log.info('build complete', { dbPath, bytes: bytes.byteLength, counts: stats.counts });
+  const { manifest, artifactPath, channelPath } = writeDatasetRepo({
+    out: args.out,
+    family,
+    version: args.version,
+    displayName,
+    serverProfileId: profile.id,
+    calculatorId,
+    dataRevision: status.dataRevision,
+    schemaVersion: status.schemaVersion,
+    channel: args.channel,
+    bundle,
+  });
+
+  log.info('build complete', {
+    artifactPath,
+    bundleBytes: bundle.byteLength,
+    counts: stats.counts,
+  });
   process.stdout.write(
-    `\nBuilt ${displayName} (${args.version}) → ${dbPath} (${(bytes.byteLength / 1_048_576).toFixed(1)} MB)\n`,
+    `\nBuilt ${manifest.displayName} (${family}/${args.version})\n` +
+      `  bundle:   ${artifactPath} (${(bundle.byteLength / 1_048_576).toFixed(1)} MB)\n` +
+      `  manifest: dataRevision ${manifest.dataRevision}, schema ${manifest.schemaVersion}, ` +
+      `profile ${manifest.serverProfileId}, calculator ${manifest.calculatorId}\n` +
+      `  channel:  ${channelPath}\n`,
   );
 }
 

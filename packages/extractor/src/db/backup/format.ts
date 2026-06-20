@@ -24,6 +24,7 @@ import {
 const MANIFEST_NAME = 'manifest.json';
 const GAME_FILE = 'game.sqlite3';
 const USER_FILE = 'user.sqlite3';
+const SERVER_PROFILE_FILE = 'server-profile.json';
 
 export interface BackupVersions {
   game?: { schemaVersion: number; dataRevision: number };
@@ -35,12 +36,20 @@ export interface BackupParts {
   user?: Uint8Array;
   versions: BackupVersions;
   app?: { version?: string; commit?: string };
+  /**
+   * Inline server-profile config to carry in the container (fixed-dataset
+   * bundles). Any JSON-serializable value; the install layer validates it with
+   * `serverProfileSchema`. Omitted for ordinary user backups.
+   */
+  serverProfile?: unknown;
 }
 
 export interface BackupContents {
   manifest: BackupManifest;
   game?: Uint8Array;
   user?: Uint8Array;
+  /** Parsed `server-profile.json` when the container carried one. */
+  serverProfile?: unknown;
 }
 
 /** True when the bytes start with the gzip magic — i.e. look like our container. */
@@ -97,12 +106,24 @@ export async function packBackup(parts: BackupParts): Promise<Uint8Array> {
     };
   }
 
+  let profileBytes: Uint8Array | undefined;
+  let serverProfile: BackupManifest['serverProfile'];
+  if (parts.serverProfile !== undefined) {
+    profileBytes = new TextEncoder().encode(JSON.stringify(parts.serverProfile, null, 2));
+    serverProfile = {
+      file: SERVER_PROFILE_FILE,
+      byteLength: profileBytes.byteLength,
+      sha256: await sha256Hex(profileBytes),
+    };
+  }
+
   const manifest: BackupManifest = {
     format: BACKUP_FORMAT,
     formatVersion: BACKUP_FORMAT_VERSION,
     createdAt: new Date().toISOString(),
     app: parts.app,
     databases,
+    serverProfile,
   };
 
   entries.push({
@@ -111,6 +132,7 @@ export async function packBackup(parts: BackupParts): Promise<Uint8Array> {
   });
   if (parts.game) entries.push({ name: GAME_FILE, bytes: parts.game });
   if (parts.user) entries.push({ name: USER_FILE, bytes: parts.user });
+  if (profileBytes) entries.push({ name: SERVER_PROFILE_FILE, bytes: profileBytes });
 
   return gzipAsync(packTar(entries));
 }
@@ -151,6 +173,23 @@ export async function readBackup(bytes: Uint8Array): Promise<BackupContents> {
       throw new Error(`Backup ${entry.file} is corrupt (checksum mismatch).`);
     }
     result[key] = blob.bytes;
+  }
+
+  if (manifest.serverProfile) {
+    const entry = manifest.serverProfile;
+    const blob = entries.find((e) => e.name === entry.file);
+    if (!blob) throw new Error(`Backup is missing ${entry.file}.`);
+    if (blob.bytes.byteLength !== entry.byteLength) {
+      throw new Error(`Backup ${entry.file} is corrupt (size mismatch).`);
+    }
+    if ((await sha256Hex(blob.bytes)) !== entry.sha256) {
+      throw new Error(`Backup ${entry.file} is corrupt (checksum mismatch).`);
+    }
+    try {
+      result.serverProfile = JSON.parse(new TextDecoder().decode(blob.bytes));
+    } catch {
+      throw new Error(`Backup ${entry.file} is not valid JSON.`);
+    }
   }
   return result;
 }

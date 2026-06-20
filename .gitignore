@@ -49,8 +49,9 @@ result-*
 *.sqlite
 *.sqlite-journal
 
-# Local hosted-dataset repository, built from your own backup via dataset-builder
-# and served by `pnpm dev:fixed`. Dataset artifacts are never part of the source.
+# Local hosted-dataset repository, built from your own WZ files via
+# `pnpm dataset:build` and served by `pnpm dev:fixed`. Dataset artifacts are
+# never part of the source.
 apps/web/public/datasets/
 
 # Local test fixtures (real WZ archives and .img dumps) — never committed. The

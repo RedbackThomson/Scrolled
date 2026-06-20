@@ -202,22 +202,6 @@ importers:
         specifier: ^2.1.2
         version: 2.1.9(@types/node@22.19.19)(jsdom@25.0.1)(terser@5.48.0)
 
-  packages/dataset-builder:
-    dependencies:
-      '@scrolled/dataset-core':
-        specifier: workspace:*
-        version: link:../dataset-core
-    devDependencies:
-      '@types/node':
-        specifier: ^22.7.4
-        version: 22.19.19
-      typescript:
-        specifier: ^5.6.2
-        version: 5.9.3
-      vitest:
-        specifier: ^2.1.2
-        version: 2.1.9(@types/node@22.19.19)(jsdom@25.0.1)(terser@5.48.0)
-
   packages/dataset-client:
     dependencies:
       '@scrolled/dataset-core':

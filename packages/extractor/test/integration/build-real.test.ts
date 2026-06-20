@@ -1,14 +1,19 @@
 // @vitest-environment node
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { WzDataSource } from '../../src/parser/WzDataSource';
 import type { GameDataSource } from '../../src/parser';
 import { Sqlite } from '../../src/db/sqlite';
 import { DbApi } from '../../src/db/queries';
+import { packBackup, readBackup } from '../../src/db/backup';
+import { resolveServerProfile } from '../../src/serverProfiles';
 import { runExtraction } from '../../src/builder/runExtraction';
 import { gatherSourceFiles } from '../../src/builder/files';
+import { writeDatasetRepo } from '../../src/builder/pack';
+import { datasetManifestSchema } from '@scrolled/dataset-core';
 import { wzVersionFromEnv } from '../helpers/localFixtures';
 
 /**
@@ -70,4 +75,53 @@ describe.skipIf(!hasEnough)('headless build — real WZ fixtures', () => {
     expect(datasets.length).toBe(1);
     expect(datasets[0]!.label).toBe('test build');
   });
+
+  it('packs a bundle + generates a manifest, and reinstalls into a fresh DB', async () => {
+    const profile = resolveServerProfile('mapleroyals-compatible');
+    const status = await db.status();
+    const bundle = await packBackup({
+      game: bytes,
+      versions: { game: { schemaVersion: status.schemaVersion, dataRevision: status.dataRevision } },
+      serverProfile: profile,
+    });
+
+    // Generate the host-side repo layout from the bundle.
+    const out = mkdtempSync(resolve(tmpdir(), 'scrolled-ds-'));
+    try {
+      const { manifest, artifactPath } = writeDatasetRepo({
+        out,
+        family: 'mapleroyals',
+        version: '2026-06-01',
+        displayName: 'MapleRoyals',
+        serverProfileId: profile.id,
+        calculatorId: profile.systems.equipStatCalculation!,
+        dataRevision: status.dataRevision,
+        schemaVersion: status.schemaVersion,
+        bundle,
+      });
+
+      // Manifest carries the full, non-null compatibility contract.
+      datasetManifestSchema.parse(manifest);
+      expect(manifest.dataRevision).toBe(status.dataRevision);
+      expect(manifest.schemaVersion).toBe(status.schemaVersion);
+      expect(manifest.serverProfileId).toBe('mapleroyals-compatible');
+      expect(manifest.calculatorId).toBe('mapleroyals-v1');
+      expect(manifest.artifact.sha256).toMatch(/^[0-9a-f]{64}$/);
+
+      // The artifact on disk reads back: game bytes + inline profile.
+      const onDisk = new Uint8Array(readFileSync(artifactPath));
+      const contents = await readBackup(onDisk);
+      expect(contents.serverProfile).toMatchObject({ id: 'mapleroyals-compatible' });
+
+      // Reinstalling the game bytes into a fresh DB yields populated tables.
+      const fresh = new DbApi(new Sqlite({ logTag: 'reinstall-test' }));
+      await fresh.open();
+      await fresh.importBytes(contents.game!);
+      const freshStatus = await fresh.status();
+      expect(freshStatus.counts.items).toBeGreaterThan(0);
+      expect(freshStatus.dataRevision).toBe(status.dataRevision);
+    } finally {
+      rmSync(out, { recursive: true, force: true });
+    }
+  }, 30_000);
 });

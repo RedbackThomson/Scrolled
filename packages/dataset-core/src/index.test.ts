@@ -2,41 +2,41 @@ import { describe, expect, it } from 'vitest';
 import { datasetChannelSchema, datasetManifestSchema } from './index';
 
 describe('datasetManifestSchema', () => {
-  it('accepts a minimal manifest and drops absent optionals', () => {
-    const manifest = datasetManifestSchema.parse({
-      id: 'local-2026-06-20',
-      family: 'local',
-      version: '2026-06-20',
-      displayName: 'Local Dataset',
-      serverProfileId: 'vanilla-v83',
-      artifact: { url: 'local/2026-06-20/game.scrolled-backup' },
-    });
-    expect(manifest.dataRevision).toBeUndefined();
+  const valid = {
+    id: 'local-2026-06-20',
+    family: 'local',
+    version: '2026-06-20',
+    displayName: 'Local Dataset',
+    serverProfileId: 'vanilla-v83',
+    calculatorId: 'mapleroyals-v83',
+    dataRevision: 7,
+    schemaVersion: 32,
+    artifact: { url: 'local/2026-06-20/local-2026-06-20.scrolled-dataset' },
+  };
+
+  it('accepts a full manifest and drops absent artifact optionals', () => {
+    const manifest = datasetManifestSchema.parse(valid);
+    expect(manifest.dataRevision).toBe(7);
+    expect(manifest.schemaVersion).toBe(32);
+    expect(manifest.calculatorId).toBe('mapleroyals-v83');
     expect(manifest.artifact.sha256).toBeUndefined();
   });
 
   it('rejects a manifest missing the artifact', () => {
-    expect(() =>
-      datasetManifestSchema.parse({
-        id: 'x',
-        family: 'local',
-        version: '1',
-        displayName: 'X',
-        serverProfileId: 'vanilla-v83',
-      }),
-    ).toThrow();
+    const { artifact: _artifact, ...rest } = valid;
+    expect(() => datasetManifestSchema.parse(rest)).toThrow();
   });
 
   it('rejects a manifest missing the server profile', () => {
-    expect(() =>
-      datasetManifestSchema.parse({
-        id: 'x',
-        family: 'local',
-        version: '1',
-        displayName: 'X',
-        artifact: { url: 'local/1/game.scrolled-backup' },
-      }),
-    ).toThrow();
+    const { serverProfileId: _id, ...rest } = valid;
+    expect(() => datasetManifestSchema.parse(rest)).toThrow();
+  });
+
+  it('rejects a manifest missing the compatibility fields', () => {
+    const { dataRevision: _dr, ...rest } = valid;
+    expect(() => datasetManifestSchema.parse(rest)).toThrow();
+    const { calculatorId: _cid, ...rest2 } = valid;
+    expect(() => datasetManifestSchema.parse(rest2)).toThrow();
   });
 });
 
