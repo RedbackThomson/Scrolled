@@ -20,6 +20,7 @@ export type {
   JobRecord,
   LevelBandCount,
   ListOptsBase,
+  MapMarkRecord,
   MapMobRecord,
   MapMobSpawnRecord,
   MapMobSpawnWithName,

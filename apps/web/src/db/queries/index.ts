@@ -21,6 +21,7 @@ import type {
   JobRecord,
   LevelBandCount,
   ListOptsBase,
+  MapMarkRecord,
   MapMobRecord,
   MapMobSpawnRecord,
   MapMobSpawnWithName,
@@ -274,6 +275,14 @@ export class DbApi implements GameDatabase {
 
   async getMapMinimap(id: number): Promise<Uint8Array | null> {
     return maps.getMapMinimap(this.sql, id);
+  }
+
+  async upsertMapMarks(list: MapMarkRecord[]): Promise<number> {
+    return maps.upsertMapMarks(this.sql, list);
+  }
+
+  async getMapMark(id: number): Promise<Uint8Array | null> {
+    return maps.getMapMark(this.sql, id);
   }
 
   async listMaps(opts: ListOptsBase = {}): Promise<PageResult<MapRecord>> {

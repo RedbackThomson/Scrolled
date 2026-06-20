@@ -2,6 +2,7 @@ import type { Sqlite, Row } from '../sqlite';
 import type {
   CategoryCount,
   ListOptsBase,
+  MapMarkRecord,
   MapMobRecord,
   MapMobSpawnRecord,
   MapMobSpawnWithName,
@@ -31,8 +32,8 @@ export function upsertMaps(sql: Sqlite, maps: MapRecord[]): number {
           id, name, street_name, return_map_id, forced_return_map_id,
           field_limit, mob_rate, minimap_path, minimap_data,
           minimap_center_x, minimap_center_y, minimap_width, minimap_height,
-          minimap_mag, source_path
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          minimap_mag, map_mark, source_path
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
           name                 = excluded.name,
           street_name          = excluded.street_name,
@@ -47,6 +48,7 @@ export function upsertMaps(sql: Sqlite, maps: MapRecord[]): number {
           minimap_width        = COALESCE(excluded.minimap_width, maps.minimap_width),
           minimap_height       = COALESCE(excluded.minimap_height, maps.minimap_height),
           minimap_mag          = COALESCE(excluded.minimap_mag, maps.minimap_mag),
+          map_mark             = excluded.map_mark,
           source_path          = excluded.source_path`,
         [
           m.id,
@@ -63,6 +65,7 @@ export function upsertMaps(sql: Sqlite, maps: MapRecord[]): number {
           m.minimapWidth,
           m.minimapHeight,
           m.minimapMag,
+          m.mapMark,
           m.sourcePath,
         ],
       );
@@ -82,6 +85,29 @@ export function getMapMinimap(sql: Sqlite, id: number): Uint8Array | null {
     [id],
   );
   return row?.minimap_data ?? null;
+}
+
+export function upsertMapMarks(sql: Sqlite, marks: MapMarkRecord[]): number {
+  sql.transaction(() => {
+    for (const m of marks) {
+      sql.exec(
+        `INSERT INTO map_marks (name, icon_data) VALUES (?, ?)
+         ON CONFLICT(name) DO UPDATE SET icon_data = excluded.icon_data`,
+        [m.name, m.iconData],
+      );
+    }
+  });
+  return marks.length;
+}
+
+export function getMapMark(sql: Sqlite, id: number): Uint8Array | null {
+  const row = sql.selectObject<{ icon_data: Uint8Array | null }>(
+    `SELECT mk.icon_data
+       FROM maps m JOIN map_marks mk ON mk.name = m.map_mark
+      WHERE m.id = ?`,
+    [id],
+  );
+  return row?.icon_data ?? null;
 }
 
 export function listMaps(sql: Sqlite, opts: ListOptsBase = {}): PageResult<MapRecord> {
@@ -109,7 +135,7 @@ export function listMaps(sql: Sqlite, opts: ListOptsBase = {}): PageResult<MapRe
         `SELECT id, name, street_name, return_map_id, forced_return_map_id,
                 field_limit, mob_rate, minimap_path, NULL AS minimap_data,
                 minimap_center_x, minimap_center_y, minimap_width, minimap_height,
-                minimap_mag, source_path
+                minimap_mag, map_mark, source_path
          FROM maps ${clause}
          ORDER BY ${order.col} ${order.dir === 'desc' ? 'DESC' : 'ASC'} NULLS LAST, id ASC
          LIMIT ? OFFSET ?`,

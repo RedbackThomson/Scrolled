@@ -122,6 +122,7 @@ export interface MapRow extends Row {
   minimap_width: number | null;
   minimap_height: number | null;
   minimap_mag: number | null;
+  map_mark: string | null;
   source_path: string;
 }
 
@@ -214,6 +215,7 @@ export function rowToMap(r: MapRow): MapRecord {
     minimapWidth: r.minimap_width,
     minimapHeight: r.minimap_height,
     minimapMag: r.minimap_mag,
+    mapMark: r.map_mark,
     sourcePath: r.source_path,
   };
 }

@@ -18,6 +18,8 @@ async function fetchBytes(db: Remote<GameDatabase>, ref: IconRef): Promise<Uint8
       return db.getNpcIcon(ref.id);
     case 'map-mini':
       return db.getMapMinimap(ref.id);
+    case 'map-mark':
+      return db.getMapMark(ref.id);
     case 'skill':
       return db.getSkillIcon(ref.id);
   }
@@ -33,7 +35,7 @@ async function fetchBytes(db: Remote<GameDatabase>, ref: IconRef): Promise<Uint8
  * from SQLite.
  */
 export interface IconRef {
-  entity: 'item' | 'equip' | 'mob' | 'npc' | 'map-mini' | 'skill';
+  entity: 'item' | 'equip' | 'mob' | 'npc' | 'map-mini' | 'map-mark' | 'skill';
   id: number;
 }
 

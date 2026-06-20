@@ -1,6 +1,7 @@
 import type { GameDataSource, WzNodeInfo } from '@/parser';
 import { childToNumber, childToString, indexChildrenByName } from './wzCoerce';
 import type {
+  MapMarkRecord,
   MapMobRecord,
   MapMobSpawnRecord,
   MapNpcRecord,
@@ -15,11 +16,49 @@ const log = createLogger('extract-maps');
 
 export interface ExtractMapsResult {
   maps: MapRecord[];
+  mapMarks: MapMarkRecord[];
   mapNpcs: MapNpcRecord[];
   mapMobs: MapMobRecord[];
   mapMobSpawns: MapMobSpawnRecord[];
   mapPortals: MapPortalRecord[];
   skipped: { reason: string; path: string }[];
+}
+
+/**
+ * Decode the shared region-mark icons under `Map.wz/MapHelper.img/mark`. Each
+ * is a small canvas named for a region (Henesys, Ellinia, …); a map's
+ * `info/mapMark` names one of them. Returns the decoded records plus the set
+ * of names we have an icon for, so callers can null out marks with no sprite
+ * (e.g. the sentinel `"None"`).
+ */
+async function buildMapMarkIndex(
+  source: GameDataSource,
+): Promise<{ marks: MapMarkRecord[]; names: Set<string> }> {
+  const marks: MapMarkRecord[] = [];
+  const names = new Set<string>();
+  const tree = await source.readImageTree('Map.wz/MapHelper.img', {
+    subtrees: ['mark'],
+    maxDepth: 2,
+  });
+  const markTree = tree?.children.find((c) => c.name === 'mark');
+  if (!markTree) {
+    log.warn('Map.wz/MapHelper.img/mark absent; maps will fall back to glyph icons');
+    return { marks, names };
+  }
+  for (const node of markTree.children) {
+    if (node.propertyKind !== 'canvas') continue;
+    try {
+      const bytes = await source.getIconPng(node.fullPath);
+      if (bytes && bytes.byteLength > 0) {
+        marks.push({ name: node.name, iconData: bytes });
+        names.add(node.name);
+      }
+    } catch (e) {
+      log.debug('mark icon decode threw', { name: node.name, ...describeError(e) });
+    }
+  }
+  log.info('map mark index built', { marks: marks.length });
+  return { marks, names };
 }
 
 /**
@@ -49,6 +88,7 @@ export async function extractMaps(
 ): Promise<ExtractMapsResult> {
   const maps: MapRecord[] = [];
   const mapNpcs: MapNpcRecord[] = [];
+  const mapMarks: MapMarkRecord[] = [];
   const mapMobs: MapMobRecord[] = [];
   const mapMobSpawns: MapMobSpawnRecord[] = [];
   const mapPortals: MapPortalRecord[] = [];
@@ -66,7 +106,7 @@ export async function extractMaps(
           ? 'Map.wz appears to have failed to load — check parser.load errors.'
           : 'Map.wz loaded but has no `Map` directory; layout may differ from v83.',
     });
-    return { maps, mapNpcs, mapMobs, mapMobSpawns, mapPortals, skipped };
+    return { maps, mapMarks, mapNpcs, mapMobs, mapMobSpawns, mapPortals, skipped };
   }
   const buckets = mapRoot.filter((n) => /^Map\d+$/.test(n.name));
   if (buckets.length === 0) {
@@ -96,6 +136,9 @@ export async function extractMaps(
 
   const nameLookup = await buildMapStringIndex(source);
 
+  const markIndex = await buildMapMarkIndex(source);
+  mapMarks.push(...markIndex.marks);
+
   let processed = 0;
   for (const { id, node, bucket } of imgs) {
     opts.onProgress?.({
@@ -124,6 +167,7 @@ export async function extractMaps(
 
     const infoTree = subs.get('info');
     const strs = nameLookup.get(id);
+    const mapMark = childToString(infoTree, 'mapMark');
 
     // Minimap canvas. Two layouts seen in the wild:
     //   A) `<map>/miniMap` is a sub-property whose `canvas` child is the
@@ -195,6 +239,7 @@ export async function extractMaps(
       minimapWidth,
       minimapHeight,
       minimapMag,
+      mapMark: mapMark && markIndex.names.has(mapMark) ? mapMark : null,
       sourcePath: node.fullPath,
     });
 
@@ -261,5 +306,5 @@ export async function extractMaps(
     withMinimaps,
     skipped: skipped.length,
   });
-  return { maps, mapNpcs, mapMobs, mapMobSpawns, mapPortals, skipped };
+  return { maps, mapMarks, mapNpcs, mapMobs, mapMobSpawns, mapPortals, skipped };
 }

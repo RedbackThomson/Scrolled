@@ -168,7 +168,22 @@ export interface MapRecord {
   minimapWidth: number | null;
   minimapHeight: number | null;
   minimapMag: number | null;
+  /**
+   * Name of this map's region mark (`info/mapMark`), keying into `map_marks`
+   * for its icon. Null when the map has no mark or names one with no icon
+   * (e.g. the sentinel `"None"`).
+   */
+  mapMark: string | null;
   sourcePath: string;
+}
+
+/**
+ * A region-mark icon shared across maps. Stored once per `name`
+ * (Map.wz/MapHelper.img/mark/<name>) and referenced by `MapRecord.mapMark`.
+ */
+export interface MapMarkRecord {
+  name: string;
+  iconData: Uint8Array;
 }
 
 export interface MapNpcRecord {
@@ -869,6 +884,10 @@ export interface GameDatabase {
   listMapStreetCounts(limit?: number): Promise<CategoryCount[]>;
   /** Decoded PNG bytes for the map minimap, or null. */
   getMapMinimap(id: number): Promise<Uint8Array | null>;
+  /** Store the shared region-mark icons (deduplicated by name). */
+  upsertMapMarks(marks: MapMarkRecord[]): Promise<number>;
+  /** Decoded PNG bytes for the map's region-mark icon, or null. */
+  getMapMark(id: number): Promise<Uint8Array | null>;
   /** NPCs + mobs + portals attached to a single map. */
   getMapNpcs(mapId: number): Promise<MapNpcWithName[]>;
   getMapMobs(mapId: number): Promise<MapMobWithName[]>;

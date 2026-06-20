@@ -929,4 +929,21 @@ export const MIGRATIONS: readonly Migration[] = [
       CREATE INDEX world_map_links_source_idx ON world_map_links (source_world_map_id);
     `,
   },
+  {
+    version: 32,
+    name: 'map marks',
+    sql: `
+      -- Map "mark" icons from Map.wz/MapHelper.img/mark/<markName>: small
+      -- region badges (Henesys, Ellinia, …) shared across many maps. Each
+      -- map's info/mapMark names one of them. The icon bytes are stored once
+      -- per mark name (not per map) to avoid duplicating the same ~3 KB PNG
+      -- across thousands of map rows; maps reference it by name.
+      ALTER TABLE maps ADD COLUMN map_mark TEXT;
+
+      CREATE TABLE map_marks (
+        name      TEXT PRIMARY KEY,
+        icon_data BLOB NOT NULL
+      );
+    `,
+  },
 ];

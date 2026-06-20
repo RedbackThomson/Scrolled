@@ -158,6 +158,7 @@ export function useExtractAll(opts: UseExtractAllOptions = {}) {
           const r = await parser.extractMaps(onProgress);
           setProgress({ phase: 'Saving maps to database', current: 0, total: r.maps.length });
           const mapCount = r.maps.length > 0 ? await db.upsertMaps(r.maps) : 0;
+          if (r.mapMarks.length > 0) await db.upsertMapMarks(r.mapMarks);
           tracker.ran('map', mapCount, r.skipped.length);
           skippedTotal += r.skipped.length;
           if (

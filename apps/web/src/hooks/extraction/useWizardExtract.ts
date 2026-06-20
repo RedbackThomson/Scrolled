@@ -553,6 +553,7 @@ async function runWorkerExtractors(
     const onProgress = proxy((p: ProgressUpdate) => patchExtractor('map', { progress: p }));
     const r = await worker.extractMaps(onProgress);
     const rows = r.maps.length > 0 ? await db.upsertMaps(r.maps) : 0;
+    if (r.mapMarks.length > 0) await db.upsertMapMarks(r.mapMarks);
     if (
       r.mapNpcs.length > 0 ||
       r.mapMobs.length > 0 ||

@@ -63,7 +63,16 @@ export function EntityAvatar({ entity, id, size = 28, className, alt }: Props) {
         />
       );
     case 'map':
-      return <GlyphBox size={size} className={className} Glyph={MapIcon} />;
+      return (
+        <EntityIcon
+          entity="map-mark"
+          id={id}
+          size={size}
+          placeholder={MapIcon}
+          alt={alt}
+          className={cn('shrink-0', className)}
+        />
+      );
     case 'quest':
       return <GlyphBox size={size} className={className} Glyph={ScrollText} />;
     case 'questChain':
