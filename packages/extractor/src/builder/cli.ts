@@ -9,6 +9,9 @@
 // Run via vite-node so `import.meta.glob` (server profiles) and the
 // sqlite-wasm asset resolve exactly as they do under Vitest:
 //   pnpm dataset:build <wz-dir> --profile <id> --version <label> --out <dir>
+//
+// SQL execution is quiet by default; pass --trace-sql to echo every statement
+// (verbose — hundreds of thousands of lines on a full extraction).
 
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { resolve, basename } from 'node:path';
@@ -47,6 +50,7 @@ interface CliArgs {
   channel?: string;
   kind?: DataSourceKind;
   wzVersion?: WzMapleVersionName;
+  traceSql: boolean;
 }
 
 function parseArgs(argv: string[]): CliArgs {
@@ -54,12 +58,19 @@ function parseArgs(argv: string[]): CliArgs {
   if (command !== 'build') {
     fail(`Unknown command '${command ?? ''}'. Usage: scrolled-dataset build <wz-dir> [options]`);
   }
+  // Valueless boolean flags; everything else takes a `--key value` pair.
+  const BOOLEAN_FLAGS = new Set(['trace-sql']);
   let wzDir: string | undefined;
   const opts: Record<string, string> = {};
+  const flags = new Set<string>();
   for (let i = 0; i < rest.length; i++) {
     const a = rest[i]!;
     if (a.startsWith('--')) {
       const key = a.slice(2);
+      if (BOOLEAN_FLAGS.has(key)) {
+        flags.add(key);
+        continue;
+      }
       const val = rest[i + 1];
       if (val === undefined || val.startsWith('--')) fail(`Missing value for --${key}`);
       opts[key] = val!;
@@ -93,6 +104,7 @@ function parseArgs(argv: string[]): CliArgs {
     channel: opts.channel,
     kind,
     wzVersion,
+    traceSql: flags.has('trace-sql'),
   };
 }
 
@@ -185,7 +197,7 @@ async function main() {
     for (const e of loaded.errors) log.error('load error', { file: e.name, message: e.message });
   }
 
-  const sql = new Sqlite({ logTag: 'dataset-build' });
+  const sql = new Sqlite({ logTag: 'dataset-build', traceSql: args.traceSql });
   const db = new DbApi(sql);
   await db.open();
 

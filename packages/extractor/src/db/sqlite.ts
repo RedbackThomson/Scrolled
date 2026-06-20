@@ -53,6 +53,12 @@ export interface SqliteOptions {
   /** Tag used in log lines so two DBs are distinguishable in the console. */
   logTag?: string;
   /**
+   * Echo every executed SQL statement to the console (the sqlite3 `t` open
+   * flag). Off by default — on a full extraction it emits hundreds of thousands
+   * of lines. Intended only for debugging a specific query.
+   */
+  traceSql?: boolean;
+  /**
    * Optional hook run after the database opens but *before* migrations. Lets a
    * caller destructively reset an incompatible derived cache (clear all rows)
    * so that breaking migrations apply to empty tables instead of failing on a
@@ -72,6 +78,7 @@ export class Sqlite {
   private readonly poolName: string;
   private readonly migrations: readonly Migration[];
   private readonly logTag: string;
+  private readonly traceSql: boolean;
   private readonly resetBeforeMigrate?: (ctx: PreMigrateContext) => boolean;
 
   constructor(options: SqliteOptions = {}) {
@@ -79,6 +86,7 @@ export class Sqlite {
     this.poolName = options.poolName ?? DEFAULT_POOL_NAME;
     this.migrations = options.migrations ?? MIGRATIONS;
     this.logTag = options.logTag ?? this.opfsFilename;
+    this.traceSql = options.traceSql ?? false;
     this.resetBeforeMigrate = options.resetBeforeMigrate;
   }
 
@@ -126,7 +134,7 @@ export class Sqlite {
         ...describeError(err),
         capabilities: opfsCapabilities,
       });
-      this.db = new this.sqlite3.oo1.DB(':memory:', 'ct');
+      this.db = new this.sqlite3.oo1.DB(':memory:', this.traceSql ? 'ct' : 'c');
       this._backend = 'memory';
       this._fallbackReason = summarizeFallbackReason(err, opfsCapabilities);
     }
@@ -318,7 +326,7 @@ export class Sqlite {
       // Memory fallback: deserialize directly into a fresh DB. The bytes
       // need to be copied into WASM-owned memory so the engine retains
       // ownership across calls.
-      const db = new sqlite3.oo1.DB(':memory:', 'ct');
+      const db = new sqlite3.oo1.DB(':memory:', this.traceSql ? 'ct' : 'c');
       const wasm = sqlite3.wasm;
       const ptr = wasm.allocFromTypedArray(bytes);
       const flags =
