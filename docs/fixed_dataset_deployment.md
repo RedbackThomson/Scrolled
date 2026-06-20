@@ -12,11 +12,12 @@ The two are selected by build-time configuration, not separate codebases.
 
 ## Source-repo policy
 
-This repository ships **code only**. A fixed deployment's game data, exported
-database, manifests, and deployment env values live in a **separate repository**
-that the operator controls — never here. Nothing dataset-specific or proprietary
-(no `.wz`, no `.scrolled-backup`, no `mapleroyals` strings in shipped UI copy) is
-committed to `scrolled`. See `CLAUDE.md` and `docs/writing_conventions.md`.
+This repository ships **code only**. A fixed deployment's game files, built
+dataset bundle, manifests, and deployment env values live in a **separate
+repository** that the operator controls — never here. Nothing dataset-specific or
+proprietary (no `.wz`, no `.scrolled-dataset` bundle, no `mapleroyals` strings in
+shipped UI copy) is committed to `scrolled`. See `CLAUDE.md` and
+`docs/writing_conventions.md`.
 
 ## How it works
 
@@ -28,12 +29,16 @@ committed to `scrolled`. See `CLAUDE.md` and `docs/writing_conventions.md`.
 - When `enableUserImport` is false, all import/replace/rebuild/server-profile UI
   is hidden (`apps/web/src/config`).
 - On first load with an empty library, `DatasetInstallScreen` resolves the
-  channel, downloads + verifies the artifact, and restores it into OPFS via the
-  existing backup importer. Later visits open from OPFS; the site is offline.
-- The manifest declares the dataset's required `serverProfileId`. The app pins it
-  on install (overriding whatever the backup carried) so the data always renders
-  under the right rules, and refuses — before downloading — if the build doesn't
-  ship that profile. The profile picker UI stays hidden; the dataset decides it.
+  channel, downloads + verifies the `.scrolled-dataset` bundle, and restores it
+  into OPFS via the existing backup importer. Later visits open from OPFS; the
+  site is offline.
+- The bundle carries the **full server-profile config inline**
+  (`server-profile.json`); the app applies it on install, so the dataset renders
+  under its own rates/calculator without the build bundling a matching profile.
+  The manifest also declares `serverProfileId`, `calculatorId`, `dataRevision`,
+  and `schemaVersion`; the app checks them **before downloading** and refuses
+  (with "update the app") if it lacks the calculator or the data is newer than it
+  supports. The profile picker UI stays hidden; the dataset decides it.
 - OPFS storage is namespaced per deployment (`db/opfsNamespace.ts`), so the
   generic site and each fixed dataset keep separate databases on one origin.
 - A newer published version surfaces a `DatasetUpdatePrompt` (distinct from the
@@ -49,14 +54,22 @@ app build that opens it (see `CLAUDE.md` → schema vs. data revisions):
 - **data revision** (`app_meta.data_revision`) — the extracted-data contract the
   app understands.
 
-These ride inside the artifact itself (the `.scrolled-backup` manifest), so
-compatibility is decided from the artifact, not from hand-entered metadata.
-`evaluateBackupImport()` enforces it on every install/update, both directions:
+Plus one code contract: the equip stat-range **calculator** is keyed by id, so
+the build must register the `calculatorId` the manifest names. (The rest of the
+profile — rates, fingerprints — is config and travels in the bundle, so changing
+rates only needs a rebuild, not an app release.)
+
+The generated `manifest.json` carries all of these (`dataRevision`,
+`schemaVersion`, `serverProfileId`, `calculatorId`), derived from the built
+database + profile, so they can't drift from the artifact. `assertDatasetSupported`
+checks them **before downloading**; `evaluateBackupImport()` is the backstop on
+the data inside the bundle at install/update, both directions:
 
 - Data older than `MINIMUM_SUPPORTED_DATA_REVISION` → blocked.
-- Data newer than `CURRENT_DATA_REVISION`, or schema beyond
-  `LATEST_SCHEMA_VERSION` → blocked with an "update the app" message (a cached,
-  older app refuses a dataset built by a newer one rather than risk corruption).
+- Data newer than `CURRENT_DATA_REVISION`, schema beyond `LATEST_SCHEMA_VERSION`,
+  or a `calculatorId` the build lacks → blocked with an "update the app" message
+  (a cached, older app refuses a dataset built by a newer one rather than risk
+  corruption).
 
 This makes a mismatch **safe** rather than corrupting. The usual way an app and
 dataset drift is the **service-worker cache**: a returning visitor can run a
@@ -75,36 +88,34 @@ A static tree, hostable from GitHub Pages, R2, S3, or any static host:
 ```
 datasets/
   <family>/
-    latest.json                       # channel -> concrete version
+    latest.json                            # channel -> concrete version
     <version>/
-      manifest.json                   # id, version, displayName, serverProfileId, artifact{url,sha256,sizeBytes}
+      manifest.json                        # serverProfileId, calculatorId, dataRevision, schemaVersion, artifact{url,sha256,sizeBytes}
       checksums.json
-      <artifact>.scrolled-backup      # the prebuilt library
+      <id>.scrolled-dataset                # gzip(tar(manifest + game.sqlite3 + server-profile.json))
 ```
 
 `latest.json` resolves to an immutable version; published versions never change.
 
-## Building a dataset artifact
+## Building a dataset bundle
 
-The artifact is the generic site's own backup export, packaged by
-`@scrolled/dataset-builder`:
+`pnpm dataset:build` reads the game's WZ files with the same parser/extractors the
+app uses and writes the bundle + manifest under Node — no browser, no manual
+export. (It runs under `vite-node`; the build pipeline is in
+`@scrolled/extractor/builder`.)
 
-1. Run the generic site, import your game files, let it build the library.
-2. Settings → Import & Export → **Export backup → "Game data only"**. This saves
-   a `.scrolled-backup` file.
-3. Package it into the repository layout (output is wherever your deployment repo
-   keeps datasets):
+```sh
+nix develop -c pnpm dataset:build ~/wz \
+  --profile mapleroyals --version 2026-06-20 --display-name "MapleRoyals" \
+  --out <deployment-repo>/datasets
+```
 
-   ```sh
-   nix develop -c pnpm dataset:build \
-     --input ~/Downloads/scrolled-game-2026-06-20.scrolled-backup \
-     --out <deployment-repo>/datasets \
-     --family mapleroyals --version 2026-06-20 --display-name "MapleRoyals" \
-     --server-profile mapleroyals
-   ```
-
-   Re-running with a new `--version` adds a version and repoints `latest.json`;
-   prior immutable versions are left untouched.
+- `--profile` selects a built-in profile (or `--profile-file <json>` for a custom
+  one); its full config is embedded in the bundle. `--family` defaults to the
+  profile id. The WZ encryption version is auto-detected (`--wz-version` to
+  override). A folder of `.img` files works in place of `.wz`.
+- Re-running with a new `--version` adds a version and repoints `latest.json`;
+  prior immutable versions are left untouched.
 
 ## Local testing
 
@@ -112,12 +123,10 @@ The artifact is the generic site's own backup export, packaged by
 committed `apps/web/.env.fixed` uses `family=local`.
 
 ```sh
-# 1. Build a local dataset from a backup into the served folder
-nix develop -c pnpm dataset:build \
-  --input ~/Downloads/scrolled-game-2026-06-20.scrolled-backup \
-  --out apps/web/public/datasets \
-  --family local --version 2026-06-20 --display-name "Local Dataset" \
-  --server-profile vanilla-v83
+# 1. Build a local dataset straight from your WZ files into the served folder
+nix develop -c pnpm dataset:build ~/wz \
+  --profile vanilla-v83 --version 2026-06-20 --display-name "Local Dataset" \
+  --family local --out apps/web/public/datasets
 
 # 2. Run the fixed deployment (loads .env.fixed)
 nix develop -c pnpm dev:fixed

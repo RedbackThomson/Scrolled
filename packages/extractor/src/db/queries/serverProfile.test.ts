@@ -33,7 +33,8 @@ describe('inline server profile persistence', () => {
   });
 
   it('clears the inline config when a bundled profile is selected by id', async () => {
-    await db.setServerProfileConfig({ id: 'mapleroyals', rates: { exp: 4 } });
+    const profile = { id: 'mapleroyals', rates: { exp: 4 } };
+    await db.setServerProfileConfig(profile);
     await db.setServerProfile('vanilla-v83');
     expect(await db.getServerProfile()).toBe('vanilla-v83');
     expect(await db.getActiveServerProfile()).toBeNull();

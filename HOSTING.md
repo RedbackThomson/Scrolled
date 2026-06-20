@@ -18,92 +18,94 @@ document is the operational runbook, optimized for running through CI.
 RedbackThomson/scrolled            your-org/your-deploy   (private or public)
 ─────────────────────────          ──────────────────────────────────────────
 app source + build tooling   --->  CI checks out scrolled @ a pinned version,
-(this repo, public)                 packages your dataset, builds, and publishes
-                                    to your-server.example.com
+(this repo, public)                 builds your dataset from the WZ files, builds
+                                    the site, and publishes to your-server.example.com
                                           ▲
                                           │ uploaded when the game data changes
-                                    your .scrolled-backup (object storage / LFS)
+                                    your game's .wz files (object storage / LFS)
 ```
 
-Three moving parts, only **one of which is manual**:
+Three moving parts, and CI does **all** of them:
 
-| Part                                          | How often                  | Automated?          |
-| --------------------------------------------- | -------------------------- | ------------------- |
-| Export a dataset artifact from the game files | when **game data** changes | ❌ manual (browser) |
-| Package + build + publish the site            | every change               | ✅ CI               |
-| Pull a newer **app** version                  | when you choose to update  | ✅ CI (bump a pin)  |
+| Part                                     | How often                  | Automated?              |
+| ---------------------------------------- | -------------------------- | ----------------------- |
+| Build a dataset bundle from the WZ files | when **game data** changes | ✅ CI (`dataset:build`) |
+| Package + build + publish the site       | every change               | ✅ CI                   |
+| Pull a newer **app** version             | when you choose to update  | ✅ CI (bump a pin)      |
 
-The manual export is inherent: the app builds its database in the browser, so a
-human with the game files produces the artifact once per data update. Everything
-else is CI.
+The dataset build is headless now — `dataset:build` reads the WZ files with the
+same parser/extractors the app uses and writes a SQLite-backed bundle under
+Node, no browser. The only human input is uploading the game's WZ files when the
+game data itself changes.
 
 ---
 
 ## Prerequisites
 
 - A **deployment repository** you control (holds CI config + published output).
-- Somewhere to store the `.scrolled-backup` artifact that CI can read — object
-  storage (Cloudflare R2 / S3) with CI credentials, a GitHub Release asset, or
-  Git LFS. **Not** plain git (it's ~100 MB+) and **never** the public `scrolled`
-  repo.
+- Somewhere to store the game's **WZ files** that CI can read — object storage
+  (Cloudflare R2 / S3) with CI credentials, a GitHub Release asset, or Git LFS.
+  **Not** plain git (they're ~100 MB+) and **never** the public `scrolled` repo.
+  (A folder of `.img` files works too; the build auto-detects WZ vs IMG.)
 - A static host. GitHub Pages works and is assumed in the examples; any static
   host does.
-- Node 22+ in CI (`dataset:build` runs TypeScript via `--experimental-strip-types`).
+- Node 22+ in CI (`dataset:build` runs under `vite-node`).
 
 ---
 
-## Step 1 — Produce a dataset artifact (manual, on game-data updates)
+## Step 1 — Make the game's WZ files available to CI (on game-data updates)
 
-Do this once whenever the game's data changes. It needs the game files and a
-browser.
+Do this once whenever the game's data changes. There's no browser step: CI builds
+the dataset straight from the WZ files.
 
-1. Run the **generic** app (hosted `scrolled.dev` or a local `pnpm dev`).
-2. Import the new game files and let it build the library.
-3. **Settings → Import & Export → Export backup → "Game data only."** This saves
-   `scrolled-game-<date>.scrolled-backup` — a gzip container holding the game
-   database plus its schema/data-revision contract.
-4. Upload that file to your artifact storage (or attach it to a deploy-repo
-   release). This is the input CI consumes.
+1. Gather the game's WZ files. The build reads only the ones it needs —
+   `String`, `Item`, `Character`, `Mob`, `Npc`, `Map`, `Quest`, `Skill` (`.wz`).
+   A folder tree of extracted `.img` files works too.
+2. Upload them to your artifact storage (object storage, a deploy-repo release,
+   or Git LFS). This directory is the input CI consumes.
 
-> Export **"Game data only"**, not "Everything" — a shared dataset must not carry
-> anyone's personal collections.
+> These are the game's own files. They are **never** committed to `scrolled` or
+> any public repo — keep them in private storage. The build output (a derived
+> SQLite bundle) is what gets published, not the WZ files.
 
 ---
 
-## Step 2 — Package it into a dataset repository (CI)
+## Step 2 — Build the dataset bundle (CI)
 
-`pnpm dataset:build` turns the backup into the static layout the app installs
-from. It's fully parameterized — point it at your storage and your output dir:
+`pnpm dataset:build` reads the WZ files and writes the static layout the app
+installs from — a self-contained `.scrolled-dataset` bundle plus a generated
+manifest. Point it at your WZ directory and your output dir:
 
 ```bash
-pnpm dataset:build \
-  --input ./data/game.scrolled-backup \
-  --out ./scrolled/apps/web/public/datasets \
-  --family your-server \
+pnpm dataset:build ./data/wz \
+  --profile your-server \
   --version 2026-06-01 \
   --display-name "Your Server" \
-  --server-profile your-server
+  --out ./scrolled/apps/web/public/datasets
 ```
 
 Produces:
 
 ```
-datasets/your-server/latest.json                      # channel -> concrete version
-datasets/your-server/2026-06-01/manifest.json         # id, version, displayName, serverProfileId, artifact{url,sha256,sizeBytes}
+datasets/your-server/latest.json                              # channel -> concrete version
+datasets/your-server/2026-06-01/manifest.json                 # generated: serverProfileId, calculatorId, dataRevision, schemaVersion, artifact{url,sha256,sizeBytes}
 datasets/your-server/2026-06-01/checksums.json
-datasets/your-server/2026-06-01/game.scrolled-backup  # copy of the artifact
+datasets/your-server/2026-06-01/your-server-2026-06-01.scrolled-dataset   # gzip(tar(manifest + game.sqlite3 + server-profile.json))
 ```
 
 - `--version` should be immutable (a date or content hash). Re-running with a new
   `--version` **adds** a version and repoints `latest.json`; published versions
   are never rewritten.
-- `--server-profile` is **required**: it names the rules (EXP rate, equip
-  stat-range calculator) the data should render under, and the app pins it on
-  install — so the dataset always uses the right profile regardless of what was
-  selected when the backup was exported. The id must be one the app build ships
-  (a JSON in `apps/web/src/serverProfiles/profiles/`, e.g. `mapleroyals`, or the
-  baseline `vanilla-v83`). If your server needs a profile that doesn't exist yet,
-  add it to `scrolled` first — profiles are open-source config, not game data.
+- `--profile` is **required**: it names the rules (EXP rate, equip stat-range
+  calculator) the data renders under. The **full profile config travels inside
+  the bundle**, so a server can change its rates by rebuilding — no app release
+  needed. It must be a profile the build ships (the baseline `vanilla-v83`, or a
+  JSON in `apps/web/src/serverProfiles/profiles/`). You can also pass a custom one
+  with `--profile-file <path>` (validated against the profile schema). Only a
+  brand-new stat-**calculator** algorithm still needs an app release.
+- `--family` defaults to the profile id; pass it to host several datasets under
+  one name. The WZ encryption version is auto-detected (override with
+  `--wz-version` if detection is inconclusive).
 - Writing into `apps/web/public/datasets` means the next site build copies the
   tree into the output automatically.
 
@@ -148,7 +150,7 @@ env:
   DATASET_FAMILY: your-server
   DATASET_VERSION: '2026-06-01'
   DATASET_DISPLAY_NAME: Your Server
-  DATASET_SERVER_PROFILE: your-server # must match a profile shipped by SCROLLED_REF
+  DATASET_PROFILE: your-server # a profile shipped by SCROLLED_REF (its calculator must exist there)
 
 jobs:
   build:
@@ -172,25 +174,24 @@ jobs:
         working-directory: scrolled
         run: pnpm install --frozen-lockfile
 
-      - name: Fetch dataset artifact # from object storage / release — keep it out of logs
+      - name: Fetch WZ files # from object storage / release — keep them out of logs
         run: |
-          mkdir -p data
-          aws s3 cp "s3://$BUCKET/game.scrolled-backup" data/game.scrolled-backup
+          mkdir -p data/wz
+          aws s3 sync "s3://$BUCKET/wz" data/wz
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           BUCKET: ${{ secrets.DATASET_BUCKET }}
 
-      - name: Package dataset
+      - name: Build dataset bundle
         working-directory: scrolled
         run: |
-          pnpm dataset:build \
-            --input ../data/game.scrolled-backup \
-            --out apps/web/public/datasets \
-            --family "$DATASET_FAMILY" \
+          pnpm dataset:build ../data/wz \
+            --profile "$DATASET_PROFILE" \
             --version "$DATASET_VERSION" \
             --display-name "$DATASET_DISPLAY_NAME" \
-            --server-profile "$DATASET_SERVER_PROFILE"
+            --family "$DATASET_FAMILY" \
+            --out apps/web/public/datasets
 
       - name: Build site
         working-directory: scrolled
@@ -258,7 +259,7 @@ Merging the PR triggers a rebuild against the new app version. **Pin
 deliberately** rather than tracking a moving branch — a release is a known-good
 app/data contract; `main` is not.
 
-You don't have to re-export the dataset on every app update. Whether the existing
+You don't have to rebuild the dataset on every app update. Whether the existing
 dataset survives an app bump depends on the compatibility rules below — and the
 app enforces them at runtime regardless, so a mismatch is **safe, never
 corrupting**.
@@ -274,15 +275,17 @@ build that opens it (see [CLAUDE.md](CLAUDE.md) → schema vs. data revisions):
   down.
 - **data revision** (`app_meta.data_revision`) — the data contract the app
   understands; readable down to `MINIMUM_SUPPORTED_DATA_REVISION`.
-- **server profile** (`serverProfileId` in the manifest) — the app build must
-  ship a profile with that id, and pins it on install.
+- **stat calculator** (`calculatorId` in the manifest) — the equip stat-range
+  algorithm is code keyed by id, so the build must register that calculator. The
+  server profile _config_ (rates, fingerprints) travels inside the bundle and is
+  applied on install, so only a brand-new calculator needs an app release.
 
-The schema/data contracts ride inside the artifact and are checked on
-install/update (`evaluateBackupImport`); the server profile is checked from the
-manifest **before downloading**. A dataset newer than the app, older than the app
-can read, or naming a profile the build doesn't ship is **refused with an "update
-the app" message** instead of loading wrong or corrupt data. So the worst case is
-a clear prompt, not a broken wiki.
+The manifest carries all four (`dataRevision`, `schemaVersion`, `serverProfileId`,
+`calculatorId`) and is checked **before downloading**; `evaluateBackupImport` is
+the backstop on the data inside the bundle at install/update. A dataset newer than
+the app, older than the app can read, or naming a profile/calculator the build
+doesn't ship is **refused with an "update the app" message** instead of loading
+wrong or corrupt data. So the worst case is a clear prompt, not a broken wiki.
 
 What that means per change:
 
@@ -290,9 +293,10 @@ What that means per change:
 | ---------------------------------------------------------------------------------------- | -------------------------------- | --------------------------------------------------------------------------- |
 | App patch, no data-revision change                                                       | ✅ Yes                           | Bump the pin, rebuild — done                                                |
 | App update, **additive** data-revision bump                                              | ✅ Yes (new fields render blank) | Rebuild now; refresh the dataset later if you want the new fields populated |
-| App update, **breaking** bump (`MINIMUM_SUPPORTED_DATA_REVISION` rises past the dataset) | ❌ No (app refuses)              | Re-export the dataset from the new app build (Step 1), then publish         |
-| App update drops the dataset's server profile                                            | ❌ No (app refuses)              | Restore the profile JSON in `scrolled`, or repin to a build that has it     |
-| Game data update                                                                         | n/a (new content)                | Re-export (Step 1), publish a new `--version`                               |
+| App update, **breaking** bump (`MINIMUM_SUPPORTED_DATA_REVISION` rises past the dataset) | ❌ No (app refuses)              | Rebuild the dataset from the WZ files on the new app build, then publish    |
+| App update drops the dataset's stat **calculator**                                       | ❌ No (app refuses)              | Restore the calculator in `scrolled`, or repin to a build that has it       |
+| Server changes its rates (same game data)                                                | ✅ Yes (config is in the bundle) | Rebuild with the updated profile; no app release needed                     |
+| Game data update                                                                         | n/a (new content)                | Rebuild from the new WZ files, publish a new `--version`                    |
 
 **Recommended CI gate:** after building, run a quick headless smoke test — serve
 `dist-fixed`, load it in a headless browser, and assert the library installs.
@@ -310,10 +314,10 @@ ever covers the brief service-worker cache window.
 
 **Game data changed (new server content):**
 
-1. Export "Game data only" from the generic app (Step 1).
-2. Upload the backup to storage (fires the publish workflow, or run it manually).
-3. CI packages a new `--version`, repoints `latest`, rebuilds, deploys.
-4. Returning visitors get a "newer dataset available" prompt; new visitors get it
+1. Upload the new WZ files to storage (Step 1) — fires the publish workflow, or
+   run it manually.
+2. CI builds a new `--version`, repoints `latest`, rebuilds the site, deploys.
+3. Returning visitors get a "newer dataset available" prompt; new visitors get it
    on first load.
 
 **App version changed:**
@@ -321,8 +325,8 @@ ever covers the brief service-worker cache window.
 1. Merge the watcher's `SCROLLED_REF` bump (or bump it by hand).
 2. CI rebuilds against the new app. If the build's data revision still accepts the
    current dataset, you're done.
-3. If it's a breaking bump, the smoke test / runtime guard flags it — re-export
-   the dataset (Step 1) and publish both together.
+3. If it's a breaking bump, the smoke test / runtime guard flags it — rebuild the
+   dataset from the WZ files (Step 1) and publish both together.
 
 ---
 
