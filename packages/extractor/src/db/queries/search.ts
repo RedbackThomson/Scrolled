@@ -64,13 +64,18 @@ export function listSearchEntries(sql: Sqlite): SearchEntry[] {
   for (const r of sql.selectObjects<{
     id: number;
     name: string | null;
-    job_id: number;
-  }>(`SELECT id, name, job_id FROM skills WHERE name IS NOT NULL AND name <> ''`)) {
+    job_name: string | null;
+  }>(
+    `SELECT s.id, s.name, j.name AS job_name
+       FROM skills s
+       LEFT JOIN jobs j ON j.id = s.job_id
+      WHERE s.name IS NOT NULL AND s.name <> ''`,
+  )) {
     out.push({
       id: r.id,
       name: r.name as string,
       entity: 'skill',
-      category: `Job ${r.job_id}`,
+      category: r.job_name,
     });
   }
   return out;
