@@ -16,7 +16,7 @@
     "build": "pnpm --filter @scrolled/web build",
     "build:fixed": "pnpm --filter @scrolled/web build:fixed",
     "preview": "pnpm --filter @scrolled/web preview",
-    "dataset:build": "node --experimental-strip-types packages/dataset-builder/src/cli.ts",
+    "dataset:build": "pnpm --filter @scrolled/extractor dataset:build",
     "typecheck": "pnpm -r typecheck",
     "lint": "pnpm -r lint",
     "format": "prettier --write .",

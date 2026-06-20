@@ -7,7 +7,7 @@
 
 import type { DatasetFileRef } from '@/db';
 import { wzKey } from '@/hooks/extraction/useExtractAll';
-import type { ExtractorKey as SharedExtractorKey } from '@/hooks/extraction/shared';
+import type { ExtractorKey as SharedExtractorKey } from '@scrolled/extractor/builder/extractStats';
 import type { WizardFile } from './StepFiles';
 
 /**

@@ -11,9 +11,9 @@ import {
   mergeFileStatuses,
   shouldSkip,
   type ExtractStats,
-} from './shared';
+} from '@scrolled/extractor/builder/extractStats';
 
-export type { ExtractStats } from './shared';
+export type { ExtractStats } from '@scrolled/extractor/builder/extractStats';
 
 const log = createLogger('extract-ui');
 

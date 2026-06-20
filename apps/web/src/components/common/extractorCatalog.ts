@@ -12,7 +12,7 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
-import { EXTRACT_COUNT_KEYS, type ExtractCountKey } from '@/hooks/extraction/shared';
+import { EXTRACT_COUNT_KEYS, type ExtractCountKey } from '@scrolled/extractor/builder/extractStats';
 
 export interface ExtractorCardMeta {
   label: string;

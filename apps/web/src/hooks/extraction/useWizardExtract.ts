@@ -46,11 +46,11 @@ import {
   mergeFileStatuses,
   type ExtractorKey,
   type ExtractStats,
-} from './shared';
+} from '@scrolled/extractor/builder/extractStats';
 
 const log = createLogger('wizard-extract');
 
-export { ALL_EXTRACTOR_KEYS, type ExtractorKey } from './shared';
+export { ALL_EXTRACTOR_KEYS, type ExtractorKey } from '@scrolled/extractor/builder/extractStats';
 
 export const EXTRACTOR_TO_WORKER: Record<ExtractorKey, PoolWorkerName> = {
   item: 'items',
@@ -96,7 +96,7 @@ export interface ExtractorStatus {
   files: string[];
 }
 
-export type { ExtractStats } from './shared';
+export type { ExtractStats } from '@scrolled/extractor/builder/extractStats';
 
 export interface UseWizardExtractOptions {
   version: WzMapleVersionName;
