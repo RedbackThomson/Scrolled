@@ -906,4 +906,27 @@ export const MIGRATIONS: readonly Migration[] = [
       CREATE INDEX world_maps_parent_idx           ON world_maps (parent_id);
     `,
   },
+  {
+    version: 31,
+    name: 'world map links',
+    sql: `
+      -- MapLink entries on a world map: a clickable image overlay that
+      -- navigates to another (usually more detailed) world map. The overlay
+      -- PNG lives inline; it's drawn at (base origin - link origin) and the
+      -- whole image is the hit target.
+      CREATE TABLE world_map_links (
+        id                  TEXT PRIMARY KEY,
+        source_world_map_id TEXT NOT NULL,
+        target_world_map_id TEXT NOT NULL DEFAULT '',
+        link_index          INTEGER NOT NULL,
+        tooltip             TEXT,
+        image_data          BLOB,
+        origin_x            INTEGER NOT NULL DEFAULT 0,
+        origin_y            INTEGER NOT NULL DEFAULT 0,
+        z                   INTEGER NOT NULL DEFAULT 0
+      );
+
+      CREATE INDEX world_map_links_source_idx ON world_map_links (source_world_map_id);
+    `,
+  },
 ];

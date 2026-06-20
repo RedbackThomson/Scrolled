@@ -81,6 +81,17 @@ describe('extractWorldMaps', () => {
           int('type', `${top}/MapList/1/type`, 1),
         ]),
       ]),
+      sub('MapLink', `${top}/MapLink`, [
+        sub('0', `${top}/MapLink/0`, [
+          str('toolTip', `${top}/MapLink/0/toolTip`, 'To Victoria'),
+          sub('link', `${top}/MapLink/0/link`, [
+            str('linkMap', `${top}/MapLink/0/link/linkMap`, 'WorldMap000'),
+            canvas('linkImg', `${top}/MapLink/0/link/linkImg`, [
+              vec('origin', `${top}/MapLink/0/link/linkImg/origin`, 100, 50),
+            ]),
+          ]),
+        ]),
+      ]),
     ]);
 
     const childTree = image('WorldMap000.img', child, [
@@ -109,7 +120,7 @@ describe('extractWorldMaps', () => {
         ],
       },
       { [top]: topTree, [child]: childTree },
-      new Set([`${top}/BaseImg/0`]),
+      new Set([`${top}/BaseImg/0`, `${top}/MapLink/0/link/linkImg`]),
     );
 
     const result = await extractWorldMaps(source);
@@ -138,11 +149,20 @@ describe('extractWorldMaps', () => {
 
     expect(result.skipped).toContainEqual({ reason: 'marker has no mapNo', path: `${top}/MapList/1` });
     expect(result.skipped).toContainEqual({ reason: 'missing BaseImg/0', path: child });
+
+    expect(result.links).toHaveLength(1);
+    const link = result.links[0]!;
+    expect(link.id).toBe('WorldMap:0');
+    expect(link.sourceWorldMapId).toBe('WorldMap');
+    expect(link.targetWorldMapId).toBe('WorldMap000');
+    expect(link.tooltip).toBe('To Victoria');
+    expect([link.originX, link.originY]).toEqual([100, 50]);
+    expect(link.imageData).not.toBeNull();
   });
 
   it('returns empty when WorldMap dir is absent', async () => {
     const source = makeSource({}, {}, new Set());
     const result = await extractWorldMaps(source);
-    expect(result).toEqual({ worldMaps: [], markers: [], markerMaps: [], skipped: [] });
+    expect(result).toEqual({ worldMaps: [], markers: [], markerMaps: [], links: [], skipped: [] });
   });
 });

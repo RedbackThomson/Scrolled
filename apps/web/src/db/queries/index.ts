@@ -52,6 +52,7 @@ import type {
   SkillPrerequisiteWithName,
   SkillRecord,
   WorldMapForMap,
+  WorldMapLinkRecord,
   WorldMapMarkerMapRecord,
   WorldMapMarkerRecord,
   WorldMapMarkerWithMaps,
@@ -326,8 +327,16 @@ export class DbApi implements GameDatabase {
     return worldMaps.getWorldMap(this.sql, id);
   }
 
+  async upsertWorldMapLinks(list: WorldMapLinkRecord[]): Promise<number> {
+    return worldMaps.upsertWorldMapLinks(this.sql, list);
+  }
+
   async getWorldMapMarkers(worldMapId: string): Promise<WorldMapMarkerWithMaps[]> {
     return worldMaps.getWorldMapMarkers(this.sql, worldMapId);
+  }
+
+  async getWorldMapLinks(worldMapId: string): Promise<WorldMapLinkRecord[]> {
+    return worldMaps.getWorldMapLinks(this.sql, worldMapId);
   }
 
   async findWorldMapsForMap(mapId: number): Promise<WorldMapForMap[]> {

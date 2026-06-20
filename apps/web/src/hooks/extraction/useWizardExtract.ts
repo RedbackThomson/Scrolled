@@ -587,6 +587,7 @@ async function runWorkerExtractors(
       const wmRows = wm.worldMaps.length > 0 ? await db.upsertWorldMaps(wm.worldMaps) : 0;
       if (wm.markers.length > 0) await db.upsertWorldMapMarkers(wm.markers);
       if (wm.markerMaps.length > 0) await db.upsertWorldMapMarkerMaps(wm.markerMaps);
+      if (wm.links.length > 0) await db.upsertWorldMapLinks(wm.links);
       out.push({
         extractor: 'worldMap',
         status: 'ran',

@@ -1,6 +1,7 @@
 import type { Row, Sqlite } from '../sqlite';
 import type {
   WorldMapForMap,
+  WorldMapLinkRecord,
   WorldMapMarkerMapRecord,
   WorldMapMarkerRecord,
   WorldMapMarkerWithMaps,
@@ -81,6 +82,47 @@ export function upsertWorldMapMarkerMaps(sql: Sqlite, rows: WorldMapMarkerMapRec
     }
   });
   return rows.length;
+}
+
+/** Replace every link of the touched world maps, then insert. */
+export function upsertWorldMapLinks(sql: Sqlite, linkRows: WorldMapLinkRecord[]): number {
+  const worldMapIds = new Set(linkRows.map((l) => l.sourceWorldMapId));
+  sql.transaction(() => {
+    for (const id of worldMapIds) {
+      sql.exec('DELETE FROM world_map_links WHERE source_world_map_id = ?', [id]);
+    }
+    for (const l of linkRows) {
+      sql.exec(
+        `INSERT INTO world_map_links
+           (id, source_world_map_id, target_world_map_id, link_index, tooltip, image_data, origin_x, origin_y, z)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          l.id,
+          l.sourceWorldMapId,
+          l.targetWorldMapId,
+          l.linkIndex,
+          l.tooltip,
+          l.imageData,
+          l.originX,
+          l.originY,
+          l.z,
+        ],
+      );
+    }
+  });
+  return linkRows.length;
+}
+
+export function getWorldMapLinks(sql: Sqlite, worldMapId: string): WorldMapLinkRecord[] {
+  return sql.selectObjects<WorldMapLinkRecord & Row>(
+    `SELECT id, source_world_map_id AS sourceWorldMapId, target_world_map_id AS targetWorldMapId,
+            link_index AS linkIndex, tooltip, image_data AS imageData,
+            origin_x AS originX, origin_y AS originY, z
+       FROM world_map_links
+      WHERE source_world_map_id = ?
+      ORDER BY z, link_index`,
+    [worldMapId],
+  );
 }
 
 export function getWorldMap(sql: Sqlite, id: string): WorldMapRecord | null {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronUp, MapPin } from 'lucide-react';
+import { ChevronUp, Link2, MapPin } from 'lucide-react';
 import {
   GraphicViewerModal,
   GraphicViewerIcon,
@@ -7,7 +7,9 @@ import {
 } from '@/components/GraphicViewer';
 import { MapHoverCard } from '@/components/entity-links';
 import { useEntitySummaryNames } from '@/hooks/useEntitySummaries';
+import { bytesToUrl } from '@/lib/blob';
 import { useWorldMapViewerData } from './useWorldMapViewerData';
+import { WorldMapLinks } from './WorldMapLinks';
 import { WorldMapViewerSidebar } from './WorldMapViewerSidebar';
 
 interface WorldMapViewerModalProps {
@@ -47,19 +49,29 @@ export function WorldMapViewerModal({
   // Drop stale hover when the displayed world map changes.
   useEffect(() => setHoveredMarkerId(null), [worldMapId]);
 
-  const { worldMap, markers, isLoading } = useWorldMapViewerData(worldMapId, open);
+  const { worldMap, markers, links, isLoading } = useWorldMapViewerData(worldMapId, open);
 
-  const layers = useMemo<LayerDescriptor[]>(
-    () => [
-      {
-        key: 'markers',
-        label: 'Markers',
-        Icon: MapPin,
-        swatch: 'text-sky-500',
-        count: markers.length,
-      },
-    ],
-    [markers.length],
+  const layers = useMemo<LayerDescriptor[]>(() => {
+    const out: LayerDescriptor[] = [
+      { key: 'markers', label: 'Markers', Icon: MapPin, swatch: 'text-sky-500', count: markers.length },
+    ];
+    if (links.length > 0) {
+      out.push({ key: 'links', label: 'Links', Icon: Link2, swatch: 'text-violet-500', count: links.length });
+    }
+    return out;
+  }, [markers.length, links.length]);
+
+  // Object URLs for the link overlay PNGs, built once per links set.
+  const linkUrls = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const l of links) if (l.imageData) m.set(l.id, bytesToUrl(l.imageData, 'image/png'));
+    return m;
+  }, [links]);
+  useEffect(
+    () => () => {
+      for (const u of linkUrls.values()) URL.revokeObjectURL(u);
+    },
+    [linkUrls],
   );
 
   const focusMarkerId = useMemo(() => {
@@ -121,8 +133,27 @@ export function WorldMapViewerModal({
         />
       )}
       overlays={({ view, visible, openSidebar }) => {
-        if (!worldMap || !visible.markers) return null;
-        return markers.map((m) => {
+        if (!worldMap) return null;
+        // Region link overlays sit below the markers (z-10). Hit testing is
+        // pixel-accurate (link PNGs are mostly-transparent, overlapping
+        // region shapes), so they highlight only when the cursor is on the
+        // actual art. A linkImg's origin anchors it onto the base coordinate
+        // system, so its top-left is `baseOrigin - linkOrigin`.
+        const linkOverlays =
+          visible.links && links.length > 0 ? (
+            <WorldMapLinks
+              links={links}
+              urls={linkUrls}
+              baseOriginX={worldMap.originX}
+              baseOriginY={worldMap.originY}
+              width={view.imageSize.w}
+              height={view.imageSize.h}
+              onNavigate={onNavigateWorldMap}
+            />
+          ) : null;
+
+        const markerOverlays = visible.markers
+          ? markers.map((m) => {
           const single = m.mapIds.length === 1;
           const firstId = m.mapIds[0];
           const label =
@@ -162,7 +193,15 @@ export function WorldMapViewerModal({
               }
             />
           );
-        });
+            })
+          : null;
+
+        return (
+          <>
+            {linkOverlays}
+            {markerOverlays}
+          </>
+        );
       }}
     />
   );

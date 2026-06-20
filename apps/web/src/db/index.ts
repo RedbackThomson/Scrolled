@@ -59,6 +59,7 @@ export type {
   WorldMapMarkerRecord,
   WorldMapMarkerMapRecord,
   WorldMapMarkerWithMaps,
+  WorldMapLinkRecord,
   WorldMapForMap,
 } from './types';
 export {

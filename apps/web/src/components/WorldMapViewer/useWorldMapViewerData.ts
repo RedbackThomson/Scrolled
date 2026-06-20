@@ -18,10 +18,17 @@ export function useWorldMapViewerData(worldMapId: string, enabled: boolean) {
     staleTime: 5 * 60_000,
     enabled: on,
   });
+  const linksQ = useQuery({
+    queryKey: ['db', 'world-map', worldMapId, 'links'],
+    queryFn: () => client.getWorldMapLinks(worldMapId),
+    staleTime: 5 * 60_000,
+    enabled: on,
+  });
 
   return {
     worldMap: worldMapQ.data ?? null,
     markers: markersQ.data ?? [],
-    isLoading: worldMapQ.isLoading || markersQ.isLoading,
+    links: linksQ.data ?? [],
+    isLoading: worldMapQ.isLoading || markersQ.isLoading || linksQ.isLoading,
   };
 }

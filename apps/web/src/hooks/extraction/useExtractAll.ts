@@ -199,6 +199,7 @@ export function useExtractAll(opts: UseExtractAllOptions = {}) {
             r.worldMaps.length > 0 ? await db.upsertWorldMaps(r.worldMaps) : 0;
           if (r.markers.length > 0) await db.upsertWorldMapMarkers(r.markers);
           if (r.markerMaps.length > 0) await db.upsertWorldMapMarkerMaps(r.markerMaps);
+          if (r.links.length > 0) await db.upsertWorldMapLinks(r.links);
           tracker.ran('worldMap', worldMapCount, r.skipped.length);
           skippedTotal += r.skipped.length;
         } catch (err) {

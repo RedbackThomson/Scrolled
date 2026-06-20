@@ -7,6 +7,7 @@ import {
   scalarToNumber,
 } from './wzCoerce';
 import type {
+  WorldMapLinkRecord,
   WorldMapMarkerMapRecord,
   WorldMapMarkerRecord,
   WorldMapRecord,
@@ -20,6 +21,7 @@ export interface ExtractWorldMapsResult {
   worldMaps: WorldMapRecord[];
   markers: WorldMapMarkerRecord[];
   markerMaps: WorldMapMarkerMapRecord[];
+  links: WorldMapLinkRecord[];
   skipped: { reason: string; path: string }[];
 }
 
@@ -47,6 +49,7 @@ export async function extractWorldMaps(
   const worldMaps: WorldMapRecord[] = [];
   const markers: WorldMapMarkerRecord[] = [];
   const markerMaps: WorldMapMarkerMapRecord[] = [];
+  const links: WorldMapLinkRecord[] = [];
   const skipped: { reason: string; path: string }[] = [];
 
   const root = await source.listChildren('Map.wz/WorldMap');
@@ -55,7 +58,7 @@ export async function extractWorldMaps(
     log.info('Map.wz/WorldMap absent or has no WorldMap*.img', {
       children: root.slice(0, 10).map((n) => n.name),
     });
-    return { worldMaps, markers, markerMaps, skipped };
+    return { worldMaps, markers, markerMaps, links, skipped };
   }
 
   let processed = 0;
@@ -68,11 +71,11 @@ export async function extractWorldMaps(
       detail: id,
     });
 
-    // `BaseImg -> 0 -> origin` and `MapList -> index -> mapNo -> entry` are the
-    // deepest paths read, so depth 4 below the image suffices.
+    // `MapLink -> i -> link -> linkImg -> origin` is the deepest path read
+    // (5 below the image), so cap there.
     const tree = await source.readImageTree(img.fullPath, {
-      subtrees: ['info', 'BaseImg', 'MapList'],
-      maxDepth: 4,
+      subtrees: ['info', 'BaseImg', 'MapList', 'MapLink'],
+      maxDepth: 5,
     });
     if (!tree) {
       skipped.push({ reason: 'image parse failed', path: img.fullPath });
@@ -145,6 +148,39 @@ export async function extractWorldMaps(
       }
     }
 
+    // MapLink: clickable region overlays that navigate to another world map.
+    const mapLink = subs.get('MapLink');
+    if (mapLink) {
+      for (const entry of mapLink.children) {
+        const linkIndex = Number(entry.name);
+        if (!Number.isFinite(linkIndex)) continue;
+        const link = entry.children.find((c) => c.name === 'link');
+        const linkImg = link?.children.find((c) => c.name === 'linkImg');
+        const targetWorldMapId = childToString(link, 'linkMap');
+        if (!targetWorldMapId) {
+          skipped.push({ reason: 'MapLink has no linkMap', path: entry.fullPath });
+          continue;
+        }
+        if (!linkImg) {
+          skipped.push({ reason: 'MapLink has no linkImg', path: entry.fullPath });
+          continue;
+        }
+        const origin = childToVector(linkImg, 'origin');
+        const bytes = await source.getIconPng(linkImg.fullPath);
+        links.push({
+          id: `${id}:${linkIndex}`,
+          sourceWorldMapId: id,
+          targetWorldMapId,
+          linkIndex,
+          tooltip: childToString(entry, 'toolTip'),
+          imageData: bytes && bytes.byteLength > 0 ? bytes : null,
+          originX: origin?.x ?? 0,
+          originY: origin?.y ?? 0,
+          z: childToNumber(linkImg, 'z') ?? 0,
+        });
+      }
+    }
+
     processed += 1;
   }
 
@@ -152,7 +188,8 @@ export async function extractWorldMaps(
     worldMaps: worldMaps.length,
     markers: markers.length,
     markerMaps: markerMaps.length,
+    links: links.length,
     skipped: skipped.length,
   });
-  return { worldMaps, markers, markerMaps, skipped };
+  return { worldMaps, markers, markerMaps, links, skipped };
 }

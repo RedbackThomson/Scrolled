@@ -284,6 +284,22 @@ export interface WorldMapMarkerWithMaps extends WorldMapMarkerRecord {
   mapIds: number[];
 }
 
+/** A clickable image overlay linking one world map to another (a `MapLink`
+ *  entry). Drawn at `baseOrigin - origin`; the whole image is the hit target. */
+export interface WorldMapLinkRecord {
+  /** `"<sourceWorldMapId>:<linkIndex>"`. */
+  id: string;
+  sourceWorldMapId: string;
+  targetWorldMapId: string;
+  linkIndex: number;
+  tooltip: string | null;
+  /** Decoded PNG bytes for the `linkImg` overlay, or null. */
+  imageData: Uint8Array | null;
+  originX: number;
+  originY: number;
+  z: number;
+}
+
 /** A placement of a map on a world map: which world map, which marker, and
  *  the marker's region title (for labelling the switcher). A map can have
  *  several — it may appear on more than one world map. `depth` is the
@@ -863,10 +879,13 @@ export interface GameDatabase {
   upsertWorldMaps(worldMaps: WorldMapRecord[]): Promise<number>;
   upsertWorldMapMarkers(markers: WorldMapMarkerRecord[]): Promise<number>;
   upsertWorldMapMarkerMaps(rows: WorldMapMarkerMapRecord[]): Promise<number>;
+  upsertWorldMapLinks(links: WorldMapLinkRecord[]): Promise<number>;
   /** A world map incl. its decoded background PNG, or null. */
   getWorldMap(id: string): Promise<WorldMapRecord | null>;
   /** Markers for a world map, each with its grouped map ids attached. */
   getWorldMapMarkers(worldMapId: string): Promise<WorldMapMarkerWithMaps[]>;
+  /** Clickable links from a world map to others, ordered by z then index. */
+  getWorldMapLinks(worldMapId: string): Promise<WorldMapLinkRecord[]>;
   /** Every world map placement of a map (one per containing marker). */
   findWorldMapsForMap(mapId: number): Promise<WorldMapForMap[]>;
 
