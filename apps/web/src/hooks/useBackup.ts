@@ -18,6 +18,7 @@ import {
   readBackup,
   type BackupParts,
 } from '@scrolled/extractor/db/backup';
+import { serverProfileSchema } from '@scrolled/extractor/serverProfiles';
 import { downloadBytes, todayStamp } from '@/components/collections';
 import { createLogger, describeError } from '@scrolled/extractor/lib/logger';
 
@@ -78,6 +79,18 @@ export async function importBackupBytes(bytes: Uint8Array): Promise<ImportBackup
       imported.push('user');
       backend ??= r.backend;
       schemaVersion ??= r.schemaVersion;
+    }
+    // A fixed-dataset bundle carries its server profile inline. Apply it so the
+    // dataset renders under its own rules (rates, calculator) regardless of what
+    // this build bundles. Validated here; a malformed one is skipped (the
+    // install flow then falls back to pinning the manifest's profile id).
+    if (contents.serverProfile !== undefined) {
+      const parsed = serverProfileSchema.safeParse(contents.serverProfile);
+      if (parsed.success) {
+        await db.setServerProfileConfig(parsed.data);
+      } else {
+        log.warn('inline server profile failed validation; ignoring', parsed.error.issues);
+      }
     }
     return { imported, warnings: decision.warnings, legacy: false, backend, schemaVersion };
   }
