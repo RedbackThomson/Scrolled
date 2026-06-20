@@ -1,0 +1,22 @@
+{
+  "name": "@scrolled/dataset-repository",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Dataset discovery and retrieval. Resolves channels to manifests and downloads + verifies artifacts over static HTTP.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@scrolled/dataset-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.4",
+    "vitest": "^2.1.2"
+  }
+}

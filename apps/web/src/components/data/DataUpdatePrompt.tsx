@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useDataState } from '@/hooks/useDataState';
+import { appConfig } from '@/config';
 
 /**
  * Non-blocking nudge shown when the stored library is readable but older than
@@ -14,6 +15,9 @@ export function DataUpdatePrompt() {
   const { state } = useDataState();
   const [dismissed, setDismissed] = useState(false);
 
+  // This nudge points at the setup wizard, which a fixed-dataset deployment
+  // doesn't have — dataset freshness is handled by the dataset-update prompt.
+  if (!appConfig.features.enableUserImport) return null;
   if (state !== 'update-recommended' || dismissed) return null;
 
   return (

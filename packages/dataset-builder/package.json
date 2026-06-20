@@ -1,0 +1,27 @@
+{
+  "name": "@scrolled/dataset-builder",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Packages an exported library backup into a static dataset repository (manifest, channel, checksums). Runs against files anywhere on disk — no source data lives in this repo.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "bin": {
+    "scrolled-dataset": "./src/cli.ts"
+  },
+  "scripts": {
+    "start": "node --experimental-strip-types ./src/cli.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@scrolled/dataset-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.4",
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.2"
+  }
+}

@@ -62,6 +62,18 @@ importers:
       '@radix-ui/react-dialog':
         specifier: ^1.1.15
         version: 1.1.15(@types/react-dom@18.3.7(@types/react@18.3.29))(@types/react@18.3.29)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@scrolled/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@scrolled/dataset-client':
+        specifier: workspace:*
+        version: link:../../packages/dataset-client
+      '@scrolled/dataset-core':
+        specifier: workspace:*
+        version: link:../../packages/dataset-core
+      '@scrolled/dataset-repository':
+        specifier: workspace:*
+        version: link:../../packages/dataset-repository
       '@scrolled/mcp-protocol':
         specifier: workspace:*
         version: link:../../packages/mcp-protocol
@@ -177,6 +189,73 @@ importers:
       workbox-window:
         specifier: ^7.4.1
         version: 7.4.1
+
+  packages/config:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.7.4
+        version: 22.19.19
+      vitest:
+        specifier: ^2.1.2
+        version: 2.1.9(@types/node@22.19.19)(jsdom@25.0.1)(terser@5.48.0)
+
+  packages/dataset-builder:
+    dependencies:
+      '@scrolled/dataset-core':
+        specifier: workspace:*
+        version: link:../dataset-core
+    devDependencies:
+      '@types/node':
+        specifier: ^22.7.4
+        version: 22.19.19
+      typescript:
+        specifier: ^5.6.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.2
+        version: 2.1.9(@types/node@22.19.19)(jsdom@25.0.1)(terser@5.48.0)
+
+  packages/dataset-client:
+    dependencies:
+      '@scrolled/dataset-core':
+        specifier: workspace:*
+        version: link:../dataset-core
+      '@scrolled/dataset-repository':
+        specifier: workspace:*
+        version: link:../dataset-repository
+    devDependencies:
+      '@types/node':
+        specifier: ^22.7.4
+        version: 22.19.19
+      vitest:
+        specifier: ^2.1.2
+        version: 2.1.9(@types/node@22.19.19)(jsdom@25.0.1)(terser@5.48.0)
+
+  packages/dataset-core:
+    dependencies:
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: ^22.7.4
+        version: 22.19.19
+      vitest:
+        specifier: ^2.1.2
+        version: 2.1.9(@types/node@22.19.19)(jsdom@25.0.1)(terser@5.48.0)
+
+  packages/dataset-repository:
+    dependencies:
+      '@scrolled/dataset-core':
+        specifier: workspace:*
+        version: link:../dataset-core
+    devDependencies:
+      '@types/node':
+        specifier: ^22.7.4
+        version: 22.19.19
+      vitest:
+        specifier: ^2.1.2
+        version: 2.1.9(@types/node@22.19.19)(jsdom@25.0.1)(terser@5.48.0)
 
   packages/mcp-bridge-client:
     dependencies:

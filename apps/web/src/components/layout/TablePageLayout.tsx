@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { appConfig } from '@/config';
 
 interface TablePageLayoutProps {
   title: string;
@@ -29,11 +30,17 @@ export function TablePageLayout({
         {isEmpty ? (
           <div className="border-border bg-muted/40 rounded-md border p-6 text-center text-sm">
             <p className="text-muted-foreground">
-              No {entityPlural} loaded yet.{' '}
-              <Link to="/setup" className="text-primary hover:underline">
-                Run setup
-              </Link>{' '}
-              to add them.
+              {appConfig.features.enableUserImport ? (
+                <>
+                  No {entityPlural} loaded yet.{' '}
+                  <Link to="/setup" className="text-primary hover:underline">
+                    Run setup
+                  </Link>{' '}
+                  to add them.
+                </>
+              ) : (
+                <>No {entityPlural} available.</>
+              )}
             </p>
           </div>
         ) : (

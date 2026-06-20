@@ -4,6 +4,7 @@ node_modules/
 
 # Build output
 dist/
+dist-fixed/
 build/
 *.tsbuildinfo
 
@@ -47,6 +48,10 @@ result-*
 /fixtures/proprietary/
 *.sqlite
 *.sqlite-journal
+
+# Local hosted-dataset repository, built from your own backup via dataset-builder
+# and served by `pnpm dev:fixed`. Dataset artifacts are never part of the source.
+apps/web/public/datasets/
 
 # Local test fixtures (real WZ archives and .img dumps) — never committed. The
 # README and .gitkeep inside each are the only tracked files.

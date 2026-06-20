@@ -12,8 +12,11 @@
   "packageManager": "pnpm@9.12.0",
   "scripts": {
     "dev": "pnpm --filter @scrolled/web dev",
+    "dev:fixed": "pnpm --filter @scrolled/web dev:fixed",
     "build": "pnpm --filter @scrolled/web build",
+    "build:fixed": "pnpm --filter @scrolled/web build:fixed",
     "preview": "pnpm --filter @scrolled/web preview",
+    "dataset:build": "node --experimental-strip-types packages/dataset-builder/src/cli.ts",
     "typecheck": "pnpm -r typecheck",
     "lint": "pnpm -r lint",
     "format": "prettier --write .",

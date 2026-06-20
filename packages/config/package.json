@@ -1,0 +1,19 @@
+{
+  "name": "@scrolled/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Deployment profile and build-time feature flags for Scrolled. Lets one codebase build either the generic (user-import) site or a fixed hosted-dataset site.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.4",
+    "vitest": "^2.1.2"
+  }
+}

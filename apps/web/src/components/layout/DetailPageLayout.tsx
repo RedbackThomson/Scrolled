@@ -2,6 +2,7 @@ import { Loader2 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { appConfig } from '@/config';
 
 export function DetailPageLoading({ entity, id }: { entity: string; id: number | string }) {
   return (
@@ -18,12 +19,20 @@ export function DetailPageNotFound({ entity, id }: { entity: string; id: number 
         {entity} not found
       </h1>
       <p className="text-muted-foreground text-sm md:mt-2">
-        {entity} <code className="font-mono">{id}</code> isn't in your library yet. It may not have
-        been loaded —{' '}
-        <Link to="/setup" className="text-primary hover:underline">
-          visit Setup
-        </Link>{' '}
-        to add more files.
+        {appConfig.features.enableUserImport ? (
+          <>
+            {entity} <code className="font-mono">{id}</code> isn't in your library yet. It may not
+            have been loaded —{' '}
+            <Link to="/setup" className="text-primary hover:underline">
+              visit Setup
+            </Link>{' '}
+            to add more files.
+          </>
+        ) : (
+          <>
+            {entity} <code className="font-mono">{id}</code> isn't in this dataset.
+          </>
+        )}
       </p>
     </div>
   );

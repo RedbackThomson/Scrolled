@@ -21,6 +21,7 @@ import {
 import { useHomeLayout } from '@/components/home/useHomeLayout';
 import type { HomeSectionId } from '@/components/home/layout';
 import { useFeatures, type Features } from '@/hooks/useFeatures';
+import { appConfig } from '@/config';
 
 const HomeEditor = lazy(() =>
   import('@/components/home/HomeEditor').then((m) => ({ default: m.HomeEditor })),
@@ -119,6 +120,19 @@ function HomeSectionPlaceholder({ label }: { label: string }) {
 }
 
 function Welcome() {
+  // On a fixed-dataset deployment the user never loads files; the library
+  // arrives via the install flow (Phase 3), so there's nothing to point at here.
+  if (!appConfig.features.enableUserImport) {
+    return (
+      <div className="max-w-3xl space-y-6">
+        <header>
+          <h1 className="text-3xl font-semibold tracking-tight">Welcome</h1>
+          <p className="text-muted-foreground mt-2 text-sm">Preparing your library…</p>
+        </header>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-3xl space-y-6">
       <header>

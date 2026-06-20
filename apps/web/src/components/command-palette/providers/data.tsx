@@ -2,6 +2,7 @@ import { Database, Wrench } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { CommandGroup, CommandItem as CommandItemPrimitive } from '@/components/ui/command';
 import { useCommandPalette } from '@/stores/useCommandPalette';
+import { appConfig } from '@/config';
 
 function fuzzy(q: string, hay: string): boolean {
   const t = q.trim().toLowerCase();
@@ -16,6 +17,8 @@ const ENTRIES = [
     keywords: ['setup', 'wizard', 'reimport', 'wz'],
     to: '/setup',
     icon: Database,
+    // Setup/import only exists on deployments where the user supplies files.
+    requiresImport: true,
   },
   {
     id: 'data-developer',
@@ -24,7 +27,7 @@ const ENTRIES = [
     to: '/settings/developer',
     icon: Wrench,
   },
-];
+].filter((e) => !e.requiresImport || appConfig.features.enableUserImport);
 
 export function DataProvider() {
   const navigate = useNavigate();

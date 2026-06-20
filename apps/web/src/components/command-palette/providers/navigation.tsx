@@ -10,6 +10,7 @@ import {
 } from '@/lib/entityRoutes';
 import { useCommandPalette } from '@/stores/useCommandPalette';
 import { useFeatures } from '@/hooks/useFeatures';
+import { appConfig } from '@/config';
 
 interface NavEntry {
   id: string;
@@ -75,8 +76,12 @@ export function NavigationProvider() {
     },
     {
       id: 'nav-settings-import',
-      label: 'Settings → Import & Export',
-      keywords: ['backup', 'export', 'import', 'restore'],
+      label: appConfig.features.enableUserImport
+        ? 'Settings → Import & Export'
+        : 'Settings → Backup',
+      keywords: appConfig.features.enableUserImport
+        ? ['backup', 'export', 'import', 'restore']
+        : ['backup', 'export'],
       to: '/settings#import-export',
       icon: Cog,
     },

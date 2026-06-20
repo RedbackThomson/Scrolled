@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, Info, Loader2 } from 'lucide-react';
 import { detectVersion, detectImageVersion } from '@scrolled/wz';
@@ -23,6 +23,7 @@ import { useWizardMode } from '@/hooks/useWizardMode';
 import { acceptForDesktop } from '@/lib/filePickerAccept';
 import { detectServerProfile } from '@/serverProfiles';
 import { getParserClient, type DataSourceKind, type WzMapleVersionName } from '@/parser';
+import { appConfig } from '@/config';
 
 const log = createLogger('setup');
 
@@ -99,7 +100,14 @@ function pickDetectCandidate(
   };
 }
 
-export default function Setup() {
+export default function SetupRoute() {
+  // The fixed-dataset deployment has no import flow, so the wizard is
+  // unreachable — a direct URL visit bounces home.
+  if (!appConfig.features.enableUserImport) return <Navigate to="/" replace />;
+  return <SetupWizard />;
+}
+
+function SetupWizard() {
   const { mode, isReady, features, setRestore } = useWizardMode();
   const location = useLocation();
   // Set when the user was bounced here because their stored library is too old

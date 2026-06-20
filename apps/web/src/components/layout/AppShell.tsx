@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { CommandPaletteHost } from '@/components/command-palette/CommandPaletteHost';
 import { DataUpdatePrompt } from '@/components/data/DataUpdatePrompt';
+import { DatasetInstallScreen } from '@/components/dataset/DatasetInstallScreen';
 import { AppBootScreen } from '@/components/layout/AppBootScreen';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TopBar } from '@/components/layout/TopBar';
@@ -9,9 +10,11 @@ import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { useFeatures } from '@/hooks/useFeatures';
 import { useDataState } from '@/hooks/useDataState';
 import { useSidebarLayout } from '@/stores/sidebarState';
+import { appConfig } from '@/config';
 
 export function AppShell() {
-  const { showBoot } = useSetupGate();
+  const { showBoot, needsInstall } = useSetupGate();
+  if (needsInstall) return <DatasetInstallScreen />;
   if (showBoot) return <AppBootScreen />;
   return (
     <div className="flex min-h-screen w-full">
@@ -83,18 +86,24 @@ function MobileSidebarDrawer() {
  * `showBoot` keeps the full shell hidden until redirect completes so first-time
  * visitors don't flash the home page chrome.
  */
-function useSetupGate(): { showBoot: boolean } {
+function useSetupGate(): { showBoot: boolean; needsInstall: boolean } {
   const features = useFeatures();
   const { state, ready } = useDataState();
   const navigate = useNavigate();
   const location = useLocation();
 
+  // The fixed-dataset deployment has no setup wizard to redirect to — when its
+  // library is empty it installs the hosted dataset instead.
+  const canImport = appConfig.features.enableUserImport;
   const onSetup = location.pathname === '/setup';
   const shouldRedirect =
+    canImport &&
     ready &&
     !onSetup &&
     (state === 'reinitialize-required' || features.isFirstRun);
-  const showBoot = !onSetup && (!ready || shouldRedirect);
+  const needsInstall =
+    appConfig.features.enableHostedDataset && ready && !onSetup && features.isFirstRun;
+  const showBoot = !onSetup && !needsInstall && (!ready || shouldRedirect);
 
   useEffect(() => {
     if (!shouldRedirect) return;
@@ -105,5 +114,5 @@ function useSetupGate(): { showBoot: boolean } {
     }
   }, [shouldRedirect, state, navigate]);
 
-  return { showBoot };
+  return { showBoot, needsInstall };
 }

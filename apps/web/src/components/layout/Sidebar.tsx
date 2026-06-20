@@ -36,6 +36,7 @@ import { getUserDbClient } from '@/db/user';
 import { resolveCollectionColor } from '@/components/collections/colorRegistry';
 import { resolveCollectionIcon } from '@/components/collections/iconRegistry';
 import { cn } from '@/lib/utils';
+import { appConfig } from '@/config';
 
 interface SidebarChild {
   label: string;
@@ -516,7 +517,22 @@ function DbStatusIndicator({ collapsed }: { collapsed: boolean }) {
     }
   }
 
-  const cfg = HEALTH_CONFIG[health];
+  // Fixed-dataset deployments have no setup wizard. The soft "refresh via setup"
+  // nudge doesn't apply, and a too-old library is resolved by installing a newer
+  // dataset (or updating the app), never by re-running setup.
+  const canImport = appConfig.features.enableUserImport;
+  if (!canImport && health === 'update') health = 'healthy';
+
+  let cfg = HEALTH_CONFIG[health];
+  if (!canImport && health === 'reinitialize') {
+    cfg = {
+      ...cfg,
+      label: 'Update required',
+      title:
+        'This dataset is incompatible with the current app version. A newer dataset or app update is needed.',
+      actionTo: undefined,
+    };
+  }
   const Icon = cfg.icon;
   const title = reason ? `${cfg.title}\n\n${reason}` : cfg.title;
 

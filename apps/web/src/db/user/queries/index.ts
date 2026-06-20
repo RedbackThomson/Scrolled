@@ -6,6 +6,7 @@
 // `workers/userDbWorker.ts` keeps a stable, uniform shape.
 
 import { Sqlite } from '../../sqlite';
+import { USER_OPFS_FILENAME, USER_POOL_NAME } from '../../opfsNamespace';
 import { USER_MIGRATIONS } from '../migrations';
 import type { CollectionsExportJson, ImportConflictMode, ImportReport } from '../collectionsJson';
 import type {
@@ -31,9 +32,6 @@ import * as collections from './collections';
 import * as collectionGroups from './collectionGroups';
 import * as pinned from './pinnedSearches';
 import * as uiPrefs from './uiPrefs';
-
-const USER_OPFS_FILENAME = '/user.sqlite3';
-const USER_POOL_NAME = 'scrolled-user-db-pool';
 
 export class UserDbApi implements UserDatabase {
   constructor(

@@ -1,0 +1,23 @@
+{
+  "name": "@scrolled/dataset-client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Installs a hosted dataset: resolves it via a repository and hands the bytes to an injected sink. Decoupled from any specific storage backend.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@scrolled/dataset-core": "workspace:*",
+    "@scrolled/dataset-repository": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.4",
+    "vitest": "^2.1.2"
+  }
+}
