@@ -6,6 +6,7 @@ import {
   calculateEquipRanges,
   profileExpRate,
   resolveServerProfile,
+  serverProfileSchema,
   type EquipBaseStats,
   type EquipStatKey,
   type EquipStatRange,
@@ -13,6 +14,23 @@ import {
 } from '@scrolled/extractor/serverProfiles';
 
 const QUERY_KEY = ['db', 'server-profile'] as const;
+
+/**
+ * Resolve the active profile, preferring a full config a fixed dataset stored
+ * inline over the bundled-by-id registry. A stored config that fails validation
+ * (corrupt/forward-incompatible) falls back to resolving its id.
+ */
+async function loadActiveProfile(client: ReturnType<typeof getDbClient>): Promise<ServerProfile> {
+  const [config, id] = await Promise.all([
+    client.getActiveServerProfile(),
+    client.getServerProfile(),
+  ]);
+  if (config) {
+    const parsed = serverProfileSchema.safeParse(config);
+    if (parsed.success) return parsed.data;
+  }
+  return resolveServerProfile(id);
+}
 
 export interface ServerProfileState {
   /** True once the persisted selection has loaded. */
@@ -29,16 +47,16 @@ export interface ServerProfileState {
 
 export function useServerProfile(): ServerProfileState {
   const client = useMemo(() => getDbClient(), []);
-  const profileIdQ = useQuery({
+  const profileQ = useQuery({
     queryKey: QUERY_KEY,
-    queryFn: () => client.getServerProfile(),
+    queryFn: () => loadActiveProfile(client),
   });
 
-  const profile = useMemo(() => resolveServerProfile(profileIdQ.data), [profileIdQ.data]);
+  const profile = profileQ.data ?? resolveServerProfile(undefined);
   const expRate = profileExpRate(profile);
 
   return {
-    ready: !!profileIdQ.data,
+    ready: !!profileQ.data,
     profile,
     expRate,
     applyExp: (exp) => applyExpRate(expRate, exp),
@@ -55,10 +73,11 @@ export function useSetServerProfile() {
       await client.setServerProfile(profileId);
       return profileId;
     },
-    onSuccess: (profileId) => {
-      queryClient.setQueryData(QUERY_KEY, profileId);
-      // EXP- and stat-dependent views read the profile at render time; nudge
-      // cached entity queries so already-mounted detail/list pages refresh.
+    onSuccess: () => {
+      // The profile query resolves a full ServerProfile (preferring inline
+      // config), so invalidate rather than seeding it with the bare id. EXP- and
+      // stat-dependent views read the profile at render time, so nudge cached
+      // entity queries too — this covers both.
       queryClient.invalidateQueries({ queryKey: ['db'] });
     },
   });

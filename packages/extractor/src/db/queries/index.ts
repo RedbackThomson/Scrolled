@@ -76,12 +76,14 @@ import * as datasets from './datasets';
 import {
   clearAllData,
   countOf,
+  getActiveServerProfile,
   getInstalledDataset,
   getMeta,
   getServerProfile,
   markPendingRebuild,
   setInstalledDataset,
   setServerProfile,
+  setServerProfileConfig,
 } from './meta';
 
 export { gameDataPreMigrateReset } from './meta';
@@ -549,6 +551,14 @@ export class DbApi implements GameDatabase {
 
   async setServerProfile(profileId: string): Promise<void> {
     setServerProfile(this.sql, profileId);
+  }
+
+  async getActiveServerProfile(): Promise<unknown> {
+    return getActiveServerProfile(this.sql);
+  }
+
+  async setServerProfileConfig(profile: { id: string }): Promise<void> {
+    setServerProfileConfig(this.sql, profile);
   }
 
   async getInstalledDataset(): Promise<InstalledDatasetRecord | null> {

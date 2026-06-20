@@ -34,11 +34,42 @@ export function getServerProfile(sql: Sqlite): string {
 
 export function setServerProfile(sql: Sqlite, profileId: string): void {
   // Upsert, not UPDATE: a destructive reset wipes this singleton's row, and a
-  // bare UPDATE would silently no-op and lose the user's selection.
-  sql.exec('INSERT OR REPLACE INTO server_profile (id, profile_id, updated_at) VALUES (1, ?, ?)', [
-    profileId,
-    Date.now(),
-  ]);
+  // bare UPDATE would silently no-op and lose the user's selection. Selecting a
+  // bundled profile by id clears any inline config from a previous install.
+  sql.exec(
+    'INSERT OR REPLACE INTO server_profile (id, profile_id, profile_json, updated_at) VALUES (1, ?, NULL, ?)',
+    [profileId, Date.now()],
+  );
+}
+
+/**
+ * Persist a full server-profile config inline (a fixed dataset ships its own,
+ * so it renders correctly without the app bundling a matching profile). Stores
+ * both the id and the JSON. `profile` is any JSON-serializable value with an
+ * `id`; the caller validates it with `serverProfileSchema` before persisting.
+ */
+export function setServerProfileConfig(sql: Sqlite, profile: { id: string }): void {
+  sql.exec(
+    'INSERT OR REPLACE INTO server_profile (id, profile_id, profile_json, updated_at) VALUES (1, ?, ?, ?)',
+    [profile.id, JSON.stringify(profile), Date.now()],
+  );
+}
+
+/**
+ * The inline profile config stored by a fixed-dataset install, or null when the
+ * generic path selected a bundled profile by id. Returned as opaque JSON; the
+ * caller validates it against `serverProfileSchema`.
+ */
+export function getActiveServerProfile(sql: Sqlite): unknown {
+  const row = sql.selectObject<{ profile_json: string | null }>(
+    'SELECT profile_json FROM server_profile WHERE id = 1',
+  );
+  if (!row?.profile_json) return null;
+  try {
+    return JSON.parse(row.profile_json);
+  } catch {
+    return null;
+  }
 }
 
 export function getInstalledDataset(sql: Sqlite): InstalledDatasetRecord | null {

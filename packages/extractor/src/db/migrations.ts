@@ -946,6 +946,18 @@ export const MIGRATIONS: readonly Migration[] = [
       );
     `,
   },
+  {
+    version: 33,
+    name: 'inline server profile config',
+    sql: `
+      -- A fixed hosted dataset now carries its full server profile config
+      -- inline (rates, fingerprints, calculator id), so a server can change
+      -- rates without waiting for an app release. Store that JSON alongside
+      -- the selected id. Nullable: the generic (bring-your-own-WZ) path still
+      -- selects a bundled profile by id and leaves this empty.
+      ALTER TABLE server_profile ADD COLUMN profile_json TEXT;
+    `,
+  },
 ];
 
 /**

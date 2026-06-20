@@ -27,6 +27,7 @@ export { serverProfileSchema } from './schema';
 export { detectServerProfile, type FingerprintReader } from './fingerprints';
 export {
   getEquipStatCalculator,
+  equipStatCalculatorExists,
   listEquipStatCalculatorIds,
   registerEquipStatCalculator,
 } from './calculators/equipStats';

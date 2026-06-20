@@ -21,6 +21,13 @@ export function listEquipStatCalculatorIds(): string[] {
   return [...REGISTRY.keys()];
 }
 
+/** True when a calculator with this id is registered in this build. Lets the
+ *  install path verify, pre-download, that it can render a fixed dataset whose
+ *  manifest pins a given calculator id. */
+export function equipStatCalculatorExists(id: string): boolean {
+  return REGISTRY.has(id);
+}
+
 /**
  * Per-stat hard cap on the variance modifier. Defenses and HP/MP cap at +10;
  * combat and primary stats cap at +5.
