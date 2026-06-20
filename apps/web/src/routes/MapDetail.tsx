@@ -5,6 +5,7 @@ import {
   Copy,
   DoorOpen,
   Globe2,
+  LogIn,
   Map as MapIcon,
   MapPin,
   Maximize,
@@ -22,8 +23,8 @@ import {
 } from '@/components/layout/DetailPageLayout';
 import { EntityIcon } from '@/components/entity-display/EntityIcon';
 import { EntityRow } from '@/components/entity-display/EntityRow';
-import { MapPortalRow } from '@/components/entity-display/MapPortalRow';
 import { ListSortControl } from '@/components/common/ListSortControl';
+import { Badge } from '@/components/ui/badge';
 import { MapLink } from '@/components/entity-links';
 import { CollectionBadgeStrip } from '@/components/collections';
 import type { MapViewerHighlight } from '@/components/MapViewer';
@@ -48,6 +49,24 @@ import { useHideMinorPortals } from '@/stores/hideMinorPortals';
 
 // Sentinel value the WZ data uses to mean "no map" for return / target fields.
 const NO_TARGET = 999999999;
+
+// Portal-row subtitle: the portal you take, and the portal you arrive at when
+// the data names it. Shared by the outbound ("Portals") and inbound ("Ways in")
+// lists so both read the same way under their leading map name.
+function portalSubtitle(p: { portalName: string; targetPortal: string | null }): string {
+  return p.targetPortal ? `${p.portalName} → ${p.targetPortal}` : p.portalName;
+}
+
+// Portal location, rendered like NPC/mob coords. Null when the portal carries
+// no position so EntityRow's meta slot stays empty.
+function portalCoords(p: { x: number | null; y: number | null }) {
+  if (p.x === null && p.y === null) return null;
+  return (
+    <span className="font-mono">
+      ({p.x ?? '?'}, {p.y ?? '?'})
+    </span>
+  );
+}
 
 // Default ordering for the Portals section: inter-map first, then intra-map
 // teleports, then anything unclassified, then spawn points.
@@ -101,6 +120,11 @@ export default function MapDetail() {
   const portalsQ = useQuery({
     queryKey: ['db', 'map', id, 'portals'],
     queryFn: () => client.getMapPortals(id),
+    enabled: Number.isFinite(id),
+  });
+  const portalsInQ = useQuery({
+    queryKey: ['db', 'map', id, 'portals-into'],
+    queryFn: () => client.getMapPortalsInto(id),
     enabled: Number.isFinite(id),
   });
 
@@ -162,6 +186,13 @@ export default function MapDetail() {
           : (p.targetMapName ?? p.targetMapId),
     },
   ]);
+  // Inbound portals come pre-ordered by source map name. We drop GM/staff-only
+  // ones — from the source map's perspective a portal that targets us is a
+  // normal external doorway, so classify it against its own map id.
+  const portalsInVisible = useMemo(
+    () => portalsInQ.data?.filter((p) => isUsefulPortal(p, p.mapId)),
+    [portalsInQ.data],
+  );
 
   // The whole viewer lives in the URL so every level — minimap, world map,
   // a drilled region — is hard-linkable and recalled by browser back/forward.
@@ -503,27 +534,72 @@ export default function MapDetail() {
             ) : null
           }
         >
-          {portalsSort.sorted.map((p) => (
-            <MapPortalRow
-              key={`${p.portalName}-${p.x ?? 0}-${p.y ?? 0}`}
-              portal={p}
-              noTargetId={NO_TARGET}
-              trailing={
-                m.minimapPath && (
-                  <button
-                    type="button"
-                    onClick={() => openViewer({ kind: 'portal', key: String(p.idx) })}
-                    aria-label={`Show portal ${p.portalName} on map`}
-                    title="Show on map"
-                    className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition focus-visible:opacity-100 group-hover:opacity-100 max-md:opacity-100"
-                  >
-                    <MapPin className="h-4 w-4" />
-                  </button>
-                )
-              }
-            />
-          ))}
+          {portalsSort.sorted.map((p) => {
+            const layer = classifyPortal(p, id);
+            const coords = portalCoords(p);
+            const pin = m.minimapPath ? (
+              <button
+                type="button"
+                onClick={() => openViewer({ kind: 'portal', key: String(p.idx) })}
+                aria-label={`Show portal ${p.portalName} on map`}
+                title="Show on map"
+                className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition focus-visible:opacity-100 group-hover:opacity-100 max-md:opacity-100"
+              >
+                <MapPin className="h-4 w-4" />
+              </button>
+            ) : null;
+            return layer === 'portal' ? (
+              <EntityRow
+                key={p.idx}
+                entity="map"
+                id={p.targetMapId!}
+                name={p.targetMapName}
+                subtitle={portalSubtitle(p)}
+                meta={coords}
+                trailing={pin}
+              />
+            ) : (
+              // Teleports that loop back into this map (or spawn points and
+              // scripted dead-ends) have no other map to lead with — leading
+              // with this map's own name would read as a map→map portal. Lead
+              // with the portal name and tag internal teleports so they're not
+              // mistaken for a way out.
+              <EntityRow
+                key={p.idx}
+                entity="map"
+                id={p.idx}
+                name={`Portal ${p.portalName}`}
+                subtitle={p.script ?? (p.targetPortal ? `→ ${p.targetPortal}` : null)}
+                meta={
+                  layer === 'internalTeleport' || coords ? (
+                    <span className="flex items-center gap-2">
+                      {layer === 'internalTeleport' && <Badge tone="slate">Internal teleport</Badge>}
+                      {coords}
+                    </span>
+                  ) : undefined
+                }
+                linkable={false}
+                hideId
+                trailing={pin}
+              />
+            );
+          })}
         </DetailListSection>
+
+        {portalsInVisible && portalsInVisible.length > 0 && (
+          <DetailListSection icon={LogIn} title="Ways in" count={portalsInVisible.length}>
+            {portalsInVisible.map((p) => (
+              <EntityRow
+                key={`${p.mapId}-${p.idx}`}
+                entity="map"
+                id={p.mapId}
+                name={p.sourceMapName}
+                subtitle={portalSubtitle(p)}
+                meta={portalCoords(p)}
+              />
+            ))}
+          </DetailListSection>
+        )}
       </DetailPageLayout>
 
       {viewerState.open ? (

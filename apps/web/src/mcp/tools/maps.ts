@@ -57,6 +57,16 @@ export const mapsListPortals: ToolDefinition<typeof mapsListPortalsSchema, unkno
   execute: (input, ctx) => ctx.db.getMapPortals(input.id),
 };
 
+const mapsListPortalsIntoSchema = z.object({ id: idSchema });
+export const mapsListPortalsInto: ToolDefinition<typeof mapsListPortalsIntoSchema, unknown> = {
+  name: 'maps.listPortalsInto',
+  category: 'Maps',
+  description: 'List portals on other maps that lead into this map, joined to source map names.',
+  inputSchema: mapsListPortalsIntoSchema,
+  annotations: READ,
+  execute: (input, ctx) => ctx.db.getMapPortalsInto(input.id),
+};
+
 const mapsListMobSpawnsSchema = z.object({ id: idSchema });
 export const mapsListMobSpawns: ToolDefinition<typeof mapsListMobSpawnsSchema, unknown> = {
   name: 'maps.listMobSpawns',
@@ -73,5 +83,6 @@ export const mapTools = [
   mapsListMobs,
   mapsListNpcs,
   mapsListPortals,
+  mapsListPortalsInto,
   mapsListMobSpawns,
 ];

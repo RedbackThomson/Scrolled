@@ -227,6 +227,15 @@ export interface MapPortalWithName extends MapPortalRecord {
   targetMapName: string | null;
 }
 
+/**
+ * A `map_portals` row joined back to its *source* map's display name — the
+ * reverse of {@link MapPortalWithName}. Used to answer "which maps have a
+ * portal that leads into this one", so a visitor can find a way in.
+ */
+export interface InboundMapPortal extends MapPortalRecord {
+  sourceMapName: string | null;
+}
+
 /** One mob spawn position on a map. Multiple rows with the same (mapId, mobId)
  *  are expected when a mob has several spawn points. */
 export interface MapMobSpawnRecord {
@@ -907,6 +916,8 @@ export interface GameDatabase {
   getMapNpcs(mapId: number): Promise<MapNpcWithName[]>;
   getMapMobs(mapId: number): Promise<MapMobWithName[]>;
   getMapPortals(mapId: number): Promise<MapPortalWithName[]>;
+  /** Portals on *other* maps whose target is this map (reverse of getMapPortals). */
+  getMapPortalsInto(mapId: number): Promise<InboundMapPortal[]>;
   /** Per-spawn mob rows (one per spawn point, not aggregated by mob id). */
   getMapMobSpawns(mapId: number): Promise<MapMobSpawnWithName[]>;
 

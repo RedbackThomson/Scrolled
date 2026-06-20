@@ -28,6 +28,7 @@ import type {
   MapMobWithName,
   MapNpcRecord,
   MapNpcWithName,
+  InboundMapPortal,
   MapPortalRecord,
   MapPortalWithName,
   MapRecord,
@@ -308,6 +309,10 @@ export class DbApi implements GameDatabase {
 
   async getMapPortals(mapId: number): Promise<MapPortalWithName[]> {
     return maps.getMapPortals(this.sql, mapId);
+  }
+
+  async getMapPortalsInto(mapId: number): Promise<InboundMapPortal[]> {
+    return maps.getMapPortalsInto(this.sql, mapId);
   }
 
   async getMapMobSpawns(mapId: number): Promise<MapMobSpawnWithName[]> {

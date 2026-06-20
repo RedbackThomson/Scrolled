@@ -9,6 +9,7 @@ import type {
   MapMobWithName,
   MapNpcRecord,
   MapNpcWithName,
+  InboundMapPortal,
   MapPortalRecord,
   MapPortalWithName,
   MapRecord,
@@ -217,6 +218,47 @@ export function getMapPortals(sql: Sqlite, mapId: number): MapPortalWithName[] {
       portalType: r.portal_type,
       script: r.script,
       targetMapName: r.target_map_name,
+    }));
+}
+
+export function getMapPortalsInto(sql: Sqlite, mapId: number): InboundMapPortal[] {
+  // Reverse of getMapPortals: every portal on another map whose `tm` is this
+  // map. Self-referencing portals (a map's own internal teleports back into
+  // itself) are excluded — they aren't a way *in* from elsewhere. The
+  // `map_portals_target_idx` index keeps this lookup cheap. The source map's
+  // name comes from the same join pattern the forward query uses.
+  return sql
+    .selectObjects<{
+      map_id: number;
+      idx: number;
+      portal_name: string;
+      target_map_id: number | null;
+      target_portal: string | null;
+      x: number | null;
+      y: number | null;
+      portal_type: number | null;
+      script: string | null;
+      source_map_name: string | null;
+    }>(
+      `SELECT mp.map_id, mp.idx, mp.portal_name, mp.target_map_id, mp.target_portal,
+              mp.x, mp.y, mp.portal_type, mp.script, sm.name AS source_map_name
+       FROM map_portals mp
+       LEFT JOIN maps sm ON sm.id = mp.map_id
+       WHERE mp.target_map_id = ? AND mp.map_id <> ?
+       ORDER BY sm.name IS NULL, sm.name, mp.map_id, mp.idx`,
+      [mapId, mapId],
+    )
+    .map((r) => ({
+      mapId: r.map_id,
+      idx: r.idx,
+      portalName: r.portal_name,
+      targetMapId: r.target_map_id,
+      targetPortal: r.target_portal,
+      x: r.x,
+      y: r.y,
+      portalType: r.portal_type,
+      script: r.script,
+      sourceMapName: r.source_map_name,
     }));
 }
 
