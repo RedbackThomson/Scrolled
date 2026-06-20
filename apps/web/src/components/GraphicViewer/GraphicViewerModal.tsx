@@ -17,6 +17,9 @@ interface SidebarCtx {
 interface OverlayCtx {
   view: GraphicViewerView;
   visible: LayerVisibility;
+  /** Reveal the browse sidebar — opens the bottom sheet on mobile; on desktop
+   *  the sidebar is always visible, so this is a no-op there. */
+  openSidebar: () => void;
 }
 
 interface GraphicViewerModalProps {
@@ -116,7 +119,7 @@ export function GraphicViewerModal({
               loadingMessage={imageLoadingMessage}
               scrollKey={scrollKey}
             >
-              {(view) => overlays({ view, visible })}
+              {(view) => overlays({ view, visible, openSidebar: () => setBrowserOpen(true) })}
             </GraphicViewerCanvas>
             {isMobile && sidebar && (
               <>

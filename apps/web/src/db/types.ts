@@ -284,10 +284,13 @@ export interface WorldMapMarkerWithMaps extends WorldMapMarkerRecord {
   mapIds: number[];
 }
 
-/** Which world map (and marker) a given map id appears on. */
+/** A placement of a map on a world map: which world map, which marker, and
+ *  the marker's region title (for labelling the switcher). A map can have
+ *  several — it may appear on more than one world map. */
 export interface WorldMapForMap {
   worldMapId: string;
   markerId: string;
+  markerTitle: string | null;
 }
 
 /**
@@ -861,8 +864,8 @@ export interface GameDatabase {
   getWorldMap(id: string): Promise<WorldMapRecord | null>;
   /** Markers for a world map, each with its grouped map ids attached. */
   getWorldMapMarkers(worldMapId: string): Promise<WorldMapMarkerWithMaps[]>;
-  /** Which world map + marker a given map id appears on, or null. */
-  findWorldMapForMap(mapId: number): Promise<WorldMapForMap | null>;
+  /** Every world map placement of a map (one per containing marker). */
+  findWorldMapsForMap(mapId: number): Promise<WorldMapForMap[]>;
 
   upsertJobs(jobs: JobRecord[]): Promise<number>;
   getJob(id: number): Promise<JobRecord | null>;

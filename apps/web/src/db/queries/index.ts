@@ -330,8 +330,8 @@ export class DbApi implements GameDatabase {
     return worldMaps.getWorldMapMarkers(this.sql, worldMapId);
   }
 
-  async findWorldMapForMap(mapId: number): Promise<WorldMapForMap | null> {
-    return worldMaps.findWorldMapForMap(this.sql, mapId);
+  async findWorldMapsForMap(mapId: number): Promise<WorldMapForMap[]> {
+    return worldMaps.findWorldMapsForMap(this.sql, mapId);
   }
 
   // -- quests -----------------------------------------------------------------

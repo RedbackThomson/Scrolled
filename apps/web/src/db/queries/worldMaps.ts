@@ -114,15 +114,13 @@ export function getWorldMapMarkers(sql: Sqlite, worldMapId: string): WorldMapMar
   return markers.map((m) => ({ ...m, mapIds: byMarker.get(m.id) ?? [] }));
 }
 
-export function findWorldMapForMap(sql: Sqlite, mapId: number): WorldMapForMap | null {
-  const row = sql.selectObject<WorldMapForMap & Row>(
-    `SELECT m.world_map_id AS worldMapId, mm.marker_id AS markerId
+export function findWorldMapsForMap(sql: Sqlite, mapId: number): WorldMapForMap[] {
+  return sql.selectObjects<WorldMapForMap & Row>(
+    `SELECT m.world_map_id AS worldMapId, mm.marker_id AS markerId, m.title AS markerTitle
        FROM world_map_marker_maps mm
        JOIN world_map_markers m ON m.id = mm.marker_id
       WHERE mm.map_id = ?
-      ORDER BY m.world_map_id
-      LIMIT 1`,
+      ORDER BY m.world_map_id, m.marker_index`,
     [mapId],
   );
-  return row ?? null;
 }

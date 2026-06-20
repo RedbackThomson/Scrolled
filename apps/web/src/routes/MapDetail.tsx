@@ -37,7 +37,7 @@ const WorldMapViewerModal = lazy(() =>
 );
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
 import type { CommandItem } from '@/components/command-palette/types';
-import { getDbClient } from '@/db';
+import { getDbClient, type WorldMapForMap } from '@/db';
 import { classifyPortal, type PortalLayer } from '@/domain/portal-types';
 import { useFeatures } from '@/hooks/useFeatures';
 import { useListSort } from '@/hooks/useListSort';
@@ -68,13 +68,19 @@ export default function MapDetail() {
     queryFn: () => client.getMap(id),
     enabled: Number.isFinite(id),
   });
-  const worldMapQ = useQuery({
-    queryKey: ['db', 'map', id, 'world-map'],
-    queryFn: () => client.findWorldMapForMap(id),
+  const worldMapsQ = useQuery({
+    queryKey: ['db', 'map', id, 'world-maps'],
+    queryFn: () => client.findWorldMapsForMap(id),
     enabled: Number.isFinite(id),
   });
-  const worldMapFor = worldMapQ.data ?? null;
-  const [worldMapOpen, setWorldMapOpen] = useState(false);
+  // One entry per distinct world map this map appears on (first containing
+  // marker wins for the label). A map can sit on several world maps.
+  const worldMapPlacements = useMemo(() => {
+    const seen = new Map<string, WorldMapForMap>();
+    for (const p of worldMapsQ.data ?? []) if (!seen.has(p.worldMapId)) seen.set(p.worldMapId, p);
+    return [...seen.values()];
+  }, [worldMapsQ.data]);
+  const [openWorldMapId, setOpenWorldMapId] = useState<string | null>(null);
   const npcsQ = useQuery({
     queryKey: ['db', 'map', id, 'npcs'],
     queryFn: () => client.getMapNpcs(id),
@@ -179,7 +185,7 @@ export default function MapDetail() {
         icon: Maximize,
         onSelect: () => writeViewerParam({ open: true, highlight: null }, { replace: false }),
       },
-      ...(worldMapFor
+      ...(worldMapPlacements.length > 0
         ? [
             {
               id: 'open-world-map',
@@ -187,7 +193,7 @@ export default function MapDetail() {
               label: 'Open world map',
               keywords: ['world', 'map', 'region', 'overview'],
               icon: Globe2,
-              onSelect: () => setWorldMapOpen(true),
+              onSelect: () => setOpenWorldMapId(worldMapPlacements[0]!.worldMapId),
             },
           ]
         : []),
@@ -200,7 +206,7 @@ export default function MapDetail() {
         onSelect: () => navigator.clipboard.writeText(String(id)),
       },
     ],
-    [id, writeViewerParam, worldMapFor],
+    [id, writeViewerParam, worldMapPlacements],
   );
   useDetailPalette({ entity: 'map', id, name: mapQ.data?.name, items: paletteItems });
 
@@ -291,16 +297,34 @@ export default function MapDetail() {
           </section>
         )}
 
-        {worldMapFor && (
+        {worldMapPlacements.length > 0 && (
           <section>
             <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide">World map</h2>
-            <button
-              type="button"
-              onClick={() => setWorldMapOpen(true)}
-              className="text-primary inline-flex items-center gap-1 text-xs hover:underline"
-            >
-              <Globe2 className="h-3.5 w-3.5" /> View on world map
-            </button>
+            {worldMapPlacements.length === 1 ? (
+              <button
+                type="button"
+                onClick={() => setOpenWorldMapId(worldMapPlacements[0]!.worldMapId)}
+                className="text-primary inline-flex items-center gap-1 text-xs hover:underline"
+              >
+                <Globe2 className="h-3.5 w-3.5" /> View on world map
+              </button>
+            ) : (
+              <div className="flex flex-col items-start gap-1">
+                <span className="text-muted-foreground text-xs">
+                  Appears on {worldMapPlacements.length} world maps:
+                </span>
+                {worldMapPlacements.map((p) => (
+                  <button
+                    key={p.worldMapId}
+                    type="button"
+                    onClick={() => setOpenWorldMapId(p.worldMapId)}
+                    className="text-primary inline-flex items-center gap-1 text-xs hover:underline"
+                  >
+                    <Globe2 className="h-3.5 w-3.5" /> {p.markerTitle ?? p.worldMapId}
+                  </button>
+                ))}
+              </div>
+            )}
           </section>
         )}
 
@@ -449,12 +473,12 @@ export default function MapDetail() {
         </Suspense>
       ) : null}
 
-      {worldMapOpen && worldMapFor ? (
+      {openWorldMapId ? (
         <Suspense fallback={null}>
           <WorldMapViewerModal
-            open={worldMapOpen}
-            onClose={() => setWorldMapOpen(false)}
-            worldMapId={worldMapFor.worldMapId}
+            open={openWorldMapId !== null}
+            onClose={() => setOpenWorldMapId(null)}
+            worldMapId={openWorldMapId}
             focusMapId={m.id}
           />
         </Suspense>
