@@ -204,19 +204,21 @@ async function main() {
     onStage: (s) => process.stdout.write(`  ${s}\n`),
   });
 
+  // Bake the server profile into the dataset's own game DB, so it travels
+  // *as* the dataset rather than as a separate file the app applies on install.
+  await db.setServerProfileConfig(profile);
+
   const gameBytes = await db.exportBytes();
   const status = await db.status();
   await source.dispose();
 
-  // Pack the self-contained bundle: the game SQLite + the inline server
-  // profile, in the existing tar+gzip container.
+  // The bundle is the game SQLite in the existing tar+gzip container.
   process.stdout.write('  Packing bundle\n');
   const bundle = await packBackup({
     game: gameBytes,
     versions: {
       game: { schemaVersion: status.schemaVersion, dataRevision: status.dataRevision },
     },
-    serverProfile: profile,
   });
 
   const { manifest, artifactPath, channelPath } = writeDatasetRepo({

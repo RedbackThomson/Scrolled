@@ -272,35 +272,52 @@ describe('serverProfileSchema', () => {
 
 describe('detectServerProfile', () => {
   const EULA = 'EULA.img/EULA/Text00';
-  // Returns `value` only at the real fingerprint source; null elsewhere.
+  // Detection runs against whatever profiles it's given. Most cases inject
+  // synthetic profiles so the fingerprint matcher is tested independently of
+  // the real ones; the final case exercises the real shipped registry.
+  const profiles: ServerProfile[] = [
+    mockProfile({ id: 'baseline' }), // no fingerprints — naturally skipped
+    mockProfile({
+      id: 'acme',
+      fingerprints: [{ file: 'String.wz', path: EULA, contains: 'Acme Server' }],
+    }),
+  ];
+  // Returns `value` only at the fingerprint source; null elsewhere.
   const readerReturning =
     (value: string | null): FingerprintReader =>
     async (file, path) =>
       file === 'String.wz' && path === EULA ? value : null;
 
-  it('matches the MapleRoyals fingerprint in the EULA text', async () => {
-    const p = await detectServerProfile(readerReturning('…as governed by the MapleRoyals team…'));
-    expect(p?.id).toBe('mapleroyals-compatible');
+  it('matches a profile fingerprint in the EULA text', async () => {
+    const p = await detectServerProfile(readerReturning('…as governed by the Acme Server team…'), profiles);
+    expect(p?.id).toBe('acme');
   });
 
   it('matches case-insensitively', async () => {
-    const p = await detectServerProfile(readerReturning('welcome to mapleroyals'));
-    expect(p?.id).toBe('mapleroyals-compatible');
+    const p = await detectServerProfile(readerReturning('welcome to acme server'), profiles);
+    expect(p?.id).toBe('acme');
   });
 
   it('returns null when no fingerprint string matches', async () => {
-    expect(await detectServerProfile(readerReturning('Some other server EULA'))).toBeNull();
+    expect(await detectServerProfile(readerReturning('Some other server EULA'), profiles)).toBeNull();
   });
 
   it('returns null when the value is absent', async () => {
-    expect(await detectServerProfile(async () => null)).toBeNull();
+    expect(await detectServerProfile(async () => null, profiles)).toBeNull();
   });
 
   it('treats a throwing read as no match rather than propagating', async () => {
     const p = await detectServerProfile(async () => {
       throw new Error('parse failed');
-    });
+    }, profiles);
     expect(p).toBeNull();
+  });
+
+  it('detects the shipped MapleRoyals-compatible profile from its real fingerprint', async () => {
+    const hit = await detectServerProfile(readerReturning('…governed by the MapleRoyals team…'));
+    expect(hit?.id).toBe('mapleroyals-compatible');
+    // A reader whose text lacks the fingerprint string still matches nothing.
+    expect(await detectServerProfile(readerReturning('anything at all'))).toBeNull();
   });
 });
 
@@ -313,8 +330,8 @@ describe('resolveServerProfile', () => {
     expect(resolveServerProfile('nope').id).toBe(DEFAULT_PROFILE_ID);
   });
 
-  it('resolves a shipped profile id', () => {
-    expect(resolveServerProfile('mapleroyals-compatible').id).toBe('mapleroyals-compatible');
+  it('resolves the baseline profile id to itself', () => {
+    expect(resolveServerProfile(DEFAULT_PROFILE_ID).id).toBe(DEFAULT_PROFILE_ID);
   });
 });
 
@@ -325,24 +342,19 @@ describe('resolveServerProfile', () => {
 // in `pnpm test`, failing the pipeline rather than degrading at runtime.
 
 describe('shipped profile directory integrity (CI guard)', () => {
-  it('loads the directory plus the baseline, baseline first', () => {
-    expect(BUILTIN_PROFILES.length).toBeGreaterThanOrEqual(2);
+  it('ships the baseline profile, listed first', () => {
+    // The baseline always ships in code and leads the list; server-specific
+    // profiles are additive drop-in JSON and covered by the guards below.
+    expect(BUILTIN_PROFILES.length).toBeGreaterThanOrEqual(1);
     expect(BUILTIN_PROFILES[0].id).toBe(DEFAULT_PROFILE_ID);
   });
 
-  it('includes the MapleRoyals-compatible profile loaded from JSON', () => {
-    expect(BUILTIN_PROFILES.some((p) => p.id === 'mapleroyals-compatible')).toBe(true);
-  });
-
-  it('ships the MapleRoyals EULA fingerprint', () => {
-    const mr = BUILTIN_PROFILES.find((p) => p.id === 'mapleroyals-compatible');
-    const hit = mr?.fingerprints?.some(
-      (f) =>
-        f.file === 'String.wz' &&
-        f.path === 'EULA.img/EULA/Text00' &&
-        /mapleroyals/i.test(f.contains),
-    );
-    expect(hit).toBe(true);
+  it('ships the MapleRoyals-compatible profile for the generic site', () => {
+    // The generic scrolled.dev build keeps this profile so bring-your-own-files
+    // users can detect/select it; hosted deployments bake their own in instead.
+    const royals = BUILTIN_PROFILES.find((p) => p.id === 'mapleroyals-compatible');
+    expect(royals).toBeDefined();
+    expect(royals?.systems.equipStatCalculation).toBe('mapleroyals-v1');
   });
 
   it('every shipped profile passes schema validation', () => {

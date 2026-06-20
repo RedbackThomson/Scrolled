@@ -90,19 +90,27 @@ Produces:
 datasets/your-server/latest.json                              # channel -> concrete version
 datasets/your-server/2026-06-01/manifest.json                 # generated: serverProfileId, calculatorId, dataRevision, schemaVersion, artifact{url,sha256,sizeBytes}
 datasets/your-server/2026-06-01/checksums.json
-datasets/your-server/2026-06-01/your-server-2026-06-01.scrolled-dataset   # gzip(tar(manifest + game.sqlite3 + server-profile.json))
+datasets/your-server/2026-06-01/your-server-2026-06-01.scrolled-dataset   # gzip(tar(manifest + game.sqlite3)); the server profile is baked into game.sqlite3
 ```
 
 - `--version` should be immutable (a date or content hash). Re-running with a new
   `--version` **adds** a version and repoints `latest.json`; published versions
   are never rewritten.
-- `--profile` is **required**: it names the rules (EXP rate, equip stat-range
-  calculator) the data renders under. The **full profile config travels inside
-  the bundle**, so a server can change its rates by rebuilding — no app release
-  needed. It must be a profile the build ships (the baseline `vanilla-v83`, or a
-  JSON in `apps/web/src/serverProfiles/profiles/`). You can also pass a custom one
-  with `--profile-file <path>` (validated against the profile schema). Only a
-  brand-new stat-**calculator** algorithm still needs an app release.
+- A profile is **required**, and you give it one of two ways:
+  - `--profile-file <path>` — a JSON profile file you keep **in your deployment
+    repo** (validated against the profile schema). This is the normal path: a
+    deployment owns its own profile, and `scrolled` ships no server-specific
+    profiles.
+  - `--profile <id>` — a profile the build ships built-in (the baseline
+    `vanilla-v83` and a small curated set); use this for a generic build.
+
+  Either way the profile names the rules (EXP rate, equip stat-range calculator)
+  the data renders under, and `dataset:build` **bakes the full profile config
+  into the dataset's own game DB**. It travels *as* the dataset — so a server can
+  change its rates by rebuilding, no app release needed, and nothing is applied
+  as local install state. The app only needs to ship the **calculator** the
+  profile names (code keyed by id); a brand-new calculator still needs an app
+  release.
 - `--family` defaults to the profile id; pass it to host several datasets under
   one name. The WZ encryption version is auto-detected (override with
   `--wz-version` if detection is inconclusive).
@@ -150,7 +158,8 @@ env:
   DATASET_FAMILY: your-server
   DATASET_VERSION: '2026-06-01'
   DATASET_DISPLAY_NAME: Your Server
-  DATASET_PROFILE: your-server # a profile shipped by SCROLLED_REF (its calculator must exist there)
+  # The server profile lives in this deployment repo (server-profile.json); the
+  # build bakes it in. Only its calculator id must exist in SCROLLED_REF.
 
 jobs:
   build:
@@ -185,13 +194,15 @@ jobs:
 
       - name: Build dataset bundle
         working-directory: scrolled
+        # Absolute paths: `dataset:build` runs from the @scrolled/extractor
+        # package dir, so relative paths resolve against it, not this step's cwd.
         run: |
-          pnpm dataset:build ../data/wz \
-            --profile "$DATASET_PROFILE" \
+          pnpm dataset:build "$GITHUB_WORKSPACE/data/wz" \
+            --profile-file "$GITHUB_WORKSPACE/server-profile.json" \
             --version "$DATASET_VERSION" \
             --display-name "$DATASET_DISPLAY_NAME" \
             --family "$DATASET_FAMILY" \
-            --out apps/web/public/datasets
+            --out "$GITHUB_WORKSPACE/scrolled/apps/web/public/datasets"
 
       - name: Build site
         working-directory: scrolled
@@ -277,15 +288,17 @@ build that opens it (see [CLAUDE.md](CLAUDE.md) → schema vs. data revisions):
   understands; readable down to `MINIMUM_SUPPORTED_DATA_REVISION`.
 - **stat calculator** (`calculatorId` in the manifest) — the equip stat-range
   algorithm is code keyed by id, so the build must register that calculator. The
-  server profile _config_ (rates, fingerprints) travels inside the bundle and is
-  applied on install, so only a brand-new calculator needs an app release.
+  server profile _config_ (rates, fingerprints) is baked into the bundle's game
+  DB at build, so only a brand-new calculator needs an app release.
 
 The manifest carries all four (`dataRevision`, `schemaVersion`, `serverProfileId`,
 `calculatorId`) and is checked **before downloading**; `evaluateBackupImport` is
 the backstop on the data inside the bundle at install/update. A dataset newer than
-the app, older than the app can read, or naming a profile/calculator the build
-doesn't ship is **refused with an "update the app" message** instead of loading
-wrong or corrupt data. So the worst case is a clear prompt, not a broken wiki.
+the app, older than the app can read, or naming a **calculator** the build doesn't
+ship is **refused with an "update the app" message** instead of loading wrong or
+corrupt data. (The `serverProfileId` is *not* gated — the profile config travels
+in the bundle, so a build can install a dataset whose profile id it's never seen.)
+So the worst case is a clear prompt, not a broken wiki.
 
 What that means per change:
 

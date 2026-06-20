@@ -20,14 +20,6 @@ const databaseEntrySchema = z.object({
   schemaVersion: z.number().int().nonnegative(),
 });
 
-/** A non-database member carried in the container (integrity-checked like the
- *  databases). Used for the inline `server-profile.json` a fixed dataset ships. */
-const memberEntrySchema = z.object({
-  file: z.string(),
-  byteLength: z.number().int().nonnegative(),
-  sha256: z.string().regex(/^[0-9a-f]{64}$/),
-});
-
 const gameEntrySchema = databaseEntrySchema.extend({
   /** Extracted-data contract the blob was produced under (db/dataVersion.ts). */
   dataRevision: z.number().int().nonnegative(),
@@ -45,12 +37,6 @@ export const backupManifestSchema = z.object({
     game: gameEntrySchema.optional(),
     user: databaseEntrySchema.optional(),
   }),
-  /**
-   * Inline server-profile config carried by a fixed-dataset bundle. The app
-   * applies it on install so the dataset renders under the right rules without
-   * an app release. Absent in ordinary user backups.
-   */
-  serverProfile: memberEntrySchema.optional(),
 });
 
 export type BackupManifest = z.infer<typeof backupManifestSchema>;

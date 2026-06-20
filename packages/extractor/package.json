@@ -15,7 +15,7 @@
     "./*": "./src/*.ts"
   },
   "scripts": {
-    "dataset:build": "vite-node src/builder/cli.ts --",
+    "dataset:build": "vite-node src/builder/cli.ts -- build",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit",
     "lint": "eslint ."

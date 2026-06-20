@@ -4,7 +4,7 @@
 
 import type { DatasetManifest } from '@scrolled/dataset-core';
 import { getDbClient } from '@/db';
-import { serverProfileExists, equipStatCalculatorExists } from '@scrolled/extractor/serverProfiles';
+import { equipStatCalculatorExists } from '@scrolled/extractor/serverProfiles';
 import { CURRENT_DATA_REVISION } from '@scrolled/extractor/db';
 import { LATEST_SCHEMA_VERSION } from '@scrolled/extractor/db/migrations';
 import { DatasetUnsupportedError } from '@/hooks/dataset/errors';
@@ -14,16 +14,13 @@ import { DatasetUnsupportedError } from '@/hooks/dataset/errors';
  * stale app fails fast with an "update the app" message instead of fetching data
  * it can't use. The manifest carries the full compatibility contract; the
  * at-import `evaluateBackupImport` is the backstop for the data inside.
+ *
+ * The server *profile* is not checked: it travels inside the bundle and is
+ * applied on install, so a dataset can name a profile this build has never seen.
+ * Only the *calculator* it references is a hard app dependency — that's code,
+ * keyed by id — alongside the data-revision / schema contract.
  */
 export function assertDatasetSupported(manifest: DatasetManifest): void {
-  if (!serverProfileExists(manifest.serverProfileId)) {
-    throw new DatasetUnsupportedError(
-      `This data needs the "${manifest.serverProfileId}" server profile, which this version of ` +
-        `the app doesn't include. Update the app to use it.`,
-    );
-  }
-  // The profile config travels in the bundle, but the calculator is code keyed
-  // by id — a brand-new algorithm needs an app release.
   if (!equipStatCalculatorExists(manifest.calculatorId)) {
     throw new DatasetUnsupportedError(
       `This data uses the "${manifest.calculatorId}" stat calculator, which this version of the ` +
@@ -45,16 +42,12 @@ export function assertDatasetSupported(manifest: DatasetManifest): void {
 }
 
 /**
- * Pin the dataset's profile and record the installed version. Runs after the
- * import. A fixed-dataset bundle applies its full profile config inline during
- * import; only when none was applied (no inline config) do we fall back to
- * pinning the manifest's profile id, so the inline config always wins.
+ * Record the installed version after the import. The dataset's game DB already
+ * carries its server profile (the build baked it in), so there's nothing to pin
+ * here — re-pinning by id would clear that inline config.
  */
 export async function applyInstalledDataset(manifest: DatasetManifest): Promise<void> {
   const db = getDbClient();
-  if (!(await db.getActiveServerProfile())) {
-    await db.setServerProfile(manifest.serverProfileId);
-  }
   await db.setInstalledDataset({
     id: manifest.id,
     family: manifest.family,

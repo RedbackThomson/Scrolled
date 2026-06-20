@@ -249,6 +249,28 @@ A new profile should require only:
 
 No core application modification should be required.
 
+### Profile provisioning (built-in vs per-deployment)
+
+A profile reaches the app one of two ways:
+
+- **Built-in** — the app ships the baseline `vanilla-v83` plus a curated set of
+  profiles (currently `mapleroyals-compatible`) so the generic
+  bring-your-own-files site can detect/select them and persist the choice as
+  local user state. This set is deliberately small — the app does **not** bake in
+  one profile per hosted deployment.
+- **Per-deployment (fixed-dataset sites)** — the deployment owns a
+  `server-profile.json` and the headless build (`dataset:build --profile-file`)
+  **bakes the full profile config into the dataset's own game DB**. It travels
+  *as* the dataset; nothing is applied as local install state, and the app does
+  not need to ship that profile. The only hard app dependency is the
+  `equipStatCalculation` **calculator** the profile names — that's code, keyed by
+  id, so the pinned app must register it. A profile id the app has never seen is
+  fine; an unknown calculator is an "update the app" error.
+
+This is why the calculator and the profile are split: a fork can host a server
+the app's authors never heard of just by supplying a profile file, but a genuinely
+new stat algorithm still requires shipping calculator code.
+
 ### Adding New Systems
 
 Future systems must be pluggable.
@@ -355,11 +377,16 @@ Example:
 calculators/
   equipStats/
     vanillaV83.ts
-    mapleRoyals.ts
+    mapleRoyals.ts            # calculator is code → ships in the app, keyed by id
 profiles/
-  vanilla-v83.json
-  mapleroyals.json
+  mapleroyals-compatible.json # generic-site profiles ship as drop-in JSON
 ```
+
+The baseline `vanilla-v83` profile lives in code (`registry.ts`); curated
+generic-site profiles ship as drop-in JSON in `profiles/`. A profile is config
+(rates, fingerprints, name, and the id of a calculator the app provides), so a
+fixed deployment can instead supply its own without the app shipping it — see
+"Profile provisioning" below.
 
 ### Public APIs
 
@@ -390,10 +417,13 @@ applyExpRate(profile, exp);
 - User can select a server profile
 - EXP values update correctly
 - Equip stat ranges update correctly
-- MapleRoyals profile included
-- Vanilla profile included
-- Fingerprinting detects MapleRoyals from WZ data
-- Profiles persist across sessions
+- Baseline `vanilla-v83` profile included
+- MapleRoyals-compatible profile included for the generic site
+- Custom equip-stat calculators registered by id (e.g. `mapleroyals-v1`)
+- Fingerprinting detects a server from WZ data given a profile's fingerprints
+- A per-deployment profile (`--profile-file`) bakes into the dataset and renders
+  under its own rates/calculator without the app having to ship it
+- Profiles persist across sessions (generic site) / travel in the dataset (fixed)
 - Architecture supports future rule systems
 
 ---

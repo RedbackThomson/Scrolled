@@ -9,7 +9,6 @@ import type { GameDataSource } from '../../src/parser';
 import { Sqlite } from '../../src/db/sqlite';
 import { DbApi } from '../../src/db/queries';
 import { packBackup, readBackup } from '../../src/db/backup';
-import { resolveServerProfile } from '../../src/serverProfiles';
 import { runExtraction } from '../../src/builder/runExtraction';
 import { gatherSourceFiles } from '../../src/builder/files';
 import { writeDatasetRepo } from '../../src/builder/pack';
@@ -76,13 +75,22 @@ describe.skipIf(!hasEnough)('headless build — real WZ fixtures', () => {
     expect(datasets[0]!.label).toBe('test build');
   });
 
-  it('packs a bundle + generates a manifest, and reinstalls into a fresh DB', async () => {
-    const profile = resolveServerProfile('mapleroyals-compatible');
+  it('bakes the profile into the game DB, packs a bundle + manifest, and reinstalls', async () => {
+    // The CLI bakes the server profile into the dataset's own game DB before
+    // export, so it travels as the dataset rather than as a separate member.
+    const profile = {
+      id: 'mapleroyals',
+      name: 'MapleRoyals',
+      rates: { exp: 3 },
+      systems: { equipStatCalculation: 'mapleroyals-v1' },
+    };
+    await db.setServerProfileConfig(profile);
+    const gameBytes = await db.exportBytes();
     const status = await db.status();
+
     const bundle = await packBackup({
-      game: bytes,
+      game: gameBytes,
       versions: { game: { schemaVersion: status.schemaVersion, dataRevision: status.dataRevision } },
-      serverProfile: profile,
     });
 
     // Generate the host-side repo layout from the bundle.
@@ -94,7 +102,7 @@ describe.skipIf(!hasEnough)('headless build — real WZ fixtures', () => {
         version: '2026-06-01',
         displayName: 'MapleRoyals',
         serverProfileId: profile.id,
-        calculatorId: profile.systems.equipStatCalculation!,
+        calculatorId: profile.systems.equipStatCalculation,
         dataRevision: status.dataRevision,
         schemaVersion: status.schemaVersion,
         bundle,
@@ -104,22 +112,21 @@ describe.skipIf(!hasEnough)('headless build — real WZ fixtures', () => {
       datasetManifestSchema.parse(manifest);
       expect(manifest.dataRevision).toBe(status.dataRevision);
       expect(manifest.schemaVersion).toBe(status.schemaVersion);
-      expect(manifest.serverProfileId).toBe('mapleroyals-compatible');
+      expect(manifest.serverProfileId).toBe('mapleroyals');
       expect(manifest.calculatorId).toBe('mapleroyals-v1');
       expect(manifest.artifact.sha256).toMatch(/^[0-9a-f]{64}$/);
 
-      // The artifact on disk reads back: game bytes + inline profile.
+      // Reinstalling the bundle's game bytes into a fresh DB yields populated
+      // tables AND the baked-in profile — no separate apply step.
       const onDisk = new Uint8Array(readFileSync(artifactPath));
       const contents = await readBackup(onDisk);
-      expect(contents.serverProfile).toMatchObject({ id: 'mapleroyals-compatible' });
-
-      // Reinstalling the game bytes into a fresh DB yields populated tables.
       const fresh = new DbApi(new Sqlite({ logTag: 'reinstall-test' }));
       await fresh.open();
       await fresh.importBytes(contents.game!);
       const freshStatus = await fresh.status();
       expect(freshStatus.counts.items).toBeGreaterThan(0);
       expect(freshStatus.dataRevision).toBe(status.dataRevision);
+      expect(await fresh.getActiveServerProfile()).toMatchObject({ id: 'mapleroyals' });
     } finally {
       rmSync(out, { recursive: true, force: true });
     }

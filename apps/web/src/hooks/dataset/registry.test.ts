@@ -5,14 +5,15 @@ import { LATEST_SCHEMA_VERSION } from '@scrolled/extractor/db/migrations';
 import { assertDatasetSupported } from './registry';
 import { isAppUpdateRequired } from './errors';
 
-// A manifest this build fully supports: a bundled profile + its calculator, at
-// revisions/schema within range.
+// A manifest this build supports: a calculator it ships, at revisions/schema
+// within range. The server profile travels in the bundle, so its id can be
+// anything — it is deliberately not gated here.
 const supported: DatasetManifest = {
   id: 'mapleroyals-2026-06-01',
   family: 'mapleroyals',
   version: '2026-06-01',
   displayName: 'MapleRoyals',
-  serverProfileId: 'mapleroyals-compatible',
+  serverProfileId: 'mapleroyals',
   calculatorId: 'mapleroyals-v1',
   dataRevision: CURRENT_DATA_REVISION,
   schemaVersion: LATEST_SCHEMA_VERSION,
@@ -24,19 +25,19 @@ describe('assertDatasetSupported', () => {
     expect(() => assertDatasetSupported(supported)).not.toThrow();
   });
 
-  it('refuses an unknown server profile as "update the app"', () => {
-    const m = { ...supported, serverProfileId: 'some-future-profile' };
-    expect(() => assertDatasetSupported(m)).toThrow();
+  it('accepts a profile id this build does not ship (it travels in the bundle)', () => {
+    const m = { ...supported, serverProfileId: 'some-server-not-in-this-build' };
+    expect(() => assertDatasetSupported(m)).not.toThrow();
+  });
+
+  it('refuses an unknown stat calculator as "update the app"', () => {
+    const m = { ...supported, calculatorId: 'some-future-calculator' };
+    expect(() => assertDatasetSupported(m)).toThrow(/calculator/);
     try {
       assertDatasetSupported(m);
     } catch (e) {
       expect(isAppUpdateRequired(e)).toBe(true);
     }
-  });
-
-  it('refuses an unknown stat calculator', () => {
-    const m = { ...supported, calculatorId: 'some-future-calculator' };
-    expect(() => assertDatasetSupported(m)).toThrow(/calculator/);
   });
 
   it('refuses a newer schema version', () => {

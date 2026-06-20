@@ -17,8 +17,16 @@ export type FingerprintReader = (file: string, path: string) => Promise<string |
  *
  * Reads are cached per (file, path) so several profiles sharing a fingerprint
  * source only pay one lookup.
+ *
+ * `profiles` defaults to the built-in registry. The app ships no fingerprinted
+ * profiles (server profiles travel with their fixed datasets, not the build),
+ * so detection is a no-op there until a profile with fingerprints is added;
+ * tests pass their own list to exercise the matching logic.
  */
-export async function detectServerProfile(read: FingerprintReader): Promise<ServerProfile | null> {
+export async function detectServerProfile(
+  read: FingerprintReader,
+  profiles: readonly ServerProfile[] = BUILTIN_PROFILES,
+): Promise<ServerProfile | null> {
   const cache = new Map<string, string | null>();
   const readCached = async (file: string, path: string): Promise<string | null> => {
     const key = `${file}/${path}`;
@@ -33,7 +41,7 @@ export async function detectServerProfile(read: FingerprintReader): Promise<Serv
     return value;
   };
 
-  for (const profile of BUILTIN_PROFILES) {
+  for (const profile of profiles) {
     for (const fp of profile.fingerprints ?? []) {
       const value = await readCached(fp.file, fp.path);
       if (value && value.toLowerCase().includes(fp.contains.toLowerCase())) {

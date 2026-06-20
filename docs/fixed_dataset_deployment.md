@@ -32,13 +32,15 @@ shipped UI copy) is committed to `scrolled`. See `CLAUDE.md` and
   channel, downloads + verifies the `.scrolled-dataset` bundle, and restores it
   into OPFS via the existing backup importer. Later visits open from OPFS; the
   site is offline.
-- The bundle carries the **full server-profile config inline**
-  (`server-profile.json`); the app applies it on install, so the dataset renders
-  under its own rates/calculator without the build bundling a matching profile.
-  The manifest also declares `serverProfileId`, `calculatorId`, `dataRevision`,
-  and `schemaVersion`; the app checks them **before downloading** and refuses
-  (with "update the app") if it lacks the calculator or the data is newer than it
-  supports. The profile picker UI stays hidden; the dataset decides it.
+- The bundle's game DB carries the **full server-profile config inline**, baked
+  in at build (`dataset:build --profile-file`), so the dataset renders under its
+  own rates/calculator with nothing applied as local install state and without
+  the build bundling a matching profile. The manifest also declares
+  `serverProfileId`, `calculatorId`, `dataRevision`, and `schemaVersion`; the app
+  checks them **before downloading** and refuses (with "update the app") if it
+  lacks the calculator or the data is newer than it supports — the
+  `serverProfileId` is not gated, since the profile travels in the bundle. The
+  profile picker UI stays hidden; the dataset decides it.
 - OPFS storage is namespaced per deployment (`db/opfsNamespace.ts`), so the
   generic site and each fixed dataset keep separate databases on one origin.
 - A newer published version surfaces a `DatasetUpdatePrompt` (distinct from the
@@ -92,7 +94,7 @@ datasets/
     <version>/
       manifest.json                        # serverProfileId, calculatorId, dataRevision, schemaVersion, artifact{url,sha256,sizeBytes}
       checksums.json
-      <id>.scrolled-dataset                # gzip(tar(manifest + game.sqlite3 + server-profile.json))
+      <id>.scrolled-dataset                # gzip(tar(manifest + game.sqlite3)); profile baked into game.sqlite3
 ```
 
 `latest.json` resolves to an immutable version; published versions never change.
@@ -106,14 +108,18 @@ export. (It runs under `vite-node`; the build pipeline is in
 
 ```sh
 nix develop -c pnpm dataset:build ~/wz \
-  --profile mapleroyals --version 2026-06-20 --display-name "MapleRoyals" \
+  --profile-file <deployment-repo>/server-profile.json \
+  --version 2026-06-20 --display-name "MapleRoyals" \
   --out <deployment-repo>/datasets
 ```
 
-- `--profile` selects a built-in profile (or `--profile-file <json>` for a custom
-  one); its full config is embedded in the bundle. `--family` defaults to the
-  profile id. The WZ encryption version is auto-detected (`--wz-version` to
-  override). A folder of `.img` files works in place of `.wz`.
+- The profile comes from `--profile-file <json>` (a profile the deployment owns;
+  the normal path) or `--profile <id>` (a built-in — the baseline `vanilla-v83`
+  or another the build ships). Its full config is baked into the bundle's game
+  DB, not applied at install.
+  `--family` defaults to the profile id. The WZ encryption version is
+  auto-detected (`--wz-version` to override). A folder of `.img` files works in
+  place of `.wz`.
 - Re-running with a new `--version` adds a version and repoints `latest.json`;
   prior immutable versions are left untouched.
 
