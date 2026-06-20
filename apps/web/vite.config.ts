@@ -66,8 +66,13 @@ export default defineConfig({
         // loaded. `wasm` is the critical addition over Workbox defaults —
         // sqlite-wasm is ~1MB and would otherwise miss the cache.
         globPatterns: ['**/*.{js,css,html,wasm,woff2,svg,png,ico,webp}'],
+        // Hosted dataset artifacts (a fixed deployment copies them under
+        // `datasets/`) are large and installed into OPFS at runtime — never
+        // precache them, even if the patterns above are broadened later.
+        globIgnores: ['**/datasets/**'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         navigateFallback: `${basePath}index.html`,
+        navigateFallbackDenylist: [/^\/datasets\//],
         cleanupOutdatedCaches: true,
       },
     }),

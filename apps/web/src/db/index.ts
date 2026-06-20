@@ -16,6 +16,7 @@ export type {
   EntitySummary,
   EquipRecord,
   GameDatabase,
+  InstalledDatasetRecord,
   ItemRecord,
   JobRecord,
   LevelBandCount,

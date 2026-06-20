@@ -3,6 +3,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { CommandPaletteHost } from '@/components/command-palette/CommandPaletteHost';
 import { DataUpdatePrompt } from '@/components/data/DataUpdatePrompt';
 import { DatasetInstallScreen } from '@/components/dataset/DatasetInstallScreen';
+import { DatasetUpdatePrompt } from '@/components/dataset/DatasetUpdatePrompt';
 import { AppBootScreen } from '@/components/layout/AppBootScreen';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TopBar } from '@/components/layout/TopBar';
@@ -30,6 +31,7 @@ export function AppShell() {
       </div>
       <CommandPaletteHost />
       <DataUpdatePrompt />
+      <DatasetUpdatePrompt />
     </div>
   );
 }

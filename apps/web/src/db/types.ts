@@ -805,6 +805,21 @@ export interface ListOptsBase {
   filters?: Record<string, ColumnFilter>;
 }
 
+/**
+ * Which hosted dataset version is currently installed, recorded after a fixed
+ * deployment installs one. Lets startup compare the installed version against
+ * the repository's resolved `latest` and offer an update. Absent on the generic
+ * deployment and before the first install.
+ */
+export interface InstalledDatasetRecord {
+  id: string;
+  family: string;
+  version: string;
+  displayName: string;
+  /** ISO timestamp of when this version was installed. */
+  installedAt: string;
+}
+
 export interface GameDatabase {
   open(): Promise<DbStatus>;
   status(): Promise<DbStatus>;
@@ -1021,6 +1036,11 @@ export interface GameDatabase {
   getServerProfile(): Promise<string>;
   /** Set the selected server profile by id. */
   setServerProfile(profileId: string): Promise<void>;
+
+  /** The installed hosted dataset version, or null if none is recorded. */
+  getInstalledDataset(): Promise<InstalledDatasetRecord | null>;
+  /** Record the installed hosted dataset version (after a successful install). */
+  setInstalledDataset(record: InstalledDatasetRecord): Promise<void>;
 
   clearAllData(): Promise<void>;
 

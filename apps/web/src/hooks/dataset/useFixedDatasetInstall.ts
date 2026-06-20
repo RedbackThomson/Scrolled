@@ -10,6 +10,7 @@ import { installDataset, type InstallProgress } from '@scrolled/dataset-client';
 import { StaticHttpDatasetRepository } from '@scrolled/dataset-repository';
 import { appConfig } from '@/config';
 import { importBackupBytes } from '@/hooks/useBackup';
+import { recordInstalledDataset } from '@/hooks/dataset/registry';
 import { createLogger, describeError } from '@/lib/logger';
 
 const log = createLogger('dataset-install');
@@ -39,7 +40,7 @@ export function useFixedDatasetInstall(): FixedDatasetInstall {
     setProgress(null);
     try {
       const repository = new StaticHttpDatasetRepository(fixed.repositoryBaseUrl);
-      await installDataset({
+      const manifest = await installDataset({
         repository,
         ref: { family: fixed.family, channel: fixed.channel },
         sink: {
@@ -49,6 +50,9 @@ export function useFixedDatasetInstall(): FixedDatasetInstall {
         },
         onProgress: setProgress,
       });
+      // Record the installed version (the import replaced the whole DB, so this
+      // must run after) so later visits can detect a newer published version.
+      await recordInstalledDataset(manifest);
       await qc.invalidateQueries({ queryKey: ['db'] });
       setStatus('done');
     } catch (e) {

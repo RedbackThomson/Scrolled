@@ -1,5 +1,8 @@
 import type { Sqlite, PreMigrateContext } from '../sqlite';
+import type { InstalledDatasetRecord } from '../types';
 import { MINIMUM_SUPPORTED_DATA_REVISION } from '../dataVersion';
+
+const INSTALLED_DATASET_KEY = 'installed_dataset';
 
 export function getMeta(sql: Sqlite, key: string): string | null {
   const v = sql.selectValue('SELECT value FROM app_meta WHERE key = ?', [key]);
@@ -36,6 +39,20 @@ export function setServerProfile(sql: Sqlite, profileId: string): void {
     profileId,
     Date.now(),
   ]);
+}
+
+export function getInstalledDataset(sql: Sqlite): InstalledDatasetRecord | null {
+  const raw = getMeta(sql, INSTALLED_DATASET_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as InstalledDatasetRecord;
+  } catch {
+    return null;
+  }
+}
+
+export function setInstalledDataset(sql: Sqlite, record: InstalledDatasetRecord): void {
+  setMeta(sql, INSTALLED_DATASET_KEY, JSON.stringify(record));
 }
 
 export function clearAllData(sql: Sqlite): void {

@@ -37,6 +37,7 @@ import type {
   MobRecord,
   NpcRecord,
   GameDatabase,
+  InstalledDatasetRecord,
   PageResult,
   QuestChainDetail,
   QuestChainListRow,
@@ -75,9 +76,11 @@ import * as datasets from './datasets';
 import {
   clearAllData,
   countOf,
+  getInstalledDataset,
   getMeta,
   getServerProfile,
   markPendingRebuild,
+  setInstalledDataset,
   setServerProfile,
 } from './meta';
 
@@ -546,6 +549,14 @@ export class DbApi implements GameDatabase {
 
   async setServerProfile(profileId: string): Promise<void> {
     setServerProfile(this.sql, profileId);
+  }
+
+  async getInstalledDataset(): Promise<InstalledDatasetRecord | null> {
+    return getInstalledDataset(this.sql);
+  }
+
+  async setInstalledDataset(record: InstalledDatasetRecord): Promise<void> {
+    setInstalledDataset(this.sql, record);
   }
 
   async clearAllData(): Promise<void> {
