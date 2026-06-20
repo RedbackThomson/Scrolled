@@ -35,6 +35,12 @@ pnpm preview
 
 The `preview` command starts a local server and prints the URL. The contents of `apps/web/dist/` after `pnpm build` are plain static files — you can also serve them with any static file server (e.g. `npx serve apps/web/dist`) or host them anywhere that serves static content.
 
+## 📦 Host a prebuilt dataset
+
+You can also publish a **fixed-dataset** version of the site — one that ships a ready-made library (e.g. a specific server's data) that visitors download once and use offline, with no file import. The same codebase builds it from deployment config; the game data and manifests live in a separate repository you control, never here.
+
+[**HOSTING.md**](HOSTING.md) is the developer runbook: building the dataset artifact, wiring it through CI, and keeping it in sync with both the game data and the latest app version. The architecture behind it is in [docs/fixed_dataset_deployment.md](docs/fixed_dataset_deployment.md).
+
 ## 🤖 Use it from an AI agent (MCP)
 
 The app exposes its read-and-write surface as [MCP](https://modelcontextprotocol.io/) tools — every map, item, mob, quest, collection, and setting is reachable from any MCP-speaking client (Claude Desktop, IDE plugins, your own scripts) and from a bundled CLI. Tool execution stays inside the browser, so your data never leaves the tab.
