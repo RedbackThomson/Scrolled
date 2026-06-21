@@ -7,58 +7,9 @@
 
 import type { DatasetFileRef } from '@/db';
 import { wzKey } from '@/hooks/extraction/useExtractAll';
-import type { ExtractorKey as SharedExtractorKey } from '@scrolled/extractor/builder/extractStats';
+import { ALL_EXTRACTOR_KEYS, type ExtractorKey } from '@scrolled/extractor/builder/extractStats';
+import { EXTRACTOR_DEPS } from '@scrolled/extractor/builder/extractorDeps';
 import type { WizardFile } from './StepFiles';
-
-/**
- * For each extractor, the WZ files that must be in the parser worker's
- * memory for it to do useful work.
- *
- *   - `primary` triggers the extractor. Its presence in `includedFiles`
- *     means "do this extraction"; its absence means "skip".
- *   - `needs` are companion files the extractor reads cross-references
- *     from (overwhelmingly `String.wz` for localized names). Without them
- *     the extractor still runs but produces empty/nameless rows.
- *
- * `item` and `equip` share `Item.wz` as the primary: dropping it triggers
- * both, and they're processed sequentially inside the items pool worker.
- * Equip stat blocks live in `Character.wz` (the per-equip `info` images);
- * without it the equip extractor can't populate attack/defense/requirements,
- * so it's a hard dep, not a "produces nameless rows" soft one.
- */
-export const EXTRACTOR_DEPS = {
-  item: { label: 'Items', primary: 'Item.wz', needs: ['String.wz'] },
-  // Chairs piggy-back on Item.wz like equips do: dropping it triggers all
-  // three, sequentially within the items pool worker.
-  chair: { label: 'Chairs', primary: 'Item.wz', needs: ['String.wz'] },
-  equip: { label: 'Equips', primary: 'Item.wz', needs: ['String.wz', 'Character.wz'] },
-  mob: { label: 'Mobs', primary: 'Mob.wz', needs: ['String.wz'] },
-  npc: { label: 'NPCs', primary: 'Npc.wz', needs: ['String.wz'] },
-  map: { label: 'Maps', primary: 'Map.wz', needs: ['String.wz'] },
-  // World maps read only Map.wz/WorldMap; their labels come from the embedded
-  // MapList, so String.wz isn't a dependency.
-  worldMap: { label: 'World Maps', primary: 'Map.wz', needs: [] },
-  quest: { label: 'Quests', primary: 'Quest.wz', needs: ['String.wz'] },
-  // Jobs are a tiny reference table read out of String.wz alongside skill
-  // extraction. They share Skill.wz as the gating primary because the
-  // skill detail/list views are the only consumer of the table; dropping
-  // Skill.wz triggers both.
-  job: { label: 'Jobs', primary: 'Skill.wz', needs: ['String.wz'] },
-  skill: { label: 'Skills', primary: 'Skill.wz', needs: ['String.wz'] },
-} as const;
-
-export type ExtractorKey = keyof typeof EXTRACTOR_DEPS;
-
-// Derived from EXTRACTOR_DEPS (declaration order) rather than hand-listed, so
-// adding an extractor above can never silently miss the plan/UI iteration.
-export const ALL_EXTRACTOR_KEYS = Object.keys(EXTRACTOR_DEPS) as ExtractorKey[];
-
-// Compile-time guarantee the wizard's extractor set stays identical to the
-// extraction layer's (`hooks/extraction/shared.ts`). If one gains a key the
-// other lacks, this assignment stops type-checking.
-type Mutual<A, B> = [A] extends [B] ? ([B] extends [A] ? true : never) : never;
-const _keysMatchExtractionLayer: Mutual<ExtractorKey, SharedExtractorKey> = true;
-void _keysMatchExtractionLayer;
 
 export interface PlannedExtractor {
   key: ExtractorKey;

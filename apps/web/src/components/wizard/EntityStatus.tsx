@@ -1,7 +1,8 @@
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import type { Features } from '@/hooks/useFeatures';
 import { cn } from '@/lib/utils';
-import { ALL_EXTRACTOR_KEYS, EXTRACTOR_DEPS, type ExtractorKey } from './plan';
+import { ALL_EXTRACTOR_KEYS, type ExtractorKey } from '@scrolled/extractor/builder/extractStats';
+import { EXTRACTOR_DEPS } from '@scrolled/extractor/builder/extractorDeps';
 import type { WizardFile } from './StepFiles';
 
 /**

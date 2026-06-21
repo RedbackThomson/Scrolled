@@ -12,6 +12,19 @@ import {
   shouldSkip,
   type ExtractStats,
 } from '@scrolled/extractor/builder/extractStats';
+import {
+  storeItems,
+  storeChairs,
+  storeEquips,
+  storeMobs,
+  storeNpcs,
+  storeMaps,
+  storeWorldMaps,
+  storeQuests,
+  storeJobs,
+  storeSkills,
+  storeQuestChains,
+} from '@scrolled/extractor/builder/storeResults';
 
 export type { ExtractStats } from '@scrolled/extractor/builder/extractStats';
 
@@ -73,38 +86,27 @@ export function useExtractAll(opts: UseExtractAllOptions = {}) {
       const tracker = new ExtractorTracker(opts.skipWz);
       let skippedTotal = 0;
 
+      // The upsert sequencing + FK ordering lives in
+      // @scrolled/extractor/builder/storeResults, shared with the headless
+      // build and the wizard pool. This hook keeps the single-worker extract
+      // order, the hash-skip gating, and the progress phase text.
       if (!shouldSkip(opts.skipWz, 'item')) {
         try {
-          const r = await parser.extractItems(onProgress);
-          setProgress({
-            phase: 'Saving items to database',
-            current: 0,
-            total: r.items.length,
-          });
-          const itemCount = r.items.length > 0 ? await db.upsertItems(r.items) : 0;
-          tracker.ran('item', itemCount, r.skipped.length);
-          skippedTotal += r.skipped.length;
+          setProgress({ phase: 'Saving items to database', current: 0 });
+          const items = await storeItems(db, await parser.extractItems(onProgress));
+          tracker.ran('item', items.rows, items.skipped);
+          skippedTotal += items.skipped;
 
-          // Chairs FK into items.id, so they have to land after upsertItems.
-          const c = await parser.extractChairs(onProgress);
-          setProgress({
-            phase: 'Saving chairs to database',
-            current: 0,
-            total: c.chairs.length,
-          });
-          const chairCount = c.chairs.length > 0 ? await db.upsertChairs(c.chairs) : 0;
-          tracker.ran('chair', chairCount, c.skipped.length);
-          skippedTotal += c.skipped.length;
+          // Chairs FK into items.id, so they have to land after items.
+          setProgress({ phase: 'Saving chairs to database', current: 0 });
+          const chairs = await storeChairs(db, await parser.extractChairs(onProgress));
+          tracker.ran('chair', chairs.rows, chairs.skipped);
+          skippedTotal += chairs.skipped;
 
-          const e = await parser.extractEquips(onProgress);
-          setProgress({
-            phase: 'Saving equips to database',
-            current: 0,
-            total: e.equips.length,
-          });
-          const equipCount = e.equips.length > 0 ? await db.upsertEquips(e.equips) : 0;
-          tracker.ran('equip', equipCount, e.skipped.length);
-          skippedTotal += e.skipped.length;
+          setProgress({ phase: 'Saving equips to database', current: 0 });
+          const equips = await storeEquips(db, await parser.extractEquips(onProgress));
+          tracker.ran('equip', equips.rows, equips.skipped);
+          skippedTotal += equips.skipped;
         } catch (err) {
           tracker.failed('item', err);
           tracker.failed('chair', err);
@@ -117,19 +119,10 @@ export function useExtractAll(opts: UseExtractAllOptions = {}) {
 
       if (!shouldSkip(opts.skipWz, 'mob')) {
         try {
-          const r = await parser.extractMobs(onProgress);
-          setProgress({ phase: 'Saving mobs to database', current: 0, total: r.mobs.length });
-          const mobCount = r.mobs.length > 0 ? await db.upsertMobs(r.mobs) : 0;
-          if (r.drops.length > 0) {
-            setProgress({
-              phase: 'Saving mob drops',
-              current: 0,
-              total: r.drops.length,
-            });
-            await db.replaceMobDrops(r.drops);
-          }
-          tracker.ran('mob', mobCount, r.skipped.length);
-          skippedTotal += r.skipped.length;
+          setProgress({ phase: 'Saving mobs to database', current: 0 });
+          const r = await storeMobs(db, await parser.extractMobs(onProgress));
+          tracker.ran('mob', r.rows, r.skipped);
+          skippedTotal += r.skipped;
         } catch (err) {
           tracker.failed('mob', err);
           throw err;
@@ -140,11 +133,10 @@ export function useExtractAll(opts: UseExtractAllOptions = {}) {
 
       if (!shouldSkip(opts.skipWz, 'npc')) {
         try {
-          const r = await parser.extractNpcs(onProgress);
-          setProgress({ phase: 'Saving NPCs to database', current: 0, total: r.npcs.length });
-          const npcCount = r.npcs.length > 0 ? await db.upsertNpcs(r.npcs) : 0;
-          tracker.ran('npc', npcCount, r.skipped.length);
-          skippedTotal += r.skipped.length;
+          setProgress({ phase: 'Saving NPCs to database', current: 0 });
+          const r = await storeNpcs(db, await parser.extractNpcs(onProgress));
+          tracker.ran('npc', r.rows, r.skipped);
+          skippedTotal += r.skipped;
         } catch (err) {
           tracker.failed('npc', err);
           throw err;
@@ -155,31 +147,10 @@ export function useExtractAll(opts: UseExtractAllOptions = {}) {
 
       if (!shouldSkip(opts.skipWz, 'map')) {
         try {
-          const r = await parser.extractMaps(onProgress);
-          setProgress({ phase: 'Saving maps to database', current: 0, total: r.maps.length });
-          const mapCount = r.maps.length > 0 ? await db.upsertMaps(r.maps) : 0;
-          if (r.mapMarks.length > 0) await db.upsertMapMarks(r.mapMarks);
-          tracker.ran('map', mapCount, r.skipped.length);
-          skippedTotal += r.skipped.length;
-          if (
-            r.mapNpcs.length > 0 ||
-            r.mapMobs.length > 0 ||
-            r.mapPortals.length > 0 ||
-            r.mapMobSpawns.length > 0
-          ) {
-            setProgress({
-              phase: 'Saving map life + portals',
-              current: 0,
-              total:
-                r.mapNpcs.length + r.mapMobs.length + r.mapPortals.length + r.mapMobSpawns.length,
-            });
-            await db.replaceMapLife({
-              npcs: r.mapNpcs,
-              mobs: r.mapMobs,
-              portals: r.mapPortals,
-              mobSpawns: r.mapMobSpawns,
-            });
-          }
+          setProgress({ phase: 'Saving maps to database', current: 0 });
+          const r = await storeMaps(db, await parser.extractMaps(onProgress));
+          tracker.ran('map', r.rows, r.skipped);
+          skippedTotal += r.skipped;
         } catch (err) {
           tracker.failed('map', err);
           throw err;
@@ -190,19 +161,10 @@ export function useExtractAll(opts: UseExtractAllOptions = {}) {
 
       if (!shouldSkip(opts.skipWz, 'map')) {
         try {
-          const r = await parser.extractWorldMaps(onProgress);
-          setProgress({
-            phase: 'Saving world maps to database',
-            current: 0,
-            total: r.worldMaps.length,
-          });
-          const worldMapCount =
-            r.worldMaps.length > 0 ? await db.upsertWorldMaps(r.worldMaps) : 0;
-          if (r.markers.length > 0) await db.upsertWorldMapMarkers(r.markers);
-          if (r.markerMaps.length > 0) await db.upsertWorldMapMarkerMaps(r.markerMaps);
-          if (r.links.length > 0) await db.upsertWorldMapLinks(r.links);
-          tracker.ran('worldMap', worldMapCount, r.skipped.length);
-          skippedTotal += r.skipped.length;
+          setProgress({ phase: 'Saving world maps to database', current: 0 });
+          const r = await storeWorldMaps(db, await parser.extractWorldMaps(onProgress));
+          tracker.ran('worldMap', r.rows, r.skipped);
+          skippedTotal += r.skipped;
         } catch (err) {
           tracker.failed('worldMap', err);
           throw err;
@@ -213,22 +175,10 @@ export function useExtractAll(opts: UseExtractAllOptions = {}) {
 
       if (!shouldSkip(opts.skipWz, 'quest')) {
         try {
-          const r = await parser.extractQuests(onProgress);
-          setProgress({ phase: 'Saving quests to database', current: 0, total: r.quests.length });
-          const questCount = r.quests.length > 0 ? await db.upsertQuests(r.quests) : 0;
-          tracker.ran('quest', questCount, r.skipped.length, r.placeholderNames);
-          skippedTotal += r.skipped.length;
-          if (r.requirements.length > 0 || r.rewards.length > 0) {
-            setProgress({
-              phase: 'Saving quest requirements + rewards',
-              current: 0,
-              total: r.requirements.length + r.rewards.length,
-            });
-            await db.replaceQuestRelations({
-              requirements: r.requirements,
-              rewards: r.rewards,
-            });
-          }
+          setProgress({ phase: 'Saving quests to database', current: 0 });
+          const r = await storeQuests(db, await parser.extractQuests(onProgress));
+          tracker.ran('quest', r.rows, r.skipped, r.placeholderNames);
+          skippedTotal += r.skipped;
         } catch (err) {
           tracker.failed('quest', err);
           throw err;
@@ -239,40 +189,19 @@ export function useExtractAll(opts: UseExtractAllOptions = {}) {
 
       if (!shouldSkip(opts.skipWz, 'skill')) {
         try {
-          const j = await parser.extractJobs(onProgress);
-          setProgress({
-            phase: 'Saving jobs to database',
-            current: 0,
-            total: j.jobs.length,
-          });
-          const jobCount = j.jobs.length > 0 ? await db.upsertJobs(j.jobs) : 0;
-          tracker.ran('job', jobCount, j.skipped.length);
-          skippedTotal += j.skipped.length;
+          setProgress({ phase: 'Saving jobs to database', current: 0 });
+          const j = await storeJobs(db, await parser.extractJobs(onProgress));
+          tracker.ran('job', j.rows, j.skipped);
+          skippedTotal += j.skipped;
         } catch (err) {
           tracker.failed('job', err);
           throw err;
         }
         try {
-          const r = await parser.extractSkills(onProgress);
-          setProgress({
-            phase: 'Saving skills to database',
-            current: 0,
-            total: r.skills.length,
-          });
-          const skillCount = r.skills.length > 0 ? await db.upsertSkills(r.skills) : 0;
-          if (r.levels.length > 0 || r.prerequisites.length > 0) {
-            setProgress({
-              phase: 'Saving skill levels + prerequisites',
-              current: 0,
-              total: r.levels.length + r.prerequisites.length,
-            });
-            await db.replaceSkillRelations({
-              levels: r.levels,
-              prerequisites: r.prerequisites,
-            });
-          }
-          tracker.ran('skill', skillCount, r.skipped.length);
-          skippedTotal += r.skipped.length;
+          setProgress({ phase: 'Saving skills to database', current: 0 });
+          const r = await storeSkills(db, await parser.extractSkills(onProgress));
+          tracker.ran('skill', r.rows, r.skipped);
+          skippedTotal += r.skipped;
         } catch (err) {
           tracker.failed('skill', err);
           throw err;
@@ -286,8 +215,8 @@ export function useExtractAll(opts: UseExtractAllOptions = {}) {
       // the first run of a build that ships them.
       try {
         setProgress({ phase: 'Deriving quest chains', current: 0 });
-        const chainCount = await db.computeAndStoreQuestChains();
-        tracker.ran('questChain', chainCount, 0);
+        const chains = await storeQuestChains(db);
+        tracker.ran('questChain', chains.rows, 0);
       } catch (err) {
         tracker.failed('questChain', err);
         // Non-fatal: the chain pages will read empty, but the rest of the

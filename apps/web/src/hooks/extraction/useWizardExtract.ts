@@ -47,6 +47,19 @@ import {
   type ExtractorKey,
   type ExtractStats,
 } from '@scrolled/extractor/builder/extractStats';
+import {
+  storeItems,
+  storeChairs,
+  storeEquips,
+  storeMobs,
+  storeNpcs,
+  storeMaps,
+  storeWorldMaps,
+  storeQuests,
+  storeJobs,
+  storeSkills,
+  type StoredCounts,
+} from '@scrolled/extractor/builder/storeResults';
 
 const log = createLogger('wizard-extract');
 
@@ -431,6 +444,18 @@ interface RunDeps {
   signalItemFailed: (err: unknown) => void;
 }
 
+/** Build a "ran" dataset record from an extractor's store counts. */
+function ranRecord(extractor: ExtractorKey, s: StoredCounts): ExtractorResultRecord {
+  return {
+    extractor,
+    status: 'ran',
+    rows: s.rows,
+    skippedRows: s.skipped,
+    placeholderNames: s.placeholderNames,
+    error: null,
+  };
+}
+
 async function runWorkerExtractors(
   name: PoolWorkerName,
   worker: Remote<ParserWorkerApi>,
@@ -443,22 +468,16 @@ async function runWorkerExtractors(
 ): Promise<void> {
   // Each branch runs sequentially within its worker (single JS thread per
   // worker), but Promise.all at the caller level lets different workers
-  // make progress concurrently on different threads.
+  // make progress concurrently on different threads. The actual upsert
+  // sequencing lives in @scrolled/extractor/builder/storeResults so it
+  // matches the headless build exactly.
   if (name === 'items' && willRun.has('item')) {
     patchExtractor('item', { phase: 'extracting' });
     const onProgress = proxy((p: ProgressUpdate) => patchExtractor('item', { progress: p }));
     try {
-      const r = await worker.extractItems(onProgress);
-      const rows = r.items.length > 0 ? await db.upsertItems(r.items) : 0;
-      out.push({
-        extractor: 'item',
-        status: 'ran',
-        rows,
-        skippedRows: r.skipped.length,
-        placeholderNames: 0,
-        error: null,
-      });
-      bumpSkipped(r.skipped.length);
+      const stored = await storeItems(db, await worker.extractItems(onProgress));
+      out.push(ranRecord('item', stored));
+      bumpSkipped(stored.skipped);
       patchExtractor('item', { phase: 'done', progress: null });
       deps.signalItemDone();
     } catch (e) {
@@ -475,18 +494,11 @@ async function runWorkerExtractors(
     // items finishes — chair rows never land before their parent item rows.
     patchExtractor('chair', { phase: 'extracting' });
     const onProgress = proxy((p: ProgressUpdate) => patchExtractor('chair', { progress: p }));
-    const r = await worker.extractChairs(onProgress);
+    const extracted = await worker.extractChairs(onProgress);
     await deps.awaitItem();
-    const rows = r.chairs.length > 0 ? await db.upsertChairs(r.chairs) : 0;
-    out.push({
-      extractor: 'chair',
-      status: 'ran',
-      rows,
-      skippedRows: r.skipped.length,
-      placeholderNames: 0,
-      error: null,
-    });
-    bumpSkipped(r.skipped.length);
+    const stored = await storeChairs(db, extracted);
+    out.push(ranRecord('chair', stored));
+    bumpSkipped(stored.skipped);
     patchExtractor('chair', { phase: 'done', progress: null });
     return;
   }
@@ -494,17 +506,9 @@ async function runWorkerExtractors(
   if (name === 'equips' && willRun.has('equip')) {
     patchExtractor('equip', { phase: 'extracting' });
     const onProgress = proxy((p: ProgressUpdate) => patchExtractor('equip', { progress: p }));
-    const r = await worker.extractEquips(onProgress);
-    const rows = r.equips.length > 0 ? await db.upsertEquips(r.equips) : 0;
-    out.push({
-      extractor: 'equip',
-      status: 'ran',
-      rows,
-      skippedRows: r.skipped.length,
-      placeholderNames: 0,
-      error: null,
-    });
-    bumpSkipped(r.skipped.length);
+    const stored = await storeEquips(db, await worker.extractEquips(onProgress));
+    out.push(ranRecord('equip', stored));
+    bumpSkipped(stored.skipped);
     patchExtractor('equip', { phase: 'done', progress: null });
     return;
   }
@@ -512,20 +516,9 @@ async function runWorkerExtractors(
   if (name === 'mobs' && willRun.has('mob')) {
     patchExtractor('mob', { phase: 'extracting' });
     const onProgress = proxy((p: ProgressUpdate) => patchExtractor('mob', { progress: p }));
-    const r = await worker.extractMobs(onProgress);
-    const rows = r.mobs.length > 0 ? await db.upsertMobs(r.mobs) : 0;
-    if (r.drops.length > 0) {
-      await db.replaceMobDrops(r.drops);
-    }
-    out.push({
-      extractor: 'mob',
-      status: 'ran',
-      rows,
-      skippedRows: r.skipped.length,
-      placeholderNames: 0,
-      error: null,
-    });
-    bumpSkipped(r.skipped.length);
+    const stored = await storeMobs(db, await worker.extractMobs(onProgress));
+    out.push(ranRecord('mob', stored));
+    bumpSkipped(stored.skipped);
     patchExtractor('mob', { phase: 'done', progress: null });
     return;
   }
@@ -533,17 +526,9 @@ async function runWorkerExtractors(
   if (name === 'npcs' && willRun.has('npc')) {
     patchExtractor('npc', { phase: 'extracting' });
     const onProgress = proxy((p: ProgressUpdate) => patchExtractor('npc', { progress: p }));
-    const r = await worker.extractNpcs(onProgress);
-    const rows = r.npcs.length > 0 ? await db.upsertNpcs(r.npcs) : 0;
-    out.push({
-      extractor: 'npc',
-      status: 'ran',
-      rows,
-      skippedRows: r.skipped.length,
-      placeholderNames: 0,
-      error: null,
-    });
-    bumpSkipped(r.skipped.length);
+    const stored = await storeNpcs(db, await worker.extractNpcs(onProgress));
+    out.push(ranRecord('npc', stored));
+    bumpSkipped(stored.skipped);
     patchExtractor('npc', { phase: 'done', progress: null });
     return;
   }
@@ -551,31 +536,9 @@ async function runWorkerExtractors(
   if (name === 'maps' && willRun.has('map')) {
     patchExtractor('map', { phase: 'extracting' });
     const onProgress = proxy((p: ProgressUpdate) => patchExtractor('map', { progress: p }));
-    const r = await worker.extractMaps(onProgress);
-    const rows = r.maps.length > 0 ? await db.upsertMaps(r.maps) : 0;
-    if (r.mapMarks.length > 0) await db.upsertMapMarks(r.mapMarks);
-    if (
-      r.mapNpcs.length > 0 ||
-      r.mapMobs.length > 0 ||
-      r.mapPortals.length > 0 ||
-      r.mapMobSpawns.length > 0
-    ) {
-      await db.replaceMapLife({
-        npcs: r.mapNpcs,
-        mobs: r.mapMobs,
-        portals: r.mapPortals,
-        mobSpawns: r.mapMobSpawns,
-      });
-    }
-    out.push({
-      extractor: 'map',
-      status: 'ran',
-      rows,
-      skippedRows: r.skipped.length,
-      placeholderNames: 0,
-      error: null,
-    });
-    bumpSkipped(r.skipped.length);
+    const stored = await storeMaps(db, await worker.extractMaps(onProgress));
+    out.push(ranRecord('map', stored));
+    bumpSkipped(stored.skipped);
     patchExtractor('map', { phase: 'done', progress: null });
 
     // World maps share Map.wz, so they run on this same worker after maps.
@@ -584,20 +547,9 @@ async function runWorkerExtractors(
       const onWmProgress = proxy((p: ProgressUpdate) =>
         patchExtractor('worldMap', { progress: p }),
       );
-      const wm = await worker.extractWorldMaps(onWmProgress);
-      const wmRows = wm.worldMaps.length > 0 ? await db.upsertWorldMaps(wm.worldMaps) : 0;
-      if (wm.markers.length > 0) await db.upsertWorldMapMarkers(wm.markers);
-      if (wm.markerMaps.length > 0) await db.upsertWorldMapMarkerMaps(wm.markerMaps);
-      if (wm.links.length > 0) await db.upsertWorldMapLinks(wm.links);
-      out.push({
-        extractor: 'worldMap',
-        status: 'ran',
-        rows: wmRows,
-        skippedRows: wm.skipped.length,
-        placeholderNames: 0,
-        error: null,
-      });
-      bumpSkipped(wm.skipped.length);
+      const wm = await storeWorldMaps(db, await worker.extractWorldMaps(onWmProgress));
+      out.push(ranRecord('worldMap', wm));
+      bumpSkipped(wm.skipped);
       patchExtractor('worldMap', { phase: 'done', progress: null });
     }
     return;
@@ -606,23 +558,9 @@ async function runWorkerExtractors(
   if (name === 'quests' && willRun.has('quest')) {
     patchExtractor('quest', { phase: 'extracting' });
     const onProgress = proxy((p: ProgressUpdate) => patchExtractor('quest', { progress: p }));
-    const r = await worker.extractQuests(onProgress);
-    const rows = r.quests.length > 0 ? await db.upsertQuests(r.quests) : 0;
-    if (r.requirements.length > 0 || r.rewards.length > 0) {
-      await db.replaceQuestRelations({
-        requirements: r.requirements,
-        rewards: r.rewards,
-      });
-    }
-    out.push({
-      extractor: 'quest',
-      status: 'ran',
-      rows,
-      skippedRows: r.skipped.length,
-      placeholderNames: r.placeholderNames,
-      error: null,
-    });
-    bumpSkipped(r.skipped.length);
+    const stored = await storeQuests(db, await worker.extractQuests(onProgress));
+    out.push(ranRecord('quest', stored));
+    bumpSkipped(stored.skipped);
     patchExtractor('quest', { phase: 'done', progress: null });
     return;
   }
@@ -635,39 +573,17 @@ async function runWorkerExtractors(
     if (willRun.has('job')) {
       patchExtractor('job', { phase: 'extracting' });
       const onProgress = proxy((p: ProgressUpdate) => patchExtractor('job', { progress: p }));
-      const r = await worker.extractJobs(onProgress);
-      const rows = r.jobs.length > 0 ? await db.upsertJobs(r.jobs) : 0;
-      out.push({
-        extractor: 'job',
-        status: 'ran',
-        rows,
-        skippedRows: r.skipped.length,
-        placeholderNames: 0,
-        error: null,
-      });
-      bumpSkipped(r.skipped.length);
+      const stored = await storeJobs(db, await worker.extractJobs(onProgress));
+      out.push(ranRecord('job', stored));
+      bumpSkipped(stored.skipped);
       patchExtractor('job', { phase: 'done', progress: null });
     }
     if (willRun.has('skill')) {
       patchExtractor('skill', { phase: 'extracting' });
       const onProgress = proxy((p: ProgressUpdate) => patchExtractor('skill', { progress: p }));
-      const r = await worker.extractSkills(onProgress);
-      const rows = r.skills.length > 0 ? await db.upsertSkills(r.skills) : 0;
-      if (r.levels.length > 0 || r.prerequisites.length > 0) {
-        await db.replaceSkillRelations({
-          levels: r.levels,
-          prerequisites: r.prerequisites,
-        });
-      }
-      out.push({
-        extractor: 'skill',
-        status: 'ran',
-        rows,
-        skippedRows: r.skipped.length,
-        placeholderNames: 0,
-        error: null,
-      });
-      bumpSkipped(r.skipped.length);
+      const stored = await storeSkills(db, await worker.extractSkills(onProgress));
+      out.push(ranRecord('skill', stored));
+      bumpSkipped(stored.skipped);
       patchExtractor('skill', { phase: 'done', progress: null });
     }
     return;

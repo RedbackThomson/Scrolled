@@ -1,9 +1,10 @@
 // runExtraction — the headless extract → persist pipeline.
 //
-// This is the same sequence the web app's `useExtractAll` drives, factored out
-// of React/comlink so the build CLI can reuse it verbatim. The app keeps its
-// worker-pool path (`useWizardExtract`) for the in-browser wizard; both
-// ultimately run the same extractors and the same `db.upsert*` calls.
+// The sequential driver for the build CLI: run each extractor against one
+// source and persist via the shared `store*` functions (./storeResults). The web
+// app's `useExtractAll` (single worker) and `useWizardExtract` (parallel pool)
+// drive their own control flow but funnel results through those same `store*`
+// functions, so the persistence sequence is identical across all three.
 //
 // Callers pass an already-`init`/`load`ed `GameDataSource` (browser worker or
 // Node fs source) and an already-`open`ed `GameDatabase`. The function runs
@@ -33,6 +34,19 @@ import {
   mergeFileStatuses,
   type ExtractStats,
 } from './extractStats';
+import {
+  storeItems,
+  storeChairs,
+  storeEquips,
+  storeMobs,
+  storeNpcs,
+  storeMaps,
+  storeWorldMaps,
+  storeQuests,
+  storeJobs,
+  storeSkills,
+  storeQuestChains,
+} from './storeResults';
 
 const log = createLogger('run-extraction');
 
@@ -76,23 +90,20 @@ export async function runExtraction(
 
   try {
     stage('Extracting items');
-    const items = await extractItems(source, { onProgress });
-    const itemCount = items.items.length > 0 ? await db.upsertItems(items.items) : 0;
-    tracker.ran('item', itemCount, items.skipped.length);
-    skippedTotal += items.skipped.length;
+    const items = await storeItems(db, await extractItems(source, { onProgress }));
+    tracker.ran('item', items.rows, items.skipped);
+    skippedTotal += items.skipped;
 
-    // Chairs FK into items.id, so they have to land after upsertItems.
+    // Chairs FK into items.id, so they have to land after storeItems.
     stage('Extracting chairs');
-    const chairs = await extractChairs(source, { onProgress });
-    const chairCount = chairs.chairs.length > 0 ? await db.upsertChairs(chairs.chairs) : 0;
-    tracker.ran('chair', chairCount, chairs.skipped.length);
-    skippedTotal += chairs.skipped.length;
+    const chairs = await storeChairs(db, await extractChairs(source, { onProgress }));
+    tracker.ran('chair', chairs.rows, chairs.skipped);
+    skippedTotal += chairs.skipped;
 
     stage('Extracting equips');
-    const equips = await extractEquips(source, { onProgress });
-    const equipCount = equips.equips.length > 0 ? await db.upsertEquips(equips.equips) : 0;
-    tracker.ran('equip', equipCount, equips.skipped.length);
-    skippedTotal += equips.skipped.length;
+    const equips = await storeEquips(db, await extractEquips(source, { onProgress }));
+    tracker.ran('equip', equips.rows, equips.skipped);
+    skippedTotal += equips.skipped;
   } catch (err) {
     tracker.failed('item', err);
     tracker.failed('chair', err);
@@ -102,11 +113,9 @@ export async function runExtraction(
 
   try {
     stage('Extracting mobs');
-    const r = await extractMobs(source, { onProgress });
-    const mobCount = r.mobs.length > 0 ? await db.upsertMobs(r.mobs) : 0;
-    if (r.drops.length > 0) await db.replaceMobDrops(r.drops);
-    tracker.ran('mob', mobCount, r.skipped.length);
-    skippedTotal += r.skipped.length;
+    const r = await storeMobs(db, await extractMobs(source, { onProgress }));
+    tracker.ran('mob', r.rows, r.skipped);
+    skippedTotal += r.skipped;
   } catch (err) {
     tracker.failed('mob', err);
     throw err;
@@ -114,10 +123,9 @@ export async function runExtraction(
 
   try {
     stage('Extracting NPCs');
-    const r = await extractNpcs(source, { onProgress });
-    const npcCount = r.npcs.length > 0 ? await db.upsertNpcs(r.npcs) : 0;
-    tracker.ran('npc', npcCount, r.skipped.length);
-    skippedTotal += r.skipped.length;
+    const r = await storeNpcs(db, await extractNpcs(source, { onProgress }));
+    tracker.ran('npc', r.rows, r.skipped);
+    skippedTotal += r.skipped;
   } catch (err) {
     tracker.failed('npc', err);
     throw err;
@@ -125,24 +133,9 @@ export async function runExtraction(
 
   try {
     stage('Extracting maps');
-    const r = await extractMaps(source, { onProgress });
-    const mapCount = r.maps.length > 0 ? await db.upsertMaps(r.maps) : 0;
-    if (r.mapMarks.length > 0) await db.upsertMapMarks(r.mapMarks);
-    if (
-      r.mapNpcs.length > 0 ||
-      r.mapMobs.length > 0 ||
-      r.mapPortals.length > 0 ||
-      r.mapMobSpawns.length > 0
-    ) {
-      await db.replaceMapLife({
-        npcs: r.mapNpcs,
-        mobs: r.mapMobs,
-        portals: r.mapPortals,
-        mobSpawns: r.mapMobSpawns,
-      });
-    }
-    tracker.ran('map', mapCount, r.skipped.length);
-    skippedTotal += r.skipped.length;
+    const r = await storeMaps(db, await extractMaps(source, { onProgress }));
+    tracker.ran('map', r.rows, r.skipped);
+    skippedTotal += r.skipped;
   } catch (err) {
     tracker.failed('map', err);
     throw err;
@@ -150,13 +143,9 @@ export async function runExtraction(
 
   try {
     stage('Extracting world maps');
-    const r = await extractWorldMaps(source, { onProgress });
-    const worldMapCount = r.worldMaps.length > 0 ? await db.upsertWorldMaps(r.worldMaps) : 0;
-    if (r.markers.length > 0) await db.upsertWorldMapMarkers(r.markers);
-    if (r.markerMaps.length > 0) await db.upsertWorldMapMarkerMaps(r.markerMaps);
-    if (r.links.length > 0) await db.upsertWorldMapLinks(r.links);
-    tracker.ran('worldMap', worldMapCount, r.skipped.length);
-    skippedTotal += r.skipped.length;
+    const r = await storeWorldMaps(db, await extractWorldMaps(source, { onProgress }));
+    tracker.ran('worldMap', r.rows, r.skipped);
+    skippedTotal += r.skipped;
   } catch (err) {
     tracker.failed('worldMap', err);
     throw err;
@@ -164,13 +153,9 @@ export async function runExtraction(
 
   try {
     stage('Extracting quests');
-    const r = await extractQuests(source, { onProgress });
-    const questCount = r.quests.length > 0 ? await db.upsertQuests(r.quests) : 0;
-    tracker.ran('quest', questCount, r.skipped.length, r.placeholderNames);
-    skippedTotal += r.skipped.length;
-    if (r.requirements.length > 0 || r.rewards.length > 0) {
-      await db.replaceQuestRelations({ requirements: r.requirements, rewards: r.rewards });
-    }
+    const r = await storeQuests(db, await extractQuests(source, { onProgress }));
+    tracker.ran('quest', r.rows, r.skipped, r.placeholderNames);
+    skippedTotal += r.skipped;
   } catch (err) {
     tracker.failed('quest', err);
     throw err;
@@ -179,10 +164,9 @@ export async function runExtraction(
   try {
     // Jobs first so skill rows can resolve to a job name.
     stage('Extracting jobs');
-    const j = await extractJobs(source, { onProgress });
-    const jobCount = j.jobs.length > 0 ? await db.upsertJobs(j.jobs) : 0;
-    tracker.ran('job', jobCount, j.skipped.length);
-    skippedTotal += j.skipped.length;
+    const j = await storeJobs(db, await extractJobs(source, { onProgress }));
+    tracker.ran('job', j.rows, j.skipped);
+    skippedTotal += j.skipped;
   } catch (err) {
     tracker.failed('job', err);
     throw err;
@@ -190,13 +174,9 @@ export async function runExtraction(
 
   try {
     stage('Extracting skills');
-    const r = await extractSkills(source, { onProgress });
-    const skillCount = r.skills.length > 0 ? await db.upsertSkills(r.skills) : 0;
-    if (r.levels.length > 0 || r.prerequisites.length > 0) {
-      await db.replaceSkillRelations({ levels: r.levels, prerequisites: r.prerequisites });
-    }
-    tracker.ran('skill', skillCount, r.skipped.length);
-    skippedTotal += r.skipped.length;
+    const r = await storeSkills(db, await extractSkills(source, { onProgress }));
+    tracker.ran('skill', r.rows, r.skipped);
+    skippedTotal += r.skipped;
   } catch (err) {
     tracker.failed('skill', err);
     throw err;
@@ -205,8 +185,8 @@ export async function runExtraction(
   // Quest chains are a pure DB derivation, not an extraction. Always run.
   try {
     stage('Deriving quest chains');
-    const chainCount = await db.computeAndStoreQuestChains();
-    tracker.ran('questChain', chainCount, 0);
+    const chains = await storeQuestChains(db);
+    tracker.ran('questChain', chains.rows, 0);
   } catch (err) {
     tracker.failed('questChain', err);
     log.error('quest-chain derivation failed', describeError(err));
