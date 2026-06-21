@@ -1,11 +1,10 @@
-// Canonical source of truth for everything mob-element related on the UI
-// side. `info/elemAttr` in Mob.wz is a flat string like "I2F3" — pairs of
-// element code + level. Level 1 = immune, 2 = resistant, 3 = weak. Anything
-// not listed is neutral.
+// Canonical source of truth for everything mob-element related. `info/elemAttr`
+// in Mob.wz is a flat string like "I2F3" — pairs of element code + level.
+// Level 1 = immune, 2 = resistant, 3 = weak. Anything not listed is neutral.
 //
-// `db/queries.ts` deliberately duplicates the element-code map (matching
-// the EQUIP_CLASS_BITS pattern) to keep `db/` free of UI imports — if you
-// change ELEMENT_NAMES here, mirror it there too.
+// The DB filter layer (`db/queries/shared/filters.ts`) imports the element-code
+// map and status→level mapping straight from here, so there is one definition to
+// keep current.
 
 export type ElementStatus = 'neutral' | 'immune' | 'resistant' | 'weak';
 
