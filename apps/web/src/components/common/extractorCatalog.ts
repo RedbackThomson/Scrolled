@@ -42,3 +42,9 @@ export const EXTRACTOR_CARD_META: Record<ExtractCountKey, ExtractorCardMeta> = {
 
 /** Canonical render order for category lists. */
 export const EXTRACTOR_CARD_KEYS: readonly ExtractCountKey[] = EXTRACT_COUNT_KEYS;
+
+/** Display label for an extraction category by raw key, falling back to the key
+ *  itself for anything unknown. The single label source for the app. */
+export function extractorLabel(key: string): string {
+  return (EXTRACTOR_CARD_META as Record<string, ExtractorCardMeta>)[key]?.label ?? key;
+}

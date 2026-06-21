@@ -3,6 +3,7 @@ import type { Features } from '@/hooks/useFeatures';
 import { cn } from '@/lib/utils';
 import { ALL_EXTRACTOR_KEYS, type ExtractorKey } from '@scrolled/extractor/builder/extractStats';
 import { EXTRACTOR_DEPS } from '@scrolled/extractor/builder/extractorDeps';
+import { EXTRACTOR_CARD_META } from '@/components/common/extractorCatalog';
 import type { WizardFile } from './StepFiles';
 
 /**
@@ -126,7 +127,7 @@ function EntityRow({
       )}
     >
       <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-        <span className="text-xs font-medium">{dep.label}</span>
+        <span className="text-xs font-medium">{EXTRACTOR_CARD_META[ek].label}</span>
         <span
           className={cn(
             'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide',

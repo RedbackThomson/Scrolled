@@ -17,6 +17,8 @@
 import { wrap, type Remote } from 'comlink';
 import type { ParserWorkerApi } from './client';
 import { createLogger } from '@scrolled/game-db/lib/logger';
+import type { ExtractorKey } from '@scrolled/extractor/builder/extractStats';
+import { EXTRACTOR_DEPS } from '@scrolled/extractor/builder/extractorDeps';
 
 const log = createLogger('parser-pool');
 
@@ -47,42 +49,12 @@ export const POOL_WORKER_NAMES: readonly PoolWorkerName[] = [
 ];
 
 /**
- * The WZ files each worker needs in memory. The **first** entry is the
- * "primary" — if it isn't dropped by the user, the worker doesn't run.
- * Subsequent entries are companion files (overwhelmingly `String.wz` for
- * localized names).
- *
- * Item.wz is duplicated across `items` / `chairs` / `equips` so the three
- * extractors can run on separate threads. Each worker's copy adds the
- * Item.wz buffer size (~tens of MB), which is negligible next to Map.wz.
+ * Which extractor keys run in which worker — the pool topology. This is a
+ * web-only parallelism decision (one Web Worker thread per slot): items / chairs
+ * / equips each get their own worker so they run concurrently; maps also runs
+ * worldMap (shared Map.wz), and skills also runs jobs (shared Skill.wz).
  */
-export const POOL_WORKER_FILES: Record<PoolWorkerName, readonly string[]> = {
-  items: ['Item.wz', 'String.wz'],
-  chairs: ['Item.wz', 'String.wz'],
-  // Equip stat blocks live in `Character.wz` (the per-equip `info` images);
-  // without it the equip extractor can't populate attack/defense/requirements,
-  // so it's a hard dep, not a "produces nameless rows" soft one.
-  equips: ['Item.wz', 'String.wz', 'Character.wz'],
-  mobs: ['Mob.wz', 'String.wz'],
-  npcs: ['Npc.wz', 'String.wz'],
-  maps: ['Map.wz', 'String.wz'],
-  quests: ['Quest.wz', 'String.wz'],
-  skills: ['Skill.wz', 'String.wz'],
-};
-
-/**
- * Map a logical WZ file name to its top-level folder in an IMG dataset
- * (`Item.wz` → `Item`). IMG routing selects a worker's files by matching each
- * dropped file's first path segment against these folders.
- */
-export function logicalToImgFolder(logical: string): string {
-  return logical.replace(/\.wz$/i, '');
-}
-
-/** Which extractor keys are owned by which worker. `useExtractAll`-style
- *  keys ('item', 'chair', ...). Items / chairs / equips each get their own
- *  worker so they run in parallel across threads. */
-export const WORKER_EXTRACTORS: Record<PoolWorkerName, readonly string[]> = {
+export const WORKER_EXTRACTORS: Record<PoolWorkerName, readonly ExtractorKey[]> = {
   items: ['item'],
   chairs: ['chair'],
   equips: ['equip'],
@@ -92,6 +64,46 @@ export const WORKER_EXTRACTORS: Record<PoolWorkerName, readonly string[]> = {
   quests: ['quest'],
   skills: ['job', 'skill'],
 };
+
+/** The inverse of WORKER_EXTRACTORS: which worker owns a given extractor. */
+export const EXTRACTOR_TO_WORKER: Record<ExtractorKey, PoolWorkerName> = (() => {
+  const out = {} as Record<ExtractorKey, PoolWorkerName>;
+  for (const name of POOL_WORKER_NAMES) {
+    for (const ek of WORKER_EXTRACTORS[name]) out[ek] = name;
+  }
+  return out;
+})();
+
+/**
+ * The WZ files each worker must load, derived from its extractors' file
+ * dependencies (`@scrolled/extractor` EXTRACTOR_DEPS) — one source of truth for
+ * "what an extractor needs". The **first** entry is the worker's primary: if it
+ * isn't dropped by the user, the worker doesn't run; the rest are companions
+ * (overwhelmingly `String.wz`). Item.wz is duplicated across items/chairs/equips
+ * so the three run on separate threads; each copy is negligible next to Map.wz.
+ */
+export const POOL_WORKER_FILES: Record<PoolWorkerName, readonly string[]> = (() => {
+  const out = {} as Record<PoolWorkerName, string[]>;
+  for (const name of POOL_WORKER_NAMES) {
+    const files: string[] = [];
+    for (const ek of WORKER_EXTRACTORS[name]) {
+      for (const f of [EXTRACTOR_DEPS[ek].primary, ...EXTRACTOR_DEPS[ek].needs]) {
+        if (!files.includes(f)) files.push(f);
+      }
+    }
+    out[name] = files;
+  }
+  return out;
+})();
+
+/**
+ * Map a logical WZ file name to its top-level folder in an IMG dataset
+ * (`Item.wz` → `Item`). IMG routing selects a worker's files by matching each
+ * dropped file's first path segment against these folders.
+ */
+export function logicalToImgFolder(logical: string): string {
+  return logical.replace(/\.wz$/i, '');
+}
 
 interface PoolEntry {
   worker: Worker;

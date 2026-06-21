@@ -13,7 +13,6 @@ import type { WizardFile } from './StepFiles';
 
 export interface PlannedExtractor {
   key: ExtractorKey;
-  label: string;
   primary: string;
 }
 
@@ -66,7 +65,6 @@ export function buildPlan(files: WizardFile[]): WizardPlan {
     if (!file) continue;
     willRun.push({
       key,
-      label: dep.label,
       primary: dep.primary,
     });
   }

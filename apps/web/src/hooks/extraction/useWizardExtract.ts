@@ -23,6 +23,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { proxy, type Remote } from 'comlink';
 import {
+  EXTRACTOR_TO_WORKER,
   getPoolWorker,
   logicalToImgFolder,
   POOL_WORKER_FILES,
@@ -64,32 +65,6 @@ import {
 const log = createLogger('wizard-extract');
 
 export { ALL_EXTRACTOR_KEYS, type ExtractorKey } from '@scrolled/extractor/builder/extractStats';
-
-export const EXTRACTOR_TO_WORKER: Record<ExtractorKey, PoolWorkerName> = {
-  item: 'items',
-  chair: 'chairs',
-  equip: 'equips',
-  mob: 'mobs',
-  npc: 'npcs',
-  map: 'maps',
-  worldMap: 'maps',
-  quest: 'quests',
-  job: 'skills',
-  skill: 'skills',
-};
-
-export const EXTRACTOR_LABEL: Record<ExtractorKey, string> = {
-  item: 'Items',
-  chair: 'Chairs',
-  equip: 'Equips',
-  mob: 'Mobs',
-  npc: 'NPCs',
-  map: 'Maps',
-  worldMap: 'World Maps',
-  quest: 'Quests',
-  job: 'Jobs',
-  skill: 'Skills',
-};
 
 export interface ExtractorStatus {
   /** False when this extractor isn't part of the current run. */

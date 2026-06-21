@@ -10,12 +10,13 @@
 //   - `needs` are companion files the extractor cross-references (almost always
 //     `String.wz` for localized names). Without them the extractor still runs
 //     but produces empty/nameless rows — except where noted as a hard dep.
-//   - `label` is the generic entity-type name shown in run UIs.
+//
+// This is the domain graph only — no UI copy. The display label per category
+// lives in the app (apps/web `extractorCatalog`), next to its icon.
 
 import type { ExtractorKey } from './extractStats';
 
 export interface ExtractorFileDeps {
-  label: string;
   primary: string;
   needs: readonly string[];
 }
@@ -31,16 +32,16 @@ export interface ExtractorFileDeps {
  * until its file deps are filled in here.
  */
 export const EXTRACTOR_DEPS: Record<ExtractorKey, ExtractorFileDeps> = {
-  item: { label: 'Items', primary: 'Item.wz', needs: ['String.wz'] },
-  chair: { label: 'Chairs', primary: 'Item.wz', needs: ['String.wz'] },
-  equip: { label: 'Equips', primary: 'Item.wz', needs: ['String.wz', 'Character.wz'] },
-  mob: { label: 'Mobs', primary: 'Mob.wz', needs: ['String.wz'] },
-  npc: { label: 'NPCs', primary: 'Npc.wz', needs: ['String.wz'] },
-  map: { label: 'Maps', primary: 'Map.wz', needs: ['String.wz'] },
+  item: { primary: 'Item.wz', needs: ['String.wz'] },
+  chair: { primary: 'Item.wz', needs: ['String.wz'] },
+  equip: { primary: 'Item.wz', needs: ['String.wz', 'Character.wz'] },
+  mob: { primary: 'Mob.wz', needs: ['String.wz'] },
+  npc: { primary: 'Npc.wz', needs: ['String.wz'] },
+  map: { primary: 'Map.wz', needs: ['String.wz'] },
   // World maps read only Map.wz/WorldMap; labels come from the embedded MapList,
   // so String.wz isn't a dependency.
-  worldMap: { label: 'World Maps', primary: 'Map.wz', needs: [] },
-  quest: { label: 'Quests', primary: 'Quest.wz', needs: ['String.wz'] },
-  job: { label: 'Jobs', primary: 'Skill.wz', needs: ['String.wz'] },
-  skill: { label: 'Skills', primary: 'Skill.wz', needs: ['String.wz'] },
+  worldMap: { primary: 'Map.wz', needs: [] },
+  quest: { primary: 'Quest.wz', needs: ['String.wz'] },
+  job: { primary: 'Skill.wz', needs: ['String.wz'] },
+  skill: { primary: 'Skill.wz', needs: ['String.wz'] },
 };

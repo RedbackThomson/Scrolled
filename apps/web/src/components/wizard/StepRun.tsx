@@ -7,7 +7,6 @@ import { ProgressBar } from '@/components/common/ProgressBar';
 import type { WzMapleVersionName } from '@/parser';
 import {
   ALL_EXTRACTOR_KEYS,
-  EXTRACTOR_LABEL,
   useWizardExtract,
   type ExtractorKey,
   type ExtractorStatus,
@@ -166,7 +165,7 @@ export function StepRun({ version, files, onComplete, mode }: Props) {
             <ul className="mt-2 space-y-1 text-xs">
               {failedExtractors.map((k) => (
                 <li key={k}>
-                  <strong>{EXTRACTOR_LABEL[k]}</strong> — {extract.extractors[k].error}
+                  <strong>{EXTRACTOR_CARD_META[k].label}</strong> — {extract.extractors[k].error}
                 </li>
               ))}
             </ul>
@@ -235,7 +234,7 @@ function ExtractorCard({ ek, status }: { ek: ExtractorKey; status: ExtractorStat
     >
       <div className="flex items-center gap-2 text-sm">
         {icon}
-        <strong>{EXTRACTOR_LABEL[ek]}</strong>
+        <strong>{EXTRACTOR_CARD_META[ek].label}</strong>
         <span className="text-muted-foreground text-xs">· {phaseLabel}</span>
         <span className="text-muted-foreground ml-auto font-mono text-xs">
           {status.files.join(' + ')}

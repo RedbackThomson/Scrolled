@@ -6,17 +6,9 @@ import {
   XCircle,
 } from 'lucide-react';
 import type { DatasetRecord } from '@/db';
+import { extractorLabel } from '@/components/common/extractorCatalog';
 import { shortHash } from '@/lib/hashFile';
 import { cn } from '@/lib/utils';
-
-const EXTRACTOR_LABELS: Record<string, string> = {
-  item: 'Items',
-  equip: 'Equips',
-  mob: 'Mobs',
-  npc: 'NPCs',
-  map: 'Maps',
-  quest: 'Quests',
-};
 
 type Tone = 'green' | 'amber' | 'red' | 'gray';
 
@@ -42,7 +34,7 @@ function summarize(d: DatasetRecord): RunSummary {
     warnings.push(`${f.name} failed to load${f.loadError ? `: ${f.loadError}` : ''}`);
   }
   for (const e of extractorErrors) {
-    warnings.push(`${EXTRACTOR_LABELS[e.extractor] ?? e.extractor} errored: ${e.error}`);
+    warnings.push(`${extractorLabel(e.extractor)} errored: ${e.error}`);
   }
   if (placeholders > 0) {
     warnings.push(`${placeholders.toLocaleString()} record(s) used placeholder names`);
@@ -157,9 +149,7 @@ export function RunCard({ dataset: d }: { dataset: DatasetRecord }) {
                     ) : (
                       <CheckCircle2 className="h-3 w-3 shrink-0 text-green-600 dark:text-green-400" />
                     )}
-                    <span className="w-16 shrink-0">
-                      {EXTRACTOR_LABELS[e.extractor] ?? e.extractor}
-                    </span>
+                    <span className="w-16 shrink-0">{extractorLabel(e.extractor)}</span>
                     <span className="text-foreground/80 font-mono">
                       {e.rows.toLocaleString()} rows
                     </span>
@@ -180,9 +170,7 @@ export function RunCard({ dataset: d }: { dataset: DatasetRecord }) {
                 {skippedExtractors.length > 0 && (
                   <li className="text-muted-foreground">
                     Skipped:{' '}
-                    {skippedExtractors
-                      .map((e) => EXTRACTOR_LABELS[e.extractor] ?? e.extractor)
-                      .join(', ')}
+                    {skippedExtractors.map((e) => extractorLabel(e.extractor)).join(', ')}
                   </li>
                 )}
               </ul>
