@@ -1,0 +1,22 @@
+{
+  "name": "@scrolled/identity-cloud",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Supabase-backed identity provider for the hosted deployment. The only package that depends on the auth SDK; reached from the app via a dynamic import so it is excluded from self-hosted builds.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@scrolled/identity-core": "workspace:*",
+    "@supabase/supabase-js": "^2.108.2"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.2"
+  }
+}

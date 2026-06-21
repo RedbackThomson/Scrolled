@@ -49,8 +49,14 @@ extraction hooks). UI/display code never reaches into the write path.
                           extractors/    tree → records
                           builder/       CLI, runExtraction, .scrolled-dataset
                                          packing, extractStats, store-extraction
+@scrolled/identity-core  leaf — provider-agnostic identity contract:
+                                IdentityProvider, UserSession, anonymous
+                                provider; React context/hooks on /react subpath
+@scrolled/identity-cloud  → deps: identity-core, @supabase/supabase-js
+                                Supabase provider; hosted builds only
 apps/web  → deps: game-db (display), extractor (in-browser extraction),
-                  dataset-client/-core/-repository, config, wz, mcp-protocol
+                  dataset-client/-core/-repository, config, wz, mcp-protocol,
+                  identity-core (display), identity-cloud (bootstrap only)
 ```
 
 The graph is acyclic. A package never imports "up" toward the web app. The web
@@ -75,6 +81,9 @@ app is the only integrator.
 | **display / read of extracted data** | `apps/web` | **game-db, dataset-\*** |
 | **driving in-browser extraction** | `apps/web` (`workers/`, `hooks/extraction/`, `parser/`, `components/wizard/`) | **extractor** |
 | user DB (collections, pinned searches, prefs) | `apps/web/db/user` | game-db/db (sqlite only) |
+| identity contract (session, provider interface, hooks) | `identity-core` | (leaf) |
+| concrete cloud identity (Supabase) | `identity-cloud` | identity-core, supabase-js |
+| **choosing the identity provider** | `apps/web` (`identity/` only) | **identity-core, identity-cloud (dynamic)** |
 
 ## The hard rule, lint-enforced
 
@@ -95,6 +104,27 @@ blocks, not left to discipline:
 - `packages/game-db` — cannot import `@scrolled/extractor` or `@scrolled/wz`.
 - `packages/dataset-core` — cannot import any `@scrolled/*` package (it is a
   leaf; only `zod`/`fflate`).
+- `apps/web` display dirs and `packages/identity-core` — cannot import
+  `@scrolled/identity-cloud` or `@supabase/*` (see the identity rule below).
+
+## Identity is identity-aware, not auth-provider-aware (lint-enforced)
+
+Identity is orthogonal to the read/write data paths: it never touches game data.
+Sign-in is **optional and additive** — the self-hosted/local build runs the
+anonymous provider, requires no login, and must not even bundle the auth SDK.
+
+The core app consumes only the provider-agnostic contract `@scrolled/identity-core`
+(a generic `UserSession` plus `login`/`logout`). It never imports the concrete
+provider or `@supabase/supabase-js`. The provider is chosen at bootstrap in
+`apps/web/src/identity/` via a **dynamic `import()`**, so when the build is not
+configured for cloud accounts the cloud chunk is unreachable and dropped — no
+Supabase code, no vendor strings, mirroring how `apps/web/src/analytics/` gates
+its provider. Enforced in `eslint.config.js`:
+
+- `apps/web` display dirs (`components/` except `wizard/`, `routes/`, `lib/`,
+  `search/`) and `packages/identity-core` — cannot import `@scrolled/identity-cloud`
+  or `@supabase/*`. The sole exception is `apps/web/src/identity/`, the sanctioned
+  bootstrap shim that dynamic-imports the cloud provider.
 
 ## The two artifacts (don't conflate them)
 

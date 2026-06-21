@@ -1,0 +1,24 @@
+{
+  "name": "@scrolled/identity-core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Provider-agnostic identity contract: the IdentityProvider interface, generic UserSession types, React context/hooks, and an anonymous no-op provider. No concrete auth provider, no auth SDK.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./react": "./src/react.ts"
+  },
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "peerDependencies": {
+    "react": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.11",
+    "react": "^18.3.1",
+    "vitest": "^2.1.2"
+  }
+}

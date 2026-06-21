@@ -5,6 +5,7 @@ import { ServerProfileSection } from '@/components/settings/ServerProfileSection
 import { AppearanceSection } from '@/components/settings/AppearanceSection';
 import { PrivacySection } from '@/components/settings/PrivacySection';
 import { CollectionsSection } from '@/components/settings/CollectionsSection';
+import { AccountSection } from '@/components/account/AccountSection';
 import { BridgeSettingsPanel } from '@/mcp';
 import { appConfig } from '@/config';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -27,6 +28,7 @@ export default function SettingsIndex() {
       </header>
 
       <LibraryStatusSection />
+      <AccountSection />
       <AppearanceSection />
       <CollectionsSection />
       {canImport && <GameDataSection />}

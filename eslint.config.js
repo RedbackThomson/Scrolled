@@ -17,6 +17,21 @@ const noExtractorInDisplay = {
     'Display/read code must go through @scrolled/game-db, not the extractor (write path). See docs/data_boundaries.md.',
 };
 
+// Core/display code is identity-AWARE (consumes @scrolled/identity-core) but never
+// auth-provider-AWARE. The concrete cloud provider and the auth SDK are reached
+// only from the bootstrap shim apps/web/src/identity/, via a dynamic import, so
+// self-hosted builds never bundle them. See docs/data_boundaries.md.
+const noCloudIdentityInCore = {
+  group: [
+    '@scrolled/identity-cloud',
+    '@scrolled/identity-cloud/*',
+    '@supabase/supabase-js',
+    '@supabase/*',
+  ],
+  message:
+    'Core/display code is identity-aware, not auth-provider-aware. Consume @scrolled/identity-core only; the cloud provider is reached via apps/web/src/identity/. See docs/data_boundaries.md.',
+};
+
 export default tseslint.config(
   { ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**'] },
   {
@@ -60,12 +75,28 @@ export default tseslint.config(
     ignores: [
       'apps/web/src/components/wizard/**',
       'apps/web/src/components/common/extractorCatalog.ts',
+      // The one sanctioned site that may reach the cloud identity provider, and
+      // only via a dynamic import() so it is excluded from self-hosted bundles.
+      'apps/web/src/identity/**',
     ],
     plugins: { '@typescript-eslint': tseslint.plugin },
     rules: {
       '@typescript-eslint/no-restricted-imports': [
         BOUNDARY_SEVERITY,
-        { patterns: [noExtractorInDisplay] },
+        { patterns: [noExtractorInDisplay, noCloudIdentityInCore] },
+      ],
+    },
+  },
+
+  // identity-core is the provider-agnostic contract: it must not know about any
+  // concrete provider or auth SDK.
+  {
+    files: ['packages/identity-core/**/*.{ts,tsx}'],
+    plugins: { '@typescript-eslint': tseslint.plugin },
+    rules: {
+      '@typescript-eslint/no-restricted-imports': [
+        BOUNDARY_SEVERITY,
+        { patterns: [noCloudIdentityInCore] },
       ],
     },
   },

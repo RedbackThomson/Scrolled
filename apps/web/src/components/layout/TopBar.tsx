@@ -1,9 +1,11 @@
 import { Menu } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
+import { AccountMenu } from '@/components/account/AccountMenu';
 import { PaletteTrigger } from '@/components/command-palette/PaletteTrigger';
 import { Button } from '@/components/ui/button';
 import { useSidebarLayout } from '@/stores/sidebarState';
+import { appConfig } from '@/config';
 
 export function TopBar() {
   const location = useLocation();
@@ -29,6 +31,7 @@ export function TopBar() {
       </div>
       <div className="hidden flex-1 md:block" />
       <ThemeToggle />
+      {appConfig.features.accountMenu && <AccountMenu />}
     </header>
   );
 }

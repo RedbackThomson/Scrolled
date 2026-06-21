@@ -356,11 +356,65 @@ DNS) never affects the generic `scrolled.dev`.
 
 ---
 
+## Enabling cloud accounts (optional)
+
+Accounts are **opt-in and orthogonal** to the dataset profile — a generic or a
+fixed-dataset deployment can enable them, and a deployment that doesn't set the
+env below is unchanged: no sign-in UI, and the auth SDK is never even emitted
+into the bundle. There is no feature that requires being signed in; the core app
+works identically whether or not accounts are configured. (Sign-in currently
+adds identity only — cross-device sync is a later phase.)
+
+The first identity backend is [Supabase](https://supabase.com) with OAuth social
+login. The app talks to it only through a provider-agnostic interface, so other
+backends can be added later without touching the app.
+
+**1. Create a Supabase project** and, under Authentication → Providers, enable the
+OAuth provider(s) you want (e.g. Google). Under Authentication → URL
+Configuration, add your site's callback to the allowed redirect URLs:
+
+```
+https://your-site.example.com/auth/callback
+```
+
+**2. Build the site with the cloud identity env** (combine with whatever dataset
+env you already use):
+
+```bash
+VITE_IDENTITY_MODE=cloud \
+VITE_SUPABASE_URL=https://<project-ref>.supabase.co \
+VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_<...> \
+VITE_SUPABASE_OAUTH_PROVIDERS=google \
+pnpm --filter @scrolled/web build      # or build:fixed for a fixed-dataset site
+```
+
+- `VITE_IDENTITY_MODE=cloud` is the switch. Any other value (or unset) → anonymous
+  baseline, and the Supabase SDK is dropped from the build at compile time.
+- `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` come from the project's API
+  settings. The publishable key (`sb_publishable_…`) is a public client key —
+  safe to ship in the bundle (Row Level Security, not key secrecy, guards your
+  data). It replaces the legacy `anon` key; if your project predates the new
+  keys, set `VITE_SUPABASE_ANON_KEY` instead — it's accepted as a fallback until
+  Supabase retires it at the end of 2026.
+- `VITE_SUPABASE_OAUTH_PROVIDERS` is a comma-separated list of provider ids the
+  sign-in screen offers (defaults to `google`). They must match the providers
+  enabled in the project.
+- A cloud build missing the URL or a key **fails loudly** rather than shipping a
+  site whose sign-in can't work.
+
+What turning it on adds: a sign-in button + account menu in the top bar, an
+Account section in Settings, `/sign-in` and `/auth/callback` routes, and command
+palette entries — all gated, so they're absent when accounts are off.
+
+---
+
 ## Reference
 
 - Build env: `VITE_DEPLOYMENT_PROFILE`, `VITE_DATASET_FAMILY`,
   `VITE_DATASET_CHANNEL`, `VITE_DATASET_REPO_URL` (+ the usual `BASE_PATH`,
-  `VITE_SITE_URL`).
+  `VITE_SITE_URL`). Optional cloud accounts: `VITE_IDENTITY_MODE`,
+  `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (or legacy
+  `VITE_SUPABASE_ANON_KEY`), `VITE_SUPABASE_OAUTH_PROVIDERS`.
 - Commands: `pnpm dataset:build …`, `pnpm --filter @scrolled/web build:fixed`,
   and `pnpm --filter @scrolled/web dev:fixed` for local testing.
 - Local testing walkthrough and architecture:

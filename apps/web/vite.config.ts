@@ -1,5 +1,5 @@
 /// <reference types="vitest/config" />
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import path from 'node:path';
@@ -33,82 +33,95 @@ function manualChunks(id: string): string | undefined {
   return undefined;
 }
 
-export default defineConfig({
-  base: basePath,
-  plugins: [
-    {
-      name: 'inject-site-url',
-      transformIndexHtml(html) {
-        return html.replaceAll('__SITE_URL__', siteUrl);
+export default defineConfig(({ mode }) => {
+  // Mode-aware env (`.env`, `.env.local`, `.env.<mode>`, `.env.<mode>.local`,
+  // plus any matching shell vars). Cloud identity (Supabase) is opt-in per
+  // deployment; folding the mode into a build-time boolean lets Rollup
+  // dead-code-eliminate the dynamic import of `@scrolled/identity-cloud` in
+  // every other build, so the auth SDK is never emitted into a generic bundle.
+  const env = loadEnv(mode, process.cwd(), 'VITE_');
+  const identityCloud = env.VITE_IDENTITY_MODE === 'cloud';
+
+  return {
+    base: basePath,
+    define: {
+      __IDENTITY_CLOUD__: JSON.stringify(identityCloud),
+    },
+    plugins: [
+      {
+        name: 'inject-site-url',
+        transformIndexHtml(html) {
+          return html.replaceAll('__SITE_URL__', siteUrl);
+        },
+      },
+      react(),
+      VitePWA({
+        registerType: 'prompt',
+        injectRegister: null,
+        includeAssets: ['icon.svg', 'icon-192.png', 'icon-512.png'],
+        manifest: {
+          name: 'Scrolled',
+          short_name: 'Scrolled',
+          description:
+            'Browse items, mobs, NPCs, maps, and quests from your game data, fully on-device.',
+          theme_color: '#18181b',
+          background_color: '#18181b',
+          display: 'standalone',
+          icons: [
+            { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+            { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+            { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          ],
+        },
+        workbox: {
+          // Precache the full build output so the app works fully offline once
+          // loaded. `wasm` is the critical addition over Workbox defaults —
+          // sqlite-wasm is ~1MB and would otherwise miss the cache.
+          globPatterns: ['**/*.{js,css,html,wasm,woff2,svg,png,ico,webp}'],
+          // Hosted dataset artifacts (a fixed deployment copies them under
+          // `datasets/`) are large and installed into OPFS at runtime — never
+          // precache them, even if the patterns above are broadened later.
+          globIgnores: ['**/datasets/**'],
+          maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+          navigateFallback: `${basePath}index.html`,
+          navigateFallbackDenylist: [/^\/datasets\//],
+          cleanupOutdatedCaches: true,
+        },
+      }),
+    ],
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
       },
     },
-    react(),
-    VitePWA({
-      registerType: 'prompt',
-      injectRegister: null,
-      includeAssets: ['icon.svg', 'icon-192.png', 'icon-512.png'],
-      manifest: {
-        name: 'Scrolled',
-        short_name: 'Scrolled',
-        description:
-          'Browse items, mobs, NPCs, maps, and quests from your game data, fully on-device.',
-        theme_color: '#18181b',
-        background_color: '#18181b',
-        display: 'standalone',
-        icons: [
-          { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
-        ],
-      },
-      workbox: {
-        // Precache the full build output so the app works fully offline once
-        // loaded. `wasm` is the critical addition over Workbox defaults —
-        // sqlite-wasm is ~1MB and would otherwise miss the cache.
-        globPatterns: ['**/*.{js,css,html,wasm,woff2,svg,png,ico,webp}'],
-        // Hosted dataset artifacts (a fixed deployment copies them under
-        // `datasets/`) are large and installed into OPFS at runtime — never
-        // precache them, even if the patterns above are broadened later.
-        globIgnores: ['**/datasets/**'],
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
-        navigateFallback: `${basePath}index.html`,
-        navigateFallbackDenylist: [/^\/datasets\//],
-        cleanupOutdatedCaches: true,
-      },
-    }),
-  ],
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
+    // `@sqlite.org/sqlite-wasm` loads its WASM blob via
+    // `new URL('./sqlite3.wasm', import.meta.url)`. If Vite pre-bundles the
+    // package into `node_modules/.vite/deps/`, that URL resolves to a directory
+    // where the WASM file does NOT sit — Vite's SPA fallback then serves
+    // index.html for the request and the library fails with
+    // "wasm validation error: at offset 4: failed to match magic number".
+    // Excluding the package from pre-bundling makes Vite serve it from its real
+    // node_modules location where the WASM is alongside the JS.
+    optimizeDeps: {
+      exclude: ['@sqlite.org/sqlite-wasm'],
     },
-  },
-  // `@sqlite.org/sqlite-wasm` loads its WASM blob via
-  // `new URL('./sqlite3.wasm', import.meta.url)`. If Vite pre-bundles the
-  // package into `node_modules/.vite/deps/`, that URL resolves to a directory
-  // where the WASM file does NOT sit — Vite's SPA fallback then serves
-  // index.html for the request and the library fails with
-  // "wasm validation error: at offset 4: failed to match magic number".
-  // Excluding the package from pre-bundling makes Vite serve it from its real
-  // node_modules location where the WASM is alongside the JS.
-  optimizeDeps: {
-    exclude: ['@sqlite.org/sqlite-wasm'],
-  },
-  worker: {
-    format: 'es',
-  },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks,
+    worker: {
+      format: 'es',
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks,
+        },
       },
     },
-  },
-  test: {
-    environment: 'jsdom',
-    globals: false,
-    setupFiles: ['./vitest.setup.ts'],
-    include: ['src/**/*.test.{ts,tsx}', 'test/**/*.test.{ts,tsx}'],
-    // Default to a generous timeout — WZ parsing of real files can take a while.
-    testTimeout: 30_000,
-  },
+    test: {
+      environment: 'jsdom',
+      globals: false,
+      setupFiles: ['./vitest.setup.ts'],
+      include: ['src/**/*.test.{ts,tsx}', 'test/**/*.test.{ts,tsx}'],
+      // Default to a generous timeout — WZ parsing of real files can take a while.
+      testTimeout: 30_000,
+    },
+  };
 });

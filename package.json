@@ -13,8 +13,10 @@
   "scripts": {
     "dev": "pnpm --filter @scrolled/web dev",
     "dev:fixed": "pnpm --filter @scrolled/web dev:fixed",
+    "dev:identity": "pnpm --filter @scrolled/web dev:identity",
     "build": "pnpm --filter @scrolled/web build",
     "build:fixed": "pnpm --filter @scrolled/web build:fixed",
+    "build:identity": "pnpm --filter @scrolled/web build:identity",
     "preview": "pnpm --filter @scrolled/web preview",
     "dataset:build": "pnpm --filter @scrolled/extractor dataset:build",
     "typecheck": "pnpm -r typecheck",

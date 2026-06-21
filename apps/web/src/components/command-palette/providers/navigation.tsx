@@ -1,6 +1,7 @@
-import { Bookmark, Cog, Home, Wrench } from 'lucide-react';
+import { Bookmark, Cog, Home, LogIn, LogOut, User, Wrench } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useCurrentUser, useIdentity } from '@scrolled/identity-core/react';
 import { CommandGroup, CommandItem as CommandItemPrimitive } from '@/components/ui/command';
 import {
   ENTITY_KINDS,
@@ -16,7 +17,10 @@ interface NavEntry {
   id: string;
   label: string;
   keywords: string[];
-  to: string;
+  /** Where selecting the entry navigates. Omit for an action-only entry. */
+  to?: string;
+  /** Run instead of navigating (e.g. sign out). */
+  action?: () => void;
   icon: LucideIcon;
 }
 
@@ -32,6 +36,8 @@ export function NavigationProvider() {
   const features = useFeatures();
   const query = useCommandPalette((s) => s.query);
   const setOpen = useCommandPalette((s) => s.setOpen);
+  const user = useCurrentUser();
+  const { logout } = useIdentity();
 
   const has: Record<string, boolean> = {
     item: features.hasItems,
@@ -92,7 +98,39 @@ export function NavigationProvider() {
       to: '/settings/developer',
       icon: Wrench,
     },
+    ...accountEntries(),
   ];
+
+  function accountEntries(): NavEntry[] {
+    if (!appConfig.features.accountMenu) return [];
+    if (!user.isAuthenticated) {
+      return [
+        {
+          id: 'nav-sign-in',
+          label: 'Sign in',
+          keywords: ['login', 'account', 'sign in'],
+          to: '/sign-in',
+          icon: LogIn,
+        },
+      ];
+    }
+    return [
+      {
+        id: 'nav-account',
+        label: 'Account',
+        keywords: ['profile', 'user', 'settings'],
+        to: '/settings#account',
+        icon: User,
+      },
+      {
+        id: 'nav-sign-out',
+        label: 'Sign out',
+        keywords: ['logout', 'sign out', 'log off'],
+        action: () => void logout(),
+        icon: LogOut,
+      },
+    ];
+  }
 
   const visible = entries.filter((e) => matches(query, e));
   if (visible.length === 0) return null;
@@ -107,7 +145,8 @@ export function NavigationProvider() {
             value={e.id}
             keywords={[e.label, ...e.keywords]}
             onSelect={() => {
-              navigate(e.to);
+              if (e.action) e.action();
+              else if (e.to) navigate(e.to);
               setOpen(false);
             }}
           >

@@ -4,11 +4,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HotkeysProvider } from '@tanstack/react-hotkeys';
 import { RouterProvider } from 'react-router-dom';
 import { NuqsAdapter } from 'nuqs/adapters/react-router/v6';
+import { IdentityProviderHost } from '@scrolled/identity-core/react';
 
 import { router } from '@/router';
 import { UpdatePrompt } from '@/components/common/UpdatePrompt';
 import { initAnalytics } from '@/analytics';
 import { initMcp } from '@/mcp';
+import { createIdentityProvider } from '@/identity/createProvider';
 import '@/styles/index.css';
 
 initAnalytics();
@@ -26,15 +28,23 @@ const queryClient = new QueryClient({
 const rootEl = document.getElementById('root');
 if (!rootEl) throw new Error('Root element missing');
 
-createRoot(rootEl).render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <HotkeysProvider>
-        <NuqsAdapter>
-          <RouterProvider router={router} />
-          <UpdatePrompt />
-        </NuqsAdapter>
-      </HotkeysProvider>
-    </QueryClientProvider>
-  </StrictMode>,
-);
+async function bootstrap() {
+  const identityProvider = await createIdentityProvider();
+
+  createRoot(rootEl!).render(
+    <StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <IdentityProviderHost provider={identityProvider}>
+          <HotkeysProvider>
+            <NuqsAdapter>
+              <RouterProvider router={router} />
+              <UpdatePrompt />
+            </NuqsAdapter>
+          </HotkeysProvider>
+        </IdentityProviderHost>
+      </QueryClientProvider>
+    </StrictMode>,
+  );
+}
+
+void bootstrap();

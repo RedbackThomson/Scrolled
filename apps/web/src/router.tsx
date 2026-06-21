@@ -12,6 +12,16 @@ export const router = createBrowserRouter(
       path: 'setup',
       lazy: () => import('@/routes/Setup').then((m) => ({ Component: m.default })),
     },
+    // Identity routes are siblings of AppShell so they render full-page, with no
+    // sidebar or top bar. Both no-op (redirect home) on builds without accounts.
+    {
+      path: 'sign-in',
+      lazy: () => import('@/routes/SignIn').then((m) => ({ Component: m.default })),
+    },
+    {
+      path: 'auth/callback',
+      lazy: () => import('@/routes/AuthCallback').then((m) => ({ Component: m.default })),
+    },
     {
       lazy: () =>
         import('@/components/layout/AppShell').then((m) => ({ Component: m.AppShell })),
