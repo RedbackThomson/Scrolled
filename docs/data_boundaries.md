@@ -87,7 +87,11 @@ This is enforced in `eslint.config.js` via file-scoped `no-restricted-imports`
 blocks, not left to discipline:
 
 - `apps/web` display dirs (`components/` except `wizard/`, `routes/`, `lib/`,
-  `search/`) — cannot import `@scrolled/extractor` or its subpaths.
+  `search/`) — cannot import `@scrolled/extractor` or its subpaths. One
+  documented exception: `components/common/extractorCatalog.ts` imports the
+  extractor's canonical key vocabulary (it pairs label + lucide icon to each
+  extraction category, so it can't live in the extractor). That's a type/const
+  import, not extraction logic.
 - `packages/game-db` — cannot import `@scrolled/extractor` or `@scrolled/wz`.
 - `packages/dataset-core` — cannot import any `@scrolled/*` package (it is a
   leaf; only `zod`/`fflate`).

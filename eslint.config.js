@@ -5,10 +5,11 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
 import prettier from 'eslint-config-prettier';
 
-// Layer boundaries enforced by lint. See docs/data_boundaries.md. Currently
-// `warn` while the read/write package split lands; flip to `error` once the web
-// app's display layer no longer imports the write path (extractor).
-const BOUNDARY_SEVERITY = 'warn';
+// Layer boundaries enforced by lint. See docs/data_boundaries.md. The web app's
+// display layer reads through @scrolled/game-db; only the extraction layer
+// (workers/, hooks/extraction/, parser/, components/wizard/) may import the
+// write path (extractor).
+const BOUNDARY_SEVERITY = 'error';
 
 const noExtractorInDisplay = {
   group: ['@scrolled/extractor', '@scrolled/extractor/*'],
@@ -44,6 +45,11 @@ export default tseslint.config(
   // path (extractor) is reachable from the extraction layer alone — workers/,
   // hooks/extraction/, parser/, and components/wizard/ — which are NOT covered
   // by the globs below.
+  //
+  // Exception: extractorCatalog.ts is the one display file that needs the
+  // extractor's canonical key vocabulary (label + icon per extraction category).
+  // It can't live in the extractor (it imports lucide icons), so it imports the
+  // key list from there. That's a type/const import, not extraction logic.
   {
     files: [
       'apps/web/src/components/**/*.{ts,tsx}',
@@ -51,7 +57,10 @@ export default tseslint.config(
       'apps/web/src/lib/**/*.{ts,tsx}',
       'apps/web/src/search/**/*.{ts,tsx}',
     ],
-    ignores: ['apps/web/src/components/wizard/**'],
+    ignores: [
+      'apps/web/src/components/wizard/**',
+      'apps/web/src/components/common/extractorCatalog.ts',
+    ],
     plugins: { '@typescript-eslint': tseslint.plugin },
     rules: {
       '@typescript-eslint/no-restricted-imports': [
