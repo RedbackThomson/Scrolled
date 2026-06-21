@@ -50,34 +50,6 @@ export const LEVEL_BY_STATUS = {
   weak: '3',
 } as const satisfies Record<Exclude<ElementStatus, 'neutral'>, ElementLevel>;
 
-/** Short label for a mob's per-element status, used in detail-page tables. */
-export const ELEMENT_STATUS_LABELS: Record<ElementStatus, string> = {
-  neutral: 'Neutral',
-  immune: 'Immune',
-  resistant: 'Resistant',
-  weak: 'Weak',
-};
-
-/** Section/header label when grouping elements by status (hover cards,
- *  list-page column headers). Phrased as how the *mob* relates to the
- *  element, not the other way around. */
-export const ELEMENT_GROUP_LABELS: Record<ElementStatus, string> = {
-  neutral: 'Neutral',
-  immune: 'Immune to',
-  resistant: 'Strong against',
-  weak: 'Weak against',
-};
-
-/** Tailwind text-color class for each status. Keep parity with the
- *  sidebar palette so the hover card, list cell, and detail row all
- *  visually agree on what "immune" looks like. */
-export const ELEMENT_STATUS_CLASSES: Record<ElementStatus, string> = {
-  neutral: 'text-muted-foreground',
-  immune: 'text-sky-700 dark:text-sky-300',
-  resistant: 'text-amber-700 dark:text-amber-300',
-  weak: 'text-rose-700 dark:text-rose-300',
-};
-
 export function parseMobElements(element?: string | null): Record<ElementName, ElementStatus> {
   const result = {} as Record<ElementName, ElementStatus>;
   for (const name of ELEMENT_ORDER) result[name] = 'neutral';

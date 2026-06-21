@@ -7,11 +7,11 @@ import { HoverPopover } from '@/components/common/HoverPopover';
 import { HoverCardSaveFooter } from '@/components/collections';
 import { getDbClient } from '@/db';
 import { useShowEntityIds } from '@/stores/showEntityIds';
+import { elementsByStatus } from '@scrolled/game-db/domain/mobElements';
 import {
   ELEMENT_GROUP_LABELS,
   ELEMENT_STATUS_CLASSES,
-  elementsByStatus,
-} from '@scrolled/game-db/domain/mobElements';
+} from '@/components/entity-display/mobElementsDisplay';
 
 const HOVER_CARD_STATUSES = ['immune', 'resistant', 'weak'] as const;
 

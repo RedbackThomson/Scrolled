@@ -4,12 +4,11 @@ import { EntityIcon } from '@/components/entity-display/EntityIcon';
 import { ExpValue } from '@/components/entity-display/ExpValue';
 import { MobLink } from '@/components/entity-links';
 import type { MobRecord } from '@/db';
+import { elementsByStatus, type ElementStatus } from '@scrolled/game-db/domain/mobElements';
 import {
   ELEMENT_GROUP_LABELS,
   ELEMENT_STATUS_CLASSES,
-  elementsByStatus,
-  type ElementStatus,
-} from '@scrolled/game-db/domain/mobElements';
+} from '@/components/entity-display/mobElementsDisplay';
 
 /** Statuses that get their own column in the listing. Maps each to the
  *  public column id used in URL state and filter keys. */

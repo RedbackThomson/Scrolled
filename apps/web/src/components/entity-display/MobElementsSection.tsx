@@ -1,9 +1,8 @@
+import { ELEMENT_ORDER, parseMobElements } from '@scrolled/game-db/domain/mobElements';
 import {
-  ELEMENT_ORDER,
   ELEMENT_STATUS_CLASSES,
   ELEMENT_STATUS_LABELS,
-  parseMobElements,
-} from '@scrolled/game-db/domain/mobElements';
+} from '@/components/entity-display/mobElementsDisplay';
 import { cn } from '@/lib/utils';
 
 export function MobElementsSection({ element }: { element: string | null }) {
