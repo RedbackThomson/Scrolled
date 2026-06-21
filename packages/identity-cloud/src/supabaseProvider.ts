@@ -26,11 +26,14 @@ function toUserSession(session: Session | null): UserSession {
   const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
   const str = (key: string): string | null =>
     typeof meta[key] === 'string' ? (meta[key] as string) : null;
+  // `app_metadata.provider` is the service used for the current sign-in.
+  const provider = typeof user.app_metadata?.provider === 'string' ? user.app_metadata.provider : null;
   return {
     userId: user.id,
     email: user.email ?? null,
     displayName: str('full_name') ?? str('name'),
     avatarUrl: str('avatar_url') ?? str('picture'),
+    provider,
     isAuthenticated: true,
     mode: 'cloud',
   };

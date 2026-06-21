@@ -12,6 +12,12 @@ export interface UserSession {
   displayName: string | null;
   email: string | null;
   avatarUrl: string | null;
+  /**
+   * The external service the session was established through, e.g. `'discord'`
+   * or `'twitch'`. A generic id, not auth-provider internals — `null` when
+   * anonymous or unknown.
+   */
+  provider: string | null;
   isAuthenticated: boolean;
   mode: SessionMode;
 }
@@ -21,6 +27,7 @@ export const ANONYMOUS_SESSION: UserSession = {
   displayName: null,
   email: null,
   avatarUrl: null,
+  provider: null,
   isAuthenticated: false,
   mode: 'anonymous',
 };

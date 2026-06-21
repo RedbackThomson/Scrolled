@@ -3,19 +3,8 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { useCurrentUser, useIdentity } from '@scrolled/identity-core/react';
 import { Button } from '@/components/ui/button';
 import { appConfig } from '@/config';
+import { oauthProviderLabel } from '@/lib/oauthProviders';
 import { usePageTitle } from '@/hooks/usePageTitle';
-
-const PROVIDER_LABELS: Record<string, string> = {
-  google: 'Google',
-  github: 'GitHub',
-  gitlab: 'GitLab',
-  discord: 'Discord',
-  apple: 'Apple',
-};
-
-function providerLabel(id: string): string {
-  return PROVIDER_LABELS[id] ?? id.charAt(0).toUpperCase() + id.slice(1);
-}
 
 export default function SignIn() {
   usePageTitle('Sign in');
@@ -63,7 +52,9 @@ export default function SignIn() {
               disabled={pending !== null}
               onClick={() => void onSignIn(provider)}
             >
-              {pending === provider ? 'Redirecting…' : `Continue with ${providerLabel(provider)}`}
+              {pending === provider
+                ? 'Redirecting…'
+                : `Continue with ${oauthProviderLabel(provider)}`}
             </Button>
           ))}
         </div>

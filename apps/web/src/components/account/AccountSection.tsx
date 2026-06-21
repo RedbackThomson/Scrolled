@@ -4,6 +4,7 @@ import { useCurrentUser, useIdentity } from '@scrolled/identity-core/react';
 import { useSettingsSection } from '@/components/settings/SettingsScrollSpy';
 import { Button } from '@/components/ui/button';
 import { appConfig } from '@/config';
+import { oauthProviderLabel } from '@/lib/oauthProviders';
 
 export function AccountSection() {
   if (!appConfig.features.accountMenu) return null;
@@ -31,6 +32,11 @@ function AccountSectionInner() {
               </div>
               {user.email && (
                 <p className="text-muted-foreground mt-0.5 truncate text-xs">{user.email}</p>
+              )}
+              {user.provider && (
+                <p className="text-muted-foreground mt-0.5 truncate text-xs">
+                  Signed in with {oauthProviderLabel(user.provider)}
+                </p>
               )}
             </div>
             <Button variant="outline" size="sm" onClick={() => void logout()}>
