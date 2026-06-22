@@ -3,6 +3,7 @@ import { GameDataSection } from '@/components/settings/GameDataSection';
 import { BackupSection } from '@/components/settings/BackupSection';
 import { ServerProfileSection } from '@/components/settings/ServerProfileSection';
 import { AppearanceSection } from '@/components/settings/AppearanceSection';
+import { SyncSection } from '@/components/settings/SyncSection';
 import { PrivacySection } from '@/components/settings/PrivacySection';
 import { CollectionsSection } from '@/components/settings/CollectionsSection';
 import { AccountSection } from '@/components/account/AccountSection';
@@ -29,6 +30,7 @@ export default function SettingsIndex() {
 
       <LibraryStatusSection />
       <AccountSection />
+      <SyncSection />
       <AppearanceSection />
       <CollectionsSection />
       {canImport && <GameDataSection />}

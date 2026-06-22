@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { QueryClient } from '@tanstack/react-query';
 import {
   SyncEngine,
-  PROTOCOL_VERSION,
   type SyncBackend,
   type SyncEntity,
   type SyncProvider,
@@ -60,21 +59,10 @@ export function SyncEngineHost({ provider, queryClient, children }: SyncEngineHo
     void (async () => {
       const userDb = getUserDbClient();
 
-      // Protocol handshake: a client too old for the server is told to upgrade
-      // (Phase 5 surfaces this in the UI). A network failure here is non-fatal —
-      // the engine's own cycle backs off — so offline use is never blocked.
-      try {
-        const handshake = await provider.hello();
-        if (handshake.minClientRevision > PROTOCOL_VERSION) {
-          if (!cancelled) {
-            console.warn('[sync] client protocol is older than the server requires; sync paused');
-          }
-          return;
-        }
-      } catch {
-        // ignore; a later cycle retries
-      }
-      if (cancelled) return;
+      // The protocol handshake is the engine's first cycle step now: a client
+      // too old for the server surfaces a non-retryable error through
+      // `useSyncStatus()`, and a transient failure backs off — so the host just
+      // bootstraps and starts.
 
       // Reconcile the local DB with this account before the first cycle: adopt
       // anonymous data, reset on an account switch, or resume (§11).

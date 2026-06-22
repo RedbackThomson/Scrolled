@@ -9,6 +9,7 @@ export type {
   SyncBackend,
   SyncChange,
   SyncEntity,
+  SyncErrorKind,
   SyncMeta,
   SyncOp,
   SyncProvider,

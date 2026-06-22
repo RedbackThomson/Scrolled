@@ -84,6 +84,8 @@ export class SyncEngine {
   /** A trigger arrived mid-cycle; run one more cycle when this one finishes. */
   private rerun = false;
   private failures = 0;
+  /** The protocol handshake is verified once per engine, lazily on first cycle. */
+  private protocolChecked = false;
 
   private unsubscribePoke: Unsubscribe | null = null;
   private fastTimer: ReturnType<typeof setTimeout> | null = null;
@@ -199,7 +201,7 @@ export class SyncEngine {
     try {
       await this.cycle();
       this.failures = 0;
-      this.setStatus({ state: 'synced', lastSyncedAt: this.now(), error: null });
+      this.setStatus({ state: 'synced', lastSyncedAt: this.now(), error: null, errorKind: null });
     } catch (err) {
       this.handleFailure(err);
     } finally {
@@ -212,8 +214,25 @@ export class SyncEngine {
   }
 
   private async cycle(): Promise<void> {
+    await this.ensureProtocol();
     await this.pushPhase();
     await this.pullPhase();
+  }
+
+  /**
+   * Verify the wire contract before the first push/pull. A client below the
+   * server's `minClientRevision` throws a non-retryable `SyncProtocolError`
+   * (surfaced as "please update"); a transient `hello()` fault falls through to
+   * the normal backoff, so the gate retries on the next cycle and offline use is
+   * never blocked. Verified once — handshakes don't change mid-session.
+   */
+  private async ensureProtocol(): Promise<void> {
+    if (this.protocolChecked) return;
+    const handshake = await this.provider.hello();
+    if (handshake.minClientRevision > PROTOCOL_VERSION) {
+      throw new SyncProtocolError('A newer app version is required to sync. Refresh to update.');
+    }
+    this.protocolChecked = true;
   }
 
   private async pushPhase(): Promise<void> {
@@ -285,7 +304,7 @@ export class SyncEngine {
 
   private handleFailure(err: unknown): void {
     if (err instanceof SyncProtocolError) {
-      this.setStatus({ state: 'error', error: err.message });
+      this.setStatus({ state: 'error', error: err.message, errorKind: 'protocol' });
       return;
     }
     if (err instanceof SyncAuthError) {
@@ -295,7 +314,7 @@ export class SyncEngine {
     // Treat everything else as transient: back off and retry.
     const message = err instanceof Error ? err.message : String(err);
     this.failures += 1;
-    this.setStatus({ state: 'offline', error: message });
+    this.setStatus({ state: 'offline', error: message, errorKind: 'transient' });
     this.scheduleBackoff();
   }
 
@@ -304,7 +323,7 @@ export class SyncEngine {
     if (token) {
       this.requestSync('manual');
     } else {
-      this.setStatus({ state: 'error', error: err.message });
+      this.setStatus({ state: 'error', error: err.message, errorKind: 'auth' });
     }
   }
 

@@ -8,6 +8,7 @@ export type SettingsSectionNavItem =
 const BASE_SECTIONS: SettingsSectionNavItem[] = [
   { kind: 'section', id: 'library-status', label: 'Library Status' },
   { kind: 'section', id: 'account', label: 'Account' },
+  { kind: 'section', id: 'sync', label: 'Sync' },
   { kind: 'section', id: 'appearance', label: 'Appearance' },
   { kind: 'section', id: 'collections', label: 'Collections' },
   { kind: 'section', id: 'game-data', label: 'Game Data' },
@@ -22,6 +23,7 @@ function isHidden(item: SettingsSectionNavItem): boolean {
   if (item.kind !== 'section') return false;
   if (item.id === 'privacy') return !isAnalyticsAvailable();
   if (item.id === 'account') return !appConfig.features.accountMenu;
+  if (item.id === 'sync') return !appConfig.features.sync;
   return false;
 }
 

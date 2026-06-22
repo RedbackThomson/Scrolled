@@ -136,6 +136,14 @@ export type SyncState =
   | 'offline' // a network error backed us off; will retry
   | 'error'; // a non-retryable error (e.g. session expired, incompatible)
 
+/**
+ * Why the last cycle failed, so the UI can offer the right next step without
+ * parsing the error message. `transient` pairs with `offline`; `auth` and
+ * `protocol` pair with `error` (session expired → re-auth; client too old →
+ * refresh). Null when healthy.
+ */
+export type SyncErrorKind = 'transient' | 'auth' | 'protocol';
+
 export interface SyncStatus {
   state: SyncState;
   /** Wall-clock ms of the last fully-successful cycle; null if never. */
@@ -144,6 +152,8 @@ export interface SyncStatus {
   pendingChanges: number;
   /** Human-readable last error; null when healthy. */
   error: string | null;
+  /** Machine-readable error category for UI branching; null when healthy. */
+  errorKind: SyncErrorKind | null;
 }
 
 export const INITIAL_SYNC_STATUS: SyncStatus = {
@@ -151,6 +161,7 @@ export const INITIAL_SYNC_STATUS: SyncStatus = {
   lastSyncedAt: null,
   pendingChanges: 0,
   error: null,
+  errorKind: null,
 };
 
 export type SyncStatusListener = (status: SyncStatus) => void;

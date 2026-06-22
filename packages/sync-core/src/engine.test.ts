@@ -289,6 +289,38 @@ describe('SyncEngine — failure handling', () => {
     server.setFault('protocol');
     await engine.syncNow();
     expect(engine.getStatus().state).toBe('error');
+    expect(engine.getStatus().errorKind).toBe('protocol');
+  });
+
+  it('refuses to sync when the handshake requires a newer client', async () => {
+    const server = createMockSyncServer();
+    const dev = makeBackend('A');
+    const invalidated: string[][] = [];
+    const engine = new SyncEngine({
+      // The server speaks a protocol this client is too old for.
+      provider: createMockSyncProvider({ server, minClientRevision: 999 }),
+      backend: dev.backend,
+      invalidate: (keys) => invalidated.push(...keys),
+      now: () => 1_700_000_000_000,
+    });
+    dev.localWrite('collection', 'x', 'upsert', { name: 'X', updated_at: 1 });
+
+    await engine.syncNow();
+
+    expect(engine.getStatus()).toMatchObject({ state: 'error', errorKind: 'protocol' });
+    expect(server.size()).toBe(0); // never pushed past the gate
+    expect(dev.outboxSize()).toBe(1);
+  });
+
+  it('tags an auth failure with no refresh as an auth error', async () => {
+    const server = createMockSyncServer();
+    const dev = makeBackend('A');
+    const { engine } = makeEngine(dev.backend, server);
+    dev.localWrite('collection', 'x', 'upsert', { name: 'X', updated_at: 1 });
+
+    server.setFault('auth');
+    await engine.syncNow(); // no getAccessToken provided → can't refresh
+    expect(engine.getStatus()).toMatchObject({ state: 'error', errorKind: 'auth' });
   });
 
   it('debounces fast-lane mutations and collapses them into one cycle', async () => {

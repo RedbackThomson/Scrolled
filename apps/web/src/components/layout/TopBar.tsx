@@ -2,6 +2,7 @@ import { Menu } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { AccountMenu } from '@/components/account/AccountMenu';
+import { SyncStatusIndicator } from '@/components/sync/SyncStatusIndicator';
 import { PaletteTrigger } from '@/components/command-palette/PaletteTrigger';
 import { Button } from '@/components/ui/button';
 import { useSidebarLayout } from '@/stores/sidebarState';
@@ -30,6 +31,7 @@ export function TopBar() {
         <PaletteTrigger />
       </div>
       <div className="hidden flex-1 md:block" />
+      <SyncStatusIndicator />
       <ThemeToggle />
       {appConfig.features.accountMenu && <AccountMenu />}
     </header>

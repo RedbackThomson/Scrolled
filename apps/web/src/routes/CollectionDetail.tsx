@@ -28,6 +28,7 @@ import {
 } from '@/components/collections';
 import { CollectionMembersBoard } from '@/components/collections/CollectionMembersBoard';
 import { CollectionDisplayOptionsMenu } from '@/components/collections/CollectionDisplayOptionsMenu';
+import { CollectionSyncBadge } from '@/components/sync/CollectionSyncBadge';
 import { usePaletteRegistration } from '@/components/command-palette/usePaletteContext';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import type { CommandItem } from '@/components/command-palette/types';
@@ -194,7 +195,10 @@ export default function CollectionDetail() {
               })()}
             </span>
             <div>
-              <h1 className="text-3xl font-semibold tracking-tight">{collection.name}</h1>
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-3xl font-semibold tracking-tight">{collection.name}</h1>
+                <CollectionSyncBadge />
+              </div>
               <p className="text-muted-foreground text-sm">
                 {collection.memberCount.toLocaleString()}{' '}
                 {collection.memberCount === 1 ? 'member' : 'members'}
