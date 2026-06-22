@@ -32,6 +32,22 @@ const noCloudIdentityInCore = {
     'Core/display code is identity-aware, not auth-provider-aware. Consume @scrolled/identity-core only; the cloud provider is reached via apps/web/src/identity/. See docs/data_boundaries.md.',
 };
 
+// The same shape for sync: core/display code is sync-AWARE (consumes
+// @scrolled/sync-core) but never sync-PROVIDER-aware. The concrete Supabase sync
+// transport and its SDK are reached only from the bootstrap shim
+// apps/web/src/sync/, via a dynamic import, so self-hosted builds never bundle
+// them. See docs/data_boundaries.md §5.
+const noCloudSyncInCore = {
+  group: [
+    '@scrolled/sync-supabase',
+    '@scrolled/sync-supabase/*',
+    '@supabase/supabase-js',
+    '@supabase/*',
+  ],
+  message:
+    'Core/display code is sync-aware, not sync-provider-aware. Consume @scrolled/sync-core only; the Supabase sync transport is reached via apps/web/src/sync/. See docs/data_boundaries.md.',
+};
+
 export default tseslint.config(
   { ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**'] },
   {
@@ -75,15 +91,16 @@ export default tseslint.config(
     ignores: [
       'apps/web/src/components/wizard/**',
       'apps/web/src/components/common/extractorCatalog.ts',
-      // The one sanctioned site that may reach the cloud identity provider, and
-      // only via a dynamic import() so it is excluded from self-hosted bundles.
+      // The sanctioned bootstrap shims that may reach a cloud provider, and only
+      // via a dynamic import() so they are excluded from self-hosted bundles.
       'apps/web/src/identity/**',
+      'apps/web/src/sync/**',
     ],
     plugins: { '@typescript-eslint': tseslint.plugin },
     rules: {
       '@typescript-eslint/no-restricted-imports': [
         BOUNDARY_SEVERITY,
-        { patterns: [noExtractorInDisplay, noCloudIdentityInCore] },
+        { patterns: [noExtractorInDisplay, noCloudIdentityInCore, noCloudSyncInCore] },
       ],
     },
   },
@@ -97,6 +114,19 @@ export default tseslint.config(
       '@typescript-eslint/no-restricted-imports': [
         BOUNDARY_SEVERITY,
         { patterns: [noCloudIdentityInCore] },
+      ],
+    },
+  },
+
+  // sync-core is the provider-agnostic sync contract: it must not know about the
+  // concrete Supabase sync transport or its SDK.
+  {
+    files: ['packages/sync-core/**/*.{ts,tsx}'],
+    plugins: { '@typescript-eslint': tseslint.plugin },
+    rules: {
+      '@typescript-eslint/no-restricted-imports': [
+        BOUNDARY_SEVERITY,
+        { patterns: [noCloudSyncInCore] },
       ],
     },
   },

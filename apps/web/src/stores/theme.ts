@@ -61,11 +61,10 @@ function persist(mode: ThemeMode): void {
   // Deferred + swallowed so the worker construction never throws into a
   // synchronous caller (or a test env without Workers).
   void Promise.resolve()
-    .then(() => {
+    .then(async () => {
       const db = getUserDbClient();
-      return mode === 'system'
-        ? db.deleteUserSetting(THEME_SETTING_KEY)
-        : db.setUserSetting(THEME_SETTING_KEY, JSON.stringify(mode));
+      if (mode === 'system') await db.deleteUserSetting(THEME_SETTING_KEY);
+      else await db.setUserSetting(THEME_SETTING_KEY, JSON.stringify(mode));
     })
     .catch(() => {});
 }

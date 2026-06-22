@@ -54,9 +54,17 @@ extraction hooks). UI/display code never reaches into the write path.
                                 provider; React context/hooks on /react subpath
 @scrolled/identity-cloud  → deps: identity-core, @supabase/supabase-js
                                 Supabase provider; hosted builds only
+@scrolled/sync-core      leaf — provider-agnostic sync contract: SyncProvider,
+                                protocol types/zod schemas, conflict handler,
+                                SyncEngine, in-memory mock provider; React status
+                                context/hooks on /react subpath. Ships everywhere.
+@scrolled/sync-supabase  → deps: sync-core, identity-core, @supabase/supabase-js
+                                Supabase sync transport; hosted builds only (not
+                                created until Phase 3)
 apps/web  → deps: game-db (display), extractor (in-browser extraction),
                   dataset-client/-core/-repository, config, wz, mcp-protocol,
-                  identity-core (display), identity-cloud (bootstrap only)
+                  identity-core (display), identity-cloud (bootstrap only),
+                  sync-core (display + user-DB apply), sync-supabase (bootstrap only)
 ```
 
 The graph is acyclic. A package never imports "up" toward the web app. The web
@@ -80,10 +88,14 @@ app is the only integrator.
 | hosted dataset resolve / download / install | `dataset-repository`, `dataset-client` | dataset-core |
 | **display / read of extracted data** | `apps/web` | **game-db, dataset-\*** |
 | **driving in-browser extraction** | `apps/web` (`workers/`, `hooks/extraction/`, `parser/`, `components/wizard/`) | **extractor** |
-| user DB (collections, pinned searches, prefs) | `apps/web/db/user` | game-db/db (sqlite only) |
+| user DB (collections, pinned searches, prefs) | `apps/web/db/user` | game-db/db (sqlite), sync-core (conflict handler + wire types) |
 | identity contract (session, provider interface, hooks) | `identity-core` | (leaf) |
 | concrete cloud identity (Supabase) | `identity-cloud` | identity-core, supabase-js |
 | **choosing the identity provider** | `apps/web` (`identity/` only) | **identity-core, identity-cloud (dynamic)** |
+| sync protocol, engine, conflict handler, status hooks | `sync-core` | (leaf) |
+| concrete Supabase sync transport | `sync-supabase` | sync-core, identity-core, supabase-js |
+| **choosing the sync provider** | `apps/web` (`sync/` only) | **sync-core, sync-supabase (dynamic)** |
+| local sync metadata (outbox, cursor, tombstones) | `apps/web/db/user` | game-db/db (sqlite), sync-core |
 
 ## The hard rule, lint-enforced
 
@@ -125,6 +137,25 @@ its provider. Enforced in `eslint.config.js`:
   `search/`) and `packages/identity-core` — cannot import `@scrolled/identity-cloud`
   or `@supabase/*`. The sole exception is `apps/web/src/identity/`, the sanctioned
   bootstrap shim that dynamic-imports the cloud provider.
+
+## Sync is sync-aware, not sync-provider-aware (lint-enforced)
+
+Sync mirrors the identity split exactly. Only the user DB (`/user.sqlite3`)
+syncs; the game DB never does. The core app consumes the provider-agnostic
+contract `@scrolled/sync-core` (the `SyncProvider` interface, protocol
+types/schemas, the conflict handler, the `SyncEngine`, and `useSyncStatus()`) and
+nothing else — it is sync-aware but not provider-aware. The concrete Supabase
+transport (`@scrolled/sync-supabase`, added in Phase 3) is chosen at bootstrap in
+`apps/web/src/sync/` via a **dynamic `import()`**, so self-hosted/forked builds
+that configure no sync never bundle it or `@supabase/*`. The user-DB worker
+(`apps/web/src/db/user`) additionally imports `sync-core` for the conflict
+handler and wire types its `applyRemoteChanges` runs. Enforced in
+`eslint.config.js`:
+
+- `apps/web` display dirs (`components/` except `wizard/`, `routes/`, `lib/`,
+  `search/`) and `packages/sync-core` — cannot import `@scrolled/sync-supabase`
+  or `@supabase/*`. The sole exception is `apps/web/src/sync/`, the sanctioned
+  bootstrap shim that dynamic-imports the sync transport.
 
 ## The two artifacts (don't conflate them)
 

@@ -30,6 +30,7 @@
     "@scrolled/identity-cloud": "workspace:*",
     "@scrolled/identity-core": "workspace:*",
     "@scrolled/mcp-protocol": "workspace:*",
+    "@scrolled/sync-core": "workspace:*",
     "@scrolled/wz": "workspace:*",
     "@sqlite.org/sqlite-wasm": "3.53.0-build1",
     "@tanstack/react-hotkeys": "^0.10.0",

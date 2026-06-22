@@ -31,11 +31,19 @@ import type {
   UserSettingRecord,
 } from '../types';
 import type { EntityKind } from '@scrolled/game-db/db/types';
+import type {
+  ApplyResult,
+  AssignedRevision,
+  OutboxChange,
+  ServerChange,
+  SyncMeta,
+} from '@scrolled/sync-core';
 import * as collections from './collections';
 import * as collectionGroups from './collectionGroups';
 import * as pinned from './pinnedSearches';
 import * as userSettings from './userSettings';
 import * as recents from './recents';
+import * as sync from './sync';
 
 export class UserDbApi implements UserDatabase {
   constructor(
@@ -265,6 +273,24 @@ export class UserDbApi implements UserDatabase {
 
   async clearRecents(kind: 'entity' | 'query'): Promise<void> {
     recents.clearRecents(this.db, kind);
+  }
+
+  // -- sync (docs/sync_design.md §8) ------------------------------------------
+
+  async getSyncMeta(): Promise<SyncMeta> {
+    return sync.getSyncMeta(this.db);
+  }
+
+  async drainOutbox(limit: number): Promise<OutboxChange[]> {
+    return sync.drainOutbox(this.db, limit);
+  }
+
+  async markOutboxSynced(seqs: number[], assigned: AssignedRevision[]): Promise<void> {
+    sync.markOutboxSynced(this.db, seqs, assigned);
+  }
+
+  async applyRemoteChanges(batch: ServerChange[]): Promise<ApplyResult> {
+    return sync.applyRemoteChanges(this.db, batch);
   }
 
   // -- raw bytes --------------------------------------------------------------

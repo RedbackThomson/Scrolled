@@ -6,6 +6,13 @@
 // structured-cloneable.
 
 import type { EntityKind } from '@scrolled/game-db/db/types';
+import type {
+  ApplyResult,
+  AssignedRevision,
+  OutboxChange,
+  ServerChange,
+  SyncMeta,
+} from '@scrolled/sync-core';
 import type { CollectionsExportJson, ImportConflictMode, ImportReport } from './collectionsJson';
 
 export type CollectionEntityType = Extract<
@@ -334,6 +341,18 @@ export interface UserDatabase {
   trackRecentQuery(query: string, ranAt?: number): Promise<void>;
   /** Clear all recents of one kind. */
   clearRecents(kind: 'entity' | 'query'): Promise<void>;
+
+  /** Read the sync cursor/identity the engine needs (server_seq, device_id,
+   *  account_id). */
+  getSyncMeta(): Promise<SyncMeta>;
+  /** Next batch of pending local changes (wire-projected), oldest first. */
+  drainOutbox(limit: number): Promise<OutboxChange[]>;
+  /** Acknowledge pushed rows and stamp the server-assigned revisions. */
+  markOutboxSynced(seqs: number[], assigned: AssignedRevision[]): Promise<void>;
+  /** Apply a server-ordered remote batch in one transaction (conflict handler
+   *  against pending edits, cursor advanced atomically). Returns the TanStack
+   *  query-key roots to invalidate. */
+  applyRemoteChanges(batch: ServerChange[]): Promise<ApplyResult>;
 
   /** Serialize the live user.sqlite3 to a Uint8Array. */
   exportBytes(): Promise<Uint8Array>;
