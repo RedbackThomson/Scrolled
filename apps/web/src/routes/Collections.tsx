@@ -8,7 +8,6 @@ import {
   resolveCollectionColor,
   resolveCollectionIcon,
 } from '@/components/collections';
-import { CollectionSyncBadge } from '@/components/sync/CollectionSyncBadge';
 import { useCollectionsList } from '@/hooks/useCollections';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import type { CollectionRecord } from '@/db/user';
@@ -92,10 +91,7 @@ function CollectionTile({ collection }: { collection: CollectionRecord }) {
           <Icon className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1 space-y-1">
-          <div className="flex items-center gap-2">
-            <div className="truncate text-sm font-semibold">{collection.name}</div>
-            <CollectionSyncBadge className="shrink-0" />
-          </div>
+          <div className="truncate text-sm font-semibold">{collection.name}</div>
           <div className="text-muted-foreground font-mono text-xs">
             {collection.memberCount.toLocaleString()}{' '}
             {collection.memberCount === 1 ? 'item' : 'items'}

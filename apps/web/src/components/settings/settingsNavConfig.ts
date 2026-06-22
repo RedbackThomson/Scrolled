@@ -7,8 +7,9 @@ export type SettingsSectionNavItem =
 
 const BASE_SECTIONS: SettingsSectionNavItem[] = [
   { kind: 'section', id: 'library-status', label: 'Library Status' },
+  // Sync folds into the account section (it needs an account), so the label
+  // reflects that when sync is enabled — see getSettingsNavItems.
   { kind: 'section', id: 'account', label: 'Account' },
-  { kind: 'section', id: 'sync', label: 'Sync' },
   { kind: 'section', id: 'appearance', label: 'Appearance' },
   { kind: 'section', id: 'collections', label: 'Collections' },
   { kind: 'section', id: 'game-data', label: 'Game Data' },
@@ -23,12 +24,15 @@ function isHidden(item: SettingsSectionNavItem): boolean {
   if (item.kind !== 'section') return false;
   if (item.id === 'privacy') return !isAnalyticsAvailable();
   if (item.id === 'account') return !appConfig.features.accountMenu;
-  if (item.id === 'sync') return !appConfig.features.sync;
   return false;
 }
 
 export function getSettingsNavItems(): SettingsSectionNavItem[] {
-  return BASE_SECTIONS.filter((item) => !isHidden(item));
+  return BASE_SECTIONS.filter((item) => !isHidden(item)).map((item) =>
+    item.kind === 'section' && item.id === 'account' && appConfig.features.sync
+      ? { ...item, label: 'Account & Sync' }
+      : item,
+  );
 }
 
 export function sectionIdsFromNav(items: SettingsSectionNavItem[]): string[] {

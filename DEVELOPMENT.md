@@ -109,6 +109,8 @@ docs/            Product and technical requirements
 
 The source of truth for product scope is [`docs/mapleroyals_wiki_clone_requirements.md`](docs/mapleroyals_wiki_clone_requirements.md). Technical decisions live in [`docs/technical_requirements.md`](docs/technical_requirements.md). Command palette extension is covered in [`docs/command_palette_extension_guide.md`](docs/command_palette_extension_guide.md). The WZ format reference sources used to decode game files — for adding parser/extractor features — are collected in [`docs/format_sources.md`](docs/format_sources.md).
 
+Cross-device sync is designed in [`docs/sync_design.md`](docs/sync_design.md); to make a new piece of user data sync, follow [`docs/adding_a_synced_entity.md`](docs/adding_a_synced_entity.md).
+
 ## Schema and data versioning
 
 The library is a derived cache of the user's game files, not a source of truth.

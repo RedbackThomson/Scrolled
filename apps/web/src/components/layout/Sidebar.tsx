@@ -36,6 +36,8 @@ import { getUserDbClient } from '@/db/user';
 import { resolveCollectionColor } from '@/components/collections/colorRegistry';
 import { resolveCollectionIcon } from '@/components/collections/iconRegistry';
 import { DatasetVersionTag } from '@/components/dataset/DatasetVersionTag';
+import { SidebarSyncStatus } from '@/components/sync/SidebarSyncStatus';
+import { SyncSignInNotice } from '@/components/sync/SyncSignInNotice';
 import { useInstalledDataset } from '@/hooks/dataset/useInstalledDataset';
 import { cn } from '@/lib/utils';
 import { appConfig } from '@/config';
@@ -372,6 +374,8 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
       </nav>
       <div className="border-border border-t">
         <OfflineIndicator collapsed={collapsed} />
+        <SyncSignInNotice collapsed={collapsed} />
+        <SidebarSyncStatus collapsed={collapsed} />
         <DbStatusIndicator collapsed={collapsed} />
         <DatasetVersionTag collapsed={collapsed} />
       </div>

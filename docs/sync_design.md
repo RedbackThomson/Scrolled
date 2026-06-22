@@ -15,9 +15,11 @@ remaining plan.** Phase 1 (local foundations), Phase 2 (`sync-core`
 protocol/engine/mock provider), Phase 3 (the Supabase round-trip), Phase 4 (the
 realtime Broadcast doorbell: a `sync_records` trigger calling `realtime.send()`
 on a private `sync:<account_id>` channel + the adapter `subscribe`), and Phase 5
-(the sync UI — navbar indicator, Settings → Sync, per-collection hint,
-command-palette entries — plus hardening: tombstone GC, the cursor-staleness
-re-bootstrap, and the protocol handshake moved into the engine) are all built.
+(the sync UI — a sidebar status line shown only for syncing/offline/error with a
+signed-out sign-in notice, sync status/controls folded into the Settings →
+Account & Sync section, command-palette entries — plus hardening: tombstone GC,
+the cursor-staleness re-bootstrap, and the protocol handshake moved into the
+engine) are all built.
 Liveness is now sub-second via Broadcast, degrading to the 60s safety tick when
 the channel drops.
 
@@ -735,10 +737,15 @@ Each phase is independently shippable and leaves the app fully working.
 - Sub-second cross-device propagation.
 
 ### Phase 5 — UI & hardening
-- Sync status surfaces (navbar indicator, Settings → Sync section, per-collection
-  synced/local-only hint), error states (session expired, server unreachable,
-  incompatible protocol). All copy follows `writing_conventions.md` (no
-  trademarked names).
+- Sync status surfaces: a sidebar status line next to the database-health line,
+  shown only when there's something to say (syncing / offline / error — "synced"
+  is the steady state and stays silent), and a signed-out sidebar notice
+  inviting sign-in for cross-device sync; the sync status/controls (last synced,
+  pending count, sync now, device id) folded into the Settings → **Account & Sync**
+  section rather than a standalone one (sync needs an account, so signed-out
+  there's nothing separate to show); error states (session expired, server
+  unreachable, incompatible protocol). All copy follows `writing_conventions.md`
+  (no trademarked names).
 - Tombstone GC job + cursor-staleness re-bootstrap path.
 - Account-switch reset; device id surfaced for a future device list.
 - Command-palette entries (sync now, sign-in prompt) per
