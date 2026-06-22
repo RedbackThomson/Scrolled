@@ -1,10 +1,10 @@
 /// <reference lib="WebWorker" />
-import { expose } from 'comlink';
 import { UserDbApi } from '@/db/user/queries';
 import { setOutboxListener } from '@/db/user/queries/sync';
 import { OUTBOX_DOORBELL_CHANNEL, type OutboxDoorbellMessage } from '@/db/user/syncDoorbell';
 import { createLogger } from '@scrolled/game-db/lib/logger';
 import { lazyOpenProxy } from '@/lib/lazyOpenProxy';
+import { exposeOnPort } from '@/workers/exposeOnPort';
 
 const log = createLogger('user-db-worker');
 log.info('user db worker started');
@@ -19,5 +19,6 @@ setOutboxListener((entity) => {
 });
 
 // See `lazyOpenProxy` — forwards every `UserDbApi` method and opens the
-// underlying SQLite handle on first call.
-expose(lazyOpenProxy(new UserDbApi(), log));
+// underlying SQLite handle on first call. `exposeOnPort` makes this the
+// dedicated engine; all tabs share it via the broker (see exposeOnPort.ts).
+exposeOnPort(lazyOpenProxy(new UserDbApi(), log));

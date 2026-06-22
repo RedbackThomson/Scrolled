@@ -519,8 +519,15 @@ function summarizeFallbackReason(err: unknown, caps: OpfsCapabilities): string {
   if (caps.rootDirectoryError) {
     return `OPFS root directory unavailable: ${caps.rootDirectoryError}`;
   }
+  const name = (err as { name?: unknown } | null)?.name;
   const msg = (err as { message?: unknown } | null)?.message;
-  return typeof msg === 'string' && msg.length > 0 ? msg : 'OPFS install failed (unknown reason).';
+  const msgStr = typeof msg === 'string' ? msg : '';
+  // Capabilities all check out but the sync-access handle is taken — another tab
+  // of this site already holds the exclusive OPFS handle for this file.
+  if (name === 'NoModificationAllowedError' || /access handle/i.test(msgStr)) {
+    return 'This site is already open in another tab, which is using on-device storage. Close the other tabs, then reload.';
+  }
+  return msgStr.length > 0 ? msgStr : 'OPFS install failed (unknown reason).';
 }
 
 /**

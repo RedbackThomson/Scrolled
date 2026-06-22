@@ -1,28 +1,36 @@
-import { wrap, type Remote } from 'comlink';
+import type { Remote } from 'comlink';
 import type { UserDatabase } from './types';
+import { connectWorker, type WorkerConnection } from '../connectWorker';
 
-let cached: { worker: Worker; proxy: Remote<UserDatabase> } | null = null;
+let cached: WorkerConnection<UserDatabase> | null = null;
 
 /**
- * Lazily create the user DB worker and return a comlink-wrapped proxy.
- * Mirrors `getDbClient()` for the game DB — the second worker holds the
- * connection to `/user.sqlite3` so it can run concurrently with game data
- * queries.
+ * Lazily connect to the user DB engine and return a comlink-wrapped proxy.
+ * Mirrors `getDbClient()` for the game DB — a separate engine holds the
+ * connection to `/user.sqlite3`, shared across tabs via the broker (see
+ * `connectWorker`).
  */
 export function getUserDbClient(): Remote<UserDatabase> {
   if (!cached) {
-    const worker = new Worker(new URL('@/workers/userDbWorker.ts', import.meta.url), {
-      type: 'module',
-      name: 'scrolled-user-db',
+    cached = connectWorker<UserDatabase>({
+      makeBroker: () =>
+        new SharedWorker(new URL('@/workers/userDbBroker.ts', import.meta.url), {
+          type: 'module',
+          name: 'scrolled-user-db',
+        }),
+      makeEngine: () =>
+        new Worker(new URL('@/workers/userDbWorker.ts', import.meta.url), {
+          type: 'module',
+          name: 'scrolled-user-db-engine',
+        }),
     });
-    cached = { worker, proxy: wrap<UserDatabase>(worker) };
   }
   return cached.proxy;
 }
 
 export function terminateUserDbClient(): void {
   if (cached) {
-    cached.worker.terminate();
+    cached.dispose();
     cached = null;
   }
 }
