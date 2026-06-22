@@ -298,6 +298,14 @@ export class UserDbApi implements UserDatabase {
     return sync.applyRemoteChanges(this.db, batch);
   }
 
+  async rebootstrapSyncStaleCursor(): Promise<string[][]> {
+    return sync.rebootstrapStaleCursor(this.db);
+  }
+
+  async gcLocalTombstones(cutoff: number): Promise<number> {
+    return sync.gcLocalTombstones(this.db, cutoff);
+  }
+
   // -- raw bytes --------------------------------------------------------------
 
   async exportBytes(): Promise<Uint8Array> {

@@ -23,8 +23,10 @@ import { trackRecentEntity } from './recents';
 import {
   applyRemoteChanges,
   drainOutbox,
+  gcLocalTombstones,
   getSyncMeta,
   markOutboxSynced,
+  rebootstrapStaleCursor,
 } from './sync';
 
 async function newDb(): Promise<Sqlite> {
@@ -42,6 +44,8 @@ function backendFor(db: Sqlite): SyncBackend {
     },
     applyRemoteChanges: (batch) => Promise.resolve(applyRemoteChanges(db, batch)),
     getSyncMeta: () => Promise.resolve(getSyncMeta(db)),
+    rebootstrap: () => Promise.resolve(rebootstrapStaleCursor(db)),
+    gcTombstones: (cutoff) => Promise.resolve(gcLocalTombstones(db, cutoff)),
   };
 }
 
@@ -130,7 +134,7 @@ describe('applyRemoteChanges — direct', () => {
     expect(row).toMatchObject({ name: 'From Device B', revision: 1 });
   });
 
-  it('soft-tombstones a row on a remote delete (deleted_at set, not hard-deleted)', () => {
+  it('hard-deletes a row on a remote delete (the row is gone, name freed)', () => {
     const c = createCollection(db, { name: 'Doomed' });
     const uuid = db.selectValue<string>('SELECT uuid FROM collections WHERE id = ?', [c.id])!;
     db.exec('DELETE FROM sync_outbox'); // pretend it already synced
@@ -148,13 +152,11 @@ describe('applyRemoteChanges — direct', () => {
       },
     ]);
 
-    const row = db.selectObject<Row>(
-      'SELECT deleted_at, revision FROM collections WHERE uuid = ?',
-      [uuid],
-    );
-    expect(row).not.toBeNull();
-    expect(row!.deleted_at).toBe(999);
-    expect(row!.revision).toBe(2);
+    // The row is removed outright — no lingering soft-tombstone that would stay
+    // visible to reads or keep its UNIQUE name reserved (the name is now free to
+    // re-create locally).
+    expect(db.selectValue('SELECT 1 FROM collections WHERE uuid = ?', [uuid])).toBeNull();
+    expect(() => createCollection(db, { name: 'Doomed' })).not.toThrow();
   });
 
   it('is idempotent: re-applying a change at the same revision is a no-op', () => {
@@ -172,6 +174,38 @@ describe('applyRemoteChanges — direct', () => {
     applyRemoteChanges(db, [change]);
     const count = db.selectValue<number>("SELECT COUNT(*) FROM user_settings WHERE key = 'accent'");
     expect(count).toBe(1);
+  });
+});
+
+describe('gcLocalTombstones + rebootstrapStaleCursor', () => {
+  let db: Sqlite;
+  beforeEach(async () => {
+    db = await newDb();
+  });
+
+  it('hard-deletes soft-tombstones older than the cutoff, keeping fresh ones', () => {
+    const stale = createCollection(db, { name: 'Stale' });
+    const fresh = createCollection(db, { name: 'Fresh' });
+    db.exec('UPDATE collections SET deleted_at = 100 WHERE id = ?', [stale.id]);
+    db.exec('UPDATE collections SET deleted_at = 5000 WHERE id = ?', [fresh.id]);
+
+    const removed = gcLocalTombstones(db, 1000); // cutoff between the two
+
+    expect(removed).toBe(1);
+    expect(db.selectValue("SELECT 1 FROM collections WHERE name = 'Stale'")).toBeNull();
+    expect(db.selectValue("SELECT 1 FROM collections WHERE name = 'Fresh'")).not.toBeNull();
+  });
+
+  it('wipes synced rows + cursor and returns the roots to invalidate', () => {
+    createCollection(db, { name: 'Gone after rebootstrap' });
+    db.exec('UPDATE sync_cursor SET server_seq = 42 WHERE id = 1');
+
+    const roots = rebootstrapStaleCursor(db);
+
+    expect(db.selectValue<number>('SELECT COUNT(*) FROM collections')).toBe(0);
+    expect(db.selectValue<number>('SELECT COUNT(*) FROM sync_outbox')).toBe(0);
+    expect(getSyncMeta(db).serverSeq).toBe(0);
+    expect(roots).toContainEqual(['user', 'collections']);
   });
 });
 
@@ -209,7 +243,7 @@ describe('SyncEngine — end-to-end over the real SQL backend', () => {
     expect(b.invalidated).toContainEqual(['user', 'settings']);
   });
 
-  it('propagates a delete as a tombstone to the other device', async () => {
+  it('propagates a delete to the other device, removing the row', async () => {
     const server = createMockSyncServer();
     const dbA = await newDb();
     const dbB = await newDb();
@@ -226,8 +260,8 @@ describe('SyncEngine — end-to-end over the real SQL backend', () => {
     await a.engine.syncNow();
     await b.engine.syncNow();
 
-    const deletedAt = dbB.selectValue<number>('SELECT deleted_at FROM collections WHERE uuid = ?', [uuid]);
-    expect(deletedAt).not.toBeNull();
+    // The delete propagates and the row is gone on B — not left visible.
+    expect(dbB.selectValue('SELECT 1 FROM collections WHERE uuid = ?', [uuid])).toBeNull();
   });
 
   it('resolves a 409 by server-ordered LWW — newer wins, both converge', async () => {

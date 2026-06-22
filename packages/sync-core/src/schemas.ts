@@ -12,8 +12,11 @@ import { SYNC_ENTITIES } from './types';
  * rejects clients below its `minClientRevision`; the client surfaces a clear
  * "please refresh" rather than corrupting data. Bump on any incompatible change
  * to the change envelope or push/pull semantics.
+ *
+ * v2: `PullResult` gained `rebootstrapRequired` — the cursor-staleness signal
+ * (§15). Additive (older clients ignore it), so `minClientRevision` stays 1.
  */
-export const PROTOCOL_VERSION = 1;
+export const PROTOCOL_VERSION = 2;
 
 export const syncEntitySchema = z.enum(SYNC_ENTITIES);
 export const syncOpSchema = z.enum(['upsert', 'delete']);
@@ -52,6 +55,7 @@ export const pullResultSchema = z.object({
   changes: z.array(serverChangeSchema),
   nextCursor: z.number().int().nonnegative(),
   hasMore: z.boolean(),
+  rebootstrapRequired: z.boolean().optional(),
 });
 
 export const protocolHandshakeSchema = z.object({

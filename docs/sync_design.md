@@ -10,13 +10,16 @@ work introduces is understood from the outset. Companion docs:
 `data_boundaries.md` (ownership/imports — this doc extends its table) and
 `technical_requirements.md` (the stack).
 
-Status: **Phases 1–3 shipped; Phases 4–6 are the remaining plan.** Phase 1 (local
-foundations), Phase 2 (`sync-core` protocol/engine/mock provider), and Phase 3
-(the Supabase round-trip: `sync-supabase` adapter, the `sync_push`/`sync_pull`
-Postgres functions in `supabase/`, config/build wiring, the `SyncEngineHost`
-mount, and the bootstrap/claim-local-data flow) are built. Liveness is currently
-polling (the 60s safety tick + post-mutation debounce); realtime Broadcast
-(Phase 4) and the sync UI (Phase 5) are not yet built.
+Status: **Phases 1–5 shipped; Phase 6 (self-hosted single-tenant) is the
+remaining plan.** Phase 1 (local foundations), Phase 2 (`sync-core`
+protocol/engine/mock provider), Phase 3 (the Supabase round-trip), Phase 4 (the
+realtime Broadcast doorbell: a `sync_records` trigger calling `realtime.send()`
+on a private `sync:<account_id>` channel + the adapter `subscribe`), and Phase 5
+(the sync UI — navbar indicator, Settings → Sync, per-collection hint,
+command-palette entries — plus hardening: tombstone GC, the cursor-staleness
+re-bootstrap, and the protocol handshake moved into the engine) are all built.
+Liveness is now sub-second via Broadcast, degrading to the 60s safety tick when
+the channel drops.
 
 ---
 
@@ -472,16 +475,27 @@ RxJS, no observable-query rewrite.
 
 ## 10. Tombstones & garbage collection
 
-- Deletes are tombstones (`deleted_at` + bumped revision), so deletion replicates
-  and a long-offline device learns about deletions it missed.
-- **Server retention**: tombstones live in the change log for a retention window
-  (proposed **90 days**) long enough for any realistic offline client to
-  reconcile, then GC'd. A device offline longer than the window can miss a delete;
-  the safety net is the cursor-staleness check (§15): if a client's cursor is
-  older than the GC horizon, the server tells it to **re-bootstrap** rather than
+- Deletes replicate as tombstone rows in the **server** change log
+  (`sync_records` with `op='delete'`), so deletion propagates and a long-offline
+  device learns about deletions it missed on its next pull.
+- **Local apply hard-deletes.** When a device applies a remote delete it removes
+  the local row outright rather than keeping a soft-tombstone (`deleted_at`).
+  *Implementation note / deviation from the original sketch:* the server-ordered
+  conflict handler (§7) decides every concurrent edit-vs-delete *before* apply,
+  and the pull cursor only advances past applied changes, so a stale upsert can
+  never re-deliver and resurrect a deleted row — a local soft-tombstone window
+  adds no convergence guarantee. It *does* add cost: the row stays visible to
+  every read and keeps its `UNIQUE` name / PK reserved, which SQLite can't release
+  without a full table rebuild. Hard-deleting on apply is therefore both simpler
+  and correct. `gcLocalTombstones` still runs on the safety tick as a defensive
+  sweep, reclaiming any soft-tombstones left by older builds.
+- **Server retention**: delete-tombstones live in the change log for a retention
+  window (**90 days**) long enough for any realistic offline client to reconcile,
+  then GC'd by `sync_gc()` (scheduled, e.g. daily via `pg_cron`), which advances a
+  per-account `gc_horizon`. A device offline longer than the window can miss a
+  delete; the safety net is the cursor-staleness check (§15): if a client's cursor
+  predates the GC horizon, the server tells it to **re-bootstrap** rather than
   delta-pull, guaranteeing convergence.
-- **Local GC**: a tombstoned row is hard-deleted locally once its delete is acked
-  and older than the window, so the user DB doesn't grow unbounded.
 
 ---
 
@@ -660,16 +674,24 @@ Three independent versions now coexist; keep them straight:
 - **User-DB schema version** (`_migrations` in the user DB) — local SQL shape.
   Sync columns/tables are appended migrations. Forward-only.
 - **Sync protocol version** (`sync-core` constant, exchanged via `hello()`) — the
-  wire contract. The server rejects clients below `minClientRevision` with a
-  structured error; the client surfaces a clear "please refresh/upgrade" message
-  rather than corrupting data.
+  wire contract, currently **2** (v2 added `PullResult.rebootstrapRequired`,
+  additive, so `min_client_revision` stays 1). The handshake runs as the engine's
+  first cycle step: a client below `minClientRevision` raises a non-retryable
+  `SyncProtocolError` surfaced through `useSyncStatus()` as "update needed",
+  rather than corrupting data. Keep `PROTOCOL_VERSION` (sync-core) and the
+  `sync_protocol` row in lockstep.
 - **Game-DB schema + data revisions** — unchanged by sync, except the one
   schema-only migration dropping `server_profile.profile_id` (§6.4). No
   data-revision bump.
 
 **Cursor staleness**: if a client's `server_seq` predates the server's tombstone
-GC horizon (§10), `sync_pull` returns a "re-bootstrap required" signal instead of
-a partial delta, so a very stale device can't silently miss deletes.
+GC horizon (§10), `sync_pull` returns `rebootstrapRequired: true` (with empty
+`changes`) instead of a partial delta. The engine then calls
+`backend.rebootstrap()` — which discards the local synced rows, outbox, and
+cursor (keeping the account + device id) and invalidates every synced query
+key — and re-pulls from 0, so a very stale device can't silently miss deletes. A
+device this far behind trades any unsynced local-only edits for guaranteed
+convergence (the design's stated preference).
 
 ---
 

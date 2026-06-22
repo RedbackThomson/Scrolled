@@ -31,6 +31,9 @@ export interface MockSyncServer {
   /** Ring the doorbell for every attached provider. */
   poke(): void;
   subscribe(onPoke: () => void): Unsubscribe;
+  /** Make the next `readPull` return the cursor-staleness signal (§15) instead
+   *  of a delta, modelling a cursor that predates the GC horizon. */
+  requireRebootstrapOnce(): void;
   /** Total accepted records currently stored. */
   size(): number;
   /** Force the next provider call to fail with the given fault, then clear it. */
@@ -56,6 +59,7 @@ export function createMockSyncServer(): MockSyncServer {
   const subscribers = new Set<() => void>();
   let seq = 0;
   let pendingFault: MockFault = 'none';
+  let rebootstrapOnce = false;
 
   return {
     applyPush(changes) {
@@ -116,6 +120,10 @@ export function createMockSyncServer(): MockSyncServer {
     },
 
     readPull(cursor, pageSize) {
+      if (rebootstrapOnce && cursor > 0) {
+        rebootstrapOnce = false;
+        return { changes: [], nextCursor: cursor, hasMore: false, rebootstrapRequired: true };
+      }
       const ahead = [...records.values()]
         .filter((r) => r.serverSeq > cursor)
         .sort((a, b) => a.serverSeq - b.serverSeq);
@@ -134,6 +142,10 @@ export function createMockSyncServer(): MockSyncServer {
       return () => {
         subscribers.delete(onPoke);
       };
+    },
+
+    requireRebootstrapOnce() {
+      rebootstrapOnce = true;
     },
 
     size: () => records.size,

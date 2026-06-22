@@ -416,9 +416,13 @@ dead-code-eliminated at compile time), and the app stays fully usable offline an
 signed-out — sync is purely additive.
 
 **1. Provision the backend.** Apply the SQL in [`supabase/`](supabase/) to your
-Supabase project (`supabase db push`, or paste it into the SQL editor). It
-creates the change log, the push/pull RPC functions, and Row Level Security. See
-[`supabase/README.md`](supabase/README.md).
+Supabase project (`supabase db push`, or paste it into the SQL editor). The
+migrations create the change log, the push/pull RPC functions, Row Level
+Security, the realtime Broadcast doorbell (for sub-second propagation — enable
+the project's Realtime feature), and the change-log GC. See
+[`supabase/README.md`](supabase/README.md). Schedule the GC to run periodically
+(e.g. `select cron.schedule('sync-gc-daily', '17 3 * * *', $$select public.sync_gc(90)$$);`
+once `pg_cron` is enabled) so delete-tombstones don't accumulate forever.
 
 **2. Build with sync turned on** (on top of the cloud identity env above):
 

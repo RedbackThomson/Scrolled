@@ -120,6 +120,12 @@ function makeBackend(deviceId: string) {
     },
     getSyncMeta: () =>
       Promise.resolve({ serverSeq: cursor, deviceId, accountId: 'acct-1' }),
+    rebootstrap: () => {
+      live.clear();
+      outbox.length = 0;
+      cursor = 0;
+      return Promise.resolve([['user', 'collections']]);
+    },
   };
 
   return {
@@ -241,6 +247,31 @@ describe('SyncEngine — tombstone convergence', () => {
     await eb.engine.syncNow();
 
     expect(b.has('doomed')).toBe(false);
+  });
+});
+
+describe('SyncEngine — cursor-staleness re-bootstrap', () => {
+  it('re-bootstraps from 0 when the server reports a stale cursor', async () => {
+    const server = createMockSyncServer();
+    const a = makeBackend('A');
+    const b = makeBackend('B');
+    const ea = makeEngine(a.backend, server);
+    const eb = makeEngine(b.backend, server);
+
+    a.localWrite('collection', 'keep', 'upsert', { name: 'Keep', updated_at: 1 });
+    await ea.engine.syncNow();
+    await eb.engine.syncNow();
+    expect(b.has('keep')).toBe(true);
+
+    // B's cursor now predates the server's GC horizon: the next pull tells it to
+    // re-bootstrap rather than delta-pull. B discards local state and re-pulls.
+    server.requireRebootstrapOnce();
+    eb.invalidated.length = 0;
+    await eb.engine.syncNow();
+
+    expect(b.has('keep')).toBe(true); // re-pulled from 0
+    expect(eb.invalidated).toContainEqual(['user', 'collections']); // wipe invalidated views
+    expect(eb.engine.getStatus().state).toBe('synced');
   });
 });
 

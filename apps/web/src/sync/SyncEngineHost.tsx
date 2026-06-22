@@ -67,7 +67,15 @@ export function SyncEngineHost({ provider, queryClient, children }: SyncEngineHo
       // Reconcile the local DB with this account before the first cycle: adopt
       // anonymous data, reset on an account switch, or resume (§11).
       try {
-        await userDb.bootstrapSyncAccount(accountId);
+        const action = await userDb.bootstrapSyncAccount(accountId);
+        // An account switch wiped the previous account's synced rows; drop their
+        // cached queries so the UI doesn't show stale data until the from-0 pull
+        // repopulates this account's. ('adopted' keeps local data; 'resumed' is
+        // a no-op.)
+        if (action === 'reset') {
+          void queryClient.invalidateQueries({ queryKey: ['user'] });
+          void queryClient.invalidateQueries({ queryKey: ['recents'] });
+        }
       } catch (err) {
         if (!cancelled) console.error('[sync] account bootstrap failed', err);
         return;
@@ -79,6 +87,8 @@ export function SyncEngineHost({ provider, queryClient, children }: SyncEngineHo
         markOutboxSynced: (seqs, assigned) => userDb.markOutboxSynced(seqs, assigned),
         applyRemoteChanges: (batch) => userDb.applyRemoteChanges(batch),
         getSyncMeta: () => userDb.getSyncMeta(),
+        rebootstrap: () => userDb.rebootstrapSyncStaleCursor(),
+        gcTombstones: (cutoff) => userDb.gcLocalTombstones(cutoff),
       };
 
       const e = new SyncEngine({

@@ -358,6 +358,13 @@ export interface UserDatabase {
    *  against pending edits, cursor advanced atomically). Returns the TanStack
    *  query-key roots to invalidate. */
   applyRemoteChanges(batch: ServerChange[]): Promise<ApplyResult>;
+  /** Discard local synced rows + cursor for a re-bootstrap from 0, after the
+   *  server reports the cursor is past its GC horizon (§15). Returns the query
+   *  roots to invalidate. */
+  rebootstrapSyncStaleCursor(): Promise<string[][]>;
+  /** Hard-delete local soft-tombstones older than `cutoff` (§10). Returns the
+   *  number reclaimed. */
+  gcLocalTombstones(cutoff: number): Promise<number>;
 
   /** Serialize the live user.sqlite3 to a Uint8Array. */
   exportBytes(): Promise<Uint8Array>;

@@ -32,6 +32,8 @@ export interface SyncEngineConfig {
   /** Backoff base and ceiling for transient faults. */
   backoffBaseMs: number;
   backoffMaxMs: number;
+  /** Hard-delete local soft-tombstones older than this (§10). */
+  tombstoneRetentionMs: number;
 }
 
 export const DEFAULT_SYNC_CONFIG: SyncEngineConfig = {
@@ -41,6 +43,7 @@ export const DEFAULT_SYNC_CONFIG: SyncEngineConfig = {
   pushLimit: 200,
   backoffBaseMs: 1_000,
   backoffMaxMs: 60_000,
+  tombstoneRetentionMs: 90 * 24 * 60 * 60 * 1_000, // 90 days
 };
 
 export interface SyncEngineDeps {
@@ -130,7 +133,10 @@ export class SyncEngine {
     if (this.started) return;
     this.started = true;
     this.unsubscribePoke = this.provider.subscribe(() => this.requestSync('poke'));
-    this.safetyTimer = setInterval(() => this.requestSync('tick'), this.cfg.safetyTickMs);
+    this.safetyTimer = setInterval(() => {
+      void this.gcTombstones();
+      this.requestSync('tick');
+    }, this.cfg.safetyTickMs);
     this.requestSync('start');
   }
 
@@ -187,6 +193,17 @@ export class SyncEngine {
    *  action and the test entrypoint. */
   async syncNow(): Promise<void> {
     await this.run();
+  }
+
+  /** Reclaim local soft-tombstones older than the retention window. Best-effort
+   *  on the safety tick; a failure never disrupts a sync cycle. */
+  private async gcTombstones(): Promise<void> {
+    if (!this.backend.gcTombstones) return;
+    try {
+      await this.backend.gcTombstones(this.now() - this.cfg.tombstoneRetentionMs);
+    } catch {
+      // ignore; retried on the next tick
+    }
   }
 
   // -- the cycle --------------------------------------------------------------
@@ -287,6 +304,13 @@ export class SyncEngine {
       const meta = await this.backend.getSyncMeta();
       const result = await this.provider.pull(meta.serverSeq);
       pullResultSchema.parse(result);
+      if (result.rebootstrapRequired) {
+        // Our cursor is past the server's GC horizon (§15): discard local synced
+        // state and loop to re-pull from 0 rather than miss GC'd deletes.
+        const keys = await this.backend.rebootstrap();
+        if (keys.length > 0) this.invalidate(keys);
+        continue;
+      }
       if (result.changes.length > 0) {
         await this.applyAndInvalidate(result.changes);
       }

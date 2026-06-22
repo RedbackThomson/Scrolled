@@ -59,7 +59,8 @@ extraction hooks). UI/display code never reaches into the write path.
                                 SyncEngine, in-memory mock provider; React status
                                 context/hooks on /react subpath. Ships everywhere.
 @scrolled/sync-supabase  → deps: sync-core, identity-core, @supabase/supabase-js
-                                Supabase sync transport (sync_push/sync_pull RPCs);
+                                Supabase sync transport (sync_push/sync_pull RPCs +
+                                a private Broadcast doorbell for subscribe);
                                 hosted builds only — dynamic-imported, DCE'd from
                                 self-hosted bundles
 apps/web  → deps: game-db (display), extractor (in-browser extraction),

@@ -23,8 +23,10 @@ import {
   applyRemoteChanges,
   bootstrapSyncAccount,
   drainOutbox,
+  gcLocalTombstones,
   getSyncMeta,
   markOutboxSynced,
+  rebootstrapStaleCursor,
 } from './sync';
 
 async function newDb(): Promise<Sqlite> {
@@ -42,6 +44,8 @@ function backendFor(db: Sqlite): SyncBackend {
     },
     applyRemoteChanges: (batch) => Promise.resolve(applyRemoteChanges(db, batch)),
     getSyncMeta: () => Promise.resolve(getSyncMeta(db)),
+    rebootstrap: () => Promise.resolve(rebootstrapStaleCursor(db)),
+    gcTombstones: (cutoff) => Promise.resolve(gcLocalTombstones(db, cutoff)),
   };
 }
 

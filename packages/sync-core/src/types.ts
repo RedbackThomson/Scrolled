@@ -62,6 +62,13 @@ export interface PullResult {
   nextCursor: number;
   /** True while a paginated bootstrap still has changes beyond this page. */
   hasMore: boolean;
+  /**
+   * The client's cursor predates the server's tombstone GC horizon, so a delta
+   * pull could silently miss GC'd deletes (docs/sync_design.md §15). When set,
+   * `changes` is empty and the client must re-bootstrap (pull from cursor 0)
+   * rather than apply a partial delta. Absent/false in the normal case.
+   */
+  rebootstrapRequired?: boolean;
 }
 
 export interface ProtocolHandshake {
@@ -125,6 +132,13 @@ export interface SyncBackend {
   markOutboxSynced(seqs: number[], assigned: AssignedRevision[]): Promise<void>;
   applyRemoteChanges(batch: ServerChange[]): Promise<ApplyResult>;
   getSyncMeta(): Promise<SyncMeta>;
+  /** Discard local synced rows + cursor so the next pull re-bootstraps from 0,
+   *  after the server reports the cursor is past its GC horizon (§15). Returns
+   *  the query-key roots to invalidate (every synced view must refetch). */
+  rebootstrap(): Promise<string[][]>;
+  /** Hard-delete soft-tombstones older than the cutoff (§10). Optional: a
+   *  backend with no local tombstone retention can omit it. */
+  gcTombstones?(cutoff: number): Promise<number>;
 }
 
 // -- status -------------------------------------------------------------------

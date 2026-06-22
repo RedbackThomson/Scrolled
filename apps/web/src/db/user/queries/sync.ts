@@ -256,6 +256,48 @@ export function applyRemoteChanges(db: Sqlite, batch: ServerChange[]): ApplyResu
   };
 }
 
+/**
+ * Sweep any soft-tombstoned rows older than `cutoff` (a wall-clock ms cutoff,
+ * typically `now - retentionWindow`) and hard-delete them (docs/sync_design.md
+ * §10). The apply path hard-deletes now, so this is a belt-and-suspenders
+ * cleanup: it reclaims tombstones left by older builds and guards the invariant
+ * that the user DB never grows an unbounded graveyard. Runs across every synced
+ * table; returns the number of rows reclaimed.
+ */
+export function gcLocalTombstones(db: Sqlite, cutoff: number): number {
+  let removed = 0;
+  db.transaction(() => {
+    for (const table of SYNCED_TABLES) {
+      db.exec(`DELETE FROM ${table} WHERE deleted_at IS NOT NULL AND deleted_at < ?`, [cutoff]);
+      removed += db.selectValue<number>('SELECT changes()') ?? 0;
+    }
+  });
+  return removed;
+}
+
+/**
+ * Re-bootstrap after the server reports our cursor is older than its tombstone
+ * GC horizon (docs/sync_design.md §15) — meaning we may have missed deletes that
+ * have since been GC'd, so a delta pull can't reconcile us. The account's
+ * authoritative state lives on the server, so we discard local synced rows, the
+ * outbox, and the cursor (keeping the account + device id) and let the engine
+ * re-pull from 0. A device this stale (offline past the retention window) trades
+ * any unsynced local-only edits for guaranteed convergence — the design's
+ * stated preference over silently keeping deleted rows.
+ */
+export function rebootstrapStaleCursor(db: Sqlite): string[][] {
+  db.transaction(() => {
+    for (const table of SYNCED_TABLES) db.exec(`DELETE FROM ${table}`);
+    db.exec('DELETE FROM sync_outbox');
+    db.exec('UPDATE sync_cursor SET server_seq = 0 WHERE id = 1');
+  });
+  // Every view that reads synced data must refetch: the wipe emptied the tables
+  // and the from-0 re-pull will repopulate only what still lives on the server.
+  const roots = new Set<string>();
+  for (const key of Object.values(ENTITY_QUERY_KEY)) roots.add(JSON.stringify(key));
+  return [...roots].map((s) => JSON.parse(s) as string[]);
+}
+
 // === Bootstrap / "claim local data" (docs/sync_design.md §11) ===============
 //
 // `sync_cursor.account_id` records whose data this DB currently holds. The
@@ -462,13 +504,18 @@ function applyRow(db: Sqlite, change: ServerChange): void {
 function applyDelete(db: Sqlite, change: ServerChange): void {
   const { table, where, params } = liveMatch(change.entity, change);
   const exists = db.selectValue(`SELECT 1 FROM ${table} WHERE ${where}`, params);
-  if (exists == null) return; // we never held this row; nothing to tombstone
-  const p = asRow(change.payload);
-  const deletedAt = typeof p.deleted_at === 'number' ? p.deleted_at : Date.now();
-  db.exec(
-    `UPDATE ${table} SET deleted_at = ?, revision = ?, origin_device = ? WHERE ${where}`,
-    [deletedAt, change.revision, str(p.origin_device), ...params],
-  );
+  if (exists == null) return; // we never held this row; nothing to delete
+  // Hard-delete locally rather than retain a soft-tombstone row. Tombstone
+  // *retention* lives on the server change log (so an offline device can still
+  // learn of the delete on its next pull, §10); the cursor advances only past
+  // applied changes, so a stale upsert can never re-deliver and resurrect this
+  // row, and a concurrent edit is already decided by the server-ordered conflict
+  // handler before it reaches here (§7). Keeping a local soft-tombstone would
+  // instead keep the row visible to every read and keep its UNIQUE name / PK
+  // reserved (which SQLite can't release without a table rebuild), so a hard
+  // delete is both simpler and correct. `gcLocalTombstones` sweeps up any soft
+  // tombstones left by older code.
+  db.exec(`DELETE FROM ${table} WHERE ${where}`, params);
 }
 
 function applyUpsert(db: Sqlite, change: ServerChange): void {
