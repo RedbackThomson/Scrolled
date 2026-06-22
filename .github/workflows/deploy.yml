@@ -58,6 +58,31 @@ jobs:
           VITE_ANALYTICS_PROVIDER: ${{ vars.ANALYTICS_PROVIDER }}
           VITE_ANALYTICS_TOKEN: ${{ vars.ANALYTICS_TOKEN }}
           VITE_ANALYTICS_ALLOWED_HOSTS: ${{ vars.ANALYTICS_ALLOWED_HOSTS }}
+          # Optional cloud accounts + cross-device sync. All sourced from repo
+          # variables (not secrets): the Supabase URL and publishable key are
+          # public by design — guarded by Row Level Security, not secrecy — so
+          # they belong in `vars`, like the analytics token above. Leave the
+          # variables unset and the build stays anonymous + sync-off (the adapter
+          # and Supabase SDK are dead-code-eliminated), so forks that don't set
+          # them ship a fully local, login-free app.
+          #
+          # To turn sync on for the canonical deployment, set these repo
+          # variables (Settings → Secrets and variables → Actions → Variables):
+          #   IDENTITY_MODE=cloud
+          #   SYNC_MODE=supabase
+          #   SUPABASE_URL=https://<project-ref>.supabase.co
+          #   SUPABASE_PUBLISHABLE_KEY=sb_publishable_<...>
+          #   SUPABASE_OAUTH_PROVIDERS=google,github   (optional)
+          # SYNC_MODE=supabase without IDENTITY_MODE=cloud fails the build by
+          # design — sync has no account to scope data to.
+          VITE_IDENTITY_MODE: ${{ vars.IDENTITY_MODE }}
+          VITE_SYNC_MODE: ${{ vars.SYNC_MODE }}
+          VITE_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+          # Legacy fallback if you still use an `sb_…`-era anon key instead of a
+          # publishable key; the config resolver accepts either.
+          VITE_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_OAUTH_PROVIDERS: ${{ vars.SUPABASE_OAUTH_PROVIDERS }}
         run: pnpm build
 
       - name: SPA fallback (copy index.html to 404.html)
