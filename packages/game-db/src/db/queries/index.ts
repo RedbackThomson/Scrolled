@@ -111,6 +111,7 @@ export class DbApi implements GameDatabase {
       pendingRebuild,
       backend: this.sql.backend,
       fallbackReason: this.sql.fallbackReason,
+      fallbackDetail: this.sql.fallbackDetail,
       counts: {
         items: countOf(this.sql, 'items'),
         equips: countOf(this.sql, 'equips'),

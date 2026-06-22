@@ -73,6 +73,7 @@ export class Sqlite {
   private db: Database | null = null;
   private _backend: Backend = 'memory';
   private _fallbackReason: string | null = null;
+  private _fallbackDetail: string | null = null;
   private pool: SAHPoolUtil | null = null;
   private readonly opfsFilename: string;
   private readonly poolName: string;
@@ -99,6 +100,16 @@ export class Sqlite {
     return this._fallbackReason;
   }
 
+  /**
+   * Verbose diagnostics for the in-memory fallback — the raw install error
+   * (message + stack) plus the capability probe. Hides nothing; meant for the
+   * "Advanced" disclosure on the storage-unavailable screen and bug reports.
+   * Null when OPFS opened cleanly.
+   */
+  get fallbackDetail(): string | null {
+    return this._fallbackDetail;
+  }
+
   async open(): Promise<OpenResult> {
     if (this.db) {
       return {
@@ -121,6 +132,7 @@ export class Sqlite {
       this.pool = pool;
       this._backend = 'opfs';
       this._fallbackReason = null;
+      this._fallbackDetail = null;
       log.info('opened OPFS-backed database', {
         db: this.logTag,
         path: this.opfsFilename,
@@ -137,6 +149,13 @@ export class Sqlite {
       this.db = new this.sqlite3.oo1.DB(':memory:', this.traceSql ? 'ct' : 'c');
       this._backend = 'memory';
       this._fallbackReason = summarizeFallbackReason(err, opfsCapabilities);
+      this._fallbackDetail = describeFallbackDetail(
+        err,
+        opfsCapabilities,
+        this.logTag,
+        this.opfsFilename,
+        this.poolName,
+      );
     }
 
     this.db.exec('PRAGMA foreign_keys = ON;');
@@ -502,6 +521,42 @@ function summarizeFallbackReason(err: unknown, caps: OpfsCapabilities): string {
   }
   const msg = (err as { message?: unknown } | null)?.message;
   return typeof msg === 'string' && msg.length > 0 ? msg : 'OPFS install failed (unknown reason).';
+}
+
+/**
+ * Full, verbose diagnostics for the in-memory fallback: the raw install error
+ * (name, message, stack) and the capability probe. Unlike
+ * `summarizeFallbackReason`, this hides nothing — it backs the "Advanced"
+ * disclosure on the storage-unavailable screen, where the reader is debugging
+ * the cause and the SQLite-WASM jargon is exactly what they need.
+ */
+function describeFallbackDetail(
+  err: unknown,
+  caps: OpfsCapabilities,
+  logTag: string,
+  filename: string,
+  poolName: string,
+): string {
+  const e = err as { name?: unknown; message?: unknown; stack?: unknown } | null;
+  const lines = [
+    `db: ${logTag}`,
+    `opfsFile: ${filename}`,
+    `pool: ${poolName}`,
+    `error.name: ${typeof e?.name === 'string' ? e.name : '(none)'}`,
+    `error.message: ${typeof e?.message === 'string' ? e.message : String(err)}`,
+    '',
+    'capabilities:',
+    `  isSecureContext: ${caps.isSecureContext}`,
+    `  origin: ${caps.origin ?? '(none)'}`,
+    `  navigator.storage: ${caps.hasNavigatorStorage}`,
+    `  navigator.storage.getDirectory: ${caps.hasGetDirectory}`,
+    `  FileSystemSyncAccessHandle: ${caps.hasFileSystemSyncAccessHandle}`,
+    `  rootDirectoryError: ${caps.rootDirectoryError ?? '(none)'}`,
+  ];
+  if (typeof e?.stack === 'string' && e.stack.length > 0) {
+    lines.push('', 'stack:', e.stack);
+  }
+  return lines.join('\n');
 }
 
 async function probeOpfsCapabilities(): Promise<OpfsCapabilities> {

@@ -225,6 +225,12 @@ export interface UserDbStatus {
    * available.
    */
   fallbackReason: string | null;
+  /**
+   * Verbose diagnostics behind the in-memory fallback — raw error plus the
+   * capability probe. Null when `backend === 'opfs'`. Shown only in the
+   * "Advanced" disclosure of the storage-unavailable screen.
+   */
+  fallbackDetail: string | null;
   counts: {
     collections: number;
     members: number;

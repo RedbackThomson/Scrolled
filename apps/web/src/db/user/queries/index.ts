@@ -71,6 +71,7 @@ export class UserDbApi implements UserDatabase {
       schemaVersion,
       backend: this.db.backend,
       fallbackReason: this.db.fallbackReason,
+      fallbackDetail: this.db.fallbackDetail,
       counts: { collections: collectionsCount, members, pinnedSearches, outbox },
     };
   }

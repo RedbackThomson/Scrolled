@@ -6,15 +6,30 @@ import { DatasetInstallScreen } from '@/components/dataset/DatasetInstallScreen'
 import { DatasetUpdatePrompt } from '@/components/dataset/DatasetUpdatePrompt';
 import { AppBootScreen } from '@/components/layout/AppBootScreen';
 import { Sidebar } from '@/components/layout/Sidebar';
+import { StorageUnavailableScreen } from '@/components/layout/StorageUnavailableScreen';
 import { TopBar } from '@/components/layout/TopBar';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { useFeatures } from '@/hooks/useFeatures';
 import { useDataState } from '@/hooks/useDataState';
+import { useStorageHealth } from '@/hooks/useStorageHealth';
 import { useSidebarLayout } from '@/stores/sidebarState';
+import { useStorageBypass } from '@/stores/storageBypass';
 import { appConfig } from '@/config';
 
 export function AppShell() {
-  const { showBoot, needsInstall } = useSetupGate();
+  const storage = useStorageHealth();
+  const bypassed = useStorageBypass((s) => s.bypassed);
+
+  // On-device storage failing outranks everything else: installing a dataset or
+  // running setup into an in-memory engine just loses it on reload. Block until
+  // it's resolved or the user knowingly bypasses it. Gated on `resolved` so the
+  // boot screen below covers the brief window while status is still loading,
+  // and threaded into the setup gate so its first-run redirect doesn't bounce
+  // past this screen.
+  const storageBlocked = storage.resolved && storage.unavailable && !bypassed;
+  const { showBoot, needsInstall } = useSetupGate(storageBlocked);
+
+  if (storageBlocked) return <StorageUnavailableScreen failures={storage.failures} />;
   if (needsInstall) return <DatasetInstallScreen />;
   if (showBoot) return <AppBootScreen />;
   return (
@@ -88,7 +103,7 @@ function MobileSidebarDrawer() {
  * `showBoot` keeps the full shell hidden until redirect completes so first-time
  * visitors don't flash the home page chrome.
  */
-function useSetupGate(): { showBoot: boolean; needsInstall: boolean } {
+function useSetupGate(storageBlocked: boolean): { showBoot: boolean; needsInstall: boolean } {
   const features = useFeatures();
   const { state, ready } = useDataState();
   const navigate = useNavigate();
@@ -98,13 +113,20 @@ function useSetupGate(): { showBoot: boolean; needsInstall: boolean } {
   // library is empty it installs the hosted dataset instead.
   const canImport = appConfig.features.enableUserImport;
   const onSetup = location.pathname === '/setup';
+  // A broken on-device store makes both setup and install pointless (they'd
+  // write into memory and vanish on reload), so the storage screen takes over.
   const shouldRedirect =
     canImport &&
     ready &&
     !onSetup &&
+    !storageBlocked &&
     (state === 'reinitialize-required' || features.isFirstRun);
   const needsInstall =
-    appConfig.features.enableHostedDataset && ready && !onSetup && features.isFirstRun;
+    appConfig.features.enableHostedDataset &&
+    ready &&
+    !onSetup &&
+    !storageBlocked &&
+    features.isFirstRun;
   const showBoot = !onSetup && !needsInstall && (!ready || shouldRedirect);
 
   useEffect(() => {
