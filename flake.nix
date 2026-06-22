@@ -20,6 +20,7 @@
             nodejs
             pkgs.corepack_22
             pkgs.git
+            pkgs.supabase-cli
           ];
 
           shellHook = ''

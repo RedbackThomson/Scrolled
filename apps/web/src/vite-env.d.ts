@@ -16,6 +16,7 @@ interface ImportMetaEnv {
   /** @deprecated Supabase legacy key; prefer VITE_SUPABASE_PUBLISHABLE_KEY. */
   readonly VITE_SUPABASE_ANON_KEY?: string;
   readonly VITE_SUPABASE_OAUTH_PROVIDERS?: string;
+  readonly VITE_SYNC_MODE?: string;
 }
 
 interface ImportMeta {
@@ -29,3 +30,11 @@ interface ImportMeta {
  * Supabase SDK never reaches a self-hosted bundle.
  */
 declare const __IDENTITY_CLOUD__: boolean;
+
+/**
+ * Build-time constant injected by `vite.config.ts` (`define`). The literal
+ * `false` in any build not configured for Supabase sync, so the dynamic import
+ * of `@scrolled/sync-supabase` behind it is dead code Rollup drops — the
+ * Supabase SDK never reaches a self-hosted or sync-off bundle.
+ */
+declare const __SYNC_SUPABASE__: boolean;

@@ -1,0 +1,23 @@
+{
+  "name": "@scrolled/sync-supabase",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Supabase-backed sync transport for the hosted deployment. Implements the sync-core SyncProvider over the sync_push/sync_pull RPCs; the only sync package that depends on the Supabase SDK, reached from the app via a dynamic import so it is excluded from self-hosted builds.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@scrolled/identity-core": "workspace:*",
+    "@scrolled/sync-core": "workspace:*",
+    "@supabase/supabase-js": "^2.108.2"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.2"
+  }
+}

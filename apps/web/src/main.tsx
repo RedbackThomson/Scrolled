@@ -11,6 +11,8 @@ import { UpdatePrompt } from '@/components/common/UpdatePrompt';
 import { initAnalytics } from '@/analytics';
 import { initMcp } from '@/mcp';
 import { createIdentityProvider } from '@/identity/createProvider';
+import { createSyncProvider } from '@/sync/createProvider';
+import { SyncEngineHost } from '@/sync/SyncEngineHost';
 import { bootstrapSyncedState } from '@/lib/syncedStateBootstrap';
 import '@/styles/index.css';
 
@@ -32,17 +34,21 @@ if (!rootEl) throw new Error('Root element missing');
 
 async function bootstrap() {
   const identityProvider = await createIdentityProvider();
+  // null in self-hosted / sync-off builds; the host then mounts inert.
+  const syncProvider = await createSyncProvider(identityProvider);
 
   createRoot(rootEl!).render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
         <IdentityProviderHost provider={identityProvider}>
-          <HotkeysProvider>
-            <NuqsAdapter>
-              <RouterProvider router={router} />
-              <UpdatePrompt />
-            </NuqsAdapter>
-          </HotkeysProvider>
+          <SyncEngineHost provider={syncProvider} queryClient={queryClient}>
+            <HotkeysProvider>
+              <NuqsAdapter>
+                <RouterProvider router={router} />
+                <UpdatePrompt />
+              </NuqsAdapter>
+            </HotkeysProvider>
+          </SyncEngineHost>
         </IdentityProviderHost>
       </QueryClientProvider>
     </StrictMode>,

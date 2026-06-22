@@ -28,6 +28,7 @@ export type {
   UserDbStatus,
   UserSettingRecord,
 } from './types';
+export type { BootstrapAction } from './queries/sync';
 export type {
   CollectionBundleJson,
   CollectionMemberJson,

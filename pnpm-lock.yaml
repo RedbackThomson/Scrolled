@@ -92,6 +92,9 @@ importers:
       '@scrolled/sync-core':
         specifier: workspace:*
         version: link:../../packages/sync-core
+      '@scrolled/sync-supabase':
+        specifier: workspace:*
+        version: link:../../packages/sync-supabase
       '@scrolled/wz':
         specifier: workspace:*
         version: link:../../packages/wz
@@ -437,6 +440,22 @@ importers:
       react:
         specifier: ^18.3.1
         version: 18.3.1
+      vitest:
+        specifier: ^2.1.2
+        version: 2.1.9(@types/node@22.19.19)(jsdom@25.0.1)(terser@5.48.0)
+
+  packages/sync-supabase:
+    dependencies:
+      '@scrolled/identity-core':
+        specifier: workspace:*
+        version: link:../identity-core
+      '@scrolled/sync-core':
+        specifier: workspace:*
+        version: link:../sync-core
+      '@supabase/supabase-js':
+        specifier: ^2.108.2
+        version: 2.108.2
+    devDependencies:
       vitest:
         specifier: ^2.1.2
         version: 2.1.9(@types/node@22.19.19)(jsdom@25.0.1)(terser@5.48.0)

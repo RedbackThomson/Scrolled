@@ -38,6 +38,7 @@ import type {
   ServerChange,
   SyncMeta,
 } from '@scrolled/sync-core';
+import type { BootstrapAction } from './sync';
 import * as collections from './collections';
 import * as collectionGroups from './collectionGroups';
 import * as pinned from './pinnedSearches';
@@ -279,6 +280,10 @@ export class UserDbApi implements UserDatabase {
 
   async getSyncMeta(): Promise<SyncMeta> {
     return sync.getSyncMeta(this.db);
+  }
+
+  async bootstrapSyncAccount(accountId: string): Promise<BootstrapAction> {
+    return sync.bootstrapSyncAccount(this.db, accountId);
   }
 
   async drainOutbox(limit: number): Promise<OutboxChange[]> {

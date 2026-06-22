@@ -13,6 +13,7 @@ import type {
   ServerChange,
   SyncMeta,
 } from '@scrolled/sync-core';
+import type { BootstrapAction } from './queries/sync';
 import type { CollectionsExportJson, ImportConflictMode, ImportReport } from './collectionsJson';
 
 export type CollectionEntityType = Extract<
@@ -345,6 +346,10 @@ export interface UserDatabase {
   /** Read the sync cursor/identity the engine needs (server_seq, device_id,
    *  account_id). */
   getSyncMeta(): Promise<SyncMeta>;
+  /** Reconcile the local DB with a signing-in account before the first sync
+   *  cycle (docs/sync_design.md §11): adopt anonymous data, reset on an account
+   *  switch, or resume. Returns which path was taken. */
+  bootstrapSyncAccount(accountId: string): Promise<BootstrapAction>;
   /** Next batch of pending local changes (wire-projected), oldest first. */
   drainOutbox(limit: number): Promise<OutboxChange[]>;
   /** Acknowledge pushed rows and stamp the server-assigned revisions. */

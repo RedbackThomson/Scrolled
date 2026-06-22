@@ -21,6 +21,8 @@ export interface DeploymentFeatureFlags {
   enableAccounts: boolean;
   /** The account avatar/menu and the Account settings section are shown. */
   accountMenu: boolean;
+  /** Cross-device sync is active; sync status UI may be shown. */
+  sync: boolean;
 }
 
 export interface FixedDatasetConfig {
@@ -64,6 +66,19 @@ export interface IdentityConfig {
   cloud?: CloudIdentityConfig;
 }
 
+/**
+ * How (and whether) the deployment syncs user data across devices. `off` is the
+ * open-source baseline — no sync code is reachable and no transport SDK enters
+ * the bundle. `supabase` opts the canonical hosted deployment into the Supabase
+ * sync transport; it reuses the cloud identity's Supabase project, so it is only
+ * valid when identity is `cloud` (no account ⇒ nothing to scope synced data to).
+ */
+export type SyncMode = 'off' | 'supabase';
+
+export interface SyncConfig {
+  mode: SyncMode;
+}
+
 export interface AppConfig {
   deploymentProfile: DeploymentProfile;
   features: DeploymentFeatureFlags;
@@ -71,17 +86,21 @@ export interface AppConfig {
   fixedDataset?: FixedDatasetConfig;
   /** Identity is resolved independently of the deployment profile. */
   identity: IdentityConfig;
+  /** Cross-device sync, gated on cloud identity. */
+  sync: SyncConfig;
 }
 
 export type RawEnv = Record<string, string | undefined>;
 
 const ANONYMOUS_IDENTITY: IdentityConfig = { mode: 'anonymous' };
+const SYNC_OFF: SyncConfig = { mode: 'off' };
 
 const GENERIC_FEATURES: DeploymentFeatureFlags = {
   enableUserImport: true,
   enableHostedDataset: false,
   enableAccounts: false,
   accountMenu: false,
+  sync: false,
 };
 
 const DEFAULT_CHANNEL = 'latest';
@@ -123,6 +142,29 @@ export function resolveIdentity(env: RawEnv): IdentityConfig {
 }
 
 /**
+ * Resolve sync config from build-time env, gated on the resolved identity. Any
+ * value other than `supabase` for `VITE_SYNC_MODE` yields `off`, so existing
+ * builds and forks that set nothing never reach the sync transport.
+ *
+ * `supabase` sync requires `cloud` identity — there is no account to scope
+ * synced data to otherwise — so a build that asks for sync without cloud
+ * identity is a misconfiguration and throws, matching `resolveIdentity`'s
+ * loud-fail style. The transport reuses the cloud identity's Supabase project,
+ * so no separate URL/key env is needed.
+ */
+export function resolveSync(env: RawEnv, identity: IdentityConfig): SyncConfig {
+  if (env.VITE_SYNC_MODE !== 'supabase') {
+    return SYNC_OFF;
+  }
+  if (identity.mode !== 'cloud') {
+    throw new Error(
+      '[scrolled/config] VITE_SYNC_MODE=supabase requires VITE_IDENTITY_MODE=cloud (sync scopes data to an account)',
+    );
+  }
+  return { mode: 'supabase' };
+}
+
+/**
  * Resolve the deployment config from build-time env. Any value other than
  * `fixed-hosted-dataset` for `VITE_DEPLOYMENT_PROFILE` yields the generic
  * profile, so existing builds and forks that set nothing are unchanged.
@@ -133,9 +175,11 @@ export function resolveIdentity(env: RawEnv): IdentityConfig {
  */
 export function resolveAppConfig(env: RawEnv): AppConfig {
   const identity = resolveIdentity(env);
+  const sync = resolveSync(env, identity);
   const accountFeatures = {
     enableAccounts: identity.mode === 'cloud',
     accountMenu: identity.mode === 'cloud',
+    sync: sync.mode === 'supabase',
   };
 
   if (env.VITE_DEPLOYMENT_PROFILE !== 'fixed-hosted-dataset') {
@@ -143,6 +187,7 @@ export function resolveAppConfig(env: RawEnv): AppConfig {
       deploymentProfile: 'generic',
       features: { ...GENERIC_FEATURES, ...accountFeatures },
       identity,
+      sync,
     };
   }
 
@@ -167,5 +212,6 @@ export function resolveAppConfig(env: RawEnv): AppConfig {
     },
     fixedDataset: { family, channel, repositoryBaseUrl },
     identity,
+    sync,
   };
 }

@@ -41,11 +41,17 @@ export default defineConfig(({ mode }) => {
   // every other build, so the auth SDK is never emitted into a generic bundle.
   const env = loadEnv(mode, process.cwd(), 'VITE_');
   const identityCloud = env.VITE_IDENTITY_MODE === 'cloud';
+  // Same dead-code-elimination trick for the sync transport: folding the mode
+  // into a build-time boolean lets Rollup drop the dynamic import of
+  // `@scrolled/sync-supabase` in every build that doesn't opt in, so the
+  // Supabase SDK is never emitted into a self-hosted or sync-off bundle.
+  const syncSupabase = env.VITE_SYNC_MODE === 'supabase';
 
   return {
     base: basePath,
     define: {
       __IDENTITY_CLOUD__: JSON.stringify(identityCloud),
+      __SYNC_SUPABASE__: JSON.stringify(syncSupabase),
     },
     plugins: [
       {

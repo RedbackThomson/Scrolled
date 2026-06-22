@@ -10,8 +10,13 @@ work introduces is understood from the outset. Companion docs:
 `data_boundaries.md` (ownership/imports — this doc extends its table) and
 `technical_requirements.md` (the stack).
 
-Status: **design approved, not yet built.** Phases below are the implementation
-plan, not shipped state.
+Status: **Phases 1–3 shipped; Phases 4–6 are the remaining plan.** Phase 1 (local
+foundations), Phase 2 (`sync-core` protocol/engine/mock provider), and Phase 3
+(the Supabase round-trip: `sync-supabase` adapter, the `sync_push`/`sync_pull`
+Postgres functions in `supabase/`, config/build wiring, the `SyncEngineHost`
+mount, and the bootstrap/claim-local-data flow) are built. Liveness is currently
+polling (the 60s safety tick + post-mutation debounce); realtime Broadcast
+(Phase 4) and the sync UI (Phase 5) are not yet built.
 
 ---
 

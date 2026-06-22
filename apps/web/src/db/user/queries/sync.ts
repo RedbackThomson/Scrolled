@@ -41,6 +41,21 @@ function mintId(db: Sqlite): string {
   return db.selectValue<string>('SELECT lower(hex(randomblob(16)))') ?? '';
 }
 
+// -- outbox doorbell ---------------------------------------------------------
+//
+// Every outbox append funnels through `appendOutbox`, so it is the single place
+// to signal "local data changed, drain me." The worker registers a listener
+// that rings a cross-context doorbell (a BroadcastChannel) the main-thread sync
+// engine debounces into a push (docs/sync_design.md §13). Fires in every build;
+// with no engine listening (signed out / self-hosted) it is a harmless no-op.
+
+type OutboxListener = (entity: SyncEntity) => void;
+let outboxListener: OutboxListener | null = null;
+
+export function setOutboxListener(listener: OutboxListener | null): void {
+  outboxListener = listener;
+}
+
 /** This install's stable device id, minted by the v6 migration. */
 export function deviceId(db: Sqlite): string {
   return db.selectValue<string>('SELECT device_id FROM sync_cursor WHERE id = 1') ?? '';
@@ -60,6 +75,7 @@ function appendOutbox(
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
     [entity, uuid, op, JSON.stringify(payload), baseRevision, now, mintId(db)],
   );
+  outboxListener?.(entity);
 }
 
 /**
@@ -238,6 +254,79 @@ export function applyRemoteChanges(db: Sqlite, batch: ServerChange[]): ApplyResu
     invalidatedKeys: [...invalidated].map((s) => JSON.parse(s) as string[]),
     serverSeq: cursor,
   };
+}
+
+// === Bootstrap / "claim local data" (docs/sync_design.md §11) ===============
+//
+// `sync_cursor.account_id` records whose data this DB currently holds. The
+// engine calls `bootstrapSyncAccount` once when a session becomes authenticated,
+// before its first cycle, to reconcile the local DB with the account:
+//
+// - **resumed**: already this account — nothing to do, resume delta sync.
+// - **adopted**: anonymous data, no prior account — claim it for the account by
+//   enqueuing every live row as a fresh insert, so the user's offline work
+//   converges with anything already on the server (server-side LWW merges).
+// - **reset**: a *different* account — wipe the local user data (it belongs to
+//   the other account and lives on the server) and pull this account from 0, so
+//   two users' data never mix on one device.
+//
+// Signing out of the *same* account does NOT reset — local data stays for
+// offline use; the engine just stops.
+
+export type BootstrapAction = 'resumed' | 'adopted' | 'reset';
+
+/** Order parents before children so the adopted outbox pushes — and a fresh
+ *  device's pull applies — collections before their groups before their
+ *  members (a child whose parent isn't present yet is skipped on apply). */
+const ADOPTION_ORDER: readonly SyncEntity[] = [
+  'collection',
+  'collection_group',
+  'collection_member',
+  'pinned_search',
+  'user_setting',
+  'recent',
+];
+
+export function bootstrapSyncAccount(db: Sqlite, accountId: string): BootstrapAction {
+  const meta = getSyncMeta(db);
+  if (meta.accountId === accountId) return 'resumed';
+
+  if (meta.accountId == null) {
+    db.transaction(() => {
+      adoptLocalData(db);
+      db.exec('UPDATE sync_cursor SET account_id = ? WHERE id = 1', [accountId]);
+    });
+    return 'adopted';
+  }
+
+  db.transaction(() => {
+    for (const table of SYNCED_TABLES) db.exec(`DELETE FROM ${table}`);
+    db.exec('DELETE FROM sync_outbox');
+    db.exec('UPDATE sync_cursor SET server_seq = 0, account_id = ? WHERE id = 1', [accountId]);
+  });
+  return 'reset';
+}
+
+/**
+ * Enqueue every live local row as a fresh insert for the account being adopted.
+ * The anonymous-era outbox (intermediate edit history the server never saw) is
+ * cleared first and collapsed into one `upsert` per record at `base_revision=0`,
+ * so each lands as a new server record (or, for natural-key rows like settings,
+ * conflicts cleanly against an existing one and resolves by LWW). Must run
+ * inside the caller's transaction.
+ */
+function adoptLocalData(db: Sqlite): void {
+  db.exec('DELETE FROM sync_outbox');
+  const now = Date.now();
+  for (const entity of ADOPTION_ORDER) {
+    const table = ENTITY_TABLE[entity];
+    const rows = db.selectObjects<Row>(`SELECT * FROM ${table} WHERE deleted_at IS NULL`);
+    for (const row of rows) {
+      const uuid = typeof row.uuid === 'string' ? row.uuid : '';
+      if (!uuid) continue; // every persisted row carries a uuid; defensive
+      appendOutbox(db, entity, uuid, 'upsert', row, 0, now);
+    }
+  }
 }
 
 // -- remote-apply internals --------------------------------------------------

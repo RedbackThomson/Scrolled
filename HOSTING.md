@@ -362,8 +362,8 @@ Accounts are **opt-in and orthogonal** to the dataset profile — a generic or a
 fixed-dataset deployment can enable them, and a deployment that doesn't set the
 env below is unchanged: no sign-in UI, and the auth SDK is never even emitted
 into the bundle. There is no feature that requires being signed in; the core app
-works identically whether or not accounts are configured. (Sign-in currently
-adds identity only — cross-device sync is a later phase.)
+works identically whether or not accounts are configured. (Sign-in enables
+optional cross-device sync — see below — which is itself off unless turned on.)
 
 The first identity backend is [Supabase](https://supabase.com) with OAuth social
 login. The app talks to it only through a provider-agnostic interface, so other
@@ -406,6 +406,36 @@ What turning it on adds: a sign-in button + account menu in the top bar, an
 Account section in Settings, `/sign-in` and `/auth/callback` routes, and command
 palette entries — all gated, so they're absent when accounts are off.
 
+### Cross-device sync (optional, requires cloud identity)
+
+Signed-in users can mirror their collections, pinned searches, and preferences
+across devices. Sync is **off by default** and **layered on top of cloud
+identity** — there's no account to scope synced data to otherwise. Self-hosted
+and sync-off builds ship zero sync-transport or Supabase-SDK code (the adapter is
+dead-code-eliminated at compile time), and the app stays fully usable offline and
+signed-out — sync is purely additive.
+
+**1. Provision the backend.** Apply the SQL in [`supabase/`](supabase/) to your
+Supabase project (`supabase db push`, or paste it into the SQL editor). It
+creates the change log, the push/pull RPC functions, and Row Level Security. See
+[`supabase/README.md`](supabase/README.md).
+
+**2. Build with sync turned on** (on top of the cloud identity env above):
+
+```bash
+VITE_IDENTITY_MODE=cloud \
+VITE_SUPABASE_URL=https://<project-ref>.supabase.co \
+VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_<...> \
+VITE_SYNC_MODE=supabase \
+pnpm --filter @scrolled/web build
+```
+
+- `VITE_SYNC_MODE=supabase` is the switch; any other value (or unset) → no sync,
+  and the sync transport is dropped from the build. It reuses the cloud
+  identity's Supabase project, so no extra URL/key is needed.
+- A build that sets `VITE_SYNC_MODE=supabase` **without** `VITE_IDENTITY_MODE=cloud`
+  **fails loudly** — sync has no account to scope data to.
+
 ---
 
 ## Reference
@@ -414,7 +444,9 @@ palette entries — all gated, so they're absent when accounts are off.
   `VITE_DATASET_CHANNEL`, `VITE_DATASET_REPO_URL` (+ the usual `BASE_PATH`,
   `VITE_SITE_URL`). Optional cloud accounts: `VITE_IDENTITY_MODE`,
   `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (or legacy
-  `VITE_SUPABASE_ANON_KEY`), `VITE_SUPABASE_OAUTH_PROVIDERS`.
+  `VITE_SUPABASE_ANON_KEY`), `VITE_SUPABASE_OAUTH_PROVIDERS`. Optional
+  cross-device sync (requires cloud identity): `VITE_SYNC_MODE=supabase` plus the
+  SQL in `supabase/`.
 - Commands: `pnpm dataset:build …`, `pnpm --filter @scrolled/web build:fixed`,
   and `pnpm --filter @scrolled/web dev:fixed` for local testing.
 - Local testing walkthrough and architecture:

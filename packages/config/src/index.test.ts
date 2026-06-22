@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { resolveAppConfig, resolveIdentity } from './index';
+import { resolveAppConfig, resolveIdentity, resolveSync } from './index';
+
+const CLOUD_ENV = {
+  VITE_IDENTITY_MODE: 'cloud',
+  VITE_SUPABASE_URL: 'https://proj.supabase.co',
+  VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_key',
+};
 
 describe('resolveAppConfig', () => {
   it('defaults to the generic profile when no env is set', () => {
@@ -10,9 +16,11 @@ describe('resolveAppConfig', () => {
       enableHostedDataset: false,
       enableAccounts: false,
       accountMenu: false,
+      sync: false,
     });
     expect(config.fixedDataset).toBeUndefined();
     expect(config.identity).toEqual({ mode: 'anonymous' });
+    expect(config.sync).toEqual({ mode: 'off' });
   });
 
   it('treats an unknown profile value as generic', () => {
@@ -31,6 +39,7 @@ describe('resolveAppConfig', () => {
       enableHostedDataset: true,
       enableAccounts: false,
       accountMenu: false,
+      sync: false,
     });
     expect(config.fixedDataset).toEqual({
       family: 'example',
@@ -145,5 +154,45 @@ describe('resolveIdentity', () => {
     expect(() =>
       resolveIdentity({ VITE_IDENTITY_MODE: 'cloud', VITE_SUPABASE_URL: 'https://proj.supabase.co' }),
     ).toThrow(/VITE_SUPABASE_PUBLISHABLE_KEY/);
+  });
+});
+
+describe('resolveSync', () => {
+  const cloudIdentity = resolveIdentity(CLOUD_ENV);
+
+  it('defaults to off when no env is set', () => {
+    expect(resolveSync({}, { mode: 'anonymous' })).toEqual({ mode: 'off' });
+  });
+
+  it('treats an unknown sync mode as off', () => {
+    expect(resolveSync({ VITE_SYNC_MODE: 'something-else' }, cloudIdentity)).toEqual({ mode: 'off' });
+  });
+
+  it('resolves supabase sync when identity is cloud', () => {
+    expect(resolveSync({ VITE_SYNC_MODE: 'supabase' }, cloudIdentity)).toEqual({ mode: 'supabase' });
+  });
+
+  it('throws when supabase sync is requested without cloud identity', () => {
+    expect(() => resolveSync({ VITE_SYNC_MODE: 'supabase' }, { mode: 'anonymous' })).toThrow(
+      /VITE_IDENTITY_MODE=cloud/,
+    );
+  });
+});
+
+describe('resolveAppConfig — sync', () => {
+  it('leaves sync off and the feature flag false by default', () => {
+    const config = resolveAppConfig(CLOUD_ENV);
+    expect(config.sync).toEqual({ mode: 'off' });
+    expect(config.features.sync).toBe(false);
+  });
+
+  it('enables sync and the feature flag with cloud identity + supabase sync', () => {
+    const config = resolveAppConfig({ ...CLOUD_ENV, VITE_SYNC_MODE: 'supabase' });
+    expect(config.sync).toEqual({ mode: 'supabase' });
+    expect(config.features.sync).toBe(true);
+  });
+
+  it('throws when supabase sync is configured without cloud identity', () => {
+    expect(() => resolveAppConfig({ VITE_SYNC_MODE: 'supabase' })).toThrow(/VITE_IDENTITY_MODE=cloud/);
   });
 });

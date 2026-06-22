@@ -59,8 +59,9 @@ extraction hooks). UI/display code never reaches into the write path.
                                 SyncEngine, in-memory mock provider; React status
                                 context/hooks on /react subpath. Ships everywhere.
 @scrolled/sync-supabase  → deps: sync-core, identity-core, @supabase/supabase-js
-                                Supabase sync transport; hosted builds only (not
-                                created until Phase 3)
+                                Supabase sync transport (sync_push/sync_pull RPCs);
+                                hosted builds only — dynamic-imported, DCE'd from
+                                self-hosted bundles
 apps/web  → deps: game-db (display), extractor (in-browser extraction),
                   dataset-client/-core/-repository, config, wz, mcp-protocol,
                   identity-core (display), identity-cloud (bootstrap only),
@@ -145,8 +146,9 @@ syncs; the game DB never does. The core app consumes the provider-agnostic
 contract `@scrolled/sync-core` (the `SyncProvider` interface, protocol
 types/schemas, the conflict handler, the `SyncEngine`, and `useSyncStatus()`) and
 nothing else — it is sync-aware but not provider-aware. The concrete Supabase
-transport (`@scrolled/sync-supabase`, added in Phase 3) is chosen at bootstrap in
-`apps/web/src/sync/` via a **dynamic `import()`**, so self-hosted/forked builds
+transport (`@scrolled/sync-supabase`) is chosen at bootstrap in
+`apps/web/src/sync/createProvider.ts` via a **dynamic `import()`** behind the
+`__SYNC_SUPABASE__` build constant, so self-hosted/forked builds
 that configure no sync never bundle it or `@supabase/*`. The user-DB worker
 (`apps/web/src/db/user`) additionally imports `sync-core` for the conflict
 handler and wire types its `applyRemoteChanges` runs. Enforced in
