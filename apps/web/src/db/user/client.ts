@@ -1,28 +1,38 @@
-import { wrap, type Remote } from 'comlink';
+import type { Remote } from 'comlink';
 import type { UserDatabase } from './types';
+import {
+  connectMultiTab,
+  connectSingleTab,
+  multiTabSupported,
+  type DbConnection,
+} from '../multiTab/connect';
 
-let cached: { worker: Worker; proxy: Remote<UserDatabase> } | null = null;
+let cached: DbConnection<UserDatabase> | null = null;
+
+function makeEngine(): Worker {
+  return new Worker(new URL('@/workers/userDbWorker.ts', import.meta.url), {
+    type: 'module',
+    name: 'scrolled-user-db-engine',
+  });
+}
 
 /**
- * Lazily create the user DB worker and return a comlink-wrapped proxy.
- * Mirrors `getDbClient()` for the game DB — the second worker holds the
- * connection to `/user.sqlite3` so it can run concurrently with game data
- * queries.
+ * Lazily connect to the user DB engine and return a comlink-wrapped proxy.
+ * Mirrors `getDbClient()` — shared across tabs via the broker where supported,
+ * otherwise a per-tab dedicated worker. See `multiTab/connect`.
  */
 export function getUserDbClient(): Remote<UserDatabase> {
   if (!cached) {
-    const worker = new Worker(new URL('@/workers/userDbWorker.ts', import.meta.url), {
-      type: 'module',
-      name: 'scrolled-user-db',
-    });
-    cached = { worker, proxy: wrap<UserDatabase>(worker) };
+    cached = multiTabSupported()
+      ? connectMultiTab<UserDatabase>('user', makeEngine)
+      : connectSingleTab<UserDatabase>(makeEngine);
   }
   return cached.proxy;
 }
 
 export function terminateUserDbClient(): void {
   if (cached) {
-    cached.worker.terminate();
+    cached.dispose();
     cached = null;
   }
 }

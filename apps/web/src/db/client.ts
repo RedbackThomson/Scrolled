@@ -1,33 +1,39 @@
-import { wrap, type Remote } from 'comlink';
+import type { Remote } from 'comlink';
 import type { GameDatabase } from '@scrolled/game-db/db/types';
+import {
+  connectMultiTab,
+  connectSingleTab,
+  multiTabSupported,
+  type DbConnection,
+} from './multiTab/connect';
 
-let cached: { worker: Worker; proxy: Remote<GameDatabase> } | null = null;
+let cached: DbConnection<GameDatabase> | null = null;
+
+function makeEngine(): Worker {
+  return new Worker(new URL('@/workers/dbWorker.ts', import.meta.url), {
+    type: 'module',
+    name: 'scrolled-db-engine',
+  });
+}
 
 /**
- * Lazily create the DB worker and return a comlink-wrapped proxy. Reuses the
- * same worker for the lifetime of the page so the SQLite connection stays
- * open and prepared-statement caches persist.
- *
- * One dedicated worker per tab: the OPFS SAHPool VFS needs
- * `FileSystemSyncAccessHandle`, which only exists in a dedicated worker, and
- * those handles are exclusive per file across the origin. A second tab can't
- * share this connection (see docs) — it falls back to in-memory and the storage
- * screen tells the user to close the other tab.
+ * Lazily connect to the game DB engine and return a comlink-wrapped proxy.
+ * Where SharedWorker + Web Locks exist, the engine is shared across all tabs
+ * (one OPFS connection); otherwise it's a per-tab dedicated worker and a second
+ * tab lands on the storage screen. See `multiTab/connect`.
  */
 export function getDbClient(): Remote<GameDatabase> {
   if (!cached) {
-    const worker = new Worker(new URL('@/workers/dbWorker.ts', import.meta.url), {
-      type: 'module',
-      name: 'scrolled-db',
-    });
-    cached = { worker, proxy: wrap<GameDatabase>(worker) };
+    cached = multiTabSupported()
+      ? connectMultiTab<GameDatabase>('game', makeEngine)
+      : connectSingleTab<GameDatabase>(makeEngine);
   }
   return cached.proxy;
 }
 
 export function terminateDbClient(): void {
   if (cached) {
-    cached.worker.terminate();
+    cached.dispose();
     cached = null;
   }
 }

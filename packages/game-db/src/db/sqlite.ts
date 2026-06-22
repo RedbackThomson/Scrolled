@@ -127,7 +127,7 @@ export class Sqlite {
     log.info('opfs capability probe', { db: this.logTag, ...opfsCapabilities });
 
     try {
-      const pool = await this.sqlite3.installOpfsSAHPoolVfs({ name: this.poolName });
+      const pool = await this.installOpfsPoolWithRetry();
       this.db = new pool.OpfsSAHPoolDb(this.opfsFilename);
       this.pool = pool;
       this._backend = 'opfs';
@@ -186,6 +186,37 @@ export class Sqlite {
       schemaVersion: version,
     });
     return { backend: this._backend, schemaVersion: version, didDestructiveReset };
+  }
+
+  /**
+   * Install the SAH-pool VFS, retrying briefly on `NoModificationAllowedError`.
+   * That error means another connection still holds this file's exclusive
+   * sync-access handle. In the multi-tab failover case the previous owner tab's
+   * engine has just been torn down and its handle release can lag the Web Lock
+   * release by a few ms; a short retry lets the new owner win the handle instead
+   * of falling back to in-memory. A genuinely unsupported environment throws a
+   * different error and fails fast (no retry).
+   */
+  private async installOpfsPoolWithRetry(): Promise<SAHPoolUtil> {
+    const sqlite3 = this.sqlite3;
+    if (!sqlite3) throw new Error('[scrolled] sqlite3 not initialized');
+    const maxAttempts = 8;
+    let lastErr: unknown;
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      try {
+        return await sqlite3.installOpfsSAHPoolVfs({ name: this.poolName });
+      } catch (err) {
+        lastErr = err;
+        const name = (err as { name?: unknown } | null)?.name;
+        const msg = (err as { message?: unknown } | null)?.message;
+        const isHandleHeld =
+          name === 'NoModificationAllowedError' ||
+          (typeof msg === 'string' && /access handle/i.test(msg));
+        if (!isHandleHeld || attempt === maxAttempts - 1) throw err;
+        await new Promise((resolve) => setTimeout(resolve, 125));
+      }
+    }
+    throw lastErr;
   }
 
   /**
