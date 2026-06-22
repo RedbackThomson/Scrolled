@@ -474,6 +474,7 @@ function applyDelete(db: Sqlite, change: ServerChange): void {
 function applyUpsert(db: Sqlite, change: ServerChange): void {
   const cols = upsertColumns(db, change);
   if (!cols) return; // parent not present yet; a later batch/pull resolves it
+  dedupeUniqueName(db, change, cols);
   const { table, where, params } = liveMatch(change.entity, change);
   const exists = db.selectValue(`SELECT 1 FROM ${table} WHERE ${where}`, params) != null;
   if (exists) {
@@ -581,6 +582,67 @@ function upsertColumns(db: Sqlite, change: ServerChange): Record<string, SqlValu
         ...sync,
       };
   }
+}
+
+/**
+ * Keep a remote upsert from violating a UNIQUE `name` constraint held by a
+ * *different* record. Collections and pinned searches are unique on `name`;
+ * groups on `(collection_id, name)`. When two devices independently mint a
+ * record with the same name but different uuids (the universal seeded
+ * "Favourites", or a user creating "Bosses" on both), inserting the second one
+ * by uuid would otherwise throw `SQLITE_CONSTRAINT_UNIQUE` and wedge the engine
+ * in an infinite retry. Distinct uuids are distinct records, so we disambiguate
+ * by suffixing the incoming name ("Bosses (2)") rather than merging them. The
+ * suffix is local-only and not re-pushed: pulls apply in `server_seq` order,
+ * identical on every device, so the same record is suffixed everywhere and they
+ * still converge. (The v7 migration pins the seeded Favourites to one shared
+ * uuid, so the common case takes the same-uuid UPDATE path and never lands here.)
+ */
+function dedupeUniqueName(
+  db: Sqlite,
+  change: ServerChange,
+  cols: Record<string, SqlValue>,
+): void {
+  switch (change.entity) {
+    case 'collection':
+      cols.name = resolveUniqueName(db, 'collections', str(cols.name), change.uuid);
+      break;
+    case 'pinned_search':
+      cols.name = resolveUniqueName(db, 'pinned_searches', str(cols.name), change.uuid);
+      break;
+    case 'collection_group':
+      cols.name = resolveUniqueName(db, 'collection_groups', str(cols.name), change.uuid, {
+        column: 'collection_id',
+        value: cols.collection_id,
+      });
+      break;
+    default:
+      break;
+  }
+}
+
+function resolveUniqueName(
+  db: Sqlite,
+  table: string,
+  name: string,
+  selfUuid: string,
+  scope?: { column: string; value: SqlValue },
+): string {
+  const scopeClause = scope ? ` AND ${scope.column} = ?` : '';
+  const scopeParams: SqlValue[] = scope ? [scope.value] : [];
+  const taken = (candidate: string): boolean =>
+    db.selectValue(
+      `SELECT 1 FROM ${table} WHERE name = ? AND uuid <> ?${scopeClause}`,
+      [candidate, selfUuid, ...scopeParams],
+    ) != null;
+  if (!taken(name)) return name;
+  for (let n = 2; n < 1000; n++) {
+    const candidate = `${name} (${n})`;
+    if (!taken(candidate)) return candidate;
+  }
+  // Pathological fan-out; fall back to a guaranteed-unique suffix so apply
+  // never throws (the whole point of this path).
+  return `${name} (${selfUuid.slice(0, 8)})`;
 }
 
 /** Drop local-only columns and rewrite local foreign keys to parent uuids. */

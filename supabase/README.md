@@ -30,9 +30,21 @@ Row Level Security is enabled on every table. The bookkeeping tables have no
 client policy at all (only the functions, running as owner, reach them);
 `sync_records` is readable for the owning account; `sync_protocol` is public.
 
-Realtime Broadcast (the liveness doorbell) is **not** provisioned here — that is
-a later phase (`docs/sync_design.md` §16 Phase 4). Until then the client stays
-correct via cursor pulls on a safety tick.
+The second migration (`..._sync_realtime.sql`) adds the **liveness doorbell**
+(`docs/sync_design.md` §12, §16 Phase 4):
+
+- `sync_records_broadcast()` + an `after insert or update` trigger that calls
+  `realtime.send()` to poke a **private** per-account channel, `sync:<account_id>`.
+  The poke carries no row data — just the advanced `server_seq` — and the client
+  responds by pulling over the already-RLS-scoped `sync_pull`.
+- An RLS policy on `realtime.messages` (`sync_broadcast_receive_own`) that lets a
+  client receive broadcasts only on its own `sync:<auth.uid()>` topic.
+
+Realtime Broadcast (not `postgres_changes`) is used deliberately: it scales, and
+it never leaks DELETE/tombstone keys across tenants. Correctness does **not**
+depend on it — a dropped channel degrades to the client's safety-tick pulls — so
+the doorbell is purely an instant-propagation optimization. To use it, enable the
+Realtime feature for your project; no extra publication configuration is needed.
 
 Bump `sync_protocol.protocol_version` only alongside a `PROTOCOL_VERSION` bump in
 `@scrolled/sync-core`; raise `min_client_revision` to lock out clients too old to

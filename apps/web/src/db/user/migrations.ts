@@ -7,6 +7,17 @@
 
 import type { Migration } from '@scrolled/game-db/db/migrations';
 
+/**
+ * The deterministic, well-known `uuid` the seeded "Favourites" collection is
+ * rewritten to by migration v7. Every install seeds Favourites (v1) and the v6
+ * backfill gave each a *random* uuid, so two devices' Favourites were distinct
+ * records that collided on the UNIQUE `name` when synced. Pinning the seed to
+ * one shared uuid makes it a single logical record that converges by LWW
+ * instead (docs/sync_design.md §7). It is a sentinel hex string, not a random
+ * id, so it can never collide with a `randomblob`-minted uuid.
+ */
+export const SEEDED_FAVOURITES_UUID = '5eed0000000000000000000000fa0001';
+
 export const USER_MIGRATIONS: readonly Migration[] = [
   {
     version: 1,
@@ -255,6 +266,33 @@ export const USER_MIGRATIONS: readonly Migration[] = [
       INSERT INTO user_settings (key, value, uuid, revision, updated_at, origin_device)
         SELECT key, value, lower(hex(randomblob(16))), 1, updated_at, '' FROM ui_prefs;
       DROP TABLE ui_prefs;
+    `,
+  },
+  {
+    version: 7,
+    name: 'deterministic favourites uuid',
+    // Pin the seeded "Favourites" collection to a well-known cross-device uuid
+    // so every device's seed is the SAME logical record and converges on
+    // sign-in, rather than each device's random uuid colliding on the UNIQUE
+    // `name` when two devices sync (docs/sync_design.md §7; the remote-apply
+    // path now auto-suffixes genuine user-created same-name clashes too).
+    //
+    // Only the *untouched* seed is rewritten: still named 'Favourites' with the
+    // 'star' icon, never locally edited (revision = 1 from the v6 backfill), not
+    // tombstoned — and only while this install has not yet joined an account
+    // (`account_id` IS NULL). A device that already adopted/pushed its
+    // Favourites under the random uuid keeps it, so the rewrite never orphans a
+    // record the server already holds. Written as an UPDATE so it is a harmless
+    // no-op on a DB whose seed was renamed, deleted, or already adopted.
+    sql: `
+      UPDATE collections
+         SET uuid = '${SEEDED_FAVOURITES_UUID}'
+       WHERE name = 'Favourites'
+         AND icon = 'star'
+         AND revision = 1
+         AND deleted_at IS NULL
+         AND uuid <> '${SEEDED_FAVOURITES_UUID}'
+         AND (SELECT account_id FROM sync_cursor WHERE id = 1) IS NULL;
     `,
   },
 ];

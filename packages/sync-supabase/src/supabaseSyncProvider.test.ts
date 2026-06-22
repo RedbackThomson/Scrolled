@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { SyncAuthError, SyncTransientError, type SyncChange } from '@scrolled/sync-core';
 import {
   createSupabaseSyncProvider,
+  type SyncRealtimeChannel,
+  type SyncRealtimeClient,
   type SyncRpcClient,
   type SupabaseSyncConfig,
 } from './supabaseSyncProvider';
@@ -192,11 +194,124 @@ describe('createSupabaseSyncProvider — auth + transport mapping', () => {
   });
 });
 
-describe('createSupabaseSyncProvider — subscribe', () => {
-  it('is a no-op doorbell until Phase 4 (returns an unsubscribe, never pokes)', () => {
+// -- Phase 4: the Broadcast doorbell -----------------------------------------
+
+/** A JWT-shaped token whose payload carries `sub` — the only claim subscribe
+ *  reads (RLS enforces the rest server-side). */
+function makeJwt(sub: string): string {
+  const enc = (o: unknown) => Buffer.from(JSON.stringify(o)).toString('base64url');
+  return `${enc({ alg: 'HS256', typ: 'JWT' })}.${enc({ sub })}.sig`;
+}
+
+interface FakeRealtimeState {
+  authToken: string | null;
+  topic: string | null;
+  private: boolean | null;
+  pokeCb: (() => void) | null;
+  subscribed: boolean;
+  removed: number;
+}
+
+function fakeRealtime(): { client: SyncRealtimeClient; state: FakeRealtimeState } {
+  const state: FakeRealtimeState = {
+    authToken: null,
+    topic: null,
+    private: null,
+    pokeCb: null,
+    subscribed: false,
+    removed: 0,
+  };
+  const channel: SyncRealtimeChannel = {
+    on(_type, filter, cb) {
+      if (filter.event === 'poke') state.pokeCb = cb;
+      return channel;
+    },
+    subscribe() {
+      state.subscribed = true;
+      return channel;
+    },
+  };
+  const client: SyncRealtimeClient = {
+    setAuth(token) {
+      state.authToken = token;
+    },
+    channel(topic, opts) {
+      state.topic = topic;
+      state.private = opts.config.private;
+      return channel;
+    },
+    removeChannel(ch) {
+      if (ch === channel) state.removed += 1;
+    },
+  };
+  return { client, state };
+}
+
+/** Flush the microtask queue so subscribe's async channel setup runs. */
+async function flush(): Promise<void> {
+  for (let i = 0; i < 5; i++) await Promise.resolve();
+}
+
+describe('createSupabaseSyncProvider — subscribe (Broadcast doorbell)', () => {
+  it('opens the private per-account channel and pokes on each Broadcast message', async () => {
+    const { client: realtime, state } = fakeRealtime();
+    const token = makeJwt('acct-77');
+    const { provider } = providerWith(() => ({ data: null, error: null }), {
+      realtime,
+      getAccessToken: async () => token,
+    });
+
+    const onPoke = vi.fn();
+    const unsubscribe = provider.subscribe(onPoke);
+    await flush();
+
+    expect(state.authToken).toBe(token); // JWT handed to Realtime for RLS
+    expect(state.topic).toBe('sync:acct-77'); // topic derived from the sub claim
+    expect(state.private).toBe(true);
+    expect(state.subscribed).toBe(true);
+
+    state.pokeCb?.();
+    state.pokeCb?.();
+    expect(onPoke).toHaveBeenCalledTimes(2);
+
+    unsubscribe();
+    expect(state.removed).toBe(1);
+  });
+
+  it('tears down cleanly when unsubscribed before the channel finishes opening', async () => {
+    const { client: realtime, state } = fakeRealtime();
+    const { provider } = providerWith(() => ({ data: null, error: null }), {
+      realtime,
+      getAccessToken: async () => makeJwt('acct-1'),
+    });
+
+    const onPoke = vi.fn();
+    const unsubscribe = provider.subscribe(onPoke);
+    unsubscribe(); // cancel before the async setup runs
+    await flush();
+
+    expect(state.subscribed).toBe(false);
+    expect(onPoke).not.toHaveBeenCalled();
+  });
+
+  it('degrades to the safety tick when the token has no sub claim', async () => {
+    const { client: realtime, state } = fakeRealtime();
+    const { provider } = providerWith(() => ({ data: null, error: null }), {
+      realtime,
+      getAccessToken: async () => 'not-a-jwt',
+    });
+
+    provider.subscribe(vi.fn());
+    await flush();
+    expect(state.subscribed).toBe(false);
+  });
+
+  it('is an inert no-op when no realtime transport is available', async () => {
+    // Only the RPC seam injected → no doorbell; liveness falls back to polling.
     const { provider } = providerWith(() => ({ data: null, error: null }));
     const onPoke = vi.fn();
     const unsubscribe = provider.subscribe(onPoke);
+    await flush();
     expect(typeof unsubscribe).toBe('function');
     unsubscribe();
     expect(onPoke).not.toHaveBeenCalled();

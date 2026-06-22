@@ -15,7 +15,7 @@ import {
   type MockSyncServer,
   type SyncBackend,
 } from '@scrolled/sync-core';
-import { USER_MIGRATIONS } from '../migrations';
+import { USER_MIGRATIONS, SEEDED_FAVOURITES_UUID } from '../migrations';
 import { createCollection, addMember } from './collections';
 import { createGroup } from './collectionGroups';
 import { setUserSetting } from './userSettings';
@@ -156,21 +156,17 @@ describe('bootstrap end-to-end — adopt then converge on a fresh device', () =>
     const dbA = await newDb();
     const dbB = await newDb();
 
-    // Drop the seeded "Favourites" on both devices: each seeds it with a
-    // different uuid but the same (UNIQUE) name, so converging them is a
-    // separate same-name-collision concern (tracked elsewhere). This test
-    // isolates the Phase 3 mechanism — adopt + pull convergence.
-    dbA.exec("DELETE FROM collections WHERE name = 'Favourites'");
-    dbB.exec("DELETE FROM collections WHERE name = 'Favourites'");
-
-    // Device A: anonymous work, then sign in (adopt) and sync.
+    // Device A: anonymous work, then sign in (adopt) and sync. The seeded
+    // "Favourites" rides along — both devices now seed it with the same
+    // well-known uuid (migration v7), so it converges as one record instead of
+    // colliding on the UNIQUE name (see the convergence suite below).
     createCollection(dbA, { name: 'Adopted Bosses' });
     setUserSetting(dbA, 'accent', JSON.stringify('teal'));
     expect(bootstrapSyncAccount(dbA, ACCOUNT_A)).toBe('adopted');
 
     const a = engineFor(dbA, server);
     await a.engine.syncNow();
-    expect(server.size()).toBe(2); // Adopted Bosses + accent setting
+    expect(server.size()).toBe(3); // Favourites + Adopted Bosses + accent setting
 
     // Device B: fresh install, signs into the same account → adopt (nothing
     // local) then pull A's records from 0.
@@ -188,5 +184,87 @@ describe('bootstrap end-to-end — adopt then converge on a fresh device', () =>
     // The adopted rows now carry server-assigned revisions on A.
     const aRev = dbA.selectObject<Row>("SELECT revision FROM collections WHERE name = 'Adopted Bosses'");
     expect(aRev?.revision).toBe(1);
+    // The seeded Favourites converged as a single record, not a duplicate.
+    expect(dbB.selectValue<number>("SELECT COUNT(*) FROM collections WHERE name = 'Favourites'")).toBe(1);
+  });
+});
+
+describe('remote-apply — UNIQUE name collisions converge without crashing', () => {
+  beforeEach(() => {
+    vi.spyOn(Date, 'now').mockImplementation(() => 5_000);
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  // Settle two devices against one server: each pushes its outbox and pulls the
+  // other's records. Repeated so a conflict that rebases a local edit on one
+  // pass is re-pushed and re-pulled on the next, reaching a fixed point.
+  async function converge(devices: { engine: SyncEngine }[]): Promise<void> {
+    for (let round = 0; round < 3; round++) {
+      for (const d of devices) await d.engine.syncNow();
+    }
+  }
+
+  it('seeds Favourites with one shared uuid so two fresh devices never collide', async () => {
+    const server = createMockSyncServer();
+    const dbA = await newDb();
+    const dbB = await newDb();
+
+    // Both fresh installs seed "Favourites" — migration v7 gives both the same
+    // well-known uuid, the fix that lets this test drop the old pre-deletion.
+    expect(dbA.selectValue<string>("SELECT uuid FROM collections WHERE name = 'Favourites'")).toBe(
+      SEEDED_FAVOURITES_UUID,
+    );
+    expect(dbB.selectValue<string>("SELECT uuid FROM collections WHERE name = 'Favourites'")).toBe(
+      SEEDED_FAVOURITES_UUID,
+    );
+
+    expect(bootstrapSyncAccount(dbA, ACCOUNT_A)).toBe('adopted');
+    expect(bootstrapSyncAccount(dbB, ACCOUNT_A)).toBe('adopted');
+
+    // Must not throw SQLITE_CONSTRAINT_UNIQUE on the same-name inserts.
+    await converge([engineFor(dbA, server), engineFor(dbB, server)]);
+
+    // One Favourites per device, sharing the seed uuid; one record on the server.
+    for (const db of [dbA, dbB]) {
+      expect(db.selectValue<number>("SELECT COUNT(*) FROM collections WHERE name = 'Favourites'")).toBe(1);
+      expect(db.selectValue<string>("SELECT uuid FROM collections WHERE name = 'Favourites'")).toBe(
+        SEEDED_FAVOURITES_UUID,
+      );
+    }
+    expect(server.size()).toBe(1);
+  });
+
+  it('auto-suffixes a genuine user-created same-name collision instead of merging', async () => {
+    const server = createMockSyncServer();
+    const dbA = await newDb();
+    const dbB = await newDb();
+    // Isolate the user-created clash from the seeded Favourites.
+    dbA.exec("DELETE FROM collections WHERE name = 'Favourites'");
+    dbB.exec("DELETE FROM collections WHERE name = 'Favourites'");
+
+    // Each device independently creates "Bosses" — distinct uuids, same name.
+    createCollection(dbA, { name: 'Bosses' });
+    createCollection(dbB, { name: 'Bosses' });
+    const uuidA = dbA.selectValue<string>("SELECT uuid FROM collections WHERE name = 'Bosses'")!;
+    const uuidB = dbB.selectValue<string>("SELECT uuid FROM collections WHERE name = 'Bosses'")!;
+    expect(uuidA).not.toBe(uuidB);
+
+    expect(bootstrapSyncAccount(dbA, ACCOUNT_A)).toBe('adopted');
+    expect(bootstrapSyncAccount(dbB, ACCOUNT_A)).toBe('adopted');
+
+    await converge([engineFor(dbA, server), engineFor(dbB, server)]);
+
+    // Both records survive as distinct collections (different uuids, never
+    // merged); the second-applied one is suffixed so the UNIQUE name holds.
+    for (const db of [dbA, dbB]) {
+      const names = db
+        .selectObjects<Row>("SELECT name FROM collections WHERE name LIKE 'Bosses%' ORDER BY name")
+        .map((r) => String(r.name));
+      expect(names).toEqual(['Bosses', 'Bosses (2)']);
+      expect(db.selectValue<number>('SELECT COUNT(DISTINCT uuid) FROM collections')).toBe(2);
+    }
+    expect(server.size()).toBe(2);
   });
 });
