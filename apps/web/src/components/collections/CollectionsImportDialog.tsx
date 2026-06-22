@@ -229,8 +229,8 @@ function ReportPanel({ report }: { report: ImportReport }) {
         {report.importedPinnedSearches > 0 && (
           <ReportRow label="Saved searches" value={report.importedPinnedSearches} />
         )}
-        {report.importedUiPrefs > 0 && (
-          <ReportRow label="Settings restored" value={report.importedUiPrefs} />
+        {report.importedUserSettings > 0 && (
+          <ReportRow label="Settings restored" value={report.importedUserSettings} />
         )}
       </dl>
       {report.importedNames.length > 0 && (

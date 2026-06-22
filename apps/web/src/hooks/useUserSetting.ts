@@ -1,4 +1,4 @@
-// React adapter for the `ui_prefs` key-value table in the user DB.
+// React adapter for the synced `user_settings` key-value table in the user DB.
 //
 // One key, one consumer. The value is opaque JSON to the worker; this
 // hook handles serialize / parse and validates against a zod schema so
@@ -12,13 +12,13 @@ import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tan
 import type { ZodTypeAny, z } from 'zod';
 import { getUserDbClient } from '@/db/user';
 
-const ROOT_KEY = ['user', 'ui-prefs'] as const;
+const ROOT_KEY = ['user', 'settings'] as const;
 
-export function uiPrefKey(key: string) {
+export function userSettingKey(key: string) {
   return [...ROOT_KEY, key] as const;
 }
 
-export interface UseUiPrefResult<T> {
+export interface UseUserSettingResult<T> {
   /** Parsed value, or the default if the row is missing or invalid. */
   value: T;
   /** Persist a new value. Returns once the worker has confirmed the write. */
@@ -29,21 +29,21 @@ export interface UseUiPrefResult<T> {
 }
 
 /**
- * Bind a single ui_prefs row to React state. `schema` runs against the
+ * Bind a single user_settings row to React state. `schema` runs against the
  * parsed JSON; failure falls back to `defaultValue` rather than throwing.
  */
-export function useUiPref<S extends ZodTypeAny>(
+export function useUserSetting<S extends ZodTypeAny>(
   key: string,
   schema: S,
   defaultValue: z.infer<S>,
-): UseUiPrefResult<z.infer<S>> {
+): UseUserSettingResult<z.infer<S>> {
   const db = useMemo(() => getUserDbClient(), []);
   const qc = useQueryClient();
 
   const query = useQuery<z.infer<S>>({
-    queryKey: uiPrefKey(key),
+    queryKey: userSettingKey(key),
     queryFn: async () => {
-      const row = await db.getUiPref(key);
+      const row = await db.getUserSetting(key);
       if (!row) return defaultValue;
       try {
         const parsed = schema.safeParse(JSON.parse(row.value));
@@ -57,11 +57,11 @@ export function useUiPref<S extends ZodTypeAny>(
 
   const setM = useMutation({
     mutationFn: async (next: z.infer<S>) => {
-      await db.setUiPref(key, JSON.stringify(next));
+      await db.setUserSetting(key, JSON.stringify(next));
       return next;
     },
     onSuccess: (next) => {
-      qc.setQueryData(uiPrefKey(key), next);
+      qc.setQueryData(userSettingKey(key), next);
     },
   });
 
@@ -73,8 +73,8 @@ export function useUiPref<S extends ZodTypeAny>(
   );
 
   const reset = useCallback(async () => {
-    await db.deleteUiPref(key);
-    qc.setQueryData(uiPrefKey(key), defaultValue);
+    await db.deleteUserSetting(key);
+    qc.setQueryData(userSettingKey(key), defaultValue);
   }, [db, key, qc, defaultValue]);
 
   return {

@@ -185,12 +185,27 @@ export interface UpdatePinnedSearchPatch {
   params?: Record<string, string>;
 }
 
-/** A row in the `ui_prefs` key-value table. Value is an opaque JSON
- *  string; the consumer parses + validates it with its own schema. */
-export interface UiPrefRecord {
+/** A row in the synced `user_settings` key-value table. Value is an opaque
+ *  JSON string; the consumer parses + validates it with its own schema. */
+export interface UserSettingRecord {
   key: string;
   value: string;
   updatedAt: number;
+}
+
+/** A recently-viewed entity, newest first. `name` is a local display label
+ *  resolved from the game DB; it is not part of the sync contract. */
+export interface RecentEntityRecord {
+  entity: EntityKind;
+  id: number;
+  name: string;
+  viewedAt: number;
+}
+
+/** A recent search query, newest first. */
+export interface RecentQueryRecord {
+  query: string;
+  ranAt: number;
 }
 
 export interface UserDbStatus {
@@ -206,6 +221,8 @@ export interface UserDbStatus {
     collections: number;
     members: number;
     pinnedSearches: number;
+    /** Pending local changes awaiting sync (docs/sync_design.md). */
+    outbox: number;
   };
 }
 
@@ -292,14 +309,31 @@ export interface UserDatabase {
   updatePinnedSearch(id: number, patch: UpdatePinnedSearchPatch): Promise<PinnedSearchRecord>;
   deletePinnedSearch(id: number): Promise<void>;
 
-  /** UI preference read; null when the key has never been written. */
-  getUiPref(key: string): Promise<UiPrefRecord | null>;
-  /** Insert or update a UI preference. Value is the consumer's already-
+  /** User setting read; null when the key has never been written. */
+  getUserSetting(key: string): Promise<UserSettingRecord | null>;
+  /** Insert or update a user setting. Value is the consumer's already-
    *  serialized JSON string. */
-  setUiPref(key: string, value: string): Promise<UiPrefRecord>;
+  setUserSetting(key: string, value: string): Promise<UserSettingRecord>;
   /** All rows — used by the JSON export. */
-  listUiPrefs(): Promise<UiPrefRecord[]>;
-  deleteUiPref(key: string): Promise<void>;
+  listUserSettings(): Promise<UserSettingRecord[]>;
+  deleteUserSetting(key: string): Promise<void>;
+
+  /** Recently-viewed entities, newest first (capped). */
+  listRecentEntities(): Promise<RecentEntityRecord[]>;
+  /** Recent search queries, newest first (capped). */
+  listRecentQueries(): Promise<RecentQueryRecord[]>;
+  /** Record (or coalesce) a viewed entity. `viewedAt` defaults to now;
+   *  pass an explicit timestamp when migrating historical data. */
+  trackRecentEntity(
+    entity: EntityKind,
+    id: number,
+    name: string,
+    viewedAt?: number,
+  ): Promise<void>;
+  /** Record (or coalesce) a search query. */
+  trackRecentQuery(query: string, ranAt?: number): Promise<void>;
+  /** Clear all recents of one kind. */
+  clearRecents(kind: 'entity' | 'query'): Promise<void>;
 
   /** Serialize the live user.sqlite3 to a Uint8Array. */
   exportBytes(): Promise<Uint8Array>;

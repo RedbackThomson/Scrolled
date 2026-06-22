@@ -150,4 +150,111 @@ export const USER_MIGRATIONS: readonly Migration[] = [
       );
     `,
   },
+  {
+    version: 6,
+    name: 'sync foundations',
+    // Phase 1 of the sync system (docs/sync_design.md): the local-only
+    // foundations. Every synced table gains the cross-device contract columns,
+    // the synced key/value (`user_settings`) and `recents` tables replace their
+    // localStorage / idb-keyval homes, and the bookkeeping tables (`sync_outbox`,
+    // `sync_cursor`, `sync_state`) accumulate changes that a later phase drains
+    // to a backend. No network touches any of this yet.
+    //
+    // `uuid` is the stable cross-device identity used on the wire; the integer
+    // PK stays the local-only key foreign keys already reference, so nothing
+    // relational is rewired. Existing rows are backfilled a random uuid and
+    // stamped `revision = 1`. The index on `uuid` is intentionally NOT unique:
+    // a bulk insert (e.g. import) writes many rows with the default `''` before
+    // the mutation layer stamps each one, which a unique index would reject.
+    sql: `
+      ALTER TABLE collections ADD COLUMN uuid          TEXT    NOT NULL DEFAULT '';
+      ALTER TABLE collections ADD COLUMN revision      INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE collections ADD COLUMN deleted_at    INTEGER;
+      ALTER TABLE collections ADD COLUMN origin_device TEXT    NOT NULL DEFAULT '';
+      UPDATE collections SET uuid = lower(hex(randomblob(16))), revision = 1 WHERE uuid = '';
+      CREATE INDEX collections_uuid_idx ON collections (uuid);
+
+      ALTER TABLE collection_members ADD COLUMN uuid          TEXT    NOT NULL DEFAULT '';
+      ALTER TABLE collection_members ADD COLUMN revision      INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE collection_members ADD COLUMN updated_at    INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE collection_members ADD COLUMN deleted_at    INTEGER;
+      ALTER TABLE collection_members ADD COLUMN origin_device TEXT    NOT NULL DEFAULT '';
+      UPDATE collection_members
+        SET uuid = lower(hex(randomblob(16))), revision = 1, updated_at = added_at
+        WHERE uuid = '';
+      CREATE INDEX collection_members_uuid_idx ON collection_members (uuid);
+
+      ALTER TABLE collection_groups ADD COLUMN uuid          TEXT    NOT NULL DEFAULT '';
+      ALTER TABLE collection_groups ADD COLUMN revision      INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE collection_groups ADD COLUMN deleted_at    INTEGER;
+      ALTER TABLE collection_groups ADD COLUMN origin_device TEXT    NOT NULL DEFAULT '';
+      UPDATE collection_groups SET uuid = lower(hex(randomblob(16))), revision = 1 WHERE uuid = '';
+      CREATE INDEX collection_groups_uuid_idx ON collection_groups (uuid);
+
+      ALTER TABLE pinned_searches ADD COLUMN uuid          TEXT    NOT NULL DEFAULT '';
+      ALTER TABLE pinned_searches ADD COLUMN revision      INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE pinned_searches ADD COLUMN deleted_at    INTEGER;
+      ALTER TABLE pinned_searches ADD COLUMN origin_device TEXT    NOT NULL DEFAULT '';
+      UPDATE pinned_searches SET uuid = lower(hex(randomblob(16))), revision = 1 WHERE uuid = '';
+      CREATE INDEX pinned_searches_uuid_idx ON pinned_searches (uuid);
+
+      CREATE TABLE user_settings (
+        key           TEXT PRIMARY KEY,
+        value         TEXT    NOT NULL,
+        uuid          TEXT    NOT NULL DEFAULT '',
+        revision      INTEGER NOT NULL DEFAULT 0,
+        updated_at    INTEGER NOT NULL DEFAULT 0,
+        deleted_at    INTEGER,
+        origin_device TEXT    NOT NULL DEFAULT ''
+      );
+
+      CREATE TABLE recents (
+        kind          TEXT    NOT NULL CHECK (kind IN ('entity','query')),
+        ref           TEXT    NOT NULL,
+        -- Local display label for entity rows (resolved from the game DB at
+        -- track time). Not part of the sync contract — game-derived names never
+        -- sync; a later phase projects the wire payload to omit it.
+        name          TEXT,
+        viewed_at     INTEGER NOT NULL,
+        uuid          TEXT    NOT NULL DEFAULT '',
+        revision      INTEGER NOT NULL DEFAULT 0,
+        updated_at    INTEGER NOT NULL DEFAULT 0,
+        deleted_at    INTEGER,
+        origin_device TEXT    NOT NULL DEFAULT '',
+        PRIMARY KEY (kind, ref)
+      );
+
+      CREATE TABLE sync_outbox (
+        seq           INTEGER PRIMARY KEY AUTOINCREMENT,
+        entity        TEXT    NOT NULL,
+        uuid          TEXT    NOT NULL,
+        op            TEXT    NOT NULL CHECK (op IN ('upsert','delete')),
+        payload       TEXT    NOT NULL,
+        base_revision INTEGER NOT NULL,
+        created_at    INTEGER NOT NULL,
+        idempotency   TEXT    NOT NULL
+      );
+
+      CREATE TABLE sync_cursor (
+        id         INTEGER PRIMARY KEY CHECK (id = 1),
+        server_seq INTEGER NOT NULL DEFAULT 0,
+        device_id  TEXT    NOT NULL,
+        account_id TEXT
+      );
+
+      INSERT INTO sync_cursor (id, server_seq, device_id, account_id)
+      VALUES (1, 0, lower(hex(randomblob(16))), NULL);
+
+      CREATE TABLE sync_state (
+        key   TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      );
+
+      -- Relocate the synced UI prefs (home layout, etc.) into user_settings,
+      -- stamping each with a fresh sync identity, then retire ui_prefs.
+      INSERT INTO user_settings (key, value, uuid, revision, updated_at, origin_device)
+        SELECT key, value, lower(hex(randomblob(16))), 1, updated_at, '' FROM ui_prefs;
+      DROP TABLE ui_prefs;
+    `,
+  },
 ];

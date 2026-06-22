@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, Info, Loader2 } from 'lucide-react';
@@ -15,7 +15,8 @@ import { StepRun } from '@/components/wizard/StepRun';
 import { StepWelcome } from '@/components/wizard/StepWelcome';
 import { StepRestore, type RestoreState } from '@/components/wizard/StepRestore';
 import { buildPlan } from '@/components/wizard/plan';
-import { getDbClient } from '@/db';
+import { getUserDbClient } from '@/db/user';
+import { setActiveServerProfileId } from '@/lib/serverProfileResolution';
 import { importBackupBytes } from '@/hooks/useBackup';
 import { createLogger, describeError } from '@scrolled/game-db/lib/logger';
 import { cn } from '@/lib/utils';
@@ -152,13 +153,12 @@ function SetupWizard() {
   /** Side-channel notice when a mixed drop ignored some files. */
   const [ignoredNotice, setIgnoredNotice] = useState<string | null>(null);
   /**
-   * Restore-import state, owned here (not in StepRestore) so the `db.importBytes`
-   * call runs exactly once per dropped file even under React 18 StrictMode's
-   * dev-time effect double-fire. The handler that sets the file also kicks off
-   * the import; StepRestore is presentational.
+   * Restore-import state, owned here (not in StepRestore) so the
+   * `importBackupBytes` call runs exactly once per dropped file even under
+   * React 18 StrictMode's dev-time effect double-fire. The handler that sets
+   * the file also kicks off the import; StepRestore is presentational.
    */
   const [restoreState, setRestoreState] = useState<RestoreState>({ phase: 'pending' });
-  const db = useMemo(() => getDbClient(), []);
   const queryClient = useQueryClient();
   /** Cancellation token: only the latest-dropped file's outcome updates state. */
   const activeRestoreFileRef = useRef<File | null>(null);
@@ -500,7 +500,7 @@ function SetupWizard() {
           // re-run without String.wz doesn't reset the user back to Classic.
           const profileId = profileOverride ?? profileDetection.profileId;
           if (profileId) {
-            db.setServerProfile(profileId)
+            setActiveServerProfileId(getUserDbClient(), profileId)
               .then(() => queryClient.invalidateQueries({ queryKey: ['db', 'server-profile'] }))
               .catch((e) => log.warn('failed to persist server profile', describeError(e)));
           }

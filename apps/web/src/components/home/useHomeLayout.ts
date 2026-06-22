@@ -1,12 +1,12 @@
 // Hook that owns the home page's persisted layout.
 //
-// Reads `home.layout` out of the user DB (via useUiPref), reconciles it
+// Reads `home.layout` out of the user DB (via useUserSetting), reconciles it
 // against the canonical id list, and exposes the small set of mutations
 // the edit-mode UI needs. Writes go straight back through to the DB —
 // no debounce; reorders are user-paced, not animation-paced.
 
 import { useCallback, useMemo } from 'react';
-import { useUiPref } from '@/hooks/useUiPref';
+import { useUserSetting } from '@/hooks/useUserSetting';
 import {
   DEFAULT_HOME_LAYOUT,
   homeLayoutSchema,
@@ -31,7 +31,7 @@ export interface UseHomeLayoutResult {
 }
 
 export function useHomeLayout(): UseHomeLayoutResult {
-  const pref = useUiPref(PREF_KEY, homeLayoutSchema, { entries: DEFAULT_HOME_LAYOUT });
+  const pref = useUserSetting(PREF_KEY, homeLayoutSchema, { entries: DEFAULT_HOME_LAYOUT });
 
   const entries = useMemo(() => reconcileLayout(pref.value), [pref.value]);
 

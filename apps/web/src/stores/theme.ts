@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { syncThemeColorMeta } from '@/lib/themeColorMeta';
+import { getUserDbClient } from '@/db/user';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 export type ThemeResolved = 'light' | 'dark';
@@ -16,9 +17,15 @@ interface ThemeStore {
   set: (theme: ThemeResolved) => void;
   /** Legacy: flip between light and dark (always resolves to an explicit mode). */
   toggle: () => void;
+  /** Apply a value loaded from the DB without writing it back. */
+  hydrate: (mode: ThemeMode) => void;
 }
 
+// localStorage stays the synchronous boot mirror; user_settings is the synced
+// source of truth. Only an explicit light/dark override syncs — "follow system"
+// is the per-device default, represented by the absence of the setting.
 const STORAGE_KEY = 'scrolled.theme';
+export const THEME_SETTING_KEY = 'theme';
 
 function readInitial(): ThemeMode {
   if (typeof window === 'undefined') return 'system';
@@ -50,6 +57,19 @@ function apply(mode: ThemeMode): ThemeResolved {
   return resolved;
 }
 
+function persist(mode: ThemeMode): void {
+  // Deferred + swallowed so the worker construction never throws into a
+  // synchronous caller (or a test env without Workers).
+  void Promise.resolve()
+    .then(() => {
+      const db = getUserDbClient();
+      return mode === 'system'
+        ? db.deleteUserSetting(THEME_SETTING_KEY)
+        : db.setUserSetting(THEME_SETTING_KEY, JSON.stringify(mode));
+    })
+    .catch(() => {});
+}
+
 const initialMode = readInitial();
 const initialTheme = resolve(initialMode);
 if (typeof document !== 'undefined') {
@@ -60,17 +80,26 @@ if (typeof document !== 'undefined') {
 export const useTheme = create<ThemeStore>((set, get) => ({
   mode: initialMode,
   theme: initialTheme,
-  setMode: (mode) => set({ mode, theme: apply(mode) }),
+  setMode: (mode) => {
+    set({ mode, theme: apply(mode) });
+    persist(mode);
+  },
   cycle: () => {
     const next: ThemeMode =
       get().mode === 'light' ? 'dark' : get().mode === 'dark' ? 'system' : 'light';
     set({ mode: next, theme: apply(next) });
+    persist(next);
   },
-  set: (theme) => set({ mode: theme, theme: apply(theme) }),
+  set: (theme) => {
+    set({ mode: theme, theme: apply(theme) });
+    persist(theme);
+  },
   toggle: () => {
     const next: ThemeResolved = get().theme === 'dark' ? 'light' : 'dark';
     set({ mode: next, theme: apply(next) });
+    persist(next);
   },
+  hydrate: (mode) => set({ mode, theme: apply(mode) }),
 }));
 
 // Subscribe to system preference changes when mode === 'system'.

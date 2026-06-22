@@ -80,10 +80,8 @@ import {
   getActiveServerProfile,
   getInstalledDataset,
   getMeta,
-  getServerProfile,
   markPendingRebuild,
   setInstalledDataset,
-  setServerProfile,
   setServerProfileConfig,
 } from './meta';
 
@@ -548,14 +546,6 @@ export class DbApi implements GameDatabase {
     // the UI explains it instead of dropping the user into a blank wiki.
     if (result.didDestructiveReset) markPendingRebuild(this.sql);
     return { backend: result.backend, schemaVersion: result.schemaVersion };
-  }
-
-  async getServerProfile(): Promise<string> {
-    return getServerProfile(this.sql);
-  }
-
-  async setServerProfile(profileId: string): Promise<void> {
-    setServerProfile(this.sql, profileId);
   }
 
   async getActiveServerProfile(): Promise<unknown> {

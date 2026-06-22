@@ -1,5 +1,9 @@
 import { z } from 'zod';
-import { BUILTIN_PROFILES, resolveServerProfile } from '@scrolled/game-db/serverProfiles';
+import { BUILTIN_PROFILES } from '@scrolled/game-db/serverProfiles';
+import {
+  resolveActiveServerProfile,
+  setActiveServerProfileId,
+} from '@/lib/serverProfileResolution';
 import { NotFoundError } from '../errors';
 import type { ToolDefinition } from '../types';
 import { READ, WRITE_IDEMPOTENT } from './annotations';
@@ -35,10 +39,7 @@ export const profilesGetActive: ToolDefinition<typeof profilesGetActiveSchema, u
   description: 'Currently active server profile.',
   inputSchema: profilesGetActiveSchema,
   annotations: READ,
-  execute: async (_input, ctx) => {
-    const id = await ctx.db.getServerProfile();
-    return resolveServerProfile(id);
-  },
+  execute: async (_input, ctx) => resolveActiveServerProfile(ctx.db, ctx.userDb),
 };
 
 const profilesSetActiveSchema = z.object({ id: z.string().min(1) });
@@ -49,7 +50,7 @@ export const profilesSetActive: ToolDefinition<typeof profilesSetActiveSchema, u
   inputSchema: profilesSetActiveSchema,
   annotations: WRITE_IDEMPOTENT,
   execute: async (input, ctx) => {
-    await ctx.db.setServerProfile(input.id);
+    await setActiveServerProfileId(ctx.userDb, input.id);
     return { ok: true };
   },
 };

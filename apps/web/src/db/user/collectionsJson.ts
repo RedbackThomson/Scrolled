@@ -65,7 +65,7 @@ export const pinnedSearchJsonSchema = z.object({
   params: z.record(z.string()),
 });
 
-export const uiPrefJsonSchema = z.object({
+export const userSettingJsonSchema = z.object({
   key: z.string().min(1),
   /** Already-serialized JSON string; the consuming widget owns the
    *  shape. */
@@ -85,10 +85,10 @@ export const collectionsExportSchema = z.discriminatedUnion('kind', [
     /** Pinned searches travel with the full-library export. Optional so
      *  pre-pinned-search export files still validate. */
     pinnedSearches: z.array(pinnedSearchJsonSchema).optional(),
-    /** UI preferences (home layout, etc.) ride the full-library export
-     *  so a backup round-trips dashboard customization. Optional so
-     *  pre-ui-prefs export files still validate. */
-    uiPrefs: z.array(uiPrefJsonSchema).optional(),
+    /** User settings (accent, theme, home layout, active server profile)
+     *  ride the full-library export so a backup round-trips a user's
+     *  customization. Optional so pre-settings export files still validate. */
+    userSettings: z.array(userSettingJsonSchema).optional(),
   }),
 ]);
 
@@ -96,7 +96,7 @@ export type CollectionMemberJson = z.infer<typeof collectionMemberJsonSchema>;
 export type CollectionGroupJson = z.infer<typeof collectionGroupJsonSchema>;
 export type CollectionBundleJson = z.infer<typeof collectionBundleSchema>;
 export type PinnedSearchJson = z.infer<typeof pinnedSearchJsonSchema>;
-export type UiPrefJson = z.infer<typeof uiPrefJsonSchema>;
+export type UserSettingJson = z.infer<typeof userSettingJsonSchema>;
 export type CollectionsExportJson = z.infer<typeof collectionsExportSchema>;
 
 /**
@@ -128,7 +128,7 @@ export interface ImportReport {
    *  pinned searches always skip — no merge mode for these. */
   importedPinnedSearches: number;
   skippedPinnedSearches: number;
-  /** UI prefs imported (overwrites existing keys, since these are
+  /** User settings imported (overwrites existing keys, since these are
    *  per-user settings — the freshest write should win). */
-  importedUiPrefs: number;
+  importedUserSettings: number;
 }

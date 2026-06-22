@@ -24,7 +24,10 @@ import {
 } from '../types';
 import { rowToCollection, rowToMember } from './rowMappers';
 import { listPinnedSearches } from './pinnedSearches';
-import { listUiPrefs, setUiPref } from './uiPrefs';
+import { listUserSettings, setUserSetting } from './userSettings';
+import { recordDelete, recordNewRows, recordUpsert } from './sync';
+
+const MEMBER_WHERE = 'collection_id = ? AND entity_type = ? AND entity_id = ?';
 
 export function listCollections(db: Sqlite): CollectionRecord[] {
   // Pinned collections come first in the order chosen on the home page; the
@@ -68,7 +71,9 @@ export function createCollection(db: Sqlite, input: CreateCollectionInput): Coll
        VALUES (?, ?, ?, ?, ?, ?)`,
       [name, input.description ?? null, input.color ?? null, input.icon ?? null, now, now],
     );
-    return db.selectValue<number>('SELECT last_insert_rowid()') ?? 0;
+    const newId = db.selectValue<number>('SELECT last_insert_rowid()') ?? 0;
+    recordUpsert(db, 'collection', 'id = ?', [newId]);
+    return newId;
   });
   const created = db.selectObject<Row>(
     `SELECT c.id, c.name, c.description, c.color, c.icon,
@@ -130,6 +135,7 @@ export function setCollectionPinned(
         [Date.now(), id],
       );
     }
+    recordUpsert(db, 'collection', 'id = ?', [id]);
   });
   const updated = getCollection(db, id);
   if (!updated) throw new Error(`Collection ${id} not found after pin update`);
@@ -189,15 +195,39 @@ export function updateCollection(
   sets.push('updated_at = ?');
   params.push(Date.now());
   params.push(id);
-  db.exec(`UPDATE collections SET ${sets.join(', ')} WHERE id = ?`, params);
+  db.transaction(() => {
+    db.exec(`UPDATE collections SET ${sets.join(', ')} WHERE id = ?`, params);
+    recordUpsert(db, 'collection', 'id = ?', [id]);
+  });
   const updated = getCollection(db, id);
   if (!updated) throw new Error(`Collection ${id} not found after update`);
   return updated;
 }
 
 export function deleteCollection(db: Sqlite, id: number): void {
-  // ON DELETE CASCADE on collection_members removes member rows.
-  db.exec('DELETE FROM collections WHERE id = ?', [id]);
+  // ON DELETE CASCADE on collection_members removes member + group rows, which
+  // bypasses recordDelete — so capture tombstones for the whole subtree first,
+  // then drop the collection.
+  db.transaction(() => {
+    const members = db.selectObjects<Row>(
+      'SELECT entity_type, entity_id FROM collection_members WHERE collection_id = ?',
+      [id],
+    );
+    for (const m of members) {
+      recordDelete(db, 'collection_member', 'collection_id = ? AND entity_type = ? AND entity_id = ?', [
+        id,
+        String(m.entity_type),
+        Number(m.entity_id),
+      ]);
+    }
+    const groups = db.selectObjects<{ id: number }>(
+      'SELECT id FROM collection_groups WHERE collection_id = ?',
+      [id],
+    );
+    for (const g of groups) recordDelete(db, 'collection_group', 'id = ?', [Number(g.id)]);
+    recordDelete(db, 'collection', 'id = ?', [id]);
+    db.exec('DELETE FROM collections WHERE id = ?', [id]);
+  });
 }
 
 export function listMembers(db: Sqlite, collectionId: number): CollectionMember[] {
@@ -273,6 +303,7 @@ export function addMember(
         pos,
       ],
     );
+    recordUpsert(db, 'collection_member', MEMBER_WHERE, [collectionId, entityType, entityId]);
   });
 }
 
@@ -282,11 +313,14 @@ export function removeMember(
   entityType: CollectionEntityType,
   entityId: number,
 ): void {
-  db.exec(
-    `DELETE FROM collection_members
-     WHERE collection_id = ? AND entity_type = ? AND entity_id = ?`,
-    [collectionId, entityType, entityId],
-  );
+  db.transaction(() => {
+    recordDelete(db, 'collection_member', MEMBER_WHERE, [collectionId, entityType, entityId]);
+    db.exec(
+      `DELETE FROM collection_members
+       WHERE collection_id = ? AND entity_type = ? AND entity_id = ?`,
+      [collectionId, entityType, entityId],
+    );
+  });
 }
 
 export function updateMember(
@@ -312,11 +346,14 @@ export function updateMember(
   }
   if (sets.length === 0) return;
   params.push(collectionId, entityType, entityId);
-  db.exec(
-    `UPDATE collection_members SET ${sets.join(', ')}
-     WHERE collection_id = ? AND entity_type = ? AND entity_id = ?`,
-    params,
-  );
+  db.transaction(() => {
+    db.exec(
+      `UPDATE collection_members SET ${sets.join(', ')}
+       WHERE collection_id = ? AND entity_type = ? AND entity_id = ?`,
+      params,
+    );
+    recordUpsert(db, 'collection_member', MEMBER_WHERE, [collectionId, entityType, entityId]);
+  });
 }
 
 export function bulkAddMembers(
@@ -348,6 +385,11 @@ export function bulkAddMembers(
          VALUES (?, ?, ?, NULL, NULL, 0, ?, ?, ?)`,
         [collectionId, ref.entityType, ref.entityId, now, groupId, nextPos],
       );
+      recordUpsert(db, 'collection_member', MEMBER_WHERE, [
+        collectionId,
+        ref.entityType,
+        ref.entityId,
+      ]);
       nextPos++;
       added++;
     }
@@ -363,6 +405,11 @@ export function bulkRemoveMembers(
   if (refs.length === 0) return;
   db.transaction(() => {
     for (const ref of refs) {
+      recordDelete(db, 'collection_member', MEMBER_WHERE, [
+        collectionId,
+        ref.entityType,
+        ref.entityId,
+      ]);
       db.exec(
         `DELETE FROM collection_members
          WHERE collection_id = ? AND entity_type = ? AND entity_id = ?`,
@@ -418,7 +465,7 @@ export function exportAllJson(db: Sqlite): CollectionsExportJson {
     if (b) bundles.push(b);
   }
   const pinned = listPinnedSearches(db);
-  const prefs = listUiPrefs(db);
+  const settings = listUserSettings(db);
   return {
     version: COLLECTIONS_JSON_VERSION,
     kind: 'all',
@@ -428,7 +475,7 @@ export function exportAllJson(db: Sqlite): CollectionsExportJson {
       entity: p.entity,
       params: p.params,
     })),
-    uiPrefs: prefs.map((p) => ({ key: p.key, value: p.value })),
+    userSettings: settings.map((p) => ({ key: p.key, value: p.value })),
   };
 }
 
@@ -451,7 +498,7 @@ export function importJson(
     importedNames: [],
     importedPinnedSearches: 0,
     skippedPinnedSearches: 0,
-    importedUiPrefs: 0,
+    importedUserSettings: 0,
   };
 
   db.transaction(() => {
@@ -506,15 +553,23 @@ export function importJson(
       }
     }
 
-    if (parsed.kind === 'all' && parsed.uiPrefs) {
-      // UI prefs overwrite on key collision — the import file represents
+    if (parsed.kind === 'all' && parsed.userSettings) {
+      // Settings overwrite on key collision — the import file represents
       // the user's most recently-snapshotted desktop, and a partial
       // backup is more useful than refusing to apply settings.
-      for (const pref of parsed.uiPrefs) {
-        setUiPref(db, pref.key, pref.value);
-        report.importedUiPrefs++;
+      for (const setting of parsed.userSettings) {
+        setUserSetting(db, setting.key, setting.value);
+        report.importedUserSettings++;
       }
     }
+
+    // Collections, groups, members and pinned searches were bulk-inserted with
+    // raw SQL above, so they carry no sync identity yet. Stamp + enqueue them
+    // (settings already self-record via setUserSetting).
+    recordNewRows(db, 'collection');
+    recordNewRows(db, 'collection_group');
+    recordNewRows(db, 'collection_member');
+    recordNewRows(db, 'pinned_search');
   });
 
   return report;

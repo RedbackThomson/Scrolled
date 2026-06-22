@@ -11,10 +11,12 @@ import { UpdatePrompt } from '@/components/common/UpdatePrompt';
 import { initAnalytics } from '@/analytics';
 import { initMcp } from '@/mcp';
 import { createIdentityProvider } from '@/identity/createProvider';
+import { bootstrapSyncedState } from '@/lib/syncedStateBootstrap';
 import '@/styles/index.css';
 
 initAnalytics();
 initMcp();
+bootstrapSyncedState();
 
 const queryClient = new QueryClient({
   defaultOptions: {

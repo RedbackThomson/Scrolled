@@ -1043,14 +1043,10 @@ export interface GameDatabase {
   /** Find the most recent dataset_files row whose hash matches, or null. */
   findFileByHash(hash: string): Promise<DatasetFileRef | null>;
 
-  /** The selected server profile's id (singleton row). */
-  getServerProfile(): Promise<string>;
-  /** Set the selected server profile by id (clears any inline config). */
-  setServerProfile(profileId: string): Promise<void>;
   /**
-   * The inline server-profile config a fixed dataset installed, or null when a
-   * bundled profile was selected by id. Opaque JSON; validate with
-   * `serverProfileSchema` before use.
+   * The inline server-profile config a fixed dataset installed, or null when
+   * none is present (generic deployments keep their selection in the user DB).
+   * Opaque JSON; validate with `serverProfileSchema` before use.
    */
   getActiveServerProfile(): Promise<unknown>;
   /** Persist a full server-profile config inline (fixed-dataset install). */

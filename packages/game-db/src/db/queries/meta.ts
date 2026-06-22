@@ -25,40 +25,26 @@ export function countOf(sql: Sqlite, table: string): number {
   return Number(sql.selectValue(`SELECT COUNT(*) FROM ${table}`) ?? 0);
 }
 
-export function getServerProfile(sql: Sqlite): string {
-  const row = sql.selectObject<{ profile_id: string }>(
-    'SELECT profile_id FROM server_profile WHERE id = 1',
-  );
-  return row?.profile_id ?? 'vanilla-v83';
-}
-
-export function setServerProfile(sql: Sqlite, profileId: string): void {
-  // Upsert, not UPDATE: a destructive reset wipes this singleton's row, and a
-  // bare UPDATE would silently no-op and lose the user's selection. Selecting a
-  // bundled profile by id clears any inline config from a previous install.
-  sql.exec(
-    'INSERT OR REPLACE INTO server_profile (id, profile_id, profile_json, updated_at) VALUES (1, ?, NULL, ?)',
-    [profileId, Date.now()],
-  );
-}
-
 /**
  * Persist a full server-profile config inline (a fixed dataset ships its own,
- * so it renders correctly without the app bundling a matching profile). Stores
- * both the id and the JSON. `profile` is any JSON-serializable value with an
- * `id`; the caller validates it with `serverProfileSchema` before persisting.
+ * so it renders correctly without the app bundling a matching profile).
+ * `profile` is any JSON-serializable value with an `id`; the caller validates
+ * it with `serverProfileSchema` before persisting. Generic deployments don't
+ * use this — their active profile is a synced user setting (see the sync
+ * design), not game-DB state.
  */
 export function setServerProfileConfig(sql: Sqlite, profile: { id: string }): void {
   sql.exec(
-    'INSERT OR REPLACE INTO server_profile (id, profile_id, profile_json, updated_at) VALUES (1, ?, ?, ?)',
-    [profile.id, JSON.stringify(profile), Date.now()],
+    'INSERT OR REPLACE INTO server_profile (id, profile_json, updated_at) VALUES (1, ?, ?)',
+    [JSON.stringify(profile), Date.now()],
   );
 }
 
 /**
- * The inline profile config stored by a fixed-dataset install, or null when the
- * generic path selected a bundled profile by id. Returned as opaque JSON; the
- * caller validates it against `serverProfileSchema`.
+ * The inline profile config stored by a fixed-dataset install, or null when no
+ * inline config has been persisted (the generic path keeps its selection in the
+ * user DB instead). Returned as opaque JSON; the caller validates it against
+ * `serverProfileSchema`.
  */
 export function getActiveServerProfile(sql: Sqlite): unknown {
   const row = sql.selectObject<{ profile_json: string | null }>(

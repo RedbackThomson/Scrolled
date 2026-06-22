@@ -1,12 +1,7 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { get, set } from 'idb-keyval';
+import { getUserDbClient } from '@/db/user';
 import type { EntityKind } from '@/db';
-
-const ENTITIES_KEY = 'scrolled.recents.entities';
-const QUERIES_KEY = 'scrolled.recents.queries';
-const MAX_ENTITIES = 30;
-const MAX_QUERIES = 15;
 
 export interface RecentEntity {
   entity: EntityKind;
@@ -24,30 +19,27 @@ const ENTITIES_QK = ['recents', 'entities'] as const;
 const QUERIES_QK = ['recents', 'queries'] as const;
 
 export function useRecentEntities() {
+  const db = useMemo(() => getUserDbClient(), []);
   const qc = useQueryClient();
   const q = useQuery({
     queryKey: ENTITIES_QK,
-    queryFn: async () => (await get<RecentEntity[]>(ENTITIES_KEY)) ?? [],
+    queryFn: () => db.listRecentEntities() as Promise<RecentEntity[]>,
     staleTime: Infinity,
   });
 
   const trackM = useMutation({
     mutationFn: async (input: Omit<RecentEntity, 'viewedAt'>) => {
-      const current = (await get<RecentEntity[]>(ENTITIES_KEY)) ?? [];
-      const filtered = current.filter((r) => !(r.entity === input.entity && r.id === input.id));
-      const next = [{ ...input, viewedAt: Date.now() }, ...filtered].slice(0, MAX_ENTITIES);
-      await set(ENTITIES_KEY, next);
-      return next;
+      await db.trackRecentEntity(input.entity, input.id, input.name);
     },
-    onSuccess: (next) => {
-      qc.setQueryData(ENTITIES_QK, next);
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ENTITIES_QK });
     },
   });
 
   const clear = useCallback(async () => {
-    await set(ENTITIES_KEY, []);
+    await db.clearRecents('entity');
     qc.setQueryData(ENTITIES_QK, []);
-  }, [qc]);
+  }, [db, qc]);
 
   return {
     items: q.data ?? [],
@@ -57,32 +49,27 @@ export function useRecentEntities() {
 }
 
 export function useRecentQueries() {
+  const db = useMemo(() => getUserDbClient(), []);
   const qc = useQueryClient();
   const q = useQuery({
     queryKey: QUERIES_QK,
-    queryFn: async () => (await get<RecentQuery[]>(QUERIES_KEY)) ?? [],
+    queryFn: () => db.listRecentQueries() as Promise<RecentQuery[]>,
     staleTime: Infinity,
   });
 
   const trackM = useMutation({
     mutationFn: async (query: string) => {
-      const trimmed = query.trim();
-      if (!trimmed) return (await get<RecentQuery[]>(QUERIES_KEY)) ?? [];
-      const current = (await get<RecentQuery[]>(QUERIES_KEY)) ?? [];
-      const filtered = current.filter((r) => r.query !== trimmed);
-      const next = [{ query: trimmed, ranAt: Date.now() }, ...filtered].slice(0, MAX_QUERIES);
-      await set(QUERIES_KEY, next);
-      return next;
+      await db.trackRecentQuery(query);
     },
-    onSuccess: (next) => {
-      qc.setQueryData(QUERIES_QK, next);
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QUERIES_QK });
     },
   });
 
   const clear = useCallback(async () => {
-    await set(QUERIES_KEY, []);
+    await db.clearRecents('query');
     qc.setQueryData(QUERIES_QK, []);
-  }, [qc]);
+  }, [db, qc]);
 
   return {
     items: q.data ?? [],

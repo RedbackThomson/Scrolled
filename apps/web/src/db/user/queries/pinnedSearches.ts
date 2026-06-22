@@ -5,6 +5,7 @@ import type {
   UpdatePinnedSearchPatch,
 } from '../types';
 import { rowToPinnedSearch } from './rowMappers';
+import { recordDelete, recordUpsert } from './sync';
 
 export function listPinnedSearches(db: Sqlite): PinnedSearchRecord[] {
   const rows = db.selectObjects<Row>(
@@ -28,12 +29,16 @@ export function createPinnedSearch(db: Sqlite, input: CreatePinnedSearchInput): 
   const name = input.name.trim();
   if (!name) throw new Error('Pinned search name is required');
   const now = Date.now();
-  db.exec(
-    `INSERT INTO pinned_searches (name, entity, params_json, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?)`,
-    [name, input.entity, JSON.stringify(input.params ?? {}), now, now],
-  );
-  const id = db.selectValue<number>('SELECT last_insert_rowid()') ?? 0;
+  const id = db.transaction(() => {
+    db.exec(
+      `INSERT INTO pinned_searches (name, entity, params_json, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?)`,
+      [name, input.entity, JSON.stringify(input.params ?? {}), now, now],
+    );
+    const newId = db.selectValue<number>('SELECT last_insert_rowid()') ?? 0;
+    recordUpsert(db, 'pinned_search', 'id = ?', [newId]);
+    return newId;
+  });
   const row = db.selectObject<Row>(
     `SELECT id, name, entity, params_json, created_at, updated_at
      FROM pinned_searches WHERE id = ?`,
@@ -68,12 +73,18 @@ export function updatePinnedSearch(
   sets.push('updated_at = ?');
   params.push(Date.now());
   params.push(id);
-  db.exec(`UPDATE pinned_searches SET ${sets.join(', ')} WHERE id = ?`, params);
+  db.transaction(() => {
+    db.exec(`UPDATE pinned_searches SET ${sets.join(', ')} WHERE id = ?`, params);
+    recordUpsert(db, 'pinned_search', 'id = ?', [id]);
+  });
   const updated = getPinnedSearch(db, id);
   if (!updated) throw new Error(`Pinned search ${id} not found after update`);
   return updated;
 }
 
 export function deletePinnedSearch(db: Sqlite, id: number): void {
-  db.exec('DELETE FROM pinned_searches WHERE id = ?', [id]);
+  db.transaction(() => {
+    recordDelete(db, 'pinned_search', 'id = ?', [id]);
+    db.exec('DELETE FROM pinned_searches WHERE id = ?', [id]);
+  });
 }

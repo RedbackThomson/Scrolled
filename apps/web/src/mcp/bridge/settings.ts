@@ -35,7 +35,7 @@ export async function readBridgeSettings(): Promise<BridgeSettings> {
   if (cached) return cached;
   const db = getUserDbClient();
   try {
-    const row = await db.getUiPref(BRIDGE_PREF_KEY);
+    const row = await db.getUserSetting(BRIDGE_PREF_KEY);
     if (!row) {
       cached = DEFAULT_BRIDGE_SETTINGS;
       return cached;
@@ -55,7 +55,7 @@ export async function writeBridgeSettings(next: BridgeSettings): Promise<void> {
   const validated = bridgeSettingsSchema.parse(next);
   cached = validated;
   const db = getUserDbClient();
-  await db.setUiPref(BRIDGE_PREF_KEY, JSON.stringify(validated));
+  await db.setUserSetting(BRIDGE_PREF_KEY, JSON.stringify(validated));
   for (const fn of listeners) fn(validated);
 }
 

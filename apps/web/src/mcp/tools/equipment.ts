@@ -2,9 +2,9 @@ import { z } from 'zod';
 import {
   EQUIP_STAT_KEYS,
   calculateEquipRanges,
-  resolveServerProfile,
   type EquipBaseStats,
 } from '@scrolled/game-db/serverProfiles';
+import { resolveActiveServerProfile } from '@/lib/serverProfileResolution';
 import { NotFoundError } from '../errors';
 import type { ToolDefinition } from '../types';
 import { READ } from './annotations';
@@ -68,8 +68,7 @@ export const equipmentRanges: ToolDefinition<typeof equipmentRangesSchema, unkno
   execute: async (input, ctx) => {
     const row = await ctx.db.getEquip(input.id);
     if (!row) throw new NotFoundError(`Equip ${input.id} not found`);
-    const profileId = await ctx.db.getServerProfile();
-    const profile = resolveServerProfile(profileId);
+    const profile = await resolveActiveServerProfile(ctx.db, ctx.userDb);
     const stats: EquipBaseStats = EQUIP_STAT_KEYS.reduce((acc, key) => {
       acc[key] = (row as unknown as Record<string, number | null>)[key] ?? null;
       return acc;

@@ -21,17 +21,21 @@ import type {
   EntityRef,
   MembershipBadge,
   PinnedSearchRecord,
-  UiPrefRecord,
+  RecentEntityRecord,
+  RecentQueryRecord,
   UpdateCollectionPatch,
   UpdateMemberPatch,
   UpdatePinnedSearchPatch,
   UserDatabase,
   UserDbStatus,
+  UserSettingRecord,
 } from '../types';
+import type { EntityKind } from '@scrolled/game-db/db/types';
 import * as collections from './collections';
 import * as collectionGroups from './collectionGroups';
 import * as pinned from './pinnedSearches';
-import * as uiPrefs from './uiPrefs';
+import * as userSettings from './userSettings';
+import * as recents from './recents';
 
 export class UserDbApi implements UserDatabase {
   constructor(
@@ -53,11 +57,12 @@ export class UserDbApi implements UserDatabase {
     const collectionsCount = this.db.selectValue<number>('SELECT COUNT(*) FROM collections') ?? 0;
     const members = this.db.selectValue<number>('SELECT COUNT(*) FROM collection_members') ?? 0;
     const pinnedSearches = this.db.selectValue<number>('SELECT COUNT(*) FROM pinned_searches') ?? 0;
+    const outbox = this.db.selectValue<number>('SELECT COUNT(*) FROM sync_outbox') ?? 0;
     return {
       schemaVersion,
       backend: this.db.backend,
       fallbackReason: this.db.fallbackReason,
-      counts: { collections: collectionsCount, members, pinnedSearches },
+      counts: { collections: collectionsCount, members, pinnedSearches, outbox },
     };
   }
 
@@ -217,22 +222,49 @@ export class UserDbApi implements UserDatabase {
     pinned.deletePinnedSearch(this.db, id);
   }
 
-  // -- ui prefs ---------------------------------------------------------------
+  // -- user settings ----------------------------------------------------------
 
-  async getUiPref(key: string): Promise<UiPrefRecord | null> {
-    return uiPrefs.getUiPref(this.db, key);
+  async getUserSetting(key: string): Promise<UserSettingRecord | null> {
+    return userSettings.getUserSetting(this.db, key);
   }
 
-  async setUiPref(key: string, value: string): Promise<UiPrefRecord> {
-    return uiPrefs.setUiPref(this.db, key, value);
+  async setUserSetting(key: string, value: string): Promise<UserSettingRecord> {
+    return userSettings.setUserSetting(this.db, key, value);
   }
 
-  async listUiPrefs(): Promise<UiPrefRecord[]> {
-    return uiPrefs.listUiPrefs(this.db);
+  async listUserSettings(): Promise<UserSettingRecord[]> {
+    return userSettings.listUserSettings(this.db);
   }
 
-  async deleteUiPref(key: string): Promise<void> {
-    uiPrefs.deleteUiPref(this.db, key);
+  async deleteUserSetting(key: string): Promise<void> {
+    userSettings.deleteUserSetting(this.db, key);
+  }
+
+  // -- recents ----------------------------------------------------------------
+
+  async listRecentEntities(): Promise<RecentEntityRecord[]> {
+    return recents.listRecentEntities(this.db) as RecentEntityRecord[];
+  }
+
+  async listRecentQueries(): Promise<RecentQueryRecord[]> {
+    return recents.listRecentQueries(this.db);
+  }
+
+  async trackRecentEntity(
+    entity: EntityKind,
+    id: number,
+    name: string,
+    viewedAt?: number,
+  ): Promise<void> {
+    recents.trackRecentEntity(this.db, entity, id, name, viewedAt);
+  }
+
+  async trackRecentQuery(query: string, ranAt?: number): Promise<void> {
+    recents.trackRecentQuery(this.db, query, ranAt);
+  }
+
+  async clearRecents(kind: 'entity' | 'query'): Promise<void> {
+    recents.clearRecents(this.db, kind);
   }
 
   // -- raw bytes --------------------------------------------------------------

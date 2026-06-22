@@ -969,6 +969,19 @@ export const MIGRATIONS: readonly Migration[] = [
       ALTER TABLE skills DROP COLUMN hidden;
     `,
   },
+  {
+    version: 35,
+    name: 'drop server_profile.profile_id',
+    sql: `
+      -- The active generic-mode profile selection moved to the user DB
+      -- (user_settings 'activeServerProfile'), synced per the sync design.
+      -- A fixed hosted dataset keeps its authoritative config in
+      -- profile_json (migration #33), so only the now-unused selection id
+      -- column is dropped. Schema-only: extraction output is untouched, so
+      -- the data revision stays put.
+      ALTER TABLE server_profile DROP COLUMN profile_id;
+    `,
+  },
 ];
 
 /**

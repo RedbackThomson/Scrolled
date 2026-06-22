@@ -12,6 +12,9 @@ import type {
   CollectionGroup,
 } from '../types';
 import { rowToGroup } from './rowMappers';
+import { recordDelete, recordUpsert } from './sync';
+
+const MEMBER_WHERE = 'collection_id = ? AND entity_type = ? AND entity_id = ?';
 
 export function listGroups(db: Sqlite, collectionId: number): CollectionGroup[] {
   const rows = db.selectObjects<Row>(
@@ -47,7 +50,9 @@ export function createGroup(
        VALUES (?, ?, ?, ?, ?)`,
       [collectionId, name, nextPos, now, now],
     );
-    return db.selectValue<number>('SELECT last_insert_rowid()') ?? 0;
+    const newId = db.selectValue<number>('SELECT last_insert_rowid()') ?? 0;
+    recordUpsert(db, 'collection_group', 'id = ?', [newId]);
+    return newId;
   });
 
   const row = db.selectObject<Row>(
@@ -67,10 +72,14 @@ export function renameGroup(
   const name = rawName.trim();
   if (!name) throw new Error('Group name is required');
   const now = Date.now();
-  db.exec(
-    `UPDATE collection_groups SET name = ?, updated_at = ? WHERE id = ?`,
-    [name, now, groupId],
-  );
+  db.transaction(() => {
+    db.exec(`UPDATE collection_groups SET name = ?, updated_at = ? WHERE id = ?`, [
+      name,
+      now,
+      groupId,
+    ]);
+    recordUpsert(db, 'collection_group', 'id = ?', [groupId]);
+  });
   const row = db.selectObject<Row>(
     `SELECT id, collection_id, name, position, created_at, updated_at
      FROM collection_groups WHERE id = ?`,
@@ -119,8 +128,14 @@ export function deleteGroup(db: Sqlite, groupId: number): void {
          WHERE collection_id = ? AND entity_type = ? AND entity_id = ?`,
         [defaultTail + i, collectionId, String(row.entity_type), Number(row.entity_id)],
       );
+      recordUpsert(db, 'collection_member', MEMBER_WHERE, [
+        collectionId,
+        String(row.entity_type),
+        Number(row.entity_id),
+      ]);
     });
 
+    recordDelete(db, 'collection_group', 'id = ?', [groupId]);
     db.exec(`DELETE FROM collection_groups WHERE id = ?`, [groupId]);
   });
 }
@@ -143,6 +158,7 @@ export function reorderGroups(
          WHERE id = ? AND collection_id = ?`,
         [index, now, id, collectionId],
       );
+      recordUpsert(db, 'collection_group', 'id = ? AND collection_id = ?', [id, collectionId]);
     });
   });
 }
@@ -213,7 +229,38 @@ export function moveMember(
         [targetGroupId, targetIndex, collectionId, entityType, entityId],
       );
     }
+
+    // Re-densify shifted sibling positions in both buckets, so every member
+    // whose position changed is recorded — not just the dragged one.
+    recordBucketMembers(db, collectionId, sourceGroupId);
+    if (!sameGroup(sourceGroupId, targetGroupId)) {
+      recordBucketMembers(db, collectionId, targetGroupId);
+    }
   });
+}
+
+/** Append an outbox upsert for every live member in a (collection, group)
+ *  bucket. Used after a reorder that re-densified positions. */
+function recordBucketMembers(db: Sqlite, collectionId: number, groupId: number | null): void {
+  const rows =
+    groupId == null
+      ? db.selectObjects<Row>(
+          `SELECT entity_type, entity_id FROM collection_members
+           WHERE collection_id = ? AND group_id IS NULL`,
+          [collectionId],
+        )
+      : db.selectObjects<Row>(
+          `SELECT entity_type, entity_id FROM collection_members
+           WHERE collection_id = ? AND group_id = ?`,
+          [collectionId, groupId],
+        );
+  for (const r of rows) {
+    recordUpsert(db, 'collection_member', MEMBER_WHERE, [
+      collectionId,
+      String(r.entity_type),
+      Number(r.entity_id),
+    ]);
+  }
 }
 
 function sameGroup(a: number | null, b: number | null): boolean {

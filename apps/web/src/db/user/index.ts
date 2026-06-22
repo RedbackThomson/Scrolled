@@ -19,12 +19,14 @@ export type {
   EntityRef,
   MembershipBadge,
   PinnedSearchRecord,
-  UiPrefRecord,
+  RecentEntityRecord,
+  RecentQueryRecord,
   UpdateCollectionPatch,
   UpdateMemberPatch,
   UpdatePinnedSearchPatch,
   UserDatabase,
   UserDbStatus,
+  UserSettingRecord,
 } from './types';
 export type {
   CollectionBundleJson,
