@@ -371,11 +371,21 @@ backends can be added later without touching the app.
 
 **1. Create a Supabase project** and, under Authentication → Providers, enable the
 OAuth provider(s) you want (e.g. Google). Under Authentication → URL
-Configuration, add your site's callback to the allowed redirect URLs:
+Configuration, add your site's callback to the **Redirect URLs** allow list:
 
 ```
 https://your-site.example.com/auth/callback
 ```
+
+This must **exactly** match where the app sends users back. The app derives that
+from `VITE_SITE_URL` (the canonical site origin you already set for SEO) as
+`<VITE_SITE_URL>/auth/callback`, so allow-list that precise URL. If it isn't on
+the list, Supabase silently ignores the requested redirect and falls back to the
+project's **Site URL** — the classic symptom is signing in on production and
+landing on `http://localhost:5173` (the default Site URL). So either set the Site
+URL to your production origin, or (better) keep the callback allow-listed. On
+GitHub Pages project sites served under a base path, include it
+(`https://<user>.github.io/<repo>/auth/callback`).
 
 **2. Build the site with the cloud identity env** (combine with whatever dataset
 env you already use):

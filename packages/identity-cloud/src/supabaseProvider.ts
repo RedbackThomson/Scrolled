@@ -18,6 +18,15 @@ export interface SupabaseIdentityConfig {
   supabaseKey: string;
   /** OAuth provider used when `login()` is called without an explicit one. */
   defaultProvider?: string;
+  /**
+   * Absolute URL the OAuth flow returns to (e.g.
+   * `https://scrolled.dev/auth/callback`). It **must** be in the Supabase
+   * project's Redirect URLs allow list, or Supabase silently falls back to its
+   * default Site URL. The app derives this from the deployment's configured site
+   * URL so it's stable and allow-listable, rather than guessing from the runtime
+   * origin. When unset, `login()` falls back to the current origin's callback.
+   */
+  redirectTo?: string;
 }
 
 function toUserSession(session: Session | null): UserSession {
@@ -87,6 +96,7 @@ export function createSupabaseIdentityProvider(config: SupabaseIdentityConfig): 
       }
       const redirectTo =
         options?.redirectTo ??
+        config.redirectTo ??
         (typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined);
       const { error } = await client.auth.signInWithOAuth({
         // The interface speaks generic provider ids; the Supabase enum is wider
