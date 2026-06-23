@@ -1,5 +1,5 @@
 import type { Sqlite } from '../sqlite';
-import type { CategoryCount, ItemRecord, ListOptsBase, PageResult } from '../types';
+import type { CategoryCount, ItemListRow, ItemRecord, ListOptsBase, PageResult } from '../types';
 import {
   ITEM_ORDER,
   ITEM_ORDER_DEFAULT,
@@ -8,7 +8,7 @@ import {
   resolveOrder,
 } from './shared/order';
 import { ITEM_FILTER, applyFilters } from './shared/filters';
-import { rowToItem, type ItemRow } from './shared/rowMappers';
+import { rowToItem, rowToItemListRow, type ItemListRowSql, type ItemRow } from './shared/rowMappers';
 
 export function upsertItemRow(sql: Sqlite, item: ItemRecord): void {
   sql.exec(
@@ -101,7 +101,7 @@ export function getItemIcon(sql: Sqlite, id: number): Uint8Array | null {
 export function listItems(
   sql: Sqlite,
   opts: ListOptsBase & { category?: string } = {},
-): PageResult<ItemRecord> {
+): PageResult<ItemListRow> {
   const limit = clampLimit(opts.limit);
   const offset = clampOffset(opts.offset);
   const order = resolveOrder(ITEM_ORDER, ITEM_ORDER_DEFAULT, opts.orderBy, opts.dir);
@@ -117,29 +117,31 @@ export function listItems(
   }
   applyFilters(ITEM_FILTER, opts.filters, where, params);
   const clause = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
-  // List queries deliberately skip `icon_data` — the BLOB lookup happens
-  // per-icon via `getItemIcon(id)` so we don't drag MBs of bytes into a
-  // list-render result.
+  // consumable_specs is 1:1 (item_id PK), so the LEFT JOIN never multiplies
+  // rows — the count stays correct and effect columns surface a few common
+  // spec fields for sorting/filtering. icon_data is still skipped (BLOB drag);
+  // it's fetched per-icon via getItemIcon(id).
+  const from = `FROM items LEFT JOIN consumable_specs cs ON cs.item_id = items.id`;
   return sql.transaction(() => {
     const total = Number(
-      sql.selectValue(
-        `SELECT COUNT(*) FROM items ${clause}`,
-        params.length > 0 ? params : undefined,
-      ) ?? 0,
+      sql.selectValue(`SELECT COUNT(*) ${from} ${clause}`, params.length > 0 ? params : undefined) ??
+        0,
     );
     const rows = sql
-      .selectObjects<ItemRow>(
-        `SELECT id, name, description, category, subcategory, icon_path, NULL AS icon_data,
+      .selectObjects<ItemListRowSql>(
+        `SELECT items.id, name, description, category, subcategory, icon_path, NULL AS icon_data,
                 price, stack_size, required_level,
                 cash, trade_block, account_sharable, only_one, quest_item,
                 time_limited, expire_on_logout, pickup_block, not_sale, drop_block, trade_available,
-                source_path, string_path, string_category
-         FROM items ${clause}
-         ORDER BY ${order.col} ${order.dir === 'desc' ? 'DESC' : 'ASC'} NULLS LAST, id ASC
+                source_path, string_path, string_category,
+                cs.hp AS recovery_hp, cs.mp AS recovery_mp, cs.time / 1000 AS buff_duration_seconds,
+                cs.pad AS buff_weapon_attack, cs.speed AS buff_speed, cs.jump AS buff_jump
+         ${from} ${clause}
+         ORDER BY ${order.col} ${order.dir === 'desc' ? 'DESC' : 'ASC'} NULLS LAST, items.id ASC
          LIMIT ? OFFSET ?`,
         [...params, limit, offset],
       )
-      .map(rowToItem);
+      .map(rowToItemListRow);
     return { rows, total };
   });
 }

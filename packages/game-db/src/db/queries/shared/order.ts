@@ -19,6 +19,13 @@ export const ITEM_ORDER: Record<string, OrderSpec> = {
   subcategory: { col: 'subcategory', defaultDir: 'asc' },
   requiredLevel: { col: 'required_level', defaultDir: 'asc' },
   price: { col: 'price', defaultDir: 'desc' },
+  // Consumable effects, LEFT JOINed from consumable_specs as `cs` in listItems.
+  recoveryHp: { col: 'cs.hp', defaultDir: 'desc' },
+  recoveryMp: { col: 'cs.mp', defaultDir: 'desc' },
+  buffDurationSeconds: { col: 'cs.time', defaultDir: 'desc' },
+  buffWeaponAttack: { col: 'cs.pad', defaultDir: 'desc' },
+  buffSpeed: { col: 'cs.speed', defaultDir: 'desc' },
+  buffJump: { col: 'cs.jump', defaultDir: 'desc' },
   id: { col: 'id', defaultDir: 'asc' },
 };
 export const ITEM_ORDER_DEFAULT = 'name';

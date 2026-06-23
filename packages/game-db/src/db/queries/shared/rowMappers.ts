@@ -1,6 +1,7 @@
 import type { Row } from '../../sqlite';
 import type {
   EquipRecord,
+  ItemListRow,
   ItemRecord,
   JobRecord,
   MapRecord,
@@ -36,6 +37,17 @@ export interface ItemRow extends Row {
   source_path: string;
   string_path: string;
   string_category: string | null;
+}
+
+/** ItemRow plus the consumable-effect columns `listItems` LEFT JOINs from
+ *  `consumable_specs` (aliased `cs`). All null for non-consumables. */
+export interface ItemListRowSql extends ItemRow {
+  recovery_hp: number | null;
+  recovery_mp: number | null;
+  buff_duration_seconds: number | null;
+  buff_weapon_attack: number | null;
+  buff_speed: number | null;
+  buff_jump: number | null;
 }
 
 export interface EquipRow extends Row {
@@ -168,6 +180,18 @@ export function rowToItem(r: ItemRow): ItemRecord {
     sourcePath: r.source_path,
     stringPath: r.string_path,
     stringCategory: r.string_category,
+  };
+}
+
+export function rowToItemListRow(r: ItemListRowSql): ItemListRow {
+  return {
+    ...rowToItem(r),
+    recoveryHp: r.recovery_hp,
+    recoveryMp: r.recovery_mp,
+    buffDurationSeconds: r.buff_duration_seconds,
+    buffWeaponAttack: r.buff_weapon_attack,
+    buffSpeed: r.buff_speed,
+    buffJump: r.buff_jump,
   };
 }
 

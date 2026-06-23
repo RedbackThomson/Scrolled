@@ -18,6 +18,7 @@ import type {
   EntitySummary,
   ExtractorResultRecord,
   EquipRecord,
+  ItemListRow,
   ItemRecord,
   JobRecord,
   LevelBandCount,
@@ -150,7 +151,7 @@ export class DbApi implements GameDatabase {
 
   async listItems(
     opts: ListOptsBase & { category?: string } = {},
-  ): Promise<PageResult<ItemRecord>> {
+  ): Promise<PageResult<ItemListRow>> {
     return items.listItems(this.sql, opts);
   }
 

@@ -56,6 +56,28 @@ export interface ChairRecord {
   previewHeight: number;
 }
 
+/**
+ * An item list row: an {@link ItemRecord} plus a small, common subset of
+ * consumable `spec` effects that `listItems` LEFT JOINs in so the items table
+ * can show, sort, and filter by them. Every effect field is null for
+ * non-consumables. `getItem` does not join, so these only carry values when the
+ * row comes from `listItems`.
+ */
+export interface ItemListRow extends ItemRecord {
+  /** Flat HP restored (`spec.hp`). */
+  recoveryHp: number | null;
+  /** Flat MP restored (`spec.mp`). */
+  recoveryMp: number | null;
+  /** Buff duration in whole seconds (`spec.time` ÷ 1000). */
+  buffDurationSeconds: number | null;
+  /** Weapon Attack buff (`spec.pad`). */
+  buffWeaponAttack: number | null;
+  /** Speed buff (`spec.speed`). */
+  buffSpeed: number | null;
+  /** Jump buff (`spec.jump`). */
+  buffJump: number | null;
+}
+
 /** One weighted entry of a `morphRandom` table: transform into `morph` with
  *  relative weight `prop`. */
 export interface MorphRandomEntry {
@@ -965,7 +987,7 @@ export interface GameDatabase {
   upsertItem(item: ItemRecord): Promise<void>;
   upsertItems(items: ItemRecord[]): Promise<number>;
   getItem(id: number): Promise<ItemRecord | null>;
-  listItems(opts?: ListOptsBase & { category?: string }): Promise<PageResult<ItemRecord>>;
+  listItems(opts?: ListOptsBase & { category?: string }): Promise<PageResult<ItemListRow>>;
   /** Distinct non-null `category` values for filter UIs / sidebar nav. */
   listItemCategories(): Promise<string[]>;
   /** Top item categories by member count for the home-page browse tile. */

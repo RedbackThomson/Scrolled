@@ -37,6 +37,14 @@ export const ITEM_FILTER: Record<string, FilterSpec> = {
   subcategory: { col: 'subcategory', type: 'string' },
   requiredLevel: { col: 'required_level', type: 'number' },
   price: { col: 'price', type: 'number' },
+  // Consumable effects (LEFT JOINed as `cs` in listItems). Duration filters in
+  // whole seconds to match the displayed column, hence the expression.
+  recoveryHp: { col: 'cs.hp', type: 'number' },
+  recoveryMp: { col: 'cs.mp', type: 'number' },
+  buffDurationSeconds: { col: '(cs.time / 1000)', type: 'number' },
+  buffWeaponAttack: { col: 'cs.pad', type: 'number' },
+  buffSpeed: { col: 'cs.speed', type: 'number' },
+  buffJump: { col: 'cs.jump', type: 'number' },
   id: { col: 'id', type: 'string' },
 };
 

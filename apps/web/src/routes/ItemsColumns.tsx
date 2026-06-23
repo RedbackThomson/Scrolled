@@ -1,10 +1,15 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { Coins, Gauge, Hash, Tag } from 'lucide-react';
+import { ArrowUp, Coins, Gauge, Hash, Heart, Sparkles, Sword, Tag, Timer, Wind } from 'lucide-react';
 import { ItemIcon } from '@/components/entity-display/ItemIcon';
 import { ItemLink } from '@/components/entity-links';
-import type { ItemRecord } from '@/db';
+import { formatDurationSeconds } from '@/lib/duration';
+import type { ItemListRow } from '@/db';
 
-export const columns: ColumnDef<ItemRecord>[] = [
+const num = (v: number | null) => (v == null ? '—' : String(v));
+const signedNum = (v: number | null) => (v == null ? '—' : v >= 0 ? `+${v}` : `−${Math.abs(v)}`);
+const dur = (v: number | null) => (v == null ? '—' : formatDurationSeconds(v, { short: true }));
+
+export const columns: ColumnDef<ItemListRow>[] = [
   {
     id: 'icon',
     header: '',
@@ -69,6 +74,72 @@ export const columns: ColumnDef<ItemRecord>[] = [
     cell: ({ row }) => (row.original.price === null ? '—' : row.original.price.toLocaleString()),
   },
   {
+    id: 'recoveryHp',
+    accessorFn: (i) => i.recoveryHp,
+    header: 'HP',
+    meta: {
+      filter: 'number',
+      icon: Heart,
+      card: { label: 'HP restored', render: (row) => num(row.recoveryHp) },
+    },
+    cell: ({ row }) => num(row.original.recoveryHp),
+  },
+  {
+    id: 'recoveryMp',
+    accessorFn: (i) => i.recoveryMp,
+    header: 'MP',
+    meta: {
+      filter: 'number',
+      icon: Sparkles,
+      card: { label: 'MP restored', render: (row) => num(row.recoveryMp) },
+    },
+    cell: ({ row }) => num(row.original.recoveryMp),
+  },
+  {
+    id: 'buffDurationSeconds',
+    accessorFn: (i) => i.buffDurationSeconds,
+    header: 'Duration',
+    meta: {
+      filter: 'number',
+      icon: Timer,
+      card: { label: 'Buff duration', render: (row) => dur(row.buffDurationSeconds) },
+    },
+    cell: ({ row }) => dur(row.original.buffDurationSeconds),
+  },
+  {
+    id: 'buffWeaponAttack',
+    accessorFn: (i) => i.buffWeaponAttack,
+    header: 'W.Atk',
+    meta: {
+      filter: 'number',
+      icon: Sword,
+      card: { label: 'Weapon Attack', render: (row) => signedNum(row.buffWeaponAttack) },
+    },
+    cell: ({ row }) => signedNum(row.original.buffWeaponAttack),
+  },
+  {
+    id: 'buffSpeed',
+    accessorFn: (i) => i.buffSpeed,
+    header: 'Speed',
+    meta: {
+      filter: 'number',
+      icon: Wind,
+      card: { label: 'Speed', render: (row) => signedNum(row.buffSpeed) },
+    },
+    cell: ({ row }) => signedNum(row.original.buffSpeed),
+  },
+  {
+    id: 'buffJump',
+    accessorFn: (i) => i.buffJump,
+    header: 'Jump',
+    meta: {
+      filter: 'number',
+      icon: ArrowUp,
+      card: { label: 'Jump', render: (row) => signedNum(row.buffJump) },
+    },
+    cell: ({ row }) => signedNum(row.original.buffJump),
+  },
+  {
     id: 'id',
     accessorFn: (i) => i.id,
     header: 'ID',
@@ -81,14 +152,14 @@ export const columns: ColumnDef<ItemRecord>[] = [
   },
 ];
 
-export const defaultVisible = ['icon', 'name', 'category'] as const;
+export const defaultVisible = ['icon', 'name', 'category', 'recoveryHp', 'recoveryMp'] as const;
 export const pinnedColumns = ['icon'] as const;
 export const defaultSort = { id: 'name', dir: 'asc' } as const satisfies {
   id: string;
   dir: 'asc' | 'desc';
 };
 
-export function mobileCard(row: ItemRecord) {
+export function mobileCard(row: ItemListRow) {
   const meta: string[] = [];
   if (row.subcategory) meta.push(row.subcategory);
   else if (row.category) meta.push(row.category);
