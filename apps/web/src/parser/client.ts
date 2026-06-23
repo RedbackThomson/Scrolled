@@ -3,6 +3,7 @@ import type { GameDataSource } from '@scrolled/extractor/parser/types';
 import type {
   ExtractItemsResult,
   ExtractChairsResult,
+  ExtractConsumableSpecsResult,
   ExtractEquipsResult,
   ExtractMobsResult,
   ExtractNpcsResult,
@@ -25,6 +26,7 @@ import type { ProgressFn } from '@scrolled/game-db/lib/progress';
 export interface ParserWorkerApi extends GameDataSource {
   extractItems(onProgress?: ProgressFn): Promise<ExtractItemsResult>;
   extractChairs(onProgress?: ProgressFn): Promise<ExtractChairsResult>;
+  extractConsumableSpecs(onProgress?: ProgressFn): Promise<ExtractConsumableSpecsResult>;
   extractEquips(onProgress?: ProgressFn): Promise<ExtractEquipsResult>;
   extractMobs(onProgress?: ProgressFn): Promise<ExtractMobsResult>;
   extractNpcs(onProgress?: ProgressFn): Promise<ExtractNpcsResult>;

@@ -13,6 +13,7 @@
 import type { GameDatabase } from '@scrolled/game-db/db';
 import type {
   ExtractChairsResult,
+  ExtractConsumableSpecsResult,
   ExtractEquipsResult,
   ExtractItemsResult,
   ExtractJobsResult,
@@ -40,6 +41,14 @@ export async function storeItems(db: GameDatabase, r: ExtractItemsResult): Promi
 
 export async function storeChairs(db: GameDatabase, r: ExtractChairsResult): Promise<StoredCounts> {
   const rows = r.chairs.length > 0 ? await db.upsertChairs(r.chairs) : 0;
+  return { rows, skipped: r.skipped.length, placeholderNames: 0 };
+}
+
+export async function storeConsumableSpecs(
+  db: GameDatabase,
+  r: ExtractConsumableSpecsResult,
+): Promise<StoredCounts> {
+  const rows = r.specs.length > 0 ? await db.upsertConsumableSpecs(r.specs) : 0;
   return { rows, skipped: r.skipped.length, placeholderNames: 0 };
 }
 

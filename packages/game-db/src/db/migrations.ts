@@ -982,6 +982,105 @@ export const MIGRATIONS: readonly Migration[] = [
       ALTER TABLE server_profile DROP COLUMN profile_id;
     `,
   },
+  {
+    version: 36,
+    name: 'consumable specs',
+    sql: `
+      -- "use" items carry a /spec subtree describing what consuming them does
+      -- (HP/MP restored, timed stat buffs, cures, drop/meso bonuses, monster-
+      -- card resistances, transforms, warps, summons, pet/mount feeding, EXP).
+      -- It lives in its own sidecar table keyed by item_id so the ~60 sparse,
+      -- mostly-null columns don't bloat the generic items row. The three
+      -- list-shaped WZ keys (mob ids, the morphRandom table, the mastery-book
+      -- skill ids) are kept as JSON text. New table → additive; re-extraction
+      -- backfills it (CURRENT_DATA_REVISION bumped, minimum left alone).
+      CREATE TABLE consumable_specs (
+        item_id                  INTEGER PRIMARY KEY REFERENCES items(id),
+        hp                       INTEGER,
+        mp                       INTEGER,
+        hp_r                     INTEGER,
+        mp_r                     INTEGER,
+        mhp                      INTEGER,
+        mhp_r                    INTEGER,
+        mmp_r                    INTEGER,
+        mhp_r_rate               INTEGER,
+        mmp_r_rate               INTEGER,
+        time                     INTEGER,
+        pad                      INTEGER,
+        mad                      INTEGER,
+        pdd                      INTEGER,
+        mdd                      INTEGER,
+        acc                      INTEGER,
+        eva                      INTEGER,
+        speed                    INTEGER,
+        jump                     INTEGER,
+        luk                      INTEGER,
+        pad_rate                 INTEGER,
+        mad_rate                 INTEGER,
+        pdd_rate                 INTEGER,
+        mdd_rate                 INTEGER,
+        acc_rate                 INTEGER,
+        eva_rate                 INTEGER,
+        speed_rate               INTEGER,
+        curse                    INTEGER,
+        darkness                 INTEGER,
+        poison                   INTEGER,
+        seal                     INTEGER,
+        weakness                 INTEGER,
+        thaw                     INTEGER,
+        barrier                  INTEGER,
+        respect_pimmune          INTEGER,
+        respect_mimmune          INTEGER,
+        respect_fs               INTEGER,
+        defense_att              TEXT,
+        defense_state            TEXT,
+        prob                     INTEGER,
+        itemupbyitem             INTEGER,
+        mesoupbyitem             INTEGER,
+        item_code                INTEGER,
+        item_range               INTEGER,
+        morph                    INTEGER,
+        ghost                    INTEGER,
+        move_to                  INTEGER,
+        return_map_qr            INTEGER,
+        ignore_continent         INTEGER,
+        random_move_in_field_set INTEGER,
+        npc                      INTEGER,
+        attack_mob_id            INTEGER,
+        attack_index             INTEGER,
+        inc                      INTEGER,
+        inc_fatigue              INTEGER,
+        exp                      INTEGER,
+        expinc                   INTEGER,
+        exp_buff                 INTEGER,
+        max_level_buff           INTEGER,
+        cp                       INTEGER,
+        event_point              INTEGER,
+        event_rate               INTEGER,
+        consume_on_pickup        INTEGER,
+        only_pickup              INTEGER,
+        run_on_pickup            INTEGER,
+        repeat_effect            INTEGER,
+        other_party              INTEGER,
+        party                    INTEGER,
+        mob_json                 TEXT,
+        morph_random_json        TEXT,
+        skillbook_json           TEXT
+      );
+    `,
+  },
+  {
+    version: 37,
+    name: 'consumable summon-sack mobs',
+    sql: `
+      -- Summoning sacks (e.g. Balrog Summoning Sack) keep the mobs they spawn
+      -- in an item-level /mob node ({ id, prob } entries) — separate from
+      -- /spec — so the spec extractor didn't see them. Add a column for the
+      -- spawn table and let re-extraction backfill it. Additive: nullable, and
+      -- it also lets the extractor emit rows for summon items that have no spec.
+      ALTER TABLE consumable_specs ADD COLUMN summon_mob_json TEXT;
+    `,
+  },
 ];
 
 /**

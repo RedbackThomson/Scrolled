@@ -10,6 +10,7 @@ import type { Sqlite } from '../sqlite';
 import type {
   CategoryCount,
   ChairRecord,
+  ConsumableSpecRecord,
   DatasetFileRef,
   DatasetRecord,
   DbStatus,
@@ -63,6 +64,7 @@ import type {
 } from '../types';
 import * as items from './items';
 import * as chairs from './chairs';
+import * as consumableSpecs from './consumableSpecs';
 import * as equips from './equips';
 import * as mobs from './mobs';
 import * as npcs from './npcs';
@@ -168,6 +170,16 @@ export class DbApi implements GameDatabase {
 
   async getChair(itemId: number): Promise<ChairRecord | null> {
     return chairs.getChair(this.sql, itemId);
+  }
+
+  // -- consumable specs -------------------------------------------------------
+
+  async upsertConsumableSpecs(list: ConsumableSpecRecord[]): Promise<number> {
+    return consumableSpecs.upsertConsumableSpecs(this.sql, list);
+  }
+
+  async getConsumableSpec(itemId: number): Promise<ConsumableSpecRecord | null> {
+    return consumableSpecs.getConsumableSpec(this.sql, itemId);
   }
 
   // -- equips -----------------------------------------------------------------

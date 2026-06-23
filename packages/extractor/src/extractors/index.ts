@@ -14,6 +14,8 @@ export { extractItems } from './extractItems';
 export type { ExtractItemsResult } from './extractItems';
 export { extractChairs, defaultChairImageOps } from './extractChairs';
 export type { ExtractChairsResult, ChairImageOps } from './extractChairs';
+export { extractConsumableSpecs } from './extractConsumableSpecs';
+export type { ExtractConsumableSpecsResult } from './extractConsumableSpecs';
 export { extractEquips } from './extractEquips';
 export type { ExtractEquipsResult } from './extractEquips';
 export { extractMobs } from './extractMobs';

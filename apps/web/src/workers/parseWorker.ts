@@ -6,6 +6,7 @@ import { ensureWzInit } from '@scrolled/extractor/parser/wzInit';
 import {
   extractItems,
   extractChairs,
+  extractConsumableSpecs,
   extractEquips,
   extractMobs,
   extractNpcs,
@@ -26,6 +27,7 @@ import type {
 import type {
   ExtractItemsResult,
   ExtractChairsResult,
+  ExtractConsumableSpecsResult,
   ExtractEquipsResult,
   ExtractMobsResult,
   ExtractNpcsResult,
@@ -116,6 +118,18 @@ class WorkerGameDataSource implements GameDataSource {
     });
     log.info('extractChairs complete', {
       chairs: result.chairs.length,
+      skipped: result.skipped.length,
+    });
+    return result;
+  }
+
+  async extractConsumableSpecs(onProgress?: ProgressFn): Promise<ExtractConsumableSpecsResult> {
+    log.info('extractConsumableSpecs requested');
+    const result = await extractConsumableSpecs(this.src(), {
+      onProgress: onProgress ? throttleProgress(onProgress) : undefined,
+    });
+    log.info('extractConsumableSpecs complete', {
+      specs: result.specs.length,
       skipped: result.skipped.length,
     });
     return result;

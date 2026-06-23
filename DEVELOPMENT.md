@@ -109,6 +109,8 @@ docs/            Product and technical requirements
 
 The source of truth for product scope is [`docs/mapleroyals_wiki_clone_requirements.md`](docs/mapleroyals_wiki_clone_requirements.md). Technical decisions live in [`docs/technical_requirements.md`](docs/technical_requirements.md). Command palette extension is covered in [`docs/command_palette_extension_guide.md`](docs/command_palette_extension_guide.md). The WZ format reference sources used to decode game files — for adding parser/extractor features — are collected in [`docs/format_sources.md`](docs/format_sources.md).
 
+Which package owns which domain — and the rule that **game-data translation (code→term vocabulary) lives in `@scrolled/game-db/domain`, not the web app** — is the canonical boundary spec [`docs/data_boundaries.md`](docs/data_boundaries.md). Read it before adding a label map, enum, or `switch` over WZ codes; the web app renders game data but never defines what it means.
+
 Cross-device sync is designed in [`docs/sync_design.md`](docs/sync_design.md); to make a new piece of user data sync, follow [`docs/adding_a_synced_entity.md`](docs/adding_a_synced_entity.md).
 
 ## Schema and data versioning

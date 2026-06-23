@@ -121,6 +121,41 @@ blocks, not left to discipline:
 - `apps/web` display dirs and `packages/identity-core` — cannot import
   `@scrolled/identity-cloud` or `@supabase/*` (see the identity rule below).
 
+## Game-data vocabulary lives in the domain layer, not the web app
+
+The web app **renders** game data; it does not **define what game data means**.
+Any mapping from a raw extracted code/field to a human term — element letters
+(`F` → Fire), status-ailment codes (`C` → Curse), stat short-codes (`pad` →
+Weapon Attack), job ids, portal types, skill elements — is *translation of game
+data* and belongs in `@scrolled/game-db/domain`, defined once and imported by
+whoever displays it. The web layer may hold **presentation** (sentence
+templates, grouping, ordering, link wiring, CSS), but not the vocabulary itself.
+
+Why: the same term surfaces in many views (a detail page, a hover card, a
+filter, search), and a self-hoster or alternate front-end reads the same
+contract. A label spelled inline in one component is a second source of truth
+that silently drifts. Keeping vocabulary in the domain layer means "`pad` is
+Weapon Attack" is stated once and every reader agrees.
+
+How, by example — consumable `spec` decoding (`apps/web/src/lib/consumableEffects.ts`):
+
+- The **vocabulary** is in `game-db/domain`, split by concept so a name has one
+  home: elements reuse `mobElements.ts`, ailments live in `statusAilments.ts`,
+  combat-stat names in `combatStats.ts`. Don't pile unrelated enums into one
+  file — group them by the game concept they describe.
+- The consumable-specific *structure* (which `spec` field is a buff vs. a cure,
+  how `defenseAtt`/`defenseState` decode) is in `domain/consumableSpec.ts`,
+  which **imports** those vocabularies rather than restating them.
+- The web builder turns the decoded data into grouped sentences and entity
+  links. It owns wording and layout, and reaches for the domain decoders for
+  every game term — it never hardcodes one.
+
+Rule of thumb: if you're about to write a `Record<code, "Some Game Term">` or a
+`switch` over WZ codes inside `apps/web`, stop — it's a domain decoder. Add or
+extend a module under `game-db/domain` and import it. (This isn't lint-enforced
+today; it's a review expectation. A new label map in `apps/web/src/lib` or a
+component is the smell to catch.)
+
 ## Identity is identity-aware, not auth-provider-aware (lint-enforced)
 
 Identity is orthogonal to the read/write data paths: it never touches game data.

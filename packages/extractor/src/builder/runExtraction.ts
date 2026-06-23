@@ -19,6 +19,7 @@ import type { ProgressFn, ProgressUpdate } from '@scrolled/game-db/lib/progress'
 import {
   extractItems,
   extractChairs,
+  extractConsumableSpecs,
   extractEquips,
   extractMobs,
   extractNpcs,
@@ -37,6 +38,7 @@ import {
 import {
   storeItems,
   storeChairs,
+  storeConsumableSpecs,
   storeEquips,
   storeMobs,
   storeNpcs,
@@ -99,6 +101,13 @@ export async function runExtraction(
     const chairs = await storeChairs(db, await extractChairs(source, { onProgress }));
     tracker.ran('chair', chairs.rows, chairs.skipped);
     skippedTotal += chairs.skipped;
+
+    // Consumable specs are a sidecar of items (same Item.wz), and also FK into
+    // items.id — store after items. Tracked like the other item-relation
+    // sidecars (mob drops, map life): folded into its parent, no separate key.
+    stage('Extracting consumable specs');
+    const specs = await storeConsumableSpecs(db, await extractConsumableSpecs(source, { onProgress }));
+    skippedTotal += specs.skipped;
 
     stage('Extracting equips');
     const equips = await storeEquips(db, await extractEquips(source, { onProgress }));

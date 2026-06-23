@@ -51,6 +51,7 @@ import {
 import {
   storeItems,
   storeChairs,
+  storeConsumableSpecs,
   storeEquips,
   storeMobs,
   storeNpcs,
@@ -459,6 +460,11 @@ async function runWorkerExtractors(
       deps.signalItemFailed(e);
       throw e;
     }
+    // Consumable specs ride the items worker (same Item.wz) as a sidecar of
+    // items — stored after items so the FK into items.id holds. Outside the
+    // try above so a spec failure never re-signals item failure.
+    const specStored = await storeConsumableSpecs(db, await worker.extractConsumableSpecs());
+    bumpSkipped(specStored.skipped);
     return;
   }
 

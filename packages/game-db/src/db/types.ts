@@ -56,6 +56,129 @@ export interface ChairRecord {
   previewHeight: number;
 }
 
+/** One weighted entry of a `morphRandom` table: transform into `morph` with
+ *  relative weight `prop`. */
+export interface MorphRandomEntry {
+  morph: number;
+  prop: number;
+}
+
+/** One spawn entry of a summoning sack's `mob` table: spawn mob `mobId` with
+ *  `prob`% chance. The same id may repeat — each entry is one spawn. */
+export interface SummonMobEntry {
+  mobId: number;
+  prob: number;
+}
+
+/**
+ * Consumable `spec` metadata for a "use" item — what happens when it's
+ * consumed. A sidecar row keyed by `item_id` (FK into items), present only
+ * for items that carry a `/spec` subtree, so non-consumable items don't pay
+ * for ~60 nullable columns they'll never use.
+ *
+ * Every scalar field mirrors a raw WZ `spec` key and is null when absent.
+ * Letter-coded fields (`defenseAtt`, `defenseState`) are stored verbatim and
+ * decoded for display; the three list-shaped keys are kept as parsed arrays.
+ */
+export interface ConsumableSpecRecord {
+  itemId: number;
+  // Recovery
+  hp: number | null;
+  mp: number | null;
+  /** HP restored as a percentage of max HP (`hpR`). */
+  hpR: number | null;
+  /** MP restored as a percentage of max MP (`mpR`). */
+  mpR: number | null;
+  mhp: number | null;
+  mhpR: number | null;
+  mmpR: number | null;
+  mhpRRate: number | null;
+  mmpRRate: number | null;
+  // Timed buffs — paired with `time` (duration in ms)
+  time: number | null;
+  pad: number | null;
+  mad: number | null;
+  pdd: number | null;
+  mdd: number | null;
+  acc: number | null;
+  eva: number | null;
+  speed: number | null;
+  jump: number | null;
+  luk: number | null;
+  padRate: number | null;
+  madRate: number | null;
+  pddRate: number | null;
+  mddRate: number | null;
+  accRate: number | null;
+  evaRate: number | null;
+  speedRate: number | null;
+  // Cures / status (1 = cures the named ailment)
+  curse: number | null;
+  darkness: number | null;
+  poison: number | null;
+  seal: number | null;
+  weakness: number | null;
+  thaw: number | null;
+  barrier: number | null;
+  respectPimmune: number | null;
+  respectMimmune: number | null;
+  respectFs: number | null;
+  // Monster cards — `prob` is the magnitude (%) of the defense/bonus effect
+  /** Elemental-attack defense code: F=Fire, I=Ice, L=Lightning, S=Poison. */
+  defenseAtt: string | null;
+  /** Status-ailment defense code: C=Curse, D=Darkness, P=Poison, S=Seal,
+   *  W=Weakness, F=Freeze. */
+  defenseState: string | null;
+  prob: number | null;
+  // Drop / meso bonuses
+  itemupbyitem: number | null;
+  mesoupbyitem: number | null;
+  itemCode: number | null;
+  itemRange: number | null;
+  // Transform
+  morph: number | null;
+  ghost: number | null;
+  // Teleport
+  moveTo: number | null;
+  returnMapQr: number | null;
+  ignoreContinent: number | null;
+  randomMoveInFieldSet: number | null;
+  // Summon
+  npc: number | null;
+  attackMobId: number | null;
+  attackIndex: number | null;
+  // Pet / mount
+  /** Pet fullness restored (pet food). */
+  inc: number | null;
+  /** Mount fatigue change (negative feeds the mount). */
+  incFatigue: number | null;
+  // EXP / events
+  exp: number | null;
+  expinc: number | null;
+  expBuff: number | null;
+  maxLevelBuff: number | null;
+  /** Monster Carnival points. */
+  cp: number | null;
+  eventPoint: number | null;
+  eventRate: number | null;
+  // Pickup / misc flags
+  consumeOnPickup: number | null;
+  onlyPickup: number | null;
+  runOnPickup: number | null;
+  repeatEffect: number | null;
+  otherParty: number | null;
+  party: number | null;
+  // List-shaped keys
+  /** Mob ids referenced by `spec/mob` (e.g. a shield's associated mob). */
+  mob: number[] | null;
+  /** Summoning-sack spawn table (item-level `mob`: `{ id, prob }` entries). */
+  summonMobs: SummonMobEntry[] | null;
+  /** Weighted random-transform table (`morphRandom`). */
+  morphRandom: MorphRandomEntry[] | null;
+  /** Skill ids a mastery book can teach (the `0`–`9` keys). */
+  skillbook: number[] | null;
+}
+
 export interface EquipRecord {
   id: number;
   name: string;
@@ -856,6 +979,12 @@ export interface GameDatabase {
   upsertChairs(chairs: ChairRecord[]): Promise<number>;
   /** Returns null for items that aren't chairs. */
   getChair(itemId: number): Promise<ChairRecord | null>;
+
+  /** Persist consumable `spec` rows. Item rows must already exist —
+   *  consumable_specs.item_id FKs into items.id. */
+  upsertConsumableSpecs(specs: ConsumableSpecRecord[]): Promise<number>;
+  /** Returns null for items with no extracted `spec`. */
+  getConsumableSpec(itemId: number): Promise<ConsumableSpecRecord | null>;
 
   upsertEquip(equip: EquipRecord): Promise<void>;
   upsertEquips(equips: EquipRecord[]): Promise<number>;

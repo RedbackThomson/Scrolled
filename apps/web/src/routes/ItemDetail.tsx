@@ -13,6 +13,8 @@ import {
   SourceSection,
 } from '@/components/layout/DetailPageLayout';
 import { ChairAnimatedPreview } from '@/components/entity-display/ChairAnimatedPreview';
+import { ConsumableEffects } from '@/components/entity-display/ConsumableEffects';
+import { buildConsumableEffects } from '@/lib/consumableEffects';
 import { EntityRow } from '@/components/entity-display/EntityRow';
 import { ItemIcon } from '@/components/entity-display/ItemIcon';
 import { Badge } from '@/components/ui/badge';
@@ -62,6 +64,12 @@ export default function ItemDetail() {
     queryFn: () => client.getChair(id),
     enabled: Number.isFinite(id),
   });
+  // Returns null for items with no /spec subtree (most non-consumables).
+  const specQ = useQuery({
+    queryKey: ['db', 'item', id, 'spec'],
+    queryFn: () => client.getConsumableSpec(id),
+    enabled: Number.isFinite(id),
+  });
 
   const questsSort = useListSort(questsQ.data, [
     { id: 'name', label: 'Quest name', get: (q) => q.name },
@@ -100,6 +108,8 @@ export default function ItemDetail() {
 
   const item = itemQ.data;
   const chair = chairQ.data ?? null;
+  const spec = specQ.data ?? null;
+  const hasEffects = spec ? buildConsumableEffects(spec).length > 0 : false;
   return (
     <DetailPageLayout
       header={
@@ -143,6 +153,7 @@ export default function ItemDetail() {
               )}
             </InfoSection>
           )}
+          {spec && hasEffects && <ConsumableEffects spec={spec} />}
           <SourceSection path={item.sourcePath} />
         </>
       }
