@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Copy, Crown, Map as MapIcon, MapPin, Package, ScrollText, Skull } from 'lucide-react';
+import { Copy, Crown, Map as MapIcon, MapPin, Package, ScrollText, Skull, Wand2 } from 'lucide-react';
 import { DetailListSection } from '@/components/layout/DetailListSection';
 import {
   DetailPageLayout,
@@ -53,6 +53,12 @@ export default function MobDetail() {
     queryFn: () => client.getMobMaps(id),
     enabled: Number.isFinite(id) && features.hasMaps,
   });
+  // Optional — only a handful of mobs are summoned by an item.
+  const summonedFromQ = useQuery({
+    queryKey: ['db', 'mob', id, 'summoned-from'],
+    queryFn: () => client.getMobSummonedFrom(id),
+    enabled: Number.isFinite(id),
+  });
 
   const dropSort = useListSort(dropsQ.data, [
     { id: 'name', label: 'Name', get: (d) => d.itemName },
@@ -66,6 +72,10 @@ export default function MobDetail() {
   const questsSort = useListSort(questsQ.data, [
     { id: 'name', label: 'Quest name', get: (q) => q.name },
     { id: 'level', label: 'Required level', get: (q) => q.requiredLevel },
+  ]);
+  const summonedFromSort = useListSort(summonedFromQ.data, [
+    { id: 'name', label: 'Item name', get: (s) => s.name },
+    { id: 'count', label: 'Spawn count', get: (s) => s.spawnCount },
   ]);
 
   const paletteItems = useMemo<CommandItem[]>(
@@ -203,6 +213,35 @@ export default function MobDetail() {
                   </Link>
                 )
               }
+            />
+          ))}
+        </DetailListSection>
+      )}
+
+      {(summonedFromQ.data?.length ?? 0) > 0 && (
+        <DetailListSection
+          icon={Wand2}
+          title="Summoned from"
+          count={summonedFromQ.data?.length}
+          isLoading={false}
+          isEmpty={false}
+          action={
+            summonedFromQ.data && summonedFromQ.data.length > 1 ? (
+              <ListSortControl
+                fields={summonedFromSort.fieldOptions}
+                value={summonedFromSort.sort}
+                onChange={summonedFromSort.setSort}
+              />
+            ) : null
+          }
+        >
+          {summonedFromSort.sorted.map((s) => (
+            <EntityRow
+              key={s.itemId}
+              entity="item"
+              id={s.itemId}
+              name={s.name}
+              meta={s.spawnCount > 1 ? `×${s.spawnCount}` : undefined}
             />
           ))}
         </DetailListSection>

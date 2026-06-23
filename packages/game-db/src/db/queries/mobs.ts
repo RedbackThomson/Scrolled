@@ -6,6 +6,7 @@ import type {
   MobDropWithName,
   MobMapAppearance,
   MobRecord,
+  MobSummonSource,
   PageResult,
 } from '../types';
 import {
@@ -189,6 +190,34 @@ export function getMobMaps(sql: Sqlite, mobId: number): MobMapAppearance[] {
       [mobId],
     )
     .map((r) => ({ ...rowToMap(r), spawnCount: r.spawn_count }));
+}
+
+export function getMobSummonedFrom(sql: Sqlite, mobId: number): MobSummonSource[] {
+  // Summoning sacks keep their spawn table as JSON ({mobId,prob} entries) in
+  // consumable_specs.summon_mob_json. Expanding it with json_each is a small
+  // scan (only summon items have the column) — fine at this scale and not
+  // index-backed by design. The same mob can appear multiple times in one
+  // sack (one entry per spawn), so COUNT(*) is the spawn count.
+  return sql
+    .selectObjects<{ item_id: number; name: string; spawn_count: number; prob: number | null }>(
+      `SELECT i.id AS item_id, i.name,
+              COUNT(*) AS spawn_count,
+              MAX(json_extract(je.value, '$.prob')) AS prob
+       FROM consumable_specs cs
+       CROSS JOIN json_each(cs.summon_mob_json) je
+       JOIN items i ON i.id = cs.item_id
+       WHERE cs.summon_mob_json IS NOT NULL
+         AND json_extract(je.value, '$.mobId') = ?
+       GROUP BY i.id, i.name
+       ORDER BY i.name`,
+      [mobId],
+    )
+    .map((r) => ({
+      itemId: r.item_id,
+      name: r.name,
+      spawnCount: Number(r.spawn_count),
+      prob: r.prob,
+    }));
 }
 
 export function replaceMobDrops(sql: Sqlite, drops: MobDropRecord[]): void {

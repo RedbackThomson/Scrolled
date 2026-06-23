@@ -115,3 +115,44 @@ describe('listItems with consumable effect columns', () => {
     expect(outOfRange.total).toBe(0);
   });
 });
+
+describe('getMobSummonedFrom (reverse summon lookup)', () => {
+  let db: DbApi;
+
+  beforeEach(async () => {
+    db = new DbApi(new Sqlite({ logTag: 'summoned-from-test' }));
+    await db.open();
+    await db.upsertItems([
+      makeItem(2100132, 'Balrog Summoning Sack'),
+      makeItem(2109513, 'Summon Baby Balrog'),
+      makeItem(2000000, 'Red Potion'),
+    ]);
+    await db.upsertConsumableSpecs([
+      makeSpec(2100132, {
+        summonMobs: [
+          { mobId: 8830000, prob: 100 },
+          { mobId: 8830100, prob: 100 },
+        ],
+      }),
+      makeSpec(2109513, {
+        summonMobs: [
+          { mobId: 8830100, prob: 100 },
+          { mobId: 8830100, prob: 100 },
+          { mobId: 8830100, prob: 100 },
+        ],
+      }),
+      makeSpec(2000000, { hp: 50 }),
+    ]);
+  });
+
+  it('lists items that summon a mob, with spawn counts', async () => {
+    const rows = await db.getMobSummonedFrom(8830100);
+    expect(rows.map((r) => r.itemId)).toEqual([2100132, 2109513]); // ordered by name
+    expect(rows.find((r) => r.itemId === 2109513)!.spawnCount).toBe(3);
+    expect(rows.find((r) => r.itemId === 2100132)!.spawnCount).toBe(1);
+  });
+
+  it('returns empty for a mob nothing summons', async () => {
+    expect(await db.getMobSummonedFrom(9999999)).toEqual([]);
+  });
+});

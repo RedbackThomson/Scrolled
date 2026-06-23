@@ -412,6 +412,18 @@ export interface MobMapAppearance extends MapRecord {
 }
 
 /**
+ * An item whose summoning-sack spawn table includes a given mob — the reverse
+ * of {@link SummonMobEntry}. `spawnCount` is how many of the mob the item
+ * spawns; `prob` is the spawn chance (usually 100).
+ */
+export interface MobSummonSource {
+  itemId: number;
+  name: string;
+  spawnCount: number;
+  prob: number | null;
+}
+
+/**
  * An overview world map (one `Map.wz/WorldMap/WorldMap*.img`). `originX`/
  * `originY` come from the `BaseImg/0` canvas origin; marker/screen coords are
  * projected at render as `origin + wz`. `parentId` references another
@@ -1042,6 +1054,8 @@ export interface GameDatabase {
   getMobDrops(mobId: number): Promise<MobDropWithName[]>;
   /** Maps where this mob spawns, with the per-map aggregated spawn count. */
   getMobMaps(mobId: number): Promise<MobMapAppearance[]>;
+  /** Items whose summon table spawns this mob (reverse of consumable summonMobs). */
+  getMobSummonedFrom(mobId: number): Promise<MobSummonSource[]>;
   /** Mobs that drop the given item, joined to mob name + level. */
   getItemDroppedBy(
     itemId: number,

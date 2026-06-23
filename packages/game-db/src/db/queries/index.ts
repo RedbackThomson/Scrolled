@@ -38,6 +38,7 @@ import type {
   MobDropWithName,
   MobMapAppearance,
   MobRecord,
+  MobSummonSource,
   NpcRecord,
   GameDatabase,
   InstalledDatasetRecord,
@@ -253,6 +254,10 @@ export class DbApi implements GameDatabase {
 
   async getMobMaps(mobId: number): Promise<MobMapAppearance[]> {
     return mobs.getMobMaps(this.sql, mobId);
+  }
+
+  async getMobSummonedFrom(mobId: number): Promise<MobSummonSource[]> {
+    return mobs.getMobSummonedFrom(this.sql, mobId);
   }
 
   async replaceMobDrops(drops: MobDropRecord[]): Promise<void> {
