@@ -17,6 +17,7 @@ import {
   DetailPageLayout,
   DetailPageLoading,
   DetailPageNotFound,
+  DetailSection,
   InfoRow,
   InfoSection,
   SourceSection,
@@ -391,8 +392,7 @@ export default function MapDetail() {
         <CollectionBadgeStrip entityType="map" entityId={m.id} />
 
         {m.minimapPath && (
-          <section>
-            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide">Minimap</h2>
+          <DetailSection title="Minimap">
             <div className="flex flex-col items-start gap-2 sm:max-w-full">
               <button
                 type="button"
@@ -416,7 +416,7 @@ export default function MapDetail() {
                 <MapPin className="h-3.5 w-3.5" /> Show map details
               </button>
             </div>
-          </section>
+          </DetailSection>
         )}
 
         {features.hasNpcs && (

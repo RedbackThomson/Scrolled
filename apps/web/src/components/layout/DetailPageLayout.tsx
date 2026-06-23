@@ -69,6 +69,23 @@ export function DetailPageLayout({
   );
 }
 
+/**
+ * A main-content section with a subtle uppercase header, for the intro content
+ * that sits above the list sections — descriptions, previews, minimaps, etc.
+ * Matches the header weight of `DetailListSection` without the icon or count,
+ * so intro blocks read as a quieter sibling of the list sections below them.
+ */
+export function DetailSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section>
+      <h2 className="text-muted-foreground mb-2 text-xs font-semibold uppercase tracking-wide">
+        {title}
+      </h2>
+      {children}
+    </section>
+  );
+}
+
 export function InfoSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section>

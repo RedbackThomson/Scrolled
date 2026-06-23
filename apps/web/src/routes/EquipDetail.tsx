@@ -7,6 +7,7 @@ import {
   DetailPageLayout,
   DetailPageLoading,
   DetailPageNotFound,
+  DetailSection,
   InfoRow,
   InfoSection,
   SourceSection,
@@ -203,11 +204,13 @@ export default function EquipDetail() {
     >
       <CollectionBadgeStrip entityType="equip" entityId={e.id} />
 
-      {e.description ? (
-        <p className="whitespace-pre-line text-sm leading-relaxed">{e.description}</p>
-      ) : (
-        <p className="text-muted-foreground text-sm italic">No description available.</p>
-      )}
+      <DetailSection title="Description">
+        {e.description ? (
+          <p className="whitespace-pre-line text-sm leading-relaxed">{e.description}</p>
+        ) : (
+          <p className="text-muted-foreground text-sm italic">No description available.</p>
+        )}
+      </DetailSection>
 
       {features.hasQuests && (
         <DetailListSection

@@ -7,6 +7,7 @@ import {
   DetailPageLayout,
   DetailPageLoading,
   DetailPageNotFound,
+  DetailSection,
   InfoRow,
   InfoSection,
   SourceSection,
@@ -101,11 +102,13 @@ export default function NpcDetail() {
     >
       <CollectionBadgeStrip entityType="npc" entityId={n.id} />
 
-      {n.description ? (
-        <p className="whitespace-pre-line text-sm leading-relaxed">{n.description}</p>
-      ) : (
-        <p className="text-muted-foreground text-sm italic">No description.</p>
-      )}
+      <DetailSection title="Description">
+        {n.description ? (
+          <p className="whitespace-pre-line text-sm leading-relaxed">{n.description}</p>
+        ) : (
+          <p className="text-muted-foreground text-sm italic">No description available.</p>
+        )}
+      </DetailSection>
 
       {features.hasQuests && (
         <DetailListSection

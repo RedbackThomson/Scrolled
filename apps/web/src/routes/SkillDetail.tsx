@@ -7,6 +7,7 @@ import {
   DetailPageLayout,
   DetailPageLoading,
   DetailPageNotFound,
+  DetailSection,
   InfoRow,
   InfoSection,
   SourceSection,
@@ -137,7 +138,7 @@ export default function SkillDetail() {
           <EntityIcon
             entity="skill"
             id={s.id}
-            size={96}
+            size={48}
             placeholder={Sparkles}
             alt={s.name ?? undefined}
           />
@@ -154,16 +155,6 @@ export default function SkillDetail() {
               </h1>
             </div>
             {showIds && <p className="text-muted-foreground font-mono text-xs">{s.id}</p>}
-            {s.description && (
-              <p className="text-muted-foreground mt-2 whitespace-pre-line text-sm leading-relaxed">
-                {s.description}
-              </p>
-            )}
-            {s.tooltip && s.tooltip !== s.description && (
-              <p className="text-muted-foreground mt-1 whitespace-pre-line text-xs italic leading-relaxed">
-                {s.tooltip}
-              </p>
-            )}
           </div>
         </header>
       }
@@ -205,6 +196,19 @@ export default function SkillDetail() {
       }
     >
       <CollectionBadgeStrip entityType="skill" entityId={s.id} />
+
+      <DetailSection title="Description">
+        {s.description ? (
+          <p className="whitespace-pre-line text-sm leading-relaxed">{s.description}</p>
+        ) : (
+          <p className="text-muted-foreground text-sm italic">No description available.</p>
+        )}
+        {s.tooltip && s.tooltip !== s.description && (
+          <p className="text-muted-foreground mt-2 whitespace-pre-line text-xs italic leading-relaxed">
+            {s.tooltip}
+          </p>
+        )}
+      </DetailSection>
 
       <DetailListSection
         icon={GitBranch}

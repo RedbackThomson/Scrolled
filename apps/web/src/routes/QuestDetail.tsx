@@ -24,6 +24,7 @@ import {
   DetailPageLayout,
   DetailPageLoading,
   DetailPageNotFound,
+  DetailSection,
   InfoRow,
   InfoSection,
   SourceSection,
@@ -202,7 +203,9 @@ export default function QuestDetail() {
       )}
 
       {q.description && (
-        <p className="whitespace-pre-line text-sm leading-relaxed">{q.description}</p>
+        <DetailSection title="Description">
+          <p className="whitespace-pre-line text-sm leading-relaxed">{q.description}</p>
+        </DetailSection>
       )}
 
       {(q.startNpcId !== null || endNpcIdForDisplay !== null) && (

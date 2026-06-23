@@ -7,6 +7,7 @@ import {
   DetailPageLayout,
   DetailPageLoading,
   DetailPageNotFound,
+  DetailSection,
   InfoRow,
   InfoSection,
   SourceSection,
@@ -149,19 +150,23 @@ export default function ItemDetail() {
       <CollectionBadgeStrip entityType="item" entityId={item.id} />
 
       {chair && (
-        <ChairAnimatedPreview
-          data={chair.previewData}
-          width={chair.previewWidth}
-          height={chair.previewHeight}
-          alt={`${item.name} animated preview`}
-        />
+        <DetailSection title="Preview">
+          <ChairAnimatedPreview
+            data={chair.previewData}
+            width={chair.previewWidth}
+            height={chair.previewHeight}
+            alt={`${item.name} animated preview`}
+          />
+        </DetailSection>
       )}
 
-      {item.description ? (
-        <p className="whitespace-pre-line text-sm leading-relaxed">{item.description}</p>
-      ) : (
-        <p className="text-muted-foreground text-sm italic">No description available.</p>
-      )}
+      <DetailSection title="Description">
+        {item.description ? (
+          <p className="whitespace-pre-line text-sm leading-relaxed">{item.description}</p>
+        ) : (
+          <p className="text-muted-foreground text-sm italic">No description available.</p>
+        )}
+      </DetailSection>
 
       {features.hasQuests && (
         <DetailListSection
