@@ -1,6 +1,7 @@
 import {
   decodeCanvas,
   openImageFile,
+  type CanvasPixels,
   type ImageFile,
   getKeystream,
   type WzVersion,
@@ -166,11 +167,10 @@ export class ImgDataSource implements GameDataSource {
     return buildSubtree(img.properties, loc.fullPath, 0, maxDepth, topSubtrees);
   }
 
-  async getIconPng(path: string): Promise<Uint8Array | null> {
-    log.debug('getIconPng', { path });
+  private async decodeIcon(path: string): Promise<CanvasPixels | null> {
     const loc = this.locate(path);
     if (!loc || loc.type !== 'image' || loc.propPath.length === 0) {
-      log.debug('getIconPng: path is not a property inside an image', { path });
+      log.debug('decodeIcon: path is not a property inside an image', { path });
       return null;
     }
     const img = await this.loadImage(loc.node, loc.fullPath);
@@ -182,20 +182,31 @@ export class ImgDataSource implements GameDataSource {
     const resolved = makeProperty(img, found.prop, img.properties, imagePath, fullPath);
     const canvas = resolveToCanvas(resolved);
     if (!canvas) {
-      log.debug('getIconPng: not a canvas-like node', { path });
+      log.debug('decodeIcon: not a canvas-like node', { path });
       return null;
     }
     try {
-      const pixels = await decodeCanvas({
+      return await decodeCanvas({
         canvas: canvas.canvas,
         fileBytes: canvas.host.bytes,
         keystream: canvas.host.keystream,
       });
-      return await encodeRgbaToPng(pixels.rgba, pixels.width, pixels.height);
     } catch (e) {
-      log.warn('getIconPng failed', describeError(e));
+      log.warn('decodeIcon failed', describeError(e));
       return null;
     }
+  }
+
+  async getIconPng(path: string): Promise<Uint8Array | null> {
+    log.debug('getIconPng', { path });
+    const pixels = await this.decodeIcon(path);
+    if (!pixels) return null;
+    return encodeRgbaToPng(pixels.rgba, pixels.width, pixels.height);
+  }
+
+  async getIconRgba(path: string): Promise<CanvasPixels | null> {
+    log.debug('getIconRgba', { path });
+    return this.decodeIcon(path);
   }
 
   async diagnose(): Promise<Diagnostics> {

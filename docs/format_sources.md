@@ -114,6 +114,19 @@ These projects collectively document or imply the following WZ concepts:
 
 ---
 
+## Output formats (what we encode, not what we parse)
+
+### APNG (Animated PNG)
+Chair previews are encoded as animated PNG in pure JS
+(`packages/extractor/src/lib/apng.ts`) so extraction runs identically in the
+browser worker and the headless CLI — no Canvas, no native/WASM dependency.
+
+- Spec: https://wiki.mozilla.org/APNG_Specification
+- Chunk reference (`acTL` / `fcTL` / `fdAT`, dispose/blend ops, sequence
+  numbers) for the layout the encoder emits.
+
+---
+
 ## Important Caveat
 
 There is no official public specification from Nexon for the WZ format.

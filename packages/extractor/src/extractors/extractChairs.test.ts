@@ -1,12 +1,15 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
 import { extractChairs, type ChairImageOps } from './extractChairs';
+import type { AnimFrame } from '../lib/apng';
 import type { GameDataSource, WzNodeInfo } from '../parser';
 
 function makeSource(
   tree: Record<string, WzNodeInfo[]>,
   nodes: Record<string, WzNodeInfo>,
-  icons: Record<string, Uint8Array> = {},
+  /** Path → frame pixel dimensions. Presence marks a decodable frame; the
+   *  bytes are zero-filled since the tests only care about dimensions. */
+  icons: Record<string, { width: number; height: number }> = {},
 ): GameDataSource {
   return {
     init: async () => {},
@@ -14,7 +17,16 @@ function makeSource(
     listFiles: async () => [],
     listChildren: async (path) => tree[path] ?? [],
     getNode: async (path) => nodes[path] ?? null,
-    getIconPng: async (path) => icons[path] ?? null,
+    getIconPng: async () => null,
+    getIconRgba: async (path) => {
+      const size = icons[path];
+      if (!size) return null;
+      return {
+        rgba: new Uint8ClampedArray(size.width * size.height * 4),
+        width: size.width,
+        height: size.height,
+      };
+    },
     readImageTree: async () => null,
     diagnose: async () => ({ log: [], aesSmokeTest: { ok: true }, loadedFiles: [] }),
     dispose: async () => {},
@@ -42,38 +54,40 @@ function stringName(id: number, name: string): [string, WzNodeInfo] {
 }
 
 /**
- * Image ops stub that avoids the browser image APIs entirely. The "decoded"
- * frame's RGBA buffer is sized from the bytes' length (used by the test as a
- * cheap way to encode per-frame dimensions); the "encoded" animation just
- * concatenates a recognizable WebP-shaped prefix with frame-count metadata
- * so the test can assert structure without parsing real WebP.
+ * Encode stub that records the frames it was handed so a test can assert frame
+ * dimensions without parsing real APNG bytes.
  */
-function makeOps(frameSize: { width: number; height: number }): ChairImageOps {
+function makeCapturingOps(): { ops: ChairImageOps; frames: () => AnimFrame[] } {
+  let captured: AnimFrame[] = [];
   return {
-    async decodePngFrame(_bytes) {
-      return {
-        rgba: new Uint8ClampedArray(frameSize.width * frameSize.height * 4),
-        width: frameSize.width,
-        height: frameSize.height,
-      };
+    ops: {
+      encodeAnimation(frames) {
+        captured = frames;
+        return { data: new Uint8Array(0), width: frames[0]?.width ?? 0, height: frames[0]?.height ?? 0 };
+      },
     },
-    async encodeAnimation(frames) {
-      // RIFF/WEBP prefix + frame count, so the assertion below can read it.
-      const out = new Uint8Array(16);
-      out.set([0x52, 0x49, 0x46, 0x46], 0); // RIFF
-      out.set([0x57, 0x45, 0x42, 0x50], 8); // WEBP
-      out[12] = frames.length;
-      return {
-        data: out,
-        width: frames[0]?.width ?? 0,
-        height: frames[0]?.height ?? 0,
-      };
-    },
+    frames: () => captured,
   };
 }
 
+const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+
+function indexOfChunk(bytes: Uint8Array, type: string): number {
+  for (let i = 0; i + 4 <= bytes.length; i++) {
+    if (
+      bytes[i] === type.charCodeAt(0) &&
+      bytes[i + 1] === type.charCodeAt(1) &&
+      bytes[i + 2] === type.charCodeAt(2) &&
+      bytes[i + 3] === type.charCodeAt(3)
+    ) {
+      return i;
+    }
+  }
+  return -1;
+}
+
 describe('extractChairs', () => {
-  it('produces a chair record per Install item that carries an /effect subtree', async () => {
+  it('produces a chair record (real APNG) per Install item with an /effect subtree', async () => {
     // Two install items under group 0301:
     //   3010000 — chair with 2 frames + recoveryHP/MP
     //   3010001 — non-chair (no /effect) → should not produce a chair record
@@ -103,27 +117,22 @@ describe('extractChairs', () => {
           'Item.wz/Install/0301.img/3010000/effect/0/origin',
           propNode('origin', '', '32,48', 'vector'),
         ],
-        [
-          'Item.wz/Install/0301.img/3010000/effect/0/delay',
-          propNode('delay', '', 120),
-        ],
+        ['Item.wz/Install/0301.img/3010000/effect/0/delay', propNode('delay', '', 120)],
         [
           'Item.wz/Install/0301.img/3010000/effect/1/origin',
           propNode('origin', '', '36,48', 'vector'),
         ],
-        [
-          'Item.wz/Install/0301.img/3010000/effect/1/delay',
-          propNode('delay', '', 80),
-        ],
+        ['Item.wz/Install/0301.img/3010000/effect/1/delay', propNode('delay', '', 80)],
         stringName(3010000, 'Relaxer'),
       ]),
       {
-        'Item.wz/Install/0301.img/3010000/effect/0': new Uint8Array([1, 2, 3]),
-        'Item.wz/Install/0301.img/3010000/effect/1': new Uint8Array([4, 5, 6]),
+        'Item.wz/Install/0301.img/3010000/effect/0': { width: 64, height: 64 },
+        'Item.wz/Install/0301.img/3010000/effect/1': { width: 64, height: 64 },
       },
     );
 
-    const result = await extractChairs(source, { ops: makeOps({ width: 64, height: 64 }) });
+    // No `ops` → real pure-JS APNG encoder runs end-to-end.
+    const result = await extractChairs(source);
 
     expect(result.chairs).toHaveLength(1);
     const chair = result.chairs[0]!;
@@ -136,19 +145,19 @@ describe('extractChairs', () => {
     // top=max(48,48)=48,  bottom=max(64-48,64-48)=16 → height 64
     expect(chair.previewWidth).toBe(68);
     expect(chair.previewHeight).toBe(64);
-    // Stub-encoder marker
-    expect(chair.previewData.byteLength).toBeGreaterThan(12);
-    expect(String.fromCharCode(...chair.previewData.subarray(0, 4))).toBe('RIFF');
-    expect(String.fromCharCode(...chair.previewData.subarray(8, 12))).toBe('WEBP');
+    // Real APNG: PNG signature, animation control chunk, and one frame control
+    // chunk per frame.
+    expect([...chair.previewData.subarray(0, 8)]).toEqual(PNG_SIGNATURE);
+    expect(indexOfChunk(chair.previewData, 'acTL')).toBeGreaterThan(0);
+    expect(indexOfChunk(chair.previewData, 'fcTL')).toBeGreaterThan(0);
+    expect(indexOfChunk(chair.previewData, 'IEND')).toBeGreaterThan(0);
   });
 
   it('sorts frame indices numerically (so 10 follows 9, not 1)', async () => {
     const source = makeSource(
       {
         'Item.wz/Install': [imageNode('0301.img', 'Item.wz/Install/0301.img')],
-        'Item.wz/Install/0301.img': [
-          imageNode('3010000', 'Item.wz/Install/0301.img/3010000'),
-        ],
+        'Item.wz/Install/0301.img': [imageNode('3010000', 'Item.wz/Install/0301.img/3010000')],
         'Item.wz/Install/0301.img/3010000/info': [],
         'Item.wz/Install/0301.img/3010000/effect': [
           imageNode('0', 'Item.wz/Install/0301.img/3010000/effect/0'),
@@ -165,14 +174,14 @@ describe('extractChairs', () => {
         stringName(3010000, 'Relaxer'),
       ]),
       {
-        'Item.wz/Install/0301.img/3010000/effect/0': new Uint8Array([0]),
-        'Item.wz/Install/0301.img/3010000/effect/1': new Uint8Array([0]),
-        'Item.wz/Install/0301.img/3010000/effect/2': new Uint8Array([0]),
-        'Item.wz/Install/0301.img/3010000/effect/10': new Uint8Array([0]),
+        'Item.wz/Install/0301.img/3010000/effect/0': { width: 8, height: 8 },
+        'Item.wz/Install/0301.img/3010000/effect/1': { width: 8, height: 8 },
+        'Item.wz/Install/0301.img/3010000/effect/2': { width: 8, height: 8 },
+        'Item.wz/Install/0301.img/3010000/effect/10': { width: 8, height: 8 },
       },
     );
 
-    const result = await extractChairs(source, { ops: makeOps({ width: 8, height: 8 }) });
+    const result = await extractChairs(source);
     expect(result.chairs[0]!.frameCount).toBe(4);
   });
 
@@ -183,9 +192,7 @@ describe('extractChairs', () => {
     const source = makeSource(
       {
         'Item.wz/Install': [imageNode('0301.img', 'Item.wz/Install/0301.img')],
-        'Item.wz/Install/0301.img': [
-          imageNode('3010099', 'Item.wz/Install/0301.img/3010099'),
-        ],
+        'Item.wz/Install/0301.img': [imageNode('3010099', 'Item.wz/Install/0301.img/3010099')],
         'Item.wz/Install/0301.img/3010099/info': [],
         'Item.wz/Install/0301.img/3010099/effect': [
           imageNode('0', 'Item.wz/Install/0301.img/3010099/effect/0'),
@@ -197,12 +204,10 @@ describe('extractChairs', () => {
           'Item.wz/Install/0301.img/3010099/effect',
         ),
       },
-      {
-        'Item.wz/Install/0301.img/3010099/effect/0': new Uint8Array([0]),
-      },
+      { 'Item.wz/Install/0301.img/3010099/effect/0': { width: 8, height: 8 } },
     );
 
-    const result = await extractChairs(source, { ops: makeOps({ width: 8, height: 8 }) });
+    const result = await extractChairs(source);
     expect(result.chairs).toEqual([]);
     expect(result.skipped).toEqual([
       { reason: 'no localized name found', path: 'Item.wz/Install/0301.img/3010099' },
@@ -216,9 +221,7 @@ describe('extractChairs', () => {
     const source = makeSource(
       {
         'Item.wz/Install': [imageNode('0301.img', 'Item.wz/Install/0301.img')],
-        'Item.wz/Install/0301.img': [
-          imageNode('3010777', 'Item.wz/Install/0301.img/3010777'),
-        ],
+        'Item.wz/Install/0301.img': [imageNode('3010777', 'Item.wz/Install/0301.img/3010777')],
         'Item.wz/Install/0301.img/3010777/info': [],
         'Item.wz/Install/0301.img/3010777/effect': [
           imageNode('0', 'Item.wz/Install/0301.img/3010777/effect/0'),
@@ -241,37 +244,24 @@ describe('extractChairs', () => {
           'Item.wz/Install/0301.img/3010777/effect/0/origin',
           propNode('origin', '', '40,60', 'vector'),
         ],
-        [
-          'Item.wz/Install/0301.img/3010777/effect/0/delay',
-          propNode('delay', '', 150),
-        ],
+        ['Item.wz/Install/0301.img/3010777/effect/0/delay', propNode('delay', '', 150)],
         stringName(3010777, 'UOL Chair'),
       ]),
       {
-        'Item.wz/Install/0301.img/3010777/effect/0': new Uint8Array([0]),
-        // The UOL itself; getIconPng follows it transparently in production.
-        'Item.wz/Install/0301.img/3010777/effect/1': new Uint8Array([0]),
+        'Item.wz/Install/0301.img/3010777/effect/0': { width: 64, height: 64 },
+        // The UOL itself; getIconRgba follows it transparently in production.
+        'Item.wz/Install/0301.img/3010777/effect/1': { width: 64, height: 64 },
       },
     );
 
-    let lastFrames: { width: number; height: number }[] = [];
-    const ops: ChairImageOps = {
-      async decodePngFrame() {
-        return { rgba: new Uint8ClampedArray(64 * 64 * 4), width: 64, height: 64 };
-      },
-      async encodeAnimation(frames) {
-        lastFrames = frames.map((f) => ({ width: f.width, height: f.height }));
-        return { data: new Uint8Array(16), width: frames[0]!.width, height: frames[0]!.height };
-      },
-    };
-
+    const { ops, frames } = makeCapturingOps();
     const result = await extractChairs(source, { ops });
     expect(result.chairs).toHaveLength(1);
     expect(result.chairs[0]!.frameCount).toBe(2);
     // If origin defaulted to (0,0), the bounding box would expand to 64+40=104
     // wide × 64+60=124 tall. With the UOL resolved correctly to (40,60), both
     // frames share the same origin, so the canvas stays 64×64.
-    expect(lastFrames).toEqual([
+    expect(frames().map((f) => ({ width: f.width, height: f.height }))).toEqual([
       { width: 64, height: 64 },
       { width: 64, height: 64 },
     ]);

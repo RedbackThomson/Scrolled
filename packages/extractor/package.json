@@ -20,7 +20,8 @@
     "@scrolled/dataset-core": "workspace:*",
     "@scrolled/game-db": "workspace:*",
     "@scrolled/wz": "workspace:*",
-    "comlink": "^4.4.2"
+    "comlink": "^4.4.2",
+    "fflate": "^0.8.2"
   },
   "devDependencies": {
     "@types/node": "^22.7.4",

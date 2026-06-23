@@ -78,6 +78,9 @@ class WorkerGameDataSource implements GameDataSource {
   getIconPng(path: string) {
     return this.src().getIconPng(path);
   }
+  getIconRgba(path: string) {
+    return this.src().getIconRgba(path);
+  }
   diagnose() {
     return this.src().diagnose();
   }

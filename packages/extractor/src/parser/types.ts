@@ -4,6 +4,8 @@
 // must be structurally cloneable. Do not put class instances or WZ-library
 // objects in these types.
 
+import type { CanvasPixels } from '@scrolled/wz';
+
 export type WzNodeKind = 'file' | 'directory' | 'image' | 'property';
 
 export type WzPropertyKind =
@@ -113,6 +115,13 @@ export interface GameDataSource {
    * fails. The main thread wraps the bytes in a Blob to make an object URL.
    */
   getIconPng(path: string): Promise<Uint8Array | null>;
+  /**
+   * Decode a `WzCanvasProperty` / `WzPngProperty` node to raw RGBA8888 pixels,
+   * skipping the PNG encode `getIconPng` does. Returns null on the same
+   * conditions as `getIconPng`. Used by extractors that need to composite
+   * pixels (e.g. chair frames) rather than ship a ready-made image.
+   */
+  getIconRgba(path: string): Promise<CanvasPixels | null>;
   /** Diagnostics for bug reports. */
   diagnose(): Promise<Diagnostics>;
   dispose(): Promise<void>;

@@ -28,6 +28,7 @@ function makeSource(
       throw new Error('getNode not expected');
     },
     getIconPng: async () => null,
+    getIconRgba: async () => null,
     readImageTree: async (path) => images[path] ?? null,
     diagnose: async () => ({ log: [], aesSmokeTest: { ok: true }, loadedFiles: [] }),
     dispose: async () => {},

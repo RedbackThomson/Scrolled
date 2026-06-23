@@ -1,4 +1,4 @@
-import { decodeCanvas, openFile, type WzFile, type WzVersion } from '@scrolled/wz';
+import { decodeCanvas, openFile, type CanvasPixels, type WzFile, type WzVersion } from '@scrolled/wz';
 import type {
   Diagnostics,
   GameDataSource,
@@ -126,38 +126,39 @@ export class WzDataSource implements GameDataSource {
     return buildSubtree(resolved.props, resolved.fullPath, 0, maxDepth, topSubtrees);
   }
 
-  async getIconPng(path: string): Promise<Uint8Array | null> {
-    log.debug('getIconPng', { path });
+  private async decodeIcon(path: string): Promise<CanvasPixels | null> {
     const resolved = this.resolve(path);
     if (!resolved) {
-      log.debug('getIconPng: path did not resolve', { path });
+      log.debug('decodeIcon: path did not resolve', { path });
       return null;
     }
     const canvas = resolveToCanvas(resolved);
     if (!canvas) {
-      log.debug('getIconPng: not a canvas-like node', { path });
+      log.debug('decodeIcon: not a canvas-like node', { path });
       return null;
     }
     try {
-      const t0 = performance.now();
-      const pixels = await decodeCanvas({
+      return await decodeCanvas({
         canvas: canvas.canvas,
         fileBytes: canvas.host.bytes,
         keystream: canvas.host.keystream,
       });
-      const t1 = performance.now();
-      const png = await encodeRgbaToPng(pixels.rgba, pixels.width, pixels.height);
-      const t2 = performance.now();
-      log.debug('getIconPng ok', {
-        bytes: png.byteLength,
-        decodeMs: Math.round(t1 - t0),
-        encodeMs: Math.round(t2 - t1),
-      });
-      return png;
     } catch (e) {
-      log.warn('getIconPng failed', describeError(e));
+      log.warn('decodeIcon failed', describeError(e));
       return null;
     }
+  }
+
+  async getIconPng(path: string): Promise<Uint8Array | null> {
+    log.debug('getIconPng', { path });
+    const pixels = await this.decodeIcon(path);
+    if (!pixels) return null;
+    return encodeRgbaToPng(pixels.rgba, pixels.width, pixels.height);
+  }
+
+  async getIconRgba(path: string): Promise<CanvasPixels | null> {
+    log.debug('getIconRgba', { path });
+    return this.decodeIcon(path);
   }
 
   async diagnose(): Promise<Diagnostics> {

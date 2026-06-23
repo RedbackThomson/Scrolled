@@ -49,8 +49,8 @@ export interface ChairRecord {
   recoveryHp: number | null;
   recoveryMp: number | null;
   frameCount: number;
-  /** Animated WebP bytes. Always populated — a chair without a preview is
-   *  not persisted. */
+  /** Animated PNG (APNG) bytes. Always populated — a chair without a preview
+   *  is not persisted. */
   previewData: Uint8Array;
   previewWidth: number;
   previewHeight: number;

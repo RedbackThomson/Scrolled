@@ -57,6 +57,7 @@ function makeSource(
     listChildren: async (path) => tree[path] ?? [],
     getNode: async (path) => nodes[path] ?? null,
     getIconPng: async () => null,
+    getIconRgba: async () => null,
     readImageTree: async (path) => synthImageTree(nodes, path),
     diagnose: async () => ({ log: [], aesSmokeTest: { ok: true }, loadedFiles: [] }),
     dispose: async () => {},

@@ -48,6 +48,7 @@ function makeSource(
     listChildren: async (path) => children[path] ?? [],
     getNode: async () => null,
     getIconPng: async (path) => (pngPaths.has(path) ? new Uint8Array([1, 2, 3]) : null),
+    getIconRgba: async () => null,
     readImageTree: async (path) => trees[path] ?? null,
     diagnose: async () => ({ log: [], aesSmokeTest: { ok: true }, loadedFiles: [] }),
     dispose: async () => {},

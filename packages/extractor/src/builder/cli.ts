@@ -39,6 +39,15 @@ const log = createLogger('dataset-cli');
 
 const SUPPORTED_WZ_VERSIONS: WzMapleVersionName[] = ['BMS', 'GMS', 'EMS', 'CLASSIC'];
 
+/**
+ * The directory the user invoked `pnpm` from — what relative path arguments
+ * should resolve against. `pnpm dataset:build` runs the script inside
+ * `packages/extractor` (so `process.cwd()` is the package, not where the user
+ * typed the command), but pnpm exports the original directory as `INIT_CWD`.
+ * Without this, a relative `--out apps/web/...` would land under the package.
+ */
+const INVOCATION_CWD = process.env.INIT_CWD ?? process.cwd();
+
 interface CliArgs {
   wzDir: string;
   profileId?: string;
@@ -94,12 +103,12 @@ function parseArgs(argv: string[]): CliArgs {
     fail(`--wz-version must be one of ${SUPPORTED_WZ_VERSIONS.join(', ')}`);
   }
   return {
-    wzDir: resolve(wzDir!),
+    wzDir: resolve(INVOCATION_CWD, wzDir!),
     profileId: opts.profile,
-    profileFile: opts['profile-file'],
+    profileFile: opts['profile-file'] ? resolve(INVOCATION_CWD, opts['profile-file']) : undefined,
     version: opts.version,
     displayName: opts['display-name'],
-    out: resolve(opts.out),
+    out: resolve(INVOCATION_CWD, opts.out),
     family: opts.family,
     channel: opts.channel,
     kind,

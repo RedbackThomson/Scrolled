@@ -20,6 +20,7 @@ function makeSource(
     listChildren: async (path) => children[path] ?? [],
     getNode: async () => null,
     getIconPng: async () => null,
+    getIconRgba: async () => null,
     readImageTree: async (path) => images[path] ?? null,
     diagnose: async () => ({ log: [], aesSmokeTest: { ok: true }, loadedFiles: [] }),
     dispose: async () => {},

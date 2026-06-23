@@ -5,26 +5,24 @@
 // this pass only collects chair-specific data:
 //
 //   * recoveryHP / recoveryMP from /info
-//   * each /effect/<n> frame's PNG, origin, and delay
+//   * each /effect/<n> frame's pixels, origin, and delay
 //
 // It then normalizes all frames to a shared canvas (so the in-game pose stays
 // anchored even when individual frames differ in size) and encodes a single
-// animated WebP that the wiki shows beneath the item header.
+// animated PNG (APNG) that the wiki shows beneath the item header.
 //
-// The PNG→RGBA decoder and the animated-WebP encoder are dependency-injected
-// so the test runner can supply synthetic ones; the production worker
-// implementation uses `createImageBitmap` + `OffscreenCanvas` + `encodeAnimatedWebp`.
+// Frame pixels come straight from the data source as RGBA (`getIconRgba`), and
+// the APNG encoder is pure JS, so the whole path runs the same in the browser
+// worker and the headless CLI. The encoder is dependency-injected only so the
+// test runner can supply a cheap synthetic one.
 
 import type { GameDataSource, WzNodeInfo } from '../parser';
+import type { CanvasPixels } from '@scrolled/wz';
 import type { ChairRecord } from '@scrolled/game-db/db';
 import { createLogger, describeError } from '@scrolled/game-db/lib/logger';
 import type { ProgressFn } from '@scrolled/game-db/lib/progress';
 import { nodeToNumber, pathToNumber } from './wzCoerce';
-import {
-  encodeAnimatedWebp,
-  type AnimFrame,
-  type EncodedAnimation,
-} from '../lib/webpAnim';
+import { encodeAnimatedPng, type AnimFrame, type EncodedAnimation } from '../lib/apng';
 
 const log = createLogger('extract-chairs');
 
@@ -43,45 +41,17 @@ export interface ExtractChairsResult {
   skipped: { reason: string; path: string }[];
 }
 
-interface DecodedFrame {
-  rgba: Uint8ClampedArray;
-  width: number;
-  height: number;
-}
-
 /**
- * Boundary the extractor uses to step outside the WZ-tree world for image
- * work. The worker injects a `createImageBitmap` + `OffscreenCanvas`
- * implementation; tests inject a stub that returns predictable RGBA buffers
- * without touching the browser image APIs.
+ * Boundary the extractor uses to encode the normalized frames into the final
+ * animation. Production uses the pure-JS APNG encoder; tests inject a stub that
+ * returns predictable bytes without building a real APNG.
  */
 export interface ChairImageOps {
-  decodePngFrame(bytes: Uint8Array): Promise<DecodedFrame>;
-  encodeAnimation(frames: AnimFrame[]): Promise<EncodedAnimation>;
+  encodeAnimation(frames: AnimFrame[]): Promise<EncodedAnimation> | EncodedAnimation;
 }
 
 export const defaultChairImageOps: ChairImageOps = {
-  async decodePngFrame(bytes) {
-    if (typeof createImageBitmap === 'undefined' || typeof OffscreenCanvas === 'undefined') {
-      // Outside the worker (typically test envs that didn't inject a stub).
-      // Return a 1×1 transparent pixel so downstream layout math still works.
-      return { rgba: new Uint8ClampedArray([0, 0, 0, 0]), width: 1, height: 1 };
-    }
-    const ab = new ArrayBuffer(bytes.byteLength);
-    new Uint8Array(ab).set(bytes);
-    const bitmap = await createImageBitmap(new Blob([ab], { type: 'image/png' }));
-    try {
-      const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
-      const ctx = canvas.getContext('2d');
-      if (!ctx) throw new Error('decodePngFrame: 2d context unavailable');
-      ctx.drawImage(bitmap, 0, 0);
-      const data = ctx.getImageData(0, 0, bitmap.width, bitmap.height);
-      return { rgba: data.data, width: bitmap.width, height: bitmap.height };
-    } finally {
-      bitmap.close();
-    }
-  },
-  encodeAnimation: encodeAnimatedWebp,
+  encodeAnimation: encodeAnimatedPng,
 };
 
 interface FrameMeta {
@@ -93,11 +63,10 @@ interface FrameMeta {
 }
 
 /**
- * How many chairs are in-flight at once during extraction. The bottleneck per
- * chair is `OffscreenCanvas.convertToBlob({type:'image/webp'})` and
- * `createImageBitmap`, both of which dispatch to browser-internal threads.
- * Eight in-flight saturates a typical encoder pool without backing up
- * unrelated browser work.
+ * How many chairs are in-flight at once during extraction. The per-chair wait
+ * is the async WZ canvas inflate behind `getIconRgba` (one per frame); APNG
+ * encoding itself is synchronous pure-JS deflate. Keeping several chairs in
+ * flight overlaps those inflate waits without unbounded concurrency.
  */
 const CHAIR_CONCURRENCY = 8;
 
@@ -201,13 +170,12 @@ async function readChair(
   // to compute the shared bounding box, since WZ doesn't store them.
   const decoded = await Promise.all(
     frameMetas.map(async (meta) => {
-      const bytes = await source.getIconPng(meta.iconPath);
-      if (!bytes) return null;
-      const frame = await ops.decodePngFrame(bytes);
+      const frame = await source.getIconRgba(meta.iconPath);
+      if (!frame) return null;
       return { meta, frame };
     }),
   );
-  const live = decoded.filter((d): d is { meta: FrameMeta; frame: DecodedFrame } => d !== null);
+  const live = decoded.filter((d): d is { meta: FrameMeta; frame: CanvasPixels } => d !== null);
   if (live.length === 0) return null;
 
   // Common anchor = the maximum of each origin component across frames. Every
@@ -292,7 +260,7 @@ function parseVector(scalar: unknown): { x: number; y: number } | null {
 }
 
 function padFrameToCanvas(
-  frame: DecodedFrame,
+  frame: CanvasPixels,
   originX: number,
   originY: number,
   anchorX: number,

@@ -11,15 +11,15 @@ interface Props {
 }
 
 /**
- * Renders the chair's pre-rendered animated WebP. Browsers play animated
- * WebP natively inside `<img>` — no canvas loop here, the heavy lifting is
- * done once at extraction time.
+ * Renders the chair's pre-rendered animated PNG (APNG). Browsers play APNG
+ * natively inside `<img>` — no canvas loop here, the heavy lifting is done
+ * once at extraction time.
  */
 export function ChairAnimatedPreview({ data, width, height, alt, className }: Props) {
   const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    const next = bytesToUrl(data, 'image/webp');
+    const next = bytesToUrl(data, 'image/apng');
     setUrl(next);
     return () => URL.revokeObjectURL(next);
   }, [data]);
