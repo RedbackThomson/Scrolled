@@ -76,6 +76,14 @@ const FILTER_KEYS: Record<EntityScope, FilterMap> = {
     subcategory: { kind: 'string', param: 'subcategory' },
     level: { kind: 'number', param: 'requiredLevel' },
     price: { kind: 'number', param: 'price' },
+    // Consumable effects (see ItemsColumns / ITEM_FILTER). `duration` is in
+    // seconds, matching the column filter.
+    hp: { kind: 'number', param: 'recoveryHp' },
+    mp: { kind: 'number', param: 'recoveryMp' },
+    duration: { kind: 'number', param: 'buffDurationSeconds' },
+    attack: { kind: 'number', param: 'buffWeaponAttack' },
+    speed: { kind: 'number', param: 'buffSpeed' },
+    jump: { kind: 'number', param: 'buffJump' },
   },
   equip: {
     slot: { kind: 'enum', param: 'slot' },

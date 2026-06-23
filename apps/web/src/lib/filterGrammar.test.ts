@@ -49,6 +49,18 @@ describe('parseFilterQuery', () => {
     expect(r.params).toEqual({ f_category: 'use' });
   });
 
+  it('parses consumable effect ranges/comparisons on items', () => {
+    const r = parseFilterQuery('items hp:>=1000 duration:300-1800 attack:5');
+    expect(r.params).toEqual({
+      f_recoveryHp_min: '1000',
+      f_buffDurationSeconds_min: '300',
+      f_buffDurationSeconds_max: '1800',
+      f_buffWeaponAttack_min: '5',
+      f_buffWeaponAttack_max: '5',
+    });
+    expect(r.entity).toBe('item');
+  });
+
   it('falls back to free-text for unknown enum values', () => {
     const r = parseFilterQuery('items category:nonsense');
     expect(r.params).toEqual({ f_name: 'category:nonsense' });
