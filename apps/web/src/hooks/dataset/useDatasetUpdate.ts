@@ -7,7 +7,7 @@
 // no dataset is installed yet.
 
 import { useCallback, useMemo } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useMutationState, useQuery, useQueryClient } from '@tanstack/react-query';
 import { installDataset } from '@scrolled/dataset-client';
 import { StaticHttpDatasetRepository } from '@scrolled/dataset-repository';
 import { appConfig } from '@/config';
@@ -29,6 +29,12 @@ const log = createLogger('dataset-update');
  *   - `none`: nothing to do.
  */
 export type DatasetUpdateMode = 'none' | 'auto' | 'offer';
+
+// Shared key so the apply's pending/error state is observable from every
+// consumer (sidebar status row, version tag, settings) regardless of which one
+// triggered it — the auto-update fires from a single headless mount, but the
+// progress and failure surface elsewhere.
+const DATASET_APPLY_KEY = ['dataset', 'apply'];
 
 export interface DatasetUpdate {
   /** True when an update is available in either mode. */
@@ -71,6 +77,7 @@ export function useDatasetUpdate(): DatasetUpdate {
   });
 
   const applyM = useMutation({
+    mutationKey: DATASET_APPLY_KEY,
     mutationFn: async () => {
       if (!repository || !fixed) return;
       const manifest = await installDataset({
@@ -92,17 +99,29 @@ export function useDatasetUpdate(): DatasetUpdate {
     onError: (e) => log.error('dataset update failed', describeError(e)),
   });
 
+  // Pending/error of the most recent apply, from the shared mutation cache so
+  // every consumer sees it — not just the instance that called `apply`.
+  const applyStates = useMutationState({
+    filters: { mutationKey: DATASET_APPLY_KEY },
+    select: (m) => ({ status: m.state.status, error: (m.state.error as Error | null) ?? null }),
+  });
+  const lastApply = applyStates.at(-1);
+  const applying = lastApply?.status === 'pending';
+  const error = lastApply?.error ?? null;
+
   const installed = installedQ.data ?? null;
   const latest = latestQ.data ?? null;
-  const canUpdate = !!installed && !!latest && !applyM.isSuccess;
+  // Mode is derived purely from the queries: once an apply lands, the refetched
+  // installed version / data state collapse it back to `none` on their own.
   const dataStale = dataState === 'update-recommended' || dataState === 'reinitialize-required';
-  const mode: DatasetUpdateMode = !canUpdate
-    ? 'none'
-    : dataStale
-      ? 'auto'
-      : latest!.version !== installed!.version
-        ? 'offer'
-        : 'none';
+  const mode: DatasetUpdateMode =
+    !installed || !latest
+      ? 'none'
+      : dataStale
+        ? 'auto'
+        : latest.version !== installed.version
+          ? 'offer'
+          : 'none';
 
   const apply = useCallback(() => applyM.mutate(), [applyM]);
 
@@ -112,8 +131,8 @@ export function useDatasetUpdate(): DatasetUpdate {
     installedVersion: installed?.version ?? null,
     latestVersion: latest?.version ?? null,
     displayName: latest?.displayName ?? installed?.displayName ?? null,
-    applying: applyM.isPending,
-    error: applyM.error,
+    applying,
+    error,
     apply,
   };
 }

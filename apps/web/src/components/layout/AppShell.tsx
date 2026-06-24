@@ -2,8 +2,8 @@ import { useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { CommandPaletteHost } from '@/components/command-palette/CommandPaletteHost';
 import { DataUpdatePrompt } from '@/components/data/DataUpdatePrompt';
+import { DatasetAutoUpdate } from '@/components/dataset/DatasetAutoUpdate';
 import { DatasetInstallScreen } from '@/components/dataset/DatasetInstallScreen';
-import { DatasetUpdatePrompt } from '@/components/dataset/DatasetUpdatePrompt';
 import { AppBootScreen } from '@/components/layout/AppBootScreen';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { StorageUnavailableScreen } from '@/components/layout/StorageUnavailableScreen';
@@ -46,7 +46,7 @@ export function AppShell() {
       </div>
       <CommandPaletteHost />
       <DataUpdatePrompt />
-      <DatasetUpdatePrompt />
+      <DatasetAutoUpdate />
     </div>
   );
 }

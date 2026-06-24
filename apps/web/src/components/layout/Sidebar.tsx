@@ -36,6 +36,7 @@ import { getUserDbClient } from '@/db/user';
 import { resolveCollectionColor } from '@/components/collections/colorRegistry';
 import { resolveCollectionIcon } from '@/components/collections/iconRegistry';
 import { DatasetVersionTag } from '@/components/dataset/DatasetVersionTag';
+import { useDatasetUpdate } from '@/hooks/dataset/useDatasetUpdate';
 import { SidebarSyncStatus } from '@/components/sync/SidebarSyncStatus';
 import { SyncSignInNotice } from '@/components/sync/SyncSignInNotice';
 import { useInstalledDataset } from '@/hooks/dataset/useInstalledDataset';
@@ -405,7 +406,15 @@ const APP_VERSION_COMMIT = import.meta.env.VITE_APP_COMMIT as string | undefined
 const APP_VERSION_LABEL =
   APP_VERSION_TAG || (APP_VERSION_COMMIT ? `Pre-alpha · ${APP_VERSION_COMMIT}` : 'Pre-alpha');
 
-type DbHealth = 'pending' | 'healthy' | 'warning' | 'error' | 'reinitialize' | 'update';
+type DbHealth =
+  | 'pending'
+  | 'healthy'
+  | 'warning'
+  | 'error'
+  | 'reinitialize'
+  | 'update'
+  | 'updating'
+  | 'update-failed';
 
 interface HealthCfg {
   icon: LucideIcon;
@@ -464,6 +473,20 @@ const HEALTH_CONFIG: Record<DbHealth, HealthCfg> = {
     textClass: 'text-amber-700 dark:text-amber-300',
     actionTo: '/setup',
   },
+  updating: {
+    icon: Loader2,
+    label: 'Updating data…',
+    title: 'Downloading and installing the latest data for this version.',
+    iconClass: 'text-sidebar-muted',
+    spin: true,
+  },
+  'update-failed': {
+    icon: AlertCircle,
+    label: 'Update failed',
+    title: "Couldn't download the latest data. Click to try again.",
+    iconClass: 'text-amber-600 dark:text-amber-400',
+    textClass: 'text-amber-700 dark:text-amber-300',
+  },
 };
 
 const OFFLINE_TOOLTIP =
@@ -503,6 +526,9 @@ function DbStatusIndicator({ collapsed }: { collapsed: boolean }) {
   const gameStatusQ = useQuery({ queryKey: ['db', 'status'], queryFn: () => db.status() });
   const userStatusQ = useQuery({ queryKey: ['user', 'status'], queryFn: () => userDb.status() });
   const { state: dataState } = useDataState();
+  // Fixed-deployment dataset refresh (auto-applied or manual). Display-only here;
+  // the auto-apply itself fires from DatasetAutoUpdate.
+  const dataset = useDatasetUpdate();
 
   let health: DbHealth;
   let reason: string | null = null;
@@ -510,6 +536,12 @@ function DbStatusIndicator({ collapsed }: { collapsed: boolean }) {
     health = 'pending';
   } else if (gameStatusQ.isError || userStatusQ.isError) {
     health = 'error';
+  } else if (dataset.applying) {
+    // A dataset download/import is in flight — outrank the staleness states it's
+    // resolving, but not a broken on-device store above.
+    health = 'updating';
+  } else if (dataset.error && dataset.mode !== 'none') {
+    health = 'update-failed';
   } else if (dataState === 'reinitialize-required') {
     // A library too old to read outranks the in-memory warning — rebuilding is
     // the only way forward and that flow starts at /setup anyway.
@@ -569,6 +601,21 @@ function DbStatusIndicator({ collapsed }: { collapsed: boolean }) {
   );
 
   const containerClass = cn(collapsed ? 'flex justify-center px-2 py-2' : 'px-3 pb-2 pt-3');
+
+  // A failed refresh retries in place rather than navigating.
+  const onAction = health === 'update-failed' ? dataset.apply : undefined;
+  if (onAction) {
+    return (
+      <button
+        type="button"
+        onClick={onAction}
+        className={cn(containerClass, 'hover:bg-accent block w-full rounded-md text-left transition-colors')}
+        title={title}
+      >
+        {body}
+      </button>
+    );
+  }
 
   if (cfg.actionTo) {
     return (
