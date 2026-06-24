@@ -83,11 +83,11 @@ export function LibraryStatusSection() {
               <Badge tone="slate">version {dataset.installedVersion}</Badge>
             </div>
             <div className="sm:ml-auto">
-              {dataset.applying ? (
+              {dataset.applying || dataset.mode === 'auto' ? (
                 <span className="text-muted-foreground inline-flex items-center gap-1 text-xs">
                   <Loader2 className="h-3 w-3 animate-spin" aria-hidden /> Updating…
                 </span>
-              ) : dataset.available ? (
+              ) : dataset.mode === 'offer' ? (
                 <button
                   type="button"
                   onClick={dataset.apply}

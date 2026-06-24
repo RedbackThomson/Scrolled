@@ -9,16 +9,19 @@ import { useDatasetUpdate } from '@/hooks/dataset/useDatasetUpdate';
 import { cn } from '@/lib/utils';
 
 export function DatasetVersionTag({ collapsed }: { collapsed: boolean }) {
-  const { installedVersion, latestVersion, available, applying, apply } = useDatasetUpdate();
+  const { mode, installedVersion, latestVersion, applying, apply } = useDatasetUpdate();
   if (!installedVersion) return null;
 
-  // Newer version published (or mid-update): an actionable amber control.
-  if (available || applying) {
-    const label = applying ? 'Updating…' : `Update to ${latestVersion}`;
-    const title = applying
+  // An auto refresh (or any in-flight apply) shows a non-clickable progress tag;
+  // only the optional offer is an actionable control.
+  const updating = applying || mode === 'auto';
+  const offering = mode === 'offer' && !applying;
+  if (updating || offering) {
+    const label = updating ? 'Updating…' : `Update to ${latestVersion}`;
+    const title = updating
       ? 'Downloading and installing the newer dataset…'
       : `A newer dataset (${latestVersion}) is available — update from ${installedVersion}.`;
-    const Icon = applying ? Loader2 : RefreshCw;
+    const Icon = updating ? Loader2 : RefreshCw;
 
     if (collapsed) {
       return (
@@ -26,12 +29,12 @@ export function DatasetVersionTag({ collapsed }: { collapsed: boolean }) {
           <button
             type="button"
             onClick={apply}
-            disabled={applying}
+            disabled={updating}
             title={title}
             aria-label={label}
             className="text-amber-600 disabled:opacity-70 dark:text-amber-400"
           >
-            <Icon className={cn('h-4 w-4', applying && 'animate-spin')} aria-hidden />
+            <Icon className={cn('h-4 w-4', updating && 'animate-spin')} aria-hidden />
           </button>
         </div>
       );
@@ -41,11 +44,11 @@ export function DatasetVersionTag({ collapsed }: { collapsed: boolean }) {
         <button
           type="button"
           onClick={apply}
-          disabled={applying}
+          disabled={updating}
           title={title}
           className="inline-flex w-full items-center gap-1.5 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 transition-colors hover:bg-amber-500/25 disabled:opacity-70 dark:text-amber-300"
         >
-          <Icon className={cn('h-3 w-3 shrink-0', applying && 'animate-spin')} aria-hidden />
+          <Icon className={cn('h-3 w-3 shrink-0', updating && 'animate-spin')} aria-hidden />
           <span className="truncate">{label}</span>
         </button>
       </div>

@@ -121,12 +121,16 @@ function useSetupGate(storageBlocked: boolean): { showBoot: boolean; needsInstal
     !onSetup &&
     !storageBlocked &&
     (state === 'reinitialize-required' || features.isFirstRun);
+  // A fixed deployment has no setup wizard, so a library too old to read can't be
+  // rebuilt in place — re-download the hosted dataset instead. Same screen as
+  // first-run install; the importer replaces the whole DB, repopulating any new
+  // columns/tables the bumped data revision introduced.
   const needsInstall =
     appConfig.features.enableHostedDataset &&
     ready &&
     !onSetup &&
     !storageBlocked &&
-    features.isFirstRun;
+    (features.isFirstRun || state === 'reinitialize-required');
   const showBoot = !onSetup && !needsInstall && (!ready || shouldRedirect);
 
   useEffect(() => {
