@@ -1,0 +1,76 @@
+# @scrolled/nav-graph
+
+Framework-agnostic graph core for Scrolled Navigator. See
+[`docs/navigator_implementation.md`](../../docs/navigator_implementation.md) for
+the design.
+
+## What's in here
+
+- **IR** — the TypeScript intermediate representation of the authored graph
+  (`src/ir/`). Branded `NodeId` / `GroupId`, the `TravelEdge` and `Requirement`
+  unions, and a Zod schema that mirrors them.
+- **DSL** — `defineGraph(...)`, region scopes, and the verb methods (`walk`,
+  `portalTo`, `npcTo`, `itemTo`, `skillTo`) authors call on node handles
+  (`src/dsl/`). The requirement constructors (`meso`, `item`, `quest`, `level`)
+  live here too. The DSL emits `NavGraphSource` — nothing more.
+- **Compiler** — `compileGraph(source)` validates the source with Zod, runs the
+  pre-merge duplicate pass, expands bidirectional edges, and freezes adjacency
+  into a runtime `NavGraph` (`src/compile/`).
+- **Pathfinding** — `findPath(graph, from, to, opts?)` is BFS with optional
+  per-edge eligibility filtering. When filtering disconnects the destination it
+  returns the best unfiltered path with blocking step indices flagged
+  (`src/path/`).
+- **JSON** — `toJSON(graph)` serializes a compiled graph to the portability
+  shape (`src/json/`); `vite-node src/cli/export.ts` runs it from the command
+  line.
+
+The package is a leaf: no `@scrolled/*` deps, no React, no SQLite. It runs in
+Node and in the browser.
+
+## Releasing to npm
+
+This package is published to npm as `@scrolled/nav-graph` so external
+deployment repos (e.g. `scrolled-mapleroyals`) can consume it without cloning
+the monorepo.
+
+Authentication uses **npm Trusted Publishers (OIDC)** — no `NPM_TOKEN` secret
+lives in this repo. The GitHub Actions OIDC token authenticates directly
+against the trust relationship npm has on file for this package + workflow.
+
+**One-time setup:**
+1. Register the `@scrolled` scope on [npmjs.com](https://www.npmjs.com/) (or
+   rename the package to a scope you own).
+2. Reserve the package name. The easiest way is to publish an initial `0.0.0`
+   placeholder locally with a classic token, then immediately delete the
+   token. (Alternatively: pre-claim the name from npmjs's package settings.)
+3. On the package's npmjs page, open *Settings → Trusted Publishers* and add
+   a GitHub Actions entry:
+   - **Repository:** `RedbackThomson/scrolled`
+   - **Workflow filename:** `nav-graph-publish.yml`
+   - **Environment:** (leave blank)
+
+   That's it — npm will accept publishes only from this workflow file in this
+   repo. No long-lived credentials live anywhere.
+
+**Cutting a release:**
+1. Bump `version` in `package.json` (semver: `0.x.y` while pre-stable).
+2. Commit + push to `main`.
+3. Tag the commit `nav-graph-v<version>` and push the tag:
+   ```
+   git tag nav-graph-v0.1.0
+   git push origin nav-graph-v0.1.0
+   ```
+4. The [Publish workflow](../../.github/workflows/nav-graph-publish.yml) runs
+   typecheck + tests + `tsc` build, verifies the tag matches the package
+   version, then calls `npm publish --provenance`. The OIDC handshake happens
+   inside the npm CLI; the published tarball gets a Sigstore-signed
+   provenance attestation that shows on the package page.
+
+**Dry-run a build without publishing:** trigger the workflow manually from
+the Actions tab with `dry_run: true`. It uploads the packed tarball as an
+artifact so you can inspect it.
+
+The published tarball contains only `dist/` (compiled JS + .d.ts +
+sourcemaps), `LICENSE`, and `README.md`. `publishConfig` in `package.json`
+rewrites `main`/`types`/`exports` to point at `dist/` so workspace consumers
+inside this monorepo continue to read `src/*.ts` directly.

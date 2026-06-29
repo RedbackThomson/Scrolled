@@ -1,0 +1,101 @@
+name: Publish @scrolled/nav-graph
+
+# Publishes packages/nav-graph to npm. Triggered by tag pushes shaped like
+# `nav-graph-v0.1.0` (so other packages can have their own tag namespaces later
+# without colliding). Also runnable on-demand from the Actions tab as a dry
+# run, which builds and packs the tarball without pushing to the registry.
+#
+# Authentication: npm Trusted Publishers (OIDC) — no NPM_TOKEN secret needed.
+# The `id-token: write` permission below + GitHub's
+# ACTIONS_ID_TOKEN_REQUEST_* env vars let `npm publish --provenance`
+# authenticate against npm directly. See README.md → "Releasing to npm".
+
+on:
+  push:
+    tags:
+      - 'nav-graph-v*'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Build + pack only, do not publish'
+        type: boolean
+        default: true
+
+concurrency:
+  group: nav-graph-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write # for npm OIDC + provenance
+
+jobs:
+  publish:
+    name: Build, verify, publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          # Writes a .npmrc with the public registry so `npm publish` knows
+          # where to go. No auth token is written — OIDC supplies the creds.
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify tag matches package version
+        if: github.event_name == 'push'
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          pkg_version=$(node -p "require('./packages/nav-graph/package.json').version")
+          expected="nav-graph-v${pkg_version}"
+          if [ "$TAG" != "$expected" ]; then
+            echo "::error::Tag '$TAG' does not match package version '$pkg_version' (expected '$expected')."
+            exit 1
+          fi
+          echo "Publishing @scrolled/nav-graph@${pkg_version}"
+
+      - name: Typecheck
+        run: pnpm --filter @scrolled/nav-graph typecheck
+
+      - name: Test
+        run: pnpm --filter @scrolled/nav-graph test
+
+      - name: Build
+        run: pnpm --filter @scrolled/nav-graph build
+
+      - name: Stage LICENSE
+        run: cp LICENSE packages/nav-graph/LICENSE
+
+      - name: Pack tarball preview
+        working-directory: packages/nav-graph
+        run: pnpm pack --pack-destination .
+
+      - name: Upload tarball artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: scrolled-nav-graph-tarball
+          path: packages/nav-graph/scrolled-nav-graph-*.tgz
+          if-no-files-found: error
+
+      - name: Publish to npm (OIDC + provenance)
+        if: github.event_name == 'push' || inputs.dry_run == false
+        working-directory: packages/nav-graph
+        # npm CLI picks up the OIDC token from these env vars and exchanges it
+        # against the configured Trusted Publisher on npm. --provenance is
+        # required for the OIDC flow and also publishes the Sigstore-signed
+        # provenance attestation that shows on the package page.
+        env:
+          ACTIONS_ID_TOKEN_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
+          ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
+        run: npm publish --access public --provenance

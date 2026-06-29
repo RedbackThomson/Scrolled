@@ -19,6 +19,7 @@
     "build:identity": "pnpm --filter @scrolled/web build:identity",
     "preview": "pnpm --filter @scrolled/web preview",
     "dataset:build": "pnpm --filter @scrolled/extractor dataset:build",
+    "nav-graph:export": "pnpm --filter @scrolled/nav-graph export",
     "typecheck": "pnpm -r typecheck",
     "lint": "pnpm -r lint",
     "format": "prettier --write .",

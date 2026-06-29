@@ -176,5 +176,32 @@ export default tseslint.config(
     },
   },
 
+  // nav-graph is a leaf: framework-agnostic graph core, only third-party deps.
+  // It must not pull in SQLite, React, or extractor/wz. See
+  // docs/navigator_implementation.md §2.
+  {
+    files: ['packages/nav-graph/**/*.ts'],
+    plugins: { '@typescript-eslint': tseslint.plugin },
+    rules: {
+      '@typescript-eslint/no-restricted-imports': [
+        BOUNDARY_SEVERITY,
+        {
+          patterns: [
+            {
+              group: ['@scrolled/*'],
+              message:
+                'nav-graph is a leaf package — it must not import other @scrolled/* packages. See docs/navigator_implementation.md §2.',
+            },
+            {
+              group: ['react', 'react-dom', 'react/*', 'react-dom/*'],
+              message:
+                'nav-graph must remain framework-agnostic and Node-runnable. See docs/navigator_implementation.md §5.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   prettier,
 );

@@ -1,0 +1,75 @@
+{
+  "name": "@scrolled/nav-graph",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Framework-agnostic graph core: IR types + Zod schema, an authoring DSL, a compiler (IR → runtime adjacency), and pathfinding (BFS + eligibility). The engine behind Scrolled Navigator; usable standalone in Node and the browser.",
+  "license": "Apache-2.0",
+  "author": "Nicholas Thomson (RedbackThomson)",
+  "homepage": "https://github.com/RedbackThomson/scrolled/tree/main/packages/nav-graph",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RedbackThomson/scrolled.git",
+    "directory": "packages/nav-graph"
+  },
+  "bugs": "https://github.com/RedbackThomson/scrolled/issues",
+  "keywords": [
+    "graph",
+    "directed-graph",
+    "pathfinding",
+    "bfs",
+    "navigation",
+    "navigator",
+    "scrolled"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": "./src/index.ts",
+    "./ir": "./src/ir/index.ts",
+    "./dsl": "./src/dsl/index.ts"
+  },
+  "publishConfig": {
+    "access": "public",
+    "main": "./dist/index.js",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js"
+      },
+      "./ir": {
+        "types": "./dist/ir/index.d.ts",
+        "import": "./dist/ir/index.js"
+      },
+      "./dsl": {
+        "types": "./dist/dsl/index.d.ts",
+        "import": "./dist/dsl/index.js"
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "rm -rf dist LICENSE",
+    "export": "vite-node src/cli/export.ts",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "prepublishOnly": "pnpm run typecheck && pnpm run test && pnpm run clean && pnpm run build && cp ../../LICENSE LICENSE"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.4",
+    "vite": "^5.4.8",
+    "vite-node": "^2.1.2",
+    "vitest": "^2.1.2"
+  }
+}

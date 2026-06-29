@@ -9,6 +9,11 @@ dist-identity/
 build/
 *.tsbuildinfo
 
+# nav-graph: prepublishOnly copies the root LICENSE into the package so the
+# Apache-2.0 text ships in the npm tarball. Not tracked — regenerated on every
+# publish.
+/packages/nav-graph/LICENSE
+
 # Environment
 .env
 .env.local
