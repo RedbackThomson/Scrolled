@@ -57,6 +57,31 @@ jobs:
           # where to go. No auth token is written — OIDC supplies the creds.
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Ensure npm CLI supports OIDC (>= 11.5.1)
+        # The Node 20 LTS line still ships npm 10, which has no OIDC support.
+        # Upgrade in-place so `npm publish --provenance` can do the OIDC
+        # exchange with npm's Trusted Publisher API.
+        run: |
+          set -euo pipefail
+          echo "Bundled npm: $(npm --version)"
+          npm install --global npm@latest
+          echo "Upgraded npm: $(npm --version)"
+
+      - name: Diagnose OIDC environment
+        # Prints whether the OIDC env vars are present (without their values),
+        # plus what the registry config looks like. If you see "missing" for
+        # the request URL/token, the workflow doesn't have `id-token: write`
+        # or it's being run in an environment that strips them.
+        run: |
+          set -euo pipefail
+          check() { [ -n "${!1:-}" ] && echo "✔ $1 set (len=${#1})" || echo "✘ $1 missing"; }
+          check ACTIONS_ID_TOKEN_REQUEST_URL
+          check ACTIONS_ID_TOKEN_REQUEST_TOKEN
+          echo "---"
+          echo "npm registry: $(npm config get registry)"
+          echo "npm userconfig: $(npm config get userconfig)"
+          test -f "$(npm config get userconfig)" && cat "$(npm config get userconfig)" | sed 's/_authToken=.*/_authToken=<redacted>/' || echo "no userconfig file"
+
       - name: Decide release vs dev publish
         id: target
         run: |
@@ -141,9 +166,20 @@ jobs:
         env:
           ACTIONS_ID_TOKEN_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
           ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
+          # Tells npm to fall back to a non-existent token so it can't
+          # accidentally use cached classic auth from the runner — forces the
+          # OIDC handshake to be the only auth path in play.
+          NPM_CONFIG__AUTH_TOKEN: ''
+          NPM_CONFIG_REGISTRY: 'https://registry.npmjs.org/'
         run: |
+          set -euo pipefail
+          # --loglevel=verbose prints which auth method npm tried, the OIDC
+          # exchange URL, the request headers (with secrets redacted), and the
+          # exact registry error body. Indispensable for Trusted Publisher
+          # debugging.
           npm publish \
             --access public \
             --provenance \
             --tag ${{ steps.target.outputs.dist_tag }} \
-            --ignore-scripts
+            --ignore-scripts \
+            --loglevel=verbose
