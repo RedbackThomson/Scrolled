@@ -78,6 +78,8 @@ the Actions tab with `dry_run: true`. It uploads the packed tarball as an
 artifact so you can inspect it before flipping the toggle off.
 
 The published tarball contains only `dist/` (compiled JS + .d.ts +
-sourcemaps), `LICENSE`, and `README.md`. `publishConfig` in `package.json`
-rewrites `main`/`types`/`exports` to point at `dist/` so workspace consumers
-inside this monorepo continue to read `src/*.ts` directly.
+sourcemaps), `LICENSE`, and `README.md`. `main`/`types`/`exports` in
+`package.json` point directly at `dist/`; running tests or the export CLI
+inside this monorepo works without consulting the exports field (Vitest and
+the CLI use relative imports), so the dist-only exports don't get in the way
+of source-tree dev.

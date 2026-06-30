@@ -1,6 +1,6 @@
 {
   "name": "@scrolled/nav-graph",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Framework-agnostic graph core: IR types + Zod schema, an authoring DSL, a compiler (IR → runtime adjacency), and pathfinding (BFS + eligibility). The engine behind Scrolled Navigator; usable standalone in Node and the browser.",
   "license": "Apache-2.0",
@@ -29,30 +29,25 @@
     "README.md",
     "LICENSE"
   ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./ir": "./src/ir/index.ts",
-    "./dsl": "./src/dsl/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./ir": {
+      "types": "./dist/ir/index.d.ts",
+      "import": "./dist/ir/index.js"
+    },
+    "./dsl": {
+      "types": "./dist/dsl/index.d.ts",
+      "import": "./dist/dsl/index.js"
+    }
   },
   "publishConfig": {
-    "access": "public",
-    "main": "./dist/index.js",
-    "module": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "exports": {
-      ".": {
-        "types": "./dist/index.d.ts",
-        "import": "./dist/index.js"
-      },
-      "./ir": {
-        "types": "./dist/ir/index.d.ts",
-        "import": "./dist/ir/index.js"
-      },
-      "./dsl": {
-        "types": "./dist/dsl/index.d.ts",
-        "import": "./dist/dsl/index.js"
-      }
-    }
+    "access": "public"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
