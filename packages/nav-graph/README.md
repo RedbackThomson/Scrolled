@@ -52,23 +52,30 @@ against the trust relationship npm has on file for this package + workflow.
    That's it — npm will accept publishes only from this workflow file in this
    repo. No long-lived credentials live anywhere.
 
-**Cutting a release:**
-1. Bump `version` in `package.json` (semver: `0.x.y` while pre-stable).
-2. Commit + push to `main`.
-3. Tag the commit `nav-graph-v<version>` and push the tag:
-   ```
-   git tag nav-graph-v0.1.0
-   git push origin nav-graph-v0.1.0
-   ```
-4. The [Publish workflow](../../.github/workflows/nav-graph-publish.yml) runs
-   typecheck + tests + `tsc` build, verifies the tag matches the package
-   version, then calls `npm publish --provenance`. The OIDC handshake happens
-   inside the npm CLI; the published tarball gets a Sigstore-signed
-   provenance attestation that shows on the package page.
+**Release flow (pre-1.0 — fast iteration).** The
+[publish workflow](../../.github/workflows/nav-graph-publish.yml) runs on
+every push to `main` that touches `packages/nav-graph/**` and picks a mode
+based on whether `package.json`'s version is already on npm:
+
+| `package.json` version | What ships | npm dist-tag | Pull with |
+|---|---|---|---|
+| Not yet on npm (you bumped) | The version as-is | `latest` | `npm i @scrolled/nav-graph` |
+| Already on npm (unchanged) | `<version>-dev.<sha7>` | `dev` | `npm i @scrolled/nav-graph@dev` |
+
+So the day-to-day loop is just: edit code, commit, push. Each push gets a
+unique `0.1.0-dev.<sha7>` build under the `dev` tag — pullable immediately,
+pinnable by full version, never overwritten. When you're ready to cut a
+stable release, bump the version in `package.json` to a value that isn't on
+npm yet, push, and that publishes to `latest`.
+
+Either mode runs typecheck + tests + `tsc` build, then `npm publish
+--provenance`. The OIDC handshake happens inside the npm CLI; the tarball
+gets a Sigstore-signed provenance attestation that shows on the package
+page.
 
 **Dry-run a build without publishing:** trigger the workflow manually from
 the Actions tab with `dry_run: true`. It uploads the packed tarball as an
-artifact so you can inspect it.
+artifact so you can inspect it before flipping the toggle off.
 
 The published tarball contains only `dist/` (compiled JS + .d.ts +
 sourcemaps), `LICENSE`, and `README.md`. `publishConfig` in `package.json`
