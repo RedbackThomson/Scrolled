@@ -22,6 +22,7 @@ export function TravelEdgeView({
   targetPosition,
   markerEnd,
   markerStart,
+  selected,
 }: EdgeProps<TravelFlowEdge>) {
   const [path] = getBezierPath({
     sourceX,
@@ -36,7 +37,10 @@ export function TravelEdgeView({
       path={path}
       markerEnd={markerEnd}
       markerStart={markerStart}
-      style={{ stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1.5 }}
+      style={{
+        stroke: selected ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))',
+        strokeWidth: selected ? 2.25 : 1.5,
+      }}
     />
   );
 }

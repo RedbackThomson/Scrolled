@@ -17,8 +17,10 @@
     "@scrolled/ui": "workspace:*",
     "@xyflow/react": "^12.3.5",
     "lucide-react": "^0.451.0",
+    "nuqs": "^2.8.9",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "zustand": "^5.0.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
