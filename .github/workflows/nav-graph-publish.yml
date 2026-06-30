@@ -57,6 +57,13 @@ jobs:
           # where to go. No auth token is written — OIDC supplies the creds.
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Upgrade npm to an OIDC-capable version
+        # Node 20 LTS bundles npm 10.x, which has no Trusted Publisher / OIDC
+        # exchange. npm 11.5.1+ is required for `--provenance` to authenticate
+        # via the GitHub OIDC token instead of an NPM_TOKEN. Without this,
+        # `npm publish` falls back to no-auth and the registry returns 404.
+        run: npm install --global npm@latest
+
       - name: Decide release vs dev publish
         id: target
         run: |
