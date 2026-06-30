@@ -25,7 +25,7 @@ import {
 import { EntityIcon } from '@/components/entity-display/EntityIcon';
 import { EntityRow } from '@/components/entity-display/EntityRow';
 import { ListSortControl } from '@/components/common/ListSortControl';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@scrolled/ui';
 import { MapLink } from '@/components/entity-links';
 import { CollectionBadgeStrip } from '@/components/collections';
 import type { MapViewerHighlight } from '@/components/MapViewer';

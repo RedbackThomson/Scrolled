@@ -13,7 +13,7 @@
 import { createPortal } from 'react-dom';
 import { ArrowDown, ArrowUp, Settings2 } from 'lucide-react';
 import { usePopover } from '@/hooks/usePopover';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 import { useSetDisplayOptions } from '@/hooks/useCollections';
 import { useCollectionDisplay } from '@/stores/useCollectionDisplay';
 import type {

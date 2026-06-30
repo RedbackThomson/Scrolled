@@ -8,7 +8,7 @@ import { AppBootScreen } from '@/components/layout/AppBootScreen';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { StorageUnavailableScreen } from '@/components/layout/StorageUnavailableScreen';
 import { TopBar } from '@/components/layout/TopBar';
-import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTitle } from '@scrolled/ui';
 import { useFeatures } from '@/hooks/useFeatures';
 import { useDataState } from '@/hooks/useDataState';
 import { useStorageHealth } from '@/hooks/useStorageHealth';

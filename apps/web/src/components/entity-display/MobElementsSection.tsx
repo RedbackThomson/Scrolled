@@ -3,7 +3,7 @@ import {
   ELEMENT_STATUS_CLASSES,
   ELEMENT_STATUS_LABELS,
 } from '@/components/entity-display/mobElementsDisplay';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 
 export function MobElementsSection({ element }: { element: string | null }) {
   const statuses = parseMobElements(element);

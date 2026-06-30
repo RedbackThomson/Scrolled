@@ -3,10 +3,10 @@
 
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@scrolled/ui';
 import { useCreateCollection, useUpdateCollection } from '@/hooks/useCollections';
 import type { CollectionRecord } from '@/db/user';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 import { Modal } from './Modal';
 import { COLLECTION_ICONS, DEFAULT_COLLECTION_ICON, resolveCollectionIcon } from './iconRegistry';
 import {

@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 import { clamp } from '@scrolled/game-db/lib/math';
 import type { ProgressUpdate } from '@scrolled/game-db/lib/progress';
 

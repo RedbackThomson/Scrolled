@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Loader2, Upload } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@scrolled/ui';
 
 export type RestoreState =
   | { phase: 'pending' }

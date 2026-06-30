@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useCurrentUser } from '@scrolled/identity-core/react';
 import { useSyncStatus } from '@scrolled/sync-core/react';
 import { appConfig } from '@/config';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 import { presentSyncStatus } from './syncPresentation';
 
 // Sidebar colour per tone, matching the DB status block's palette.

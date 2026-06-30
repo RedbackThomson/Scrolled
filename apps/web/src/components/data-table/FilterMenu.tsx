@@ -29,12 +29,12 @@ import {
   CommandList,
   CommandItem,
   CommandEmpty,
-} from '@/components/ui/command';
-import { Button } from '@/components/ui/button';
+} from '@scrolled/ui';
+import { Button } from '@scrolled/ui';
 import { usePopover } from '@/hooks/usePopover';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import type { ColumnFilter } from '@/db';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 import { collectFilterable, type FilterableCol } from './Filterable';
 
 type Variant = 'button' | 'plus';

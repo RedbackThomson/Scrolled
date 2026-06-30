@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { AccountMenu } from '@/components/account/AccountMenu';
 import { PaletteTrigger } from '@/components/command-palette/PaletteTrigger';
-import { Button } from '@/components/ui/button';
+import { Button } from '@scrolled/ui';
 import { useSidebarLayout } from '@/stores/sidebarState';
 import { appConfig } from '@/config';
 

@@ -2,7 +2,7 @@ import { Bookmark, Cog, Home, LogIn, LogOut, User, Wrench } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCurrentUser, useIdentity } from '@scrolled/identity-core/react';
-import { CommandGroup, CommandItem as CommandItemPrimitive } from '@/components/ui/command';
+import { CommandGroup, CommandItem as CommandItemPrimitive } from '@scrolled/ui';
 import {
   ENTITY_KINDS,
   iconForEntity,

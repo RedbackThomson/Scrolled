@@ -1,5 +1,5 @@
 import { useRegisterSW } from 'virtual:pwa-register/react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@scrolled/ui';
 import { reloadForUpdate } from '@/lib/swReload';
 
 export function UpdatePrompt() {

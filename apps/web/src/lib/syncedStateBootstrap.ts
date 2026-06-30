@@ -19,7 +19,7 @@ import type { UserDatabase } from '@/db/user';
 import type { EntityKind } from '@/db';
 import { isAccentName } from '@/lib/accents';
 import { useAccent, ACCENT_SETTING_KEY } from '@/stores/accent';
-import { useTheme, THEME_SETTING_KEY } from '@/stores/theme';
+import { setThemePersistence, useTheme, THEME_SETTING_KEY } from '@scrolled/ui';
 
 const LEGACY_ENTITIES_KEY = 'scrolled.recents.entities';
 const LEGACY_QUERIES_KEY = 'scrolled.recents.queries';
@@ -94,6 +94,19 @@ export function bootstrapSyncedState(): void {
   if (started) return;
   started = true;
   const db = getUserDbClient();
+  // The user DB is the synced source of truth — wire it into the shared theme
+  // store. Navigator (and any minimal embedder) leaves this unwired so the
+  // store falls back to its localStorage mirror.
+  setThemePersistence({
+    persist: (mode) => {
+      void Promise.resolve()
+        .then(async () => {
+          if (mode === 'system') await db.deleteUserSetting(THEME_SETTING_KEY);
+          else await db.setUserSetting(THEME_SETTING_KEY, JSON.stringify(mode));
+        })
+        .catch(() => {});
+    },
+  });
   void (async () => {
     try {
       await migrateLegacyRecents(db);

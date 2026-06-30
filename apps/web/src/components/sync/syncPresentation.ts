@@ -12,7 +12,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { SyncStatus } from '@scrolled/sync-core';
-import type { BadgeTone } from '@/components/ui/badge';
+import type { BadgeTone } from '@scrolled/ui';
 
 export interface SyncPresentation {
   /** Short label for a chip or button (e.g. "Synced"). */

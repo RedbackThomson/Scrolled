@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/cn';
 
 // Tailwind can't build class names dynamically, so each tone is a full,
 // statically-analyzable string. Add a tone here rather than constructing

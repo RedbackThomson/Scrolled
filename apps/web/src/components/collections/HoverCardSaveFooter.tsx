@@ -4,7 +4,7 @@
 
 import { BookmarkPlus } from 'lucide-react';
 import type { CollectionEntityType } from '@/db/user';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 import { CollectionPicker } from './CollectionPicker';
 
 interface HoverCardSaveFooterProps {

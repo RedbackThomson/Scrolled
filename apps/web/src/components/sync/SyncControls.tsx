@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useSyncStatus } from '@scrolled/sync-core/react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@scrolled/ui';
 import { getUserDbClient } from '@/db/user';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 import { presentSyncStatus, formatLastSynced } from './syncPresentation';
 
 const TONE_TEXT: Record<string, string> = {

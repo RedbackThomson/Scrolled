@@ -5,7 +5,7 @@
 // so they aren't duplicated here. Renders nothing on the generic build.
 
 import { Package, RefreshCw } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@scrolled/ui';
 import { useDatasetUpdate } from '@/hooks/dataset/useDatasetUpdate';
 
 export function DatasetVersionTag({ collapsed }: { collapsed: boolean }) {

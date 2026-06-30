@@ -1,4 +1,4 @@
-import type { BadgeTone } from '@/components/ui/badge';
+import type { BadgeTone } from '@scrolled/ui';
 
 /**
  * Boolean metadata flags an item or equip can carry on its WZ `info` block.

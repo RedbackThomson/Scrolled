@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { CommandGroup, CommandItem as CommandItemPrimitive } from '@/components/ui/command';
+import { CommandGroup, CommandItem as CommandItemPrimitive } from '@scrolled/ui';
 import { getDbClient, type EntityKind } from '@/db';
 import { getSearchIndex, querySearch, type SearchHit } from '@/search';
 import { labelForEntityKind, routeForEntity } from '@/lib/entityRoutes';

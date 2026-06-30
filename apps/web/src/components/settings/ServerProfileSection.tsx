@@ -2,7 +2,7 @@ import { Gamepad2 } from 'lucide-react';
 import { useSettingsSection } from '@/components/settings/SettingsScrollSpy';
 import { BUILTIN_PROFILES } from '@scrolled/game-db/serverProfiles';
 import { useServerProfile, useSetServerProfile } from '@/hooks/useServerProfile';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 
 export function ServerProfileSection() {
   const sectionProps = useSettingsSection('server');

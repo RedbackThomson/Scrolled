@@ -2,7 +2,7 @@ import { UserCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCurrentUser, useIdentity } from '@scrolled/identity-core/react';
 import { useSettingsSection } from '@/components/settings/SettingsScrollSpy';
-import { Button } from '@/components/ui/button';
+import { Button } from '@scrolled/ui';
 import { SyncControls } from '@/components/sync/SyncControls';
 import { appConfig } from '@/config';
 import { oauthProviderLabel } from '@/lib/oauthProviders';

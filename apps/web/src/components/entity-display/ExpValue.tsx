@@ -1,4 +1,4 @@
-import { HoverPopover } from '@/components/common/HoverPopover';
+import { HoverPopover } from '@scrolled/ui';
 import { useServerProfile } from '@/hooks/useServerProfile';
 
 /**

@@ -1,6 +1,6 @@
 import { Database, Wrench } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { CommandGroup, CommandItem as CommandItemPrimitive } from '@/components/ui/command';
+import { CommandGroup, CommandItem as CommandItemPrimitive } from '@scrolled/ui';
 import { useCommandPalette } from '@/stores/useCommandPalette';
 import { appConfig } from '@/config';
 

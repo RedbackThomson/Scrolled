@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { DEFAULT_ACCENT, isAccentName, type AccentName } from '@/lib/accents';
-import { syncThemeColorMeta } from '@/lib/themeColorMeta';
+import { syncThemeColorMeta } from '@scrolled/ui';
 import { getUserDbClient } from '@/db/user';
 
 interface AccentStore {

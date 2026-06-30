@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Clock, History } from 'lucide-react';
-import { CommandGroup, CommandItem as CommandItemPrimitive } from '@/components/ui/command';
+import { CommandGroup, CommandItem as CommandItemPrimitive } from '@scrolled/ui';
 import { iconForEntity, labelForEntityKind, routeForEntity } from '@/lib/entityRoutes';
 import { useRecentEntities, useRecentQueries } from '@/lib/recents';
 import { useCommandPalette } from '@/stores/useCommandPalette';

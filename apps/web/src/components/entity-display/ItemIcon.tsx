@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { AlertTriangle, Package } from 'lucide-react';
 import { useIcon, type IconRef } from '@/hooks/useIcon';
 import { createLogger } from '@scrolled/game-db/lib/logger';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 
 const log = createLogger('icon-img');
 

@@ -8,7 +8,7 @@ import {
 import type { DatasetRecord } from '@/db';
 import { extractorLabel } from '@/components/common/extractorCatalog';
 import { shortHash } from '@/lib/hashFile';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 
 type Tone = 'green' | 'amber' | 'red' | 'gray';
 

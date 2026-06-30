@@ -95,6 +95,9 @@ importers:
       '@scrolled/sync-supabase':
         specifier: workspace:*
         version: link:../../packages/sync-supabase
+      '@scrolled/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@scrolled/wz':
         specifier: workspace:*
         version: link:../../packages/wz
@@ -478,6 +481,49 @@ importers:
         specifier: ^2.108.2
         version: 2.108.2
     devDependencies:
+      vitest:
+        specifier: ^2.1.2
+        version: 2.1.9(@types/node@22.19.19)(jsdom@25.0.1)(terser@5.48.0)
+
+  packages/ui:
+    dependencies:
+      '@radix-ui/react-dialog':
+        specifier: ^1.1.15
+        version: 1.1.15(@types/react-dom@18.3.7(@types/react@18.3.29))(@types/react@18.3.29)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
+      cmdk:
+        specifier: ^1.1.1
+        version: 1.1.1(@types/react-dom@18.3.7(@types/react@18.3.29))(@types/react@18.3.29)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      lucide-react:
+        specifier: ^0.451.0
+        version: 0.451.0(react@18.3.1)
+      tailwind-merge:
+        specifier: ^2.5.2
+        version: 2.6.1
+      tailwindcss-animate:
+        specifier: ^1.0.7
+        version: 1.0.7(tailwindcss@3.4.19(yaml@2.9.0))
+      zustand:
+        specifier: ^5.0.0
+        version: 5.0.13(@types/react@18.3.29)(immer@11.1.8)(react@18.3.1)(use-sync-external-store@1.6.0(react@18.3.1))
+    devDependencies:
+      '@types/react':
+        specifier: ^18.3.11
+        version: 18.3.29
+      '@types/react-dom':
+        specifier: ^18.3.0
+        version: 18.3.7(@types/react@18.3.29)
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
+      tailwindcss:
+        specifier: ^3.4.13
+        version: 3.4.19(yaml@2.9.0)
       vitest:
         specifier: ^2.1.2
         version: 2.1.9(@types/node@22.19.19)(jsdom@25.0.1)(terser@5.48.0)

@@ -1,6 +1,6 @@
 import { useRef, type ChangeEvent } from 'react';
 import { Upload } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@scrolled/ui';
 
 interface Props {
   accept?: string;

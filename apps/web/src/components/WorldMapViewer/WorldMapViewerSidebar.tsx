@@ -2,9 +2,9 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { MapPin, X } from 'lucide-react';
 import type { WorldMapMarkerWithMaps } from '@/db';
 import { MapHoverCard } from '@/components/entity-links';
-import { HoverPopover } from '@/components/common/HoverPopover';
+import { HoverPopover } from '@scrolled/ui';
 import { useEntitySummaryNames } from '@/hooks/useEntitySummaries';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 
 interface Props {
   markers: WorldMapMarkerWithMaps[];

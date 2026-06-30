@@ -5,7 +5,7 @@
 // users who understand the consequence (everything is lost on reload) take it.
 
 import { AlertTriangle, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@scrolled/ui';
 import { useStorageBypass } from '@/stores/storageBypass';
 import type { StorageFailure } from '@/hooks/useStorageHealth';
 

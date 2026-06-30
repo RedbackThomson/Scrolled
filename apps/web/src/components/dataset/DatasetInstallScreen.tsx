@@ -5,7 +5,7 @@
 
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@scrolled/ui';
 import { useFixedDatasetInstall } from '@/hooks/dataset/useFixedDatasetInstall';
 import { isAppUpdateRequired } from '@/hooks/dataset/errors';
 import { reloadForUpdate } from '@/lib/swReload';

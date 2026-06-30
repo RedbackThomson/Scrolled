@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Search } from 'lucide-react';
 import { useCommandPalette } from '@/stores/useCommandPalette';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 
 function detectMac(): boolean {
   if (typeof navigator === 'undefined') return false;

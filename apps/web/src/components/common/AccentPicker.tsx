@@ -1,7 +1,7 @@
 import { Check } from 'lucide-react';
 import { ACCENTS } from '@/lib/accents';
 import { useAccent } from '@/stores/accent';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 
 /**
  * Row of accent swatches. Reads and writes the accent store directly, so it

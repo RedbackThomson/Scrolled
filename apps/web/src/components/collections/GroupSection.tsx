@@ -13,7 +13,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Trash2, Pencil } from 'lucide-react';
 import { useDeleteGroup, useRenameGroup } from '@/hooks/useCollections';
 import { groupDndId } from './dndIds';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 
 interface GroupSectionProps {
   /** Null for the default group. */

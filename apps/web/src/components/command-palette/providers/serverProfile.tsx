@@ -1,5 +1,5 @@
 import { Gamepad2 } from 'lucide-react';
-import { CommandGroup, CommandItem as CommandItemPrimitive } from '@/components/ui/command';
+import { CommandGroup, CommandItem as CommandItemPrimitive } from '@scrolled/ui';
 import { useCommandPalette } from '@/stores/useCommandPalette';
 import { useServerProfile, useSetServerProfile } from '@/hooks/useServerProfile';
 import { BUILTIN_PROFILES } from '@scrolled/game-db/serverProfiles';

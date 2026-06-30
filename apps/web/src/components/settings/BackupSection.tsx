@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Archive, ChevronDown, Download, Loader2, Upload } from 'lucide-react';
 import { useSettingsSection } from '@/components/settings/SettingsScrollSpy';
-import { Button } from '@/components/ui/button';
+import { Button } from '@scrolled/ui';
 import { useExportBackup, useImportBackup, type BackupScope } from '@/hooks/useBackup';
 import { acceptForDesktop } from '@/lib/filePickerAccept';
 import { appConfig } from '@/config';

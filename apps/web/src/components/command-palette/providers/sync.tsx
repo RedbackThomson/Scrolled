@@ -2,7 +2,7 @@ import { LogIn, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCurrentUser } from '@scrolled/identity-core/react';
 import { useSyncStatus } from '@scrolled/sync-core/react';
-import { CommandGroup, CommandItem as CommandItemPrimitive } from '@/components/ui/command';
+import { CommandGroup, CommandItem as CommandItemPrimitive } from '@scrolled/ui';
 import { useCommandPalette } from '@/stores/useCommandPalette';
 import { appConfig } from '@/config';
 

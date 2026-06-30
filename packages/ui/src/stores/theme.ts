@@ -1,9 +1,27 @@
 import { create } from 'zustand';
-import { syncThemeColorMeta } from '@/lib/themeColorMeta';
-import { getUserDbClient } from '@/db/user';
+import { syncThemeColorMeta } from '../lib/themeColorMeta';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 export type ThemeResolved = 'light' | 'dark';
+
+/**
+ * Side channel for writing the explicit theme choice somewhere that survives
+ * a reload — Scrolled wires a user-DB-backed adapter; Navigator (and any
+ * minimal consumer) can ship the localStorage no-op below or a custom one.
+ * `persist` is fire-and-forget: the store never awaits it and ignores errors.
+ */
+export interface ThemePersistence {
+  persist(mode: ThemeMode): void;
+}
+
+const NOOP_PERSISTENCE: ThemePersistence = { persist: () => {} };
+
+let activePersistence: ThemePersistence = NOOP_PERSISTENCE;
+
+/** Install the persistence adapter. Call once at startup. */
+export function setThemePersistence(adapter: ThemePersistence): void {
+  activePersistence = adapter;
+}
 
 interface ThemeStore {
   /** User preference. */
@@ -17,13 +35,14 @@ interface ThemeStore {
   set: (theme: ThemeResolved) => void;
   /** Legacy: flip between light and dark (always resolves to an explicit mode). */
   toggle: () => void;
-  /** Apply a value loaded from the DB without writing it back. */
+  /** Apply a value loaded from the synced store without writing it back. */
   hydrate: (mode: ThemeMode) => void;
 }
 
-// localStorage stays the synchronous boot mirror; user_settings is the synced
-// source of truth. Only an explicit light/dark override syncs — "follow system"
-// is the per-device default, represented by the absence of the setting.
+// localStorage stays the synchronous boot mirror; the injected persistence
+// adapter is the synced source of truth. Only an explicit light/dark override
+// is persisted — "follow system" is the per-device default, represented by
+// the absence of the setting.
 const STORAGE_KEY = 'scrolled.theme';
 export const THEME_SETTING_KEY = 'theme';
 
@@ -58,15 +77,11 @@ function apply(mode: ThemeMode): ThemeResolved {
 }
 
 function persist(mode: ThemeMode): void {
-  // Deferred + swallowed so the worker construction never throws into a
-  // synchronous caller (or a test env without Workers).
-  void Promise.resolve()
-    .then(async () => {
-      const db = getUserDbClient();
-      if (mode === 'system') await db.deleteUserSetting(THEME_SETTING_KEY);
-      else await db.setUserSetting(THEME_SETTING_KEY, JSON.stringify(mode));
-    })
-    .catch(() => {});
+  try {
+    activePersistence.persist(mode);
+  } catch {
+    // Persistence is a side channel; failures must never disturb the store.
+  }
 }
 
 const initialMode = readInitial();

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plug, PlugZap, ListTree } from 'lucide-react';
-import { CommandGroup, CommandItem as CommandItemPrimitive } from '@/components/ui/command';
+import { CommandGroup, CommandItem as CommandItemPrimitive } from '@scrolled/ui';
 import { useCommandPalette } from '@/stores/useCommandPalette';
 import {
   DEFAULT_BRIDGE_SETTINGS,

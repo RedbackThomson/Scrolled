@@ -12,7 +12,7 @@ import {
   type VisibilityState,
 } from '@tanstack/react-table';
 import { Loader2, Search, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@scrolled/ui';
 import {
   Table,
   TableBody,
@@ -20,7 +20,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from '@scrolled/ui';
 import { DisplayOptionsMenu } from './DisplayOptionsMenu';
 import { FilterMenu } from './FilterMenu';
 import { FilterBadges } from './FilterBadges';

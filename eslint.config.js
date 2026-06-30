@@ -203,5 +203,28 @@ export default tseslint.config(
     },
   },
 
+  // @scrolled/ui is the shared design system: React-aware, but a leaf among
+  // @scrolled/* — it must not depend on game-db, the extractor, identity, or any
+  // other workspace package. Keeps both apps able to consume it without
+  // dragging in app-specific machinery. See docs/navigator_implementation.md §7.
+  {
+    files: ['packages/ui/**/*.{ts,tsx}'],
+    plugins: { '@typescript-eslint': tseslint.plugin },
+    rules: {
+      '@typescript-eslint/no-restricted-imports': [
+        BOUNDARY_SEVERITY,
+        {
+          patterns: [
+            {
+              group: ['@scrolled/*'],
+              message:
+                '@scrolled/ui is a leaf design-system package — it must not import other @scrolled/* packages. See docs/navigator_implementation.md §7.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   prettier,
 );

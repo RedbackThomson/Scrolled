@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 import { EntityLink } from '@/components/entity-links';
 import type { EntityKind } from '@scrolled/game-db/db/types';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 import { useShowEntityIds } from '@/stores/showEntityIds';
 
 interface Props {

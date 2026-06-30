@@ -1,7 +1,7 @@
 // Tiny pill used by the palette and (optionally) the top bar. Hidden when
 // the bridge is idle — there's no value showing "Disabled" everywhere.
 
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 import { useBridgeStatus } from '../bridge/status';
 
 export function BridgeStatusIndicator({ className }: { className?: string }) {

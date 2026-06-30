@@ -4,7 +4,7 @@ import { EntityLink } from '@/components/entity-links';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 import { useRemoveMember, useUpdateMember } from '@/hooks/useCollections';
 import type { CollectionMember } from '@/db/user';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 
 interface MemberRowProps {
   member: CollectionMember;

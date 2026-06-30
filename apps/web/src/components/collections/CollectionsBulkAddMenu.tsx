@@ -7,10 +7,10 @@ import { useEffect, useState } from 'react';
 import { usePopover } from '@/hooks/usePopover';
 import { createPortal } from 'react-dom';
 import { BookmarkPlus, ChevronDown, Loader2, Plus, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@scrolled/ui';
 import { useBulkAddMembers, useCollectionsList, useCreateCollection } from '@/hooks/useCollections';
 import type { CollectionEntityType, EntityRef } from '@/db/user';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 
 interface CollectionsBulkAddMenuProps {
   entityType: CollectionEntityType;

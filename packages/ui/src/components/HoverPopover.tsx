@@ -17,7 +17,7 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/cn';
 
 interface HoverPopoverProps {
   /** The trigger — typically a Link or anchor. Wrapped in an inline span. */

@@ -8,7 +8,7 @@
 import { useDroppable } from '@dnd-kit/core';
 import { FolderPlus } from 'lucide-react';
 import { NEW_GROUP_DROPZONE_ID } from './dndIds';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 
 interface NewGroupButtonProps {
   /** Whether a drag is currently in progress — controls highlight + the

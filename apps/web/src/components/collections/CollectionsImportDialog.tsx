@@ -9,7 +9,7 @@
 
 import { useState, type ChangeEvent } from 'react';
 import { AlertCircle, FileJson, Loader2, Upload } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@scrolled/ui';
 import { useImportJson } from '@/hooks/useCollections';
 import {
   collectionsExportSchema,
@@ -17,7 +17,7 @@ import {
   type ImportConflictMode,
   type ImportReport,
 } from '@/db/user/collectionsJson';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 import { Modal } from './Modal';
 
 interface CollectionsImportDialogProps {

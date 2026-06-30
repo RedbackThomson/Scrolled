@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Filter, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 import { ALL_EQUIP_CLASSES, type EquipClass } from '@scrolled/game-db/domain/equipJobs';
 import { useCharacterPreferences, type Gender } from '@/stores/characterPreferences';
 

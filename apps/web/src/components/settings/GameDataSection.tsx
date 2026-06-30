@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Database, Loader2, Trash2, Upload } from 'lucide-react';
 import { useSettingsSection } from '@/components/settings/SettingsScrollSpy';
-import { Button } from '@/components/ui/button';
+import { Button } from '@scrolled/ui';
 import { getDbClient } from '@/db';
 import { RunCard } from '@/components/settings/RunCard';
 

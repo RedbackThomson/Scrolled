@@ -11,12 +11,12 @@ import {
   Save,
 } from 'lucide-react';
 import { FilePicker } from '@/components/data/FilePicker';
-import { Button } from '@/components/ui/button';
+import { Button } from '@scrolled/ui';
 import { ExtractAllPanel } from '@/components/data/ExtractAllPanel';
 import { ProgressBar } from '@/components/common/ProgressBar';
 import { getParserClient, type WzNodeInfo, type WzMapleVersionName } from '@/parser';
 import { getDbClient } from '@/db';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 import { buildReport } from '@/lib/diagnosticsReport';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import type { ProgressUpdate } from '@scrolled/game-db/lib/progress';

@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { List, Loader2 } from 'lucide-react';
 import { Modal } from '@/components/collections';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@scrolled/ui';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { GraphicViewerCanvas } from './GraphicViewerCanvas';
 import { GraphicViewerLayerControls } from './GraphicViewerLayerControls';

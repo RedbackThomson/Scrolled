@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 import type { LayerDescriptor, LayerVisibility } from './types';
 
 interface GraphicViewerLayerControlsProps {

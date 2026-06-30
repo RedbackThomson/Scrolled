@@ -13,7 +13,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { usePopover } from '@/hooks/usePopover';
 import { createPortal } from 'react-dom';
 import { Check, Loader2, Plus, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@scrolled/ui';
 import {
   useCollectionsList,
   useCreateCollection,
@@ -22,7 +22,7 @@ import {
   useUpdateMember,
 } from '@/hooks/useCollections';
 import type { CollectionEntityType, MembershipBadge } from '@/db/user';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 
 interface CollectionPickerProps {
   entityType: CollectionEntityType;

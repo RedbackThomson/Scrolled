@@ -10,12 +10,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Bookmark, ChevronDown, Loader2, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@scrolled/ui';
 import { usePopover } from '@/hooks/usePopover';
 import { useDeletePinnedSearch, usePinnedSearches } from '@/hooks/usePinnedSearches';
 import { listingRouteForEntity } from '@/lib/entityRoutes';
 import type { CollectionEntityType } from '@/db/user';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 
 interface Props {
   entity: CollectionEntityType;

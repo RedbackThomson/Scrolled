@@ -6,10 +6,10 @@
 
 import { Link } from 'react-router-dom';
 import { BookmarkPlus } from 'lucide-react';
-import { HoverPopover } from '@/components/common/HoverPopover';
+import { HoverPopover } from '@scrolled/ui';
 import { useMembership } from '@/hooks/useCollections';
 import type { CollectionEntityType, MembershipBadge } from '@/db/user';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 import { CollectionPicker } from './CollectionPicker';
 import { resolveCollectionIcon } from './iconRegistry';
 import { resolveCollectionColor } from './colorRegistry';

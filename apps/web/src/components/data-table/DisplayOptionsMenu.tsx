@@ -10,7 +10,7 @@ import { createPortal } from 'react-dom';
 import type { Table } from '@tanstack/react-table';
 import { ArrowDown, ArrowUp, Settings2 } from 'lucide-react';
 import { usePopover } from '@/hooks/usePopover';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 import type { TableUrlState, TableUrlStatePatch, TableSortDir } from './useTableUrlState';
 
 interface DisplayOptionsMenuProps<TData> {

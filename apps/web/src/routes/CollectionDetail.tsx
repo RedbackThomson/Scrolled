@@ -17,7 +17,7 @@ import {
   PinOff,
   Trash2,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@scrolled/ui';
 import {
   CollectionFormDialog,
   downloadJson,
@@ -43,7 +43,7 @@ import {
 } from '@/hooks/useCollections';
 import type { CollectionEntityType, CollectionGroup, CollectionMember } from '@/db/user';
 import { COLLECTION_ENTITY_TYPES } from '@/db/user';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 
 const EMPTY_MEMBERS: readonly CollectionMember[] = [];
 const EMPTY_GROUPS: readonly CollectionGroup[] = [];

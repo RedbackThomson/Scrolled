@@ -1,6 +1,6 @@
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import type { Features } from '@/hooks/useFeatures';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 import { ALL_EXTRACTOR_KEYS, type ExtractorKey } from '@scrolled/extractor/builder/extractStats';
 import { EXTRACTOR_DEPS } from '@scrolled/extractor/builder/extractorDeps';
 import { EXTRACTOR_CARD_META } from '@/components/common/extractorCatalog';

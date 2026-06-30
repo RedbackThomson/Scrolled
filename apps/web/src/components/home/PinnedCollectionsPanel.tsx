@@ -7,7 +7,7 @@ import { ArrowRight, Pin } from 'lucide-react';
 import { resolveCollectionColor } from '@/components/collections/colorRegistry';
 import { resolveCollectionIcon } from '@/components/collections/iconRegistry';
 import { useCollectionsList } from '@/hooks/useCollections';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 import { HomeSection } from './HomeSection';
 
 export function PinnedCollectionsPanel() {

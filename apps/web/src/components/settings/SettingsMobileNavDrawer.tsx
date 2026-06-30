@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { SettingsNavList } from '@/components/settings/SettingsSectionNav';
-import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTitle } from '@scrolled/ui';
 import { useSidebarLayout } from '@/stores/sidebarState';
 
 export function SettingsMobileNavDrawer() {

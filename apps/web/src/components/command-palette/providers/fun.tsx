@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Dices } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { CommandGroup, CommandItem as CommandItemPrimitive } from '@/components/ui/command';
+import { CommandGroup, CommandItem as CommandItemPrimitive } from '@scrolled/ui';
 import { getDbClient, type EntityKind } from '@/db';
 import { ENTITY_KINDS, labelForEntityKind, routeForEntity } from '@/lib/entityRoutes';
 import { useCommandPalette } from '@/stores/useCommandPalette';

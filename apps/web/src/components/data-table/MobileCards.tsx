@@ -2,7 +2,7 @@ import { Fragment, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Loader2 } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 
 interface Props<TData> {
   data: readonly TData[];

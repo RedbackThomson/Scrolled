@@ -1,10 +1,10 @@
 import { Activity, Database, Loader2, Package, RefreshCw } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useSettingsSection } from '@/components/settings/SettingsScrollSpy';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@scrolled/ui';
 import { useDatasetUpdate } from '@/hooks/dataset/useDatasetUpdate';
 import { getDbClient } from '@/db';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 import { useMemo } from 'react';
 
 export function LibraryStatusSection() {

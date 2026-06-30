@@ -14,7 +14,7 @@ import {
 } from '@/components/layout/DetailPageLayout';
 import { EntityRow } from '@/components/entity-display/EntityRow';
 import { ItemIcon } from '@/components/entity-display/ItemIcon';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@scrolled/ui';
 import { MetadataFlagBadges } from '@/components/entity-display/MetadataFlagBadges';
 import { EQUIP_FLAG_ORDER } from '@/components/entity-display/metadataFlags';
 import { ListSortControl } from '@/components/common/ListSortControl';

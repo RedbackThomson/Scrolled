@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Shield } from 'lucide-react';
 import { useSettingsSection } from '@/components/settings/SettingsScrollSpy';
 import { isAnalyticsAvailable, isAnalyticsOptedOut, setAnalyticsOptOut } from '@/analytics';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 
 export function PrivacySection() {
   if (!isAnalyticsAvailable()) return null;

@@ -5,7 +5,7 @@ import {
   getSettingsNavItems,
   type SettingsSectionNavItem,
 } from '@/components/settings/settingsNavConfig';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 
 interface SettingsNavListProps {
   onNavigate?: () => void;

@@ -2,7 +2,7 @@ import { useMemo, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { GitBranch, ScrollText } from 'lucide-react';
-import { HoverPopover } from '@/components/common/HoverPopover';
+import { HoverPopover } from '@scrolled/ui';
 import { HoverCardSaveFooter } from '@/components/collections';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/hooks/useFeatures';

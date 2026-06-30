@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useCurrentUser, useIdentity } from '@scrolled/identity-core/react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@scrolled/ui';
 import { appConfig } from '@/config';
 import { oauthProviderLabel } from '@/lib/oauthProviders';
 import { usePageTitle } from '@/hooks/usePageTitle';

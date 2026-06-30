@@ -2,7 +2,7 @@ import { GitBranch, Map as MapIcon, ScrollText, Skull, Sparkles, Users } from 'l
 import { EntityIcon } from '@/components/entity-display/EntityIcon';
 import { ItemIcon } from '@/components/entity-display/ItemIcon';
 import type { EntityKind } from '@scrolled/game-db/db/types';
-import { cn } from '@/lib/utils';
+import { cn } from '@scrolled/ui';
 
 interface Props {
   entity: EntityKind;
