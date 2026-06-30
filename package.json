@@ -18,6 +18,8 @@
     "build:fixed": "pnpm --filter @scrolled/web build:fixed",
     "build:identity": "pnpm --filter @scrolled/web build:identity",
     "preview": "pnpm --filter @scrolled/web preview",
+    "dev:navigator": "pnpm --filter @scrolled/navigator dev",
+    "build:navigator": "pnpm --filter @scrolled/navigator build",
     "dataset:build": "pnpm --filter @scrolled/extractor dataset:build",
     "nav-graph:export": "pnpm --filter @scrolled/nav-graph export",
     "typecheck": "pnpm -r typecheck",

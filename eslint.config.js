@@ -203,6 +203,22 @@ export default tseslint.config(
     },
   },
 
+  // apps/navigator display code: identity-aware not auth-provider-aware, sync-aware
+  // not sync-provider-aware, and must go through @scrolled/game-db (types only) for
+  // any read concerns — it must never reach the write path. Mirrors the apps/web
+  // block, minus the identity/sync bootstrap-shim carve-outs since Navigator
+  // bundles neither.
+  {
+    files: ['apps/navigator/src/**/*.{ts,tsx}'],
+    plugins: { '@typescript-eslint': tseslint.plugin },
+    rules: {
+      '@typescript-eslint/no-restricted-imports': [
+        BOUNDARY_SEVERITY,
+        { patterns: [noExtractorInDisplay, noCloudIdentityInCore, noCloudSyncInCore] },
+      ],
+    },
+  },
+
   // @scrolled/ui is the shared design system: React-aware, but a leaf among
   // @scrolled/* — it must not depend on game-db, the extractor, identity, or any
   // other workspace package. Keeps both apps able to consume it without
