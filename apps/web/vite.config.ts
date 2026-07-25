@@ -86,11 +86,16 @@ export default defineConfig(({ mode }) => {
           globPatterns: ['**/*.{js,css,html,wasm,woff2,svg,png,ico,webp}'],
           // Hosted dataset artifacts (a fixed deployment copies them under
           // `datasets/`) are large and installed into OPFS at runtime — never
-          // precache them, even if the patterns above are broadened later.
-          globIgnores: ['**/datasets/**'],
+          // precache them. The `navigator/` subdir is a sibling app staged
+          // into dist-fixed/ by co-deployments (see scrolled-mapleroyals's
+          // publish.yml); the wiki's SW must not slurp its assets.
+          globIgnores: ['**/datasets/**', '**/navigator/**'],
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
           navigateFallback: `${basePath}index.html`,
-          navigateFallbackDenylist: [/^\/datasets\//],
+          // `/datasets/*` is a data-only subtree; `/navigator/*` is a sibling
+          // SPA and must handle its own navigations even when the wiki's SW is
+          // active on the same origin.
+          navigateFallbackDenylist: [/^\/datasets\//, /^\/navigator\//],
           cleanupOutdatedCaches: true,
         },
       }),

@@ -88,6 +88,14 @@ export interface AppConfig {
   identity: IdentityConfig;
   /** Cross-device sync, gated on cloud identity. */
   sync: SyncConfig;
+  /**
+   * Where to reach the sibling Navigator app, when this deployment ships one.
+   * A root-relative path (`/navigator/`) for co-deployments that stage
+   * Navigator into the wiki's dist, or a full origin for a separate deploy.
+   * Absent when the deployment doesn't offer Navigator — the sidebar link is
+   * hidden in that case.
+   */
+  navigatorUrl?: string;
 }
 
 export type RawEnv = Record<string, string | undefined>;
@@ -173,9 +181,22 @@ export function resolveSync(env: RawEnv, identity: IdentityConfig): SyncConfig {
  * throws — failing the build loudly is preferable to shipping a site that can
  * never install its dataset.
  */
+/**
+ * Where the sibling Navigator app is reachable, if this deployment ships one.
+ * Unset (or an empty/whitespace value) means no Navigator — the wiki hides the
+ * sidebar link entirely. Kept as an opaque string (no origin validation) so
+ * co-deployments can pass a root-relative path like `/navigator/` and separate
+ * deploys can pass a full origin.
+ */
+export function resolveNavigatorUrl(env: RawEnv): string | undefined {
+  const raw = env.VITE_NAVIGATOR_URL?.trim();
+  return raw && raw.length > 0 ? raw : undefined;
+}
+
 export function resolveAppConfig(env: RawEnv): AppConfig {
   const identity = resolveIdentity(env);
   const sync = resolveSync(env, identity);
+  const navigatorUrl = resolveNavigatorUrl(env);
   const accountFeatures = {
     enableAccounts: identity.mode === 'cloud',
     accountMenu: identity.mode === 'cloud',
@@ -188,6 +209,7 @@ export function resolveAppConfig(env: RawEnv): AppConfig {
       features: { ...GENERIC_FEATURES, ...accountFeatures },
       identity,
       sync,
+      navigatorUrl,
     };
   }
 
@@ -213,5 +235,6 @@ export function resolveAppConfig(env: RawEnv): AppConfig {
     fixedDataset: { family, channel, repositoryBaseUrl },
     identity,
     sync,
+    navigatorUrl,
   };
 }

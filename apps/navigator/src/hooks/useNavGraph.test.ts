@@ -5,7 +5,7 @@ import { useNavGraph } from './useNavGraph';
 
 describe('useNavGraph', () => {
   it('compiles the default authored graph', () => {
-    const { result } = renderHook(() => useNavGraph(DEFAULT_GRAPH_ID));
+    const { result } = renderHook(() => useNavGraph());
     expect(result.current.nodes.size).toBeGreaterThan(0);
     expect(result.current.source.profileId).toBe(DEFAULT_GRAPH_ID);
   });

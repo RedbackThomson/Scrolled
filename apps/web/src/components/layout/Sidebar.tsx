@@ -7,6 +7,7 @@ import {
   Bookmark,
   CheckCircle2,
   ChevronRight,
+  Compass,
   GitBranch,
   Loader2,
   Package,
@@ -370,6 +371,14 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
             aria-hidden
             className={cn('border-border my-2 border-t', collapsed && 'mx-1')}
           />
+          {appConfig.navigatorUrl && (
+            <ExternalNavItem
+              href={appConfig.navigatorUrl}
+              icon={Compass}
+              label="Open navigator"
+              collapsed={collapsed}
+            />
+          )}
           <NavItem to="/settings" icon={SettingsIcon} label="Settings" collapsed={collapsed} />
         </ul>
       </nav>
@@ -669,6 +678,41 @@ function NavItem({
         <Icon className="h-4 w-4" />
         {!collapsed && label}
       </NavLink>
+    </li>
+  );
+}
+
+/**
+ * A sibling-app link that leaves the wiki SPA entirely (Navigator lives at its
+ * own subpath / origin — client-side routing would land on the wiki NotFound
+ * route). Same shape as `NavItem` but uses a real `<a href>` so the browser
+ * does a full navigation.
+ */
+function ExternalNavItem({
+  href,
+  icon: Icon,
+  label,
+  collapsed,
+}: {
+  href: string;
+  icon: LucideIcon;
+  label: string;
+  collapsed?: boolean;
+}) {
+  return (
+    <li>
+      <a
+        href={href}
+        title={collapsed ? label : undefined}
+        aria-label={collapsed ? label : undefined}
+        className={cn(
+          'text-sidebar-muted hover:bg-accent hover:text-accent-foreground flex items-center rounded-md text-sm font-medium transition-colors',
+          collapsed ? 'justify-center p-2' : 'gap-2 px-3 py-2',
+        )}
+      >
+        <Icon className="h-4 w-4" />
+        {!collapsed && label}
+      </a>
     </li>
   );
 }
