@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Compass,
+  ExternalLink,
   GitBranch,
   Loader2,
   Package,
@@ -375,7 +376,7 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
             <ExternalNavItem
               href={appConfig.navigatorUrl}
               icon={Compass}
-              label="Open navigator"
+              label="Navigator"
               collapsed={collapsed}
             />
           )}
@@ -703,6 +704,8 @@ function ExternalNavItem({
     <li>
       <a
         href={href}
+        target="_blank"
+        rel="noreferrer"
         title={collapsed ? label : undefined}
         aria-label={collapsed ? label : undefined}
         className={cn(
@@ -710,8 +713,13 @@ function ExternalNavItem({
           collapsed ? 'justify-center p-2' : 'gap-2 px-3 py-2',
         )}
       >
-        <Icon className="h-4 w-4" />
-        {!collapsed && label}
+        <Icon className="h-4 w-4 shrink-0" />
+        {!collapsed && (
+          <>
+            <span className="flex-1 truncate">{label}</span>
+            <ExternalLink className="h-3 w-3 shrink-0 opacity-70" aria-hidden />
+          </>
+        )}
       </a>
     </li>
   );

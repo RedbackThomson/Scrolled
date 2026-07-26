@@ -19,11 +19,11 @@ export function AppShell({ children }: AppShellProps) {
             <a
               href={wikiUrl}
               className={cn(
-                'hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring focus-visible:ring-offset-background -ml-2 inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+                'hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring focus-visible:ring-offset-background -ml-1 inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
               )}
             >
-              <ArrowLeft className="h-4 w-4" aria-hidden />
-              Back to wiki
+              <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
+              Back to Wiki
             </a>
           ) : null}
           <h1 className="text-sm font-semibold tracking-tight">Navigator</h1>
