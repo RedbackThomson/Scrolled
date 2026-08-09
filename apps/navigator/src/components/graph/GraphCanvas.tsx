@@ -1,89 +1,174 @@
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Background,
   Controls,
   MarkerType,
   MiniMap,
   ReactFlow,
+  ReactFlowProvider,
+  useReactFlow,
+  type Edge,
   type EdgeTypes,
+  type Node,
   type NodeTypes,
 } from '@xyflow/react';
-import type { NavGraph, NodeId, PathResult, TravelEdge } from '@scrolled/nav-graph';
+import type { GroupId, NavGraph } from '@scrolled/nav-graph';
 
-import { dagreLayout } from '@/lib/layout/dagreLayout';
+import { collapseView, type DisplayNode } from '@/lib/graph/collapseView';
+import {
+  activeSteps,
+  pathEdgeKeys as computePathEdgeKeys,
+  pathNodeIds as computePathNodeIds,
+} from '@/lib/graph/pathHelpers';
+import { nestedLayout } from '@/lib/layout/nestedLayout';
 import { useDirections } from '@/stores/useDirections';
 import { useEndpoints } from '@/hooks/useEndpoints';
 
-import {
-  AreaNodeView,
-  type AreaFlowNode,
-  type AreaHighlight,
-} from './AreaNodeView';
-import { TravelEdgeView, type TravelFlowEdge } from './TravelEdgeView';
+import { AreaNodeView, type AreaHighlight } from './AreaNodeView';
+import { RegionNodeView } from './RegionNodeView';
+import { RegionContainerView } from './RegionContainerView';
+import { TravelEdgeView } from './TravelEdgeView';
 
-const nodeTypes: NodeTypes = { area: AreaNodeView };
+const nodeTypes: NodeTypes = {
+  area: AreaNodeView,
+  region: RegionNodeView,
+  'region-container': RegionContainerView,
+};
 const edgeTypes: EdgeTypes = { travel: TravelEdgeView };
 
 export interface GraphCanvasProps {
   graph: NavGraph;
 }
 
-export function GraphCanvas({ graph }: GraphCanvasProps) {
+export function GraphCanvas(props: GraphCanvasProps) {
+  return (
+    <ReactFlowProvider>
+      <GraphCanvasInner {...props} />
+    </ReactFlowProvider>
+  );
+}
+
+function GraphCanvasInner({ graph }: GraphCanvasProps) {
   const result = useDirections((s) => s.result);
   const { fromId, toId } = useEndpoints(graph);
+  const { fitView } = useReactFlow();
 
-  // Layout (expensive) memoizes on the graph alone — endpoint/highlight changes
-  // shouldn't re-run dagre.
-  const layout = useMemo(() => {
-    const nodeWidth = 180;
-    const nodeHeight = 64;
-    const positions = dagreLayout(graph, { nodeWidth, nodeHeight });
-    return { positions, nodeWidth, nodeHeight };
-  }, [graph]);
+  // Regions the user has opened by hand. Route regions expand on top of this
+  // (see collapseView), so removing one here never hides a node on the route.
+  const [manualExpanded, setManualExpanded] = useState<ReadonlySet<GroupId>>(() => new Set());
 
-  const { nodes, edges } = useMemo(() => {
-    const pathSteps = activeSteps(result);
-    const pathEdges = pathEdgeIds(graph, pathSteps);
-    const pathNodes = pathNodeIds(pathSteps);
+  const { pathNodes, pathEdges } = useMemo(() => {
+    const steps = activeSteps(result);
+    return {
+      pathNodes: computePathNodeIds(steps),
+      pathEdges: computePathEdgeKeys(graph, steps),
+    };
+  }, [graph, result]);
 
-    const flowNodes: AreaFlowNode[] = [...graph.nodes.values()].map((node) => {
-      const position = layout.positions.get(node.id) ?? { x: 0, y: 0 };
-      const groupName = node.group ? graph.groups.get(node.group)?.name : undefined;
+  const view = useMemo(
+    () =>
+      collapseView({ graph, manualExpanded, pathNodeIds: pathNodes, pathEdgeKeys: pathEdges }),
+    [graph, manualExpanded, pathNodes, pathEdges],
+  );
+
+  const layout = useMemo(() => nestedLayout(view.nodes, view.edges), [view]);
+
+  const routeActive = pathNodes.size > 0;
+
+  const nodes = useMemo<Node[]>(() => {
+    // React Flow requires a parent node to precede its children in the array.
+    const ordered = [...view.nodes].sort((a, b) => containerFirst(a) - containerFirst(b));
+    return ordered.map((n) => {
+      const position = layout.positions.get(n.id) ?? { x: 0, y: 0 };
+      const size = layout.sizes.get(n.id);
+
+      if (n.kind === 'region-container') {
+        return {
+          id: n.id,
+          type: 'region-container',
+          position,
+          draggable: false,
+          selectable: false,
+          style: { width: size?.width, height: size?.height },
+          data: { groupId: n.groupId, label: n.label, containsPath: n.containsPath ?? false },
+        } satisfies Node;
+      }
+
+      if (n.kind === 'region-collapsed') {
+        return {
+          id: n.id,
+          type: 'region',
+          position,
+          draggable: false,
+          data: {
+            groupId: n.groupId,
+            label: n.label,
+            areaCount: n.areaCount ?? 0,
+            dimmed: routeActive,
+          },
+        } satisfies Node;
+      }
+
+      const highlight: AreaHighlight =
+        n.nodeId === fromId ? 'start' : n.nodeId === toId ? 'end' : n.onPath ? 'path' : null;
+      const dimmed = routeActive && !n.onPath && n.nodeId !== fromId && n.nodeId !== toId;
       return {
-        id: node.id,
+        id: n.id,
         type: 'area',
         position,
-        width: layout.nodeWidth,
-        height: layout.nodeHeight,
-        data: {
-          nodeId: node.id,
-          label: node.name,
-          groupName,
-          highlight: nodeHighlight(node.id, fromId, toId, pathNodes),
-        },
-      };
+        draggable: false,
+        ...(n.parentId ? { parentId: n.parentId, extent: 'parent' as const } : {}),
+        data: { nodeId: n.nodeId, label: n.label, highlight, dimmed },
+      } satisfies Node;
     });
+  }, [view.nodes, layout, routeActive, fromId, toId]);
 
-    const flowEdges: TravelFlowEdge[] = graph.source.edges.map((edge, index) => {
-      const id = `${edge.from}->${edge.to}#${index}`;
-      const onPath = pathEdges.has(id);
-      const stroke = onPath ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))';
-      return {
-        id,
-        type: 'travel',
-        source: edge.from,
-        target: edge.to,
-        selected: onPath,
-        data: { method: edge.method, bidirectional: edge.bidirectional ?? false },
-        markerEnd: { type: MarkerType.ArrowClosed, color: stroke },
-        markerStart: edge.bidirectional
-          ? { type: MarkerType.ArrowClosed, color: stroke }
-          : undefined,
-      };
-    });
+  const edges = useMemo<Edge[]>(
+    () =>
+      view.edges.map((e) => {
+        const stroke = e.onPath ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))';
+        return {
+          id: e.id,
+          type: 'travel',
+          source: e.source,
+          target: e.target,
+          zIndex: e.onPath ? 1 : 0,
+          data: {
+            method: e.method,
+            bidirectional: e.bidirectional,
+            onPath: e.onPath,
+            count: e.count,
+            minor: e.minor,
+            dimmed: routeActive && !e.onPath,
+          },
+          markerEnd: { type: MarkerType.ArrowClosed, color: stroke },
+          markerStart: e.bidirectional
+            ? { type: MarkerType.ArrowClosed, color: stroke }
+            : undefined,
+        } satisfies Edge;
+      }),
+    [view.edges, routeActive],
+  );
 
-    return { nodes: flowNodes, edges: flowEdges };
-  }, [graph, layout, result, fromId, toId]);
+  // Re-frame whenever the visible set changes (route computed, region toggled).
+  useEffect(() => {
+    const id = window.requestAnimationFrame(() => fitView({ duration: 300, padding: 0.2 }));
+    return () => window.cancelAnimationFrame(id);
+  }, [fitView, view]);
+
+  const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
+    const groupId = (node.data as { groupId?: GroupId }).groupId;
+    if (!groupId) return;
+    if (node.type === 'region') {
+      setManualExpanded((prev) => new Set(prev).add(groupId));
+    } else if (node.type === 'region-container') {
+      setManualExpanded((prev) => {
+        const next = new Set(prev);
+        next.delete(groupId);
+        return next;
+      });
+    }
+  }, []);
 
   return (
     <ReactFlow
@@ -91,6 +176,9 @@ export function GraphCanvas({ graph }: GraphCanvasProps) {
       edges={edges}
       nodeTypes={nodeTypes}
       edgeTypes={edgeTypes}
+      onNodeClick={onNodeClick}
+      nodesDraggable={false}
+      nodesConnectable={false}
       fitView
       proOptions={{ hideAttribution: true }}
     >
@@ -101,49 +189,6 @@ export function GraphCanvas({ graph }: GraphCanvasProps) {
   );
 }
 
-function activeSteps(result: PathResult | null): readonly TravelEdge[] {
-  if (!result) return [];
-  if (result.status === 'found') return result.steps;
-  if (result.status === 'unreachable-when-filtered') return result.fallback?.steps ?? [];
-  return [];
-}
-
-// A path step may traverse a bidirectional source edge in either direction; we
-// want the single rendered edge highlighted regardless of direction.
-function pathEdgeIds(graph: NavGraph, steps: readonly TravelEdge[]): Set<string> {
-  const ids = new Set<string>();
-  for (const step of steps) {
-    for (let i = 0; i < graph.source.edges.length; i++) {
-      const src = graph.source.edges[i];
-      if (src.method !== step.method) continue;
-      const sameDir = src.from === step.from && src.to === step.to;
-      const reverseBi = src.bidirectional && src.from === step.to && src.to === step.from;
-      if (sameDir || reverseBi) {
-        ids.add(`${src.from}->${src.to}#${i}`);
-        break;
-      }
-    }
-  }
-  return ids;
-}
-
-function pathNodeIds(steps: readonly TravelEdge[]): Set<NodeId> {
-  const ids = new Set<NodeId>();
-  for (const step of steps) {
-    ids.add(step.from);
-    ids.add(step.to);
-  }
-  return ids;
-}
-
-function nodeHighlight(
-  id: NodeId,
-  fromId: string | null,
-  toId: string | null,
-  pathNodes: Set<NodeId>,
-): AreaHighlight {
-  if (fromId === id) return 'start';
-  if (toId === id) return 'end';
-  if (pathNodes.has(id)) return 'path';
-  return null;
+function containerFirst(n: DisplayNode): number {
+  return n.kind === 'region-container' ? 0 : 1;
 }

@@ -69,6 +69,13 @@ export interface TravelEdge {
    */
   seconds?: number;
   notes?: string;
+  /**
+   * Hide this edge from the default map to reduce clutter. Purely a rendering
+   * hint — pathfinding ignores it, so a `minor` edge is still routable and is
+   * drawn (highlighted) whenever it lies on the computed route. Use it for
+   * noisy or rarely-taken connections that would otherwise crowd the graph.
+   */
+  minor?: boolean;
 }
 
 export interface GroupDef {

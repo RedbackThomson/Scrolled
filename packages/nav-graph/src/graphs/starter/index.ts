@@ -68,6 +68,7 @@ export const starterGraph: NavGraphSource = defineGraph(
       via: 'Board the summit ferry',
       seconds: 480,
       notes: 'A long ride — instant with a fast-travel ticket.',
+      minor: true,
     });
   },
 );

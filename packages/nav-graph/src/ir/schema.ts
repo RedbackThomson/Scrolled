@@ -56,6 +56,7 @@ const travelEdgeSchema = z
     requirements: z.array(requirementSchema).optional(),
     seconds: z.number().positive().optional(),
     notes: z.string().optional(),
+    minor: z.boolean().optional(),
   })
   .superRefine((edge, ctx) => {
     if (

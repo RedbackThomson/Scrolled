@@ -36,6 +36,11 @@ export interface EdgeOpts {
    */
   both?: boolean;
   notes?: string;
+  /**
+   * Hide this edge from the default map (pathfinding is unaffected; it still
+   * draws when it's on the computed route). For noisy or rarely-taken links.
+   */
+  minor?: boolean;
 }
 
 /**
@@ -226,7 +231,8 @@ class Builder implements GraphBuilder {
   }
 
   private pushEdge(from: NodeId, to: NodeId, opts: EdgeBuildOpts): void {
-    const { method, defaultBidirectional, both, cost, require, ref, via, seconds, notes } = opts;
+    const { method, defaultBidirectional, both, cost, require, ref, via, seconds, notes, minor } =
+      opts;
     const requirements = mergeRequirements(cost, require);
     const bidirectional = both ?? defaultBidirectional;
     const edge: TravelEdge = {
@@ -239,6 +245,7 @@ class Builder implements GraphBuilder {
       ...(requirements ? { requirements } : {}),
       ...(seconds !== undefined ? { seconds } : {}),
       ...(notes !== undefined ? { notes } : {}),
+      ...(minor ? { minor: true } : {}),
     };
     this.edges.push(edge);
   }

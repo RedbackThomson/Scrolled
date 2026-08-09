@@ -9,6 +9,7 @@ export interface AreaNodeData extends Record<string, unknown> {
   label: string;
   groupName?: string;
   highlight?: AreaHighlight;
+  dimmed?: boolean;
 }
 
 export type AreaFlowNode = Node<AreaNodeData, 'area'>;
@@ -24,8 +25,9 @@ export function AreaNodeView({ data }: NodeProps<AreaFlowNode>) {
   return (
     <div
       className={cn(
-        'border-border bg-card text-card-foreground min-w-[140px] rounded-md border px-3 py-2 text-sm shadow-sm transition-[box-shadow]',
+        'border-border bg-card text-card-foreground min-w-[140px] rounded-md border px-3 py-2 text-sm shadow-sm transition-[box-shadow,opacity]',
         ringClass,
+        data.dimmed && 'opacity-40',
       )}
     >
       <div className="font-medium leading-tight">{data.label}</div>
