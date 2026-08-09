@@ -136,9 +136,12 @@ export type NodeId = string & { readonly __brand: 'NodeId' };
 export type GroupId = string & { readonly __brand: 'GroupId' };
 
 export interface AreaNode {
-  id: NodeId;          // 'kerning-hub'  (author-chosen)
-  name: string;        // display label (authored — see writing_conventions)
-  group?: GroupId;     // optional region cluster ('victoria') — author concept
+  id: NodeId;            // 'kerning-hub'  (author-chosen)
+  name: string;          // display label (authored — see writing_conventions)
+  group?: GroupId;       // optional region cluster ('victoria') — author concept
+  nearestTown?: NodeId;  // where a return-to-town scroll drops you (defaults to
+                         // self). Enables an optional `scroll` edge, gated by the
+                         // traveller's nearestTownScroll option in findPath.
   // No coordinates in MVP: layout is automatic (see §6).
   // No mapId: nodes are authored concepts, not game maps.
 }
@@ -349,10 +352,17 @@ Design notes:
 - **Unreachable handling (FR7) lives here**, not in the UI: Dijkstra once with the
   filter; if no path, Dijkstra again unfiltered and mark which steps the user
   can't satisfy, returning `status: 'unreachable-when-filtered'` + `fallback`.
-- **Routing is least-time Dijkstra** over walk-edge `seconds`; portal/npc/item/
-  skill transitions cost 0 (instant teleports) and untimed walks fall back to
-  `DEFAULT_WALK_SECONDS`. `findPath` returns `totalSeconds` alongside the steps.
-  With no times authored, uniform costs make this equivalent to fewest-hops BFS.
+- **Routing is least-time Dijkstra** over walk- and transport-edge `seconds`;
+  portal/npc/item/skill/scroll transitions cost 0 (instant teleports) and untimed
+  walks/transports fall back to their method default. `findPath` returns
+  `totalSeconds` alongside the steps. With no times authored, uniform costs make
+  this equivalent to fewest-hops BFS.
+- **Traveller options gate certain edges** in `findPath`, so a route never assumes
+  something the player lacks: `fastTravel` waives `transport` ride time (cost);
+  `nearestTownScroll` unlocks the synthesized `scroll` edges from each node to its
+  `nearestTown` (availability). Both default off. The scroll edges live only in
+  the compiled adjacency (from `AreaNode.nearestTown`), not `source.edges`, so
+  they route without cluttering the rendered graph.
 - **`toJSON` is the portability guarantee** the requirements asked for — a tiny
   CLI (`pnpm --filter @scrolled/nav-graph export`) writes the JSON so the graph can
   be shipped to a non-TS target without the authoring toolchain.

@@ -26,6 +26,7 @@ export type {
   EdgeOpts,
   GraphBuilder,
   NodeHandle,
+  NodeOpts,
   RegionScope,
   TimedEdgeOpts,
 } from './dsl/builder';

@@ -29,8 +29,9 @@ export function DirectionsPanel({ graph }: DirectionsPanelProps) {
       s.seconds == null &&
       (s.method === 'walk' || (s.method === 'transport' && !fastTravel)),
   );
-  // "on foot" is only right for a pure-walk route; label mixed routes neutrally.
-  const label = steps.some((s) => s.method === 'transport') ? 'travel time' : 'on foot';
+  // "on foot" is only right for a pure-walk route; label anything with a ride,
+  // teleport, or scroll neutrally.
+  const label = steps.every((s) => s.method === 'walk') ? 'on foot' : 'travel time';
 
   return (
     <aside className="border-border bg-background z-10 flex w-80 flex-none flex-col border-l">

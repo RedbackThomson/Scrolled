@@ -1,5 +1,14 @@
 import type { LucideIcon } from 'lucide-react';
-import { Footprints, MoreHorizontal, Package, Ship, Sparkles, Train, Users } from 'lucide-react';
+import {
+  Footprints,
+  MoreHorizontal,
+  Package,
+  Scroll,
+  Ship,
+  Sparkles,
+  Train,
+  Users,
+} from 'lucide-react';
 import { cn } from '@scrolled/ui';
 import { edgeSeconds, type NavGraph, type TravelEdge, type TravelMethod } from '@scrolled/nav-graph';
 
@@ -14,6 +23,7 @@ const METHOD_ICONS: Record<TravelMethod, LucideIcon> = {
   npc: Users,
   item: Package,
   skill: Sparkles,
+  scroll: Scroll,
   other: MoreHorizontal,
 };
 
@@ -24,6 +34,7 @@ const METHOD_LABELS: Record<TravelMethod, string> = {
   npc: 'NPC',
   item: 'Item',
   skill: 'Skill',
+  scroll: 'Return scroll',
   other: 'Other',
 };
 

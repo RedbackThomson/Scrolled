@@ -155,4 +155,15 @@ describe('defineGraph', () => {
       notes: 'fast-travel',
     });
   });
+
+  it('nearestTown accepts a node handle or an id string, storing the id', () => {
+    const source = defineGraph({ profileId: 'test' }, (g) => {
+      const town = g.node('town', 'Town');
+      g.node('dungeon', 'Dungeon', { nearestTown: town }); // handle
+      g.node('field', 'Field', { nearestTown: 'town' }); // id fallback
+    });
+    const byId = Object.fromEntries(source.nodes.map((n) => [n.id, n]));
+    expect(byId.dungeon.nearestTown).toBe('town');
+    expect(byId.field.nearestTown).toBe('town');
+  });
 });

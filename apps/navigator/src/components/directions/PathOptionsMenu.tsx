@@ -18,6 +18,11 @@ const OPTIONS: OptionDef[] = [
     label: 'Fast-travel ticket',
     description: 'Boats, trains and carpets are treated as instant.',
   },
+  {
+    key: 'nearestTownScroll',
+    label: 'Return scrolls',
+    description: 'Warp to the nearest town when it is quicker.',
+  },
 ];
 
 export function PathOptionsMenu() {

@@ -16,9 +16,13 @@ import {
 export interface PathOptions {
   /** The player holds a fast-travel ticket, making transport hops instant. */
   fastTravel: boolean;
+  /** The player carries return-to-nearest-town scrolls, enabling scroll edges. */
+  nearestTownScroll: boolean;
 }
 
-const DEFAULT_OPTIONS: PathOptions = { fastTravel: false };
+// Most players carry a fast-travel ticket and return scrolls, so both default
+// on; the menu (which auto-opens on first visit) lets them opt out.
+const DEFAULT_OPTIONS: PathOptions = { fastTravel: true, nearestTownScroll: true };
 
 /** The inputs of the last computed route, kept so option changes can recompute. */
 interface LastQuery {
@@ -48,7 +52,10 @@ interface DirectionsStore {
 }
 
 function route(query: LastQuery, options: PathOptions): PathResult {
-  return findPath(query.graph, query.from, query.to, { fastTravel: options.fastTravel });
+  return findPath(query.graph, query.from, query.to, {
+    fastTravel: options.fastTravel,
+    nearestTownScroll: options.nearestTownScroll,
+  });
 }
 
 export const useDirections = create<DirectionsStore>()(

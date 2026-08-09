@@ -10,6 +10,10 @@
 // over long walks; without it, transports cost their ride time and the router
 // may route around them.
 //
+// `scroll` edges (return-to-nearest-town) are *availability*-conditional: they
+// are traversable only when `nearestTownScroll` is set (the player carries
+// return scrolls). They are instant like other teleports when enabled.
+//
 // When an eligibility predicate is supplied:
 //   1. Run Dijkstra with the predicate pruning candidate edges.
 //   2. If the destination is reachable that way, return `status: 'found'`.
@@ -75,6 +79,12 @@ export interface FindPathOptions {
    * *reachability*: transports are always traversable either way.
    */
   fastTravel?: boolean;
+  /**
+   * When true, `scroll` edges (return to nearest town) are traversable — the
+   * traveller carries return scrolls. When false (default) they are skipped
+   * entirely, so a route never assumes a scroll the player doesn't have.
+   */
+  nearestTownScroll?: boolean;
 }
 
 export function findPath(
@@ -89,14 +99,15 @@ export function findPath(
   if (from === to) return { status: 'found', steps: [], totalSeconds: 0 };
 
   const cost: EdgeCostOptions = { fastTravel: opts.fastTravel };
+  const allowScroll = opts.nearestTownScroll ?? false;
   const filtered = opts.eligible
-    ? dijkstra(graph, from, to, cost, opts.eligible)
+    ? dijkstra(graph, from, to, cost, allowScroll, opts.eligible)
     : null;
   if (filtered) {
     return { status: 'found', steps: filtered.steps, totalSeconds: filtered.totalSeconds };
   }
 
-  const unfiltered = dijkstra(graph, from, to, cost);
+  const unfiltered = dijkstra(graph, from, to, cost, allowScroll);
   if (!unfiltered) return { status: 'unreachable', steps: [], totalSeconds: 0 };
 
   if (!opts.eligible) {
@@ -131,6 +142,7 @@ function dijkstra(
   from: NodeId,
   to: NodeId,
   cost: EdgeCostOptions,
+  allowScroll: boolean,
   eligible?: (edge: TravelEdge) => boolean,
 ): RoutedPath | null {
   const dist = new Map<NodeId, number>([[from, 0]]);
@@ -147,6 +159,7 @@ function dijkstra(
 
     const base = dist.get(node)!;
     for (const edge of graph.adjacency.get(node) ?? []) {
+      if (edge.method === 'scroll' && !allowScroll) continue;
       if (eligible && !eligible(edge)) continue;
       if (settled.has(edge.to)) continue;
       const next = base + edgeSeconds(edge, cost);

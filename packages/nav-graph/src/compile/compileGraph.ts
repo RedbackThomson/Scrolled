@@ -38,6 +38,7 @@ export function compileGraph(source: NavGraphSource): NavGraph {
   validateNodes(parsed.nodes);
   validateGroups(parsed);
   validateEdgeEndpoints(parsed);
+  validateNearestTowns(parsed);
 
   const nodes = new Map<NodeId, AreaNode>(parsed.nodes.map((n) => [n.id, n]));
   const groups = new Map<GroupId, GroupDef>(
@@ -104,6 +105,17 @@ function validateEdgeEndpoints(source: NavGraphSource): void {
   }
 }
 
+function validateNearestTowns(source: NavGraphSource): void {
+  const known = new Set(source.nodes.map((n) => n.id));
+  for (const node of source.nodes) {
+    if (node.nearestTown && !known.has(node.nearestTown)) {
+      throw new Error(
+        `Node "${node.id}" has nearestTown "${node.nearestTown}", which is not a declared node.`,
+      );
+    }
+  }
+}
+
 function buildAdjacency(
   nodes: AreaNode[],
   edges: TravelEdge[],
@@ -119,6 +131,19 @@ function buildAdjacency(
       // as its own step.
       adj.get(edge.to)!.push({ ...edge, from: edge.to, to: edge.from });
     }
+  }
+  // Synthesize a one-way "return scroll" edge from each node to its nearest
+  // town. These live only in the adjacency (not source.edges), so they don't
+  // clutter the rendered graph; pathfinding gates them behind the traveller's
+  // nearestTownScroll option. Self-targets (the default) yield no edge.
+  for (const node of nodes) {
+    if (!node.nearestTown || node.nearestTown === node.id) continue;
+    adj.get(node.id)!.push({
+      from: node.id,
+      to: node.nearestTown,
+      method: 'scroll',
+      via: 'Return to nearest town',
+    });
   }
   for (const [id, list] of adj) adj.set(id, Object.freeze(list) as TravelEdge[]);
   return adj;

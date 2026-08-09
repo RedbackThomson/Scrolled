@@ -318,3 +318,57 @@ describe('findPath — eligibility', () => {
     ).toBe(true);
   });
 });
+
+describe('findPath — return-to-town scrolls', () => {
+  // A dungeon (c) whose nearest-town scroll drops you at a hub town (a), plus a
+  // slow walk back the long way.
+  function scrollGraph() {
+    return compileGraph(
+      defineGraph({ profileId: 'test' }, (g) => {
+        const na = g.node('a', 'A');
+        const nb = g.node('b', 'B');
+        g.node('c', 'C', { nearestTown: 'a' });
+        na.walk(nb, { seconds: 100 });
+        nb.walk(g.ref('c'), { seconds: 100 });
+      }),
+    );
+  }
+
+  it('ignores scroll edges unless the traveller carries scrolls', () => {
+    const result = findPath(scrollGraph(), c, a);
+    expect(result.status).toBe('found');
+    // Long way home: c -> b -> a, two timed walks.
+    expect(result.steps.map((s) => `${s.from}->${s.to}`)).toEqual(['c->b', 'b->a']);
+    expect(result.totalSeconds).toBe(200);
+  });
+
+  it('uses the instant scroll edge to the nearest town when enabled', () => {
+    const result = findPath(scrollGraph(), c, a, { nearestTownScroll: true });
+    expect(result.status).toBe('found');
+    expect(result.steps).toHaveLength(1);
+    expect(result.steps[0].method).toBe('scroll');
+    expect(result.steps[0].to).toBe(a);
+    expect(result.totalSeconds).toBe(0);
+  });
+
+  it('a node without nearestTown produces no scroll edge', () => {
+    const graph = compileGraph(
+      defineGraph({ profileId: 'test' }, (g) => {
+        g.node('a', 'A');
+        g.node('b', 'B');
+      }),
+    );
+    // No authored connection and no scroll edge — unreachable even with scrolls.
+    expect(findPath(graph, a, b, { nearestTownScroll: true }).status).toBe('unreachable');
+  });
+
+  it('rejects a nearestTown that references an undeclared node', () => {
+    const source = {
+      profileId: 'test',
+      nodes: [{ id: 'a', name: 'A', nearestTown: 'ghost' }],
+      edges: [],
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- hand-written IR
+    expect(() => compileGraph(source as any)).toThrow(/nearestTown "ghost"/);
+  });
+});

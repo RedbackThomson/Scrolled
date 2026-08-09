@@ -42,6 +42,7 @@ const areaNodeSchema = z.object({
   id: nodeIdSchema,
   name: z.string().min(1),
   group: groupIdSchema.optional(),
+  nearestTown: nodeIdSchema.optional(),
 });
 
 const travelEdgeSchema = z

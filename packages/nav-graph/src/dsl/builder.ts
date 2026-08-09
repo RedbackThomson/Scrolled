@@ -70,8 +70,21 @@ export interface NodeHandle {
   edgeTo(other: NodeHandle, method: TravelMethod, opts?: TimedEdgeOpts): void;
 }
 
+export interface NodeOpts {
+  group?: string;
+  /**
+   * Where a "return to nearest town" scroll sends you from this node. Defaults
+   * to the node itself (scroll is a no-op); set it when the scroll routes
+   * elsewhere, e.g. a dungeon whose scroll drops you at its hub town. Pass the
+   * town's `NodeHandle` (its id is inferred) or its id string as a fallback —
+   * handy for forward references. Resolved at build(); the target need not be
+   * declared yet.
+   */
+  nearestTown?: NodeHandle | string;
+}
+
 export interface RegionScope {
-  node(id: string, name: string, opts?: { group?: string }): NodeHandle;
+  node(id: string, name: string, opts?: NodeOpts): NodeHandle;
   region(id: string, name: string, fn: (r: RegionScope) => void): void;
 }
 
@@ -124,13 +137,24 @@ class Builder implements GraphBuilder {
     this.groups.set(gid, { id: gid, name });
   }
 
-  node(id: string, name: string, opts?: { group?: string }): NodeHandle {
+  node(id: string, name: string, opts?: NodeOpts): NodeHandle {
     const nodeId = asNodeId(id);
     const group = opts?.group
       ? asGroupId(opts.group)
       : (this.groupStack[this.groupStack.length - 1] ?? undefined);
+    const nearestTown =
+      opts?.nearestTown === undefined
+        ? undefined
+        : typeof opts.nearestTown === 'string'
+          ? asNodeId(opts.nearestTown)
+          : opts.nearestTown.id;
     const decl: NodeDecl = {
-      node: { id: nodeId, name, ...(group ? { group } : {}) },
+      node: {
+        id: nodeId,
+        name,
+        ...(group ? { group } : {}),
+        ...(nearestTown ? { nearestTown } : {}),
+      },
       declarationIndex: this.nodeDecls.length,
     };
     this.nodeDecls.push(decl);
@@ -166,6 +190,7 @@ class Builder implements GraphBuilder {
     this.validateNodes();
     this.validateGroupRefs();
     this.validateEdgeEndpoints();
+    this.validateNearestTowns();
     const groups = [...this.groups.values()];
     return {
       profileId: this.profileId,
@@ -261,6 +286,17 @@ class Builder implements GraphBuilder {
         `Edge endpoint(s) reference undeclared nodes: ${unique.join(', ')}. ` +
           `Either declare the node with g.node(...) or remove the edge.`,
       );
+    }
+  }
+
+  private validateNearestTowns(): void {
+    const declared = new Set(this.nodeDecls.map((d) => d.node.id));
+    for (const { node } of this.nodeDecls) {
+      if (node.nearestTown && !declared.has(node.nearestTown)) {
+        throw new Error(
+          `Node "${node.id}" has nearestTown "${node.nearestTown}", which is not a declared node.`,
+        );
+      }
     }
   }
 }

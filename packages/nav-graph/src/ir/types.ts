@@ -16,6 +16,7 @@ export const TRAVEL_METHODS = [
   'npc',
   'item',
   'skill',
+  'scroll',
   'other',
 ] as const;
 export type TravelMethod = (typeof TRAVEL_METHODS)[number];
@@ -30,6 +31,15 @@ export interface AreaNode {
   id: NodeId;
   name: string;
   group?: GroupId;
+  /**
+   * The town a "return to nearest town" scroll sends you to from this node.
+   * Every node is a town, so this defaults to the node itself (a scroll there
+   * is a no-op). Set it when the game routes the scroll elsewhere — e.g. a
+   * dungeon whose scroll drops you at its continent's hub town. Must reference
+   * a declared node. Enables an optional `scroll` edge used only when the
+   * traveller has declared they carry return scrolls (see findPath).
+   */
+  nearestTown?: NodeId;
 }
 
 export interface EntityRefs {

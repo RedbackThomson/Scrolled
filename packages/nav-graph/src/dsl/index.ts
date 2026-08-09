@@ -3,6 +3,7 @@ export type {
   EdgeOpts,
   GraphBuilder,
   NodeHandle,
+  NodeOpts,
   RegionScope,
   TimedEdgeOpts,
 } from './builder';

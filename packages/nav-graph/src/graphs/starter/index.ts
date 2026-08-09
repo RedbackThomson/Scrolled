@@ -25,7 +25,9 @@ export const starterGraph: NavGraphSource = defineGraph(
 
     g.region('coast', 'Eastern Coast', (r) => {
       const harbour = r.node('harbour', 'Harbour Town');
-      const lighthouse = r.node('lighthouse', 'Lighthouse Point');
+      const lighthouse = r.node('lighthouse', 'Lighthouse Point', {
+        nearestTown: harbour,
+      });
 
       harbour.walk(lighthouse, { seconds: 150 });
       harbour.skillTo(lighthouse, {
@@ -36,7 +38,7 @@ export const starterGraph: NavGraphSource = defineGraph(
 
     g.region('mountain', 'Mountain Pass', (r) => {
       const trailhead = r.node('trailhead', 'Trailhead');
-      const summit = r.node('summit', 'Summit Shrine');
+      const summit = r.node('summit', 'Summit Shrine', { nearestTown: 'riverside' });
 
       trailhead.walk(summit, {
         seconds: 300,
