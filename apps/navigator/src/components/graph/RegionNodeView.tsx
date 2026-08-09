@@ -27,8 +27,8 @@ export function RegionNodeView({ data }: NodeProps<RegionFlowNode>) {
         </div>
         <ChevronDown className="text-muted-foreground size-4 shrink-0" aria-hidden />
       </div>
-      <Handle type="target" position={Position.Top} className="!bg-muted-foreground !border-background" />
-      <Handle type="source" position={Position.Bottom} className="!bg-muted-foreground !border-background" />
+      <Handle type="target" position={Position.Top} className="!size-0 !min-h-0 !min-w-0 !border-0 opacity-0" />
+      <Handle type="source" position={Position.Bottom} className="!size-0 !min-h-0 !min-w-0 !border-0 opacity-0" />
     </div>
   );
 }

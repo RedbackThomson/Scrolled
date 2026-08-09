@@ -75,6 +75,30 @@ function GraphCanvasInner({ graph }: GraphCanvasProps) {
 
   const routeActive = pathNodes.size > 0;
 
+  // Hovering a region at rest lights up just its connections; a computed route
+  // takes precedence over hover.
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const { focusSet, neighborSet } = useMemo(() => {
+    if (!hoveredId || routeActive) return { focusSet: null, neighborSet: null };
+    const children = view.nodes.filter((n) => n.parentId === hoveredId).map((n) => n.id);
+    const focus = new Set(children.length > 0 ? children : [hoveredId]);
+    const neighbors = new Set<string>();
+    for (const e of view.edges) {
+      if (focus.has(e.source)) neighbors.add(e.target);
+      if (focus.has(e.target)) neighbors.add(e.source);
+    }
+    return { focusSet: focus, neighborSet: neighbors };
+  }, [hoveredId, routeActive, view.nodes, view.edges]);
+
+  const nodeDimmed = useCallback(
+    (id: string, keepOnRoute: boolean): boolean => {
+      if (routeActive) return !keepOnRoute;
+      if (focusSet) return !(focusSet.has(id) || (neighborSet?.has(id) ?? false));
+      return false;
+    },
+    [routeActive, focusSet, neighborSet],
+  );
+
   const nodes = useMemo<Node[]>(() => {
     // React Flow requires a parent node to precede its children in the array.
     const ordered = [...view.nodes].sort((a, b) => containerFirst(a) - containerFirst(b));
@@ -104,14 +128,15 @@ function GraphCanvasInner({ graph }: GraphCanvasProps) {
             groupId: n.groupId,
             label: n.label,
             areaCount: n.areaCount ?? 0,
-            dimmed: routeActive,
+            dimmed: nodeDimmed(n.id, false),
           },
         } satisfies Node;
       }
 
       const highlight: AreaHighlight =
         n.nodeId === fromId ? 'start' : n.nodeId === toId ? 'end' : n.onPath ? 'path' : null;
-      const dimmed = routeActive && !n.onPath && n.nodeId !== fromId && n.nodeId !== toId;
+      const keepOnRoute = n.onPath || n.nodeId === fromId || n.nodeId === toId;
+      const dimmed = nodeDimmed(n.id, keepOnRoute);
       return {
         id: n.id,
         type: 'area',
@@ -121,12 +146,17 @@ function GraphCanvasInner({ graph }: GraphCanvasProps) {
         data: { nodeId: n.nodeId, label: n.label, highlight, dimmed },
       } satisfies Node;
     });
-  }, [view.nodes, layout, routeActive, fromId, toId]);
+  }, [view.nodes, layout, nodeDimmed, fromId, toId]);
 
   const edges = useMemo<Edge[]>(
     () =>
       view.edges.map((e) => {
-        const stroke = e.onPath ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))';
+        const opacity = edgeOpacity(e, routeActive, focusSet);
+        // Arrowheads only clutter the overview — reserve them for the route,
+        // where travel direction actually matters.
+        const marker = e.onPath
+          ? { type: MarkerType.ArrowClosed, color: 'hsl(var(--primary))' }
+          : undefined;
         return {
           id: e.id,
           type: 'travel',
@@ -139,15 +169,13 @@ function GraphCanvasInner({ graph }: GraphCanvasProps) {
             onPath: e.onPath,
             count: e.count,
             minor: e.minor,
-            dimmed: routeActive && !e.onPath,
+            opacity,
           },
-          markerEnd: { type: MarkerType.ArrowClosed, color: stroke },
-          markerStart: e.bidirectional
-            ? { type: MarkerType.ArrowClosed, color: stroke }
-            : undefined,
+          markerEnd: marker,
+          markerStart: e.onPath && e.bidirectional ? marker : undefined,
         } satisfies Edge;
       }),
-    [view.edges, routeActive],
+    [view.edges, routeActive, focusSet],
   );
 
   // Re-frame whenever the visible set changes (route computed, region toggled).
@@ -177,6 +205,8 @@ function GraphCanvasInner({ graph }: GraphCanvasProps) {
       nodeTypes={nodeTypes}
       edgeTypes={edgeTypes}
       onNodeClick={onNodeClick}
+      onNodeMouseEnter={(_, node) => setHoveredId(node.id)}
+      onNodeMouseLeave={() => setHoveredId(null)}
       nodesDraggable={false}
       nodesConnectable={false}
       fitView
@@ -191,4 +221,15 @@ function GraphCanvasInner({ graph }: GraphCanvasProps) {
 
 function containerFirst(n: DisplayNode): number {
   return n.kind === 'region-container' ? 0 : 1;
+}
+
+// Calm at rest, focused connections lit on hover, route lines full-strength.
+function edgeOpacity(
+  edge: { source: string; target: string; onPath: boolean },
+  routeActive: boolean,
+  focusSet: ReadonlySet<string> | null,
+): number {
+  if (routeActive) return edge.onPath ? 1 : 0.1;
+  if (focusSet) return focusSet.has(edge.source) || focusSet.has(edge.target) ? 1 : 0.05;
+  return 0.18;
 }
