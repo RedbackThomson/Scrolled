@@ -4,7 +4,7 @@ import { defineGraph } from '../dsl/builder';
 import { item, level, meso, quest } from '../dsl/requirements';
 import { asNodeId } from '../ir/types';
 import { eligibilityFilter } from './eligibility';
-import { DEFAULT_WALK_SECONDS, findPath } from './findPath';
+import { DEFAULT_TRANSPORT_SECONDS, DEFAULT_WALK_SECONDS, findPath } from './findPath';
 
 const a = asNodeId('a');
 const b = asNodeId('b');
@@ -140,6 +140,75 @@ describe('findPath — weighted (travel time)', () => {
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- hand-written IR bypassing the DSL's type guard
     expect(() => compileGraph(source as any)).toThrow(/seconds is only valid on walk/);
+  });
+});
+
+describe('findPath — transport & fast travel', () => {
+  // A slow one-hop ferry vs. two quick walks (20s total).
+  function ferryGraph() {
+    return compileGraph(
+      defineGraph({ profileId: 'test' }, (g) => {
+        const na = g.node('a', 'A');
+        const nb = g.node('b', 'B');
+        const nc = g.node('c', 'C');
+        na.transportTo(nc, { seconds: 300 });
+        na.walk(nb, { seconds: 10 });
+        nb.walk(nc, { seconds: 10 });
+      }),
+    );
+  }
+
+  it('without fast travel, a slow transport loses to faster walks', () => {
+    const result = findPath(ferryGraph(), a, c);
+    expect(result.status).toBe('found');
+    expect(result.steps.map((s) => `${s.from}->${s.to}`)).toEqual(['a->b', 'b->c']);
+    expect(result.totalSeconds).toBe(20);
+  });
+
+  it('with fast travel, the transport becomes instant and wins', () => {
+    const result = findPath(ferryGraph(), a, c, { fastTravel: true });
+    expect(result.steps).toHaveLength(1);
+    expect(result.steps[0].method).toBe('transport');
+    expect(result.totalSeconds).toBe(0);
+  });
+
+  it('an untimed transport falls back to DEFAULT_TRANSPORT_SECONDS (0 with fast travel)', () => {
+    const graph = compileGraph(
+      defineGraph({ profileId: 'test' }, (g) => {
+        const na = g.node('a', 'A');
+        const nb = g.node('b', 'B');
+        na.transportTo(nb);
+      }),
+    );
+    expect(findPath(graph, a, b).totalSeconds).toBe(DEFAULT_TRANSPORT_SECONDS);
+    expect(findPath(graph, a, b, { fastTravel: true }).totalSeconds).toBe(0);
+  });
+
+  it('fast travel changes cost, not reachability — a transport is always traversable', () => {
+    const graph = compileGraph(
+      defineGraph({ profileId: 'test' }, (g) => {
+        const na = g.node('a', 'A');
+        const nb = g.node('b', 'B');
+        na.transportTo(nb, { seconds: 120 });
+      }),
+    );
+    // bidirectional by default, reachable with or without fast travel
+    expect(findPath(graph, a, b).status).toBe('found');
+    expect(findPath(graph, b, a).status).toBe('found');
+    expect(findPath(graph, a, b, { fastTravel: true }).status).toBe('found');
+  });
+
+  it('accepts a seconds weight on a transport edge at compile time', () => {
+    const source = {
+      profileId: 'test',
+      nodes: [
+        { id: 'a', name: 'A' },
+        { id: 'b', name: 'B' },
+      ],
+      edges: [{ from: 'a', to: 'b', method: 'transport', seconds: 90 }],
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- hand-written IR
+    expect(() => compileGraph(source as any)).not.toThrow();
   });
 });
 

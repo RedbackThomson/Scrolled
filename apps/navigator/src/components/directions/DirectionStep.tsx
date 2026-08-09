@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { Footprints, MoreHorizontal, Package, Sparkles, Train, Users } from 'lucide-react';
+import { Footprints, MoreHorizontal, Package, Ship, Sparkles, Train, Users } from 'lucide-react';
 import { cn } from '@scrolled/ui';
 import { edgeSeconds, type NavGraph, type TravelEdge, type TravelMethod } from '@scrolled/nav-graph';
 
@@ -9,6 +9,7 @@ import { RequirementChip } from './RequirementChip';
 
 const METHOD_ICONS: Record<TravelMethod, LucideIcon> = {
   walk: Footprints,
+  transport: Ship,
   portal: Train,
   npc: Users,
   item: Package,
@@ -18,6 +19,7 @@ const METHOD_ICONS: Record<TravelMethod, LucideIcon> = {
 
 const METHOD_LABELS: Record<TravelMethod, string> = {
   walk: 'Walk',
+  transport: 'Transport',
   portal: 'Portal',
   npc: 'NPC',
   item: 'Item',
@@ -29,15 +31,22 @@ export interface DirectionStepProps {
   index: number;
   step: TravelEdge;
   graph: NavGraph;
+  /** Fast travel makes transport hops instant — mirrors the routed cost. */
+  fastTravel?: boolean;
   /** True when the eligibility filter blocked this step (unreachable-when-filtered). */
   blocked?: boolean;
 }
 
-export function DirectionStep({ index, step, graph, blocked }: DirectionStepProps) {
+export function DirectionStep({ index, step, graph, fastTravel, blocked }: DirectionStepProps) {
   const Icon = METHOD_ICONS[step.method];
   const fromName = graph.nodes.get(step.from)?.name ?? step.from;
   const toName = graph.nodes.get(step.to)?.name ?? step.to;
   const npcLink = step.refs?.npcId ? npcUrl(step.refs.npcId) : null;
+  // walk and transport carry time; the rest are instant. `~` marks a fallback
+  // to the method's default time (no authored `seconds`).
+  const timed = step.method === 'walk' || step.method === 'transport';
+  const secs = edgeSeconds(step, { fastTravel });
+  const estimated = step.seconds == null && secs > 0;
 
   return (
     <li
@@ -56,10 +65,10 @@ export function DirectionStep({ index, step, graph, blocked }: DirectionStepProp
             <span className="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">
               {METHOD_LABELS[step.method]}
             </span>
-            {step.method === 'walk' ? (
+            {timed ? (
               <span className="text-muted-foreground text-[10px] tabular-nums">
-                · {step.seconds == null ? '~' : ''}
-                {formatDuration(edgeSeconds(step))}
+                · {estimated ? '~' : ''}
+                {formatDuration(secs)}
               </span>
             ) : null}
           </div>

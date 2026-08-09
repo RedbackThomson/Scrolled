@@ -1,9 +1,14 @@
 // Weighted pathfinding: least-time Dijkstra over the compiled adjacency.
 //
-// Only `walk` edges cost time: every other method (portal, npc, item, skill)
-// is a teleport-like transition, treated as instant. A walk edge costs its
-// declared `seconds`, or `DEFAULT_WALK_SECONDS` when untimed — so a graph with
-// no walk times set still routes sensibly (favouring teleports, then hops).
+// Two methods cost time — `walk` and `transport` (boats/trains/carpets). Each
+// costs its declared `seconds`, or its method default when untimed, so a graph
+// with no times set still routes sensibly. Every other method (portal, npc,
+// item, skill) is a teleport-like transition, treated as instant.
+//
+// `transport` time is *conditional*: with fast travel enabled (the player holds
+// a fast-travel ticket), every transport hop is instant, so routes prefer boats
+// over long walks; without it, transports cost their ride time and the router
+// may route around them.
 //
 // When an eligibility predicate is supplied:
 //   1. Run Dijkstra with the predicate pruning candidate edges.
@@ -22,12 +27,31 @@ import type { NodeId, TravelEdge } from '../ir/types';
 export const DEFAULT_WALK_SECONDS = 60;
 
 /**
- * Travel time an edge contributes to a route. Only walking takes time;
- * portal / npc / item / skill transitions teleport the player instantly.
+ * Assumed ride time, in seconds, for a transport edge that declares no
+ * `seconds`. Longer than a walk hop: boarding a boat/train means waiting for it.
  */
-export function edgeSeconds(edge: TravelEdge): number {
-  if (edge.method !== 'walk') return 0;
-  return edge.seconds ?? DEFAULT_WALK_SECONDS;
+export const DEFAULT_TRANSPORT_SECONDS = 300;
+
+/** Cost inputs that depend on the traveller, not the edge. */
+export interface EdgeCostOptions {
+  /** When true, `transport` hops are instant (the player has a fast-travel ticket). */
+  fastTravel?: boolean;
+}
+
+/**
+ * Travel time an edge contributes to a route. `walk` always costs time;
+ * `transport` costs its ride time unless `fastTravel` waives it; portal / npc /
+ * item / skill transitions teleport the player instantly.
+ */
+export function edgeSeconds(edge: TravelEdge, opts: EdgeCostOptions = {}): number {
+  switch (edge.method) {
+    case 'walk':
+      return edge.seconds ?? DEFAULT_WALK_SECONDS;
+    case 'transport':
+      return opts.fastTravel ? 0 : (edge.seconds ?? DEFAULT_TRANSPORT_SECONDS);
+    default:
+      return 0;
+  }
 }
 
 export interface PathResult {
@@ -45,6 +69,12 @@ export interface PathResult {
 
 export interface FindPathOptions {
   eligible?: (edge: TravelEdge) => boolean;
+  /**
+   * When true, `transport` hops (boats/trains/carpets) are treated as instant —
+   * the traveller holds a fast-travel ticket. Affects route *cost*, never
+   * *reachability*: transports are always traversable either way.
+   */
+  fastTravel?: boolean;
 }
 
 export function findPath(
@@ -58,12 +88,15 @@ export function findPath(
 
   if (from === to) return { status: 'found', steps: [], totalSeconds: 0 };
 
-  const filtered = opts.eligible ? dijkstra(graph, from, to, opts.eligible) : null;
+  const cost: EdgeCostOptions = { fastTravel: opts.fastTravel };
+  const filtered = opts.eligible
+    ? dijkstra(graph, from, to, cost, opts.eligible)
+    : null;
   if (filtered) {
     return { status: 'found', steps: filtered.steps, totalSeconds: filtered.totalSeconds };
   }
 
-  const unfiltered = dijkstra(graph, from, to);
+  const unfiltered = dijkstra(graph, from, to, cost);
   if (!unfiltered) return { status: 'unreachable', steps: [], totalSeconds: 0 };
 
   if (!opts.eligible) {
@@ -97,6 +130,7 @@ function dijkstra(
   graph: NavGraph,
   from: NodeId,
   to: NodeId,
+  cost: EdgeCostOptions,
   eligible?: (edge: TravelEdge) => boolean,
 ): RoutedPath | null {
   const dist = new Map<NodeId, number>([[from, 0]]);
@@ -115,7 +149,7 @@ function dijkstra(
     for (const edge of graph.adjacency.get(node) ?? []) {
       if (eligible && !eligible(edge)) continue;
       if (settled.has(edge.to)) continue;
-      const next = base + edgeSeconds(edge);
+      const next = base + edgeSeconds(edge, cost);
       if (next < (dist.get(edge.to) ?? Infinity)) {
         dist.set(edge.to, next);
         cameFrom.set(edge.to, edge);

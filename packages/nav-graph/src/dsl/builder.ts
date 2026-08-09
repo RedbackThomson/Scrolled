@@ -39,24 +39,35 @@ export interface EdgeOpts {
 }
 
 /**
- * Options for a walk edge. Only walking takes time, so `seconds` lives here and
- * not on the base `EdgeOpts` — portal / npc / item / skill transitions are
- * instant and the type system rejects a `seconds` on them.
+ * Options for a timed edge. Only `walk` and `transport` (boats/trains/carpets)
+ * take time, so `seconds` lives here and not on the base `EdgeOpts` — portal /
+ * npc / item / skill transitions are instant and the type system rejects a
+ * `seconds` on them.
  */
-export interface WalkEdgeOpts extends EdgeOpts {
-  /** Estimated travel time on foot, in seconds. Drives weighted routing. */
+export interface TimedEdgeOpts extends EdgeOpts {
+  /**
+   * Estimated travel time, in seconds. On a `transport` edge this is the ride
+   * time when the traveller has no fast-travel ticket; with fast travel the ride
+   * is instant (see `findPath`). Drives weighted routing.
+   */
   seconds?: number;
 }
 
 export interface NodeHandle {
   readonly id: NodeId;
-  walk(other: NodeHandle, opts?: WalkEdgeOpts): void;
+  walk(other: NodeHandle, opts?: TimedEdgeOpts): void;
+  /**
+   * A boarded conveyance — boat, train, magic carpet. Bidirectional by default
+   * (vehicles round-trip). Takes `seconds` unless the route is found with fast
+   * travel, which makes every transport hop instant.
+   */
+  transportTo(other: NodeHandle, opts?: TimedEdgeOpts): void;
   portalTo(other: NodeHandle, opts?: EdgeOpts): void;
   npcTo(other: NodeHandle, opts?: EdgeOpts): void;
   itemTo(other: NodeHandle, opts?: EdgeOpts): void;
   skillTo(other: NodeHandle, opts?: EdgeOpts): void;
-  /** Escape hatch when none of the named verbs fit. `seconds` applies only if method is 'walk'. */
-  edgeTo(other: NodeHandle, method: TravelMethod, opts?: WalkEdgeOpts): void;
+  /** Escape hatch when none of the named verbs fit. `seconds` applies only if method is 'walk' or 'transport'. */
+  edgeTo(other: NodeHandle, method: TravelMethod, opts?: TimedEdgeOpts): void;
 }
 
 export interface RegionScope {
@@ -76,16 +87,17 @@ interface NodeDecl {
   readonly declarationIndex: number;
 }
 
-interface EdgeBuildOpts extends WalkEdgeOpts {
+interface EdgeBuildOpts extends TimedEdgeOpts {
   method: TravelMethod;
   defaultBidirectional: boolean;
 }
 
 const VERB_DEFAULTS: Record<
-  'walk' | 'portalTo' | 'npcTo' | 'itemTo' | 'skillTo',
+  'walk' | 'transportTo' | 'portalTo' | 'npcTo' | 'itemTo' | 'skillTo',
   { method: TravelMethod; defaultBidirectional: boolean }
 > = {
   walk: { method: 'walk', defaultBidirectional: true },
+  transportTo: { method: 'transport', defaultBidirectional: true },
   portalTo: { method: 'portal', defaultBidirectional: true },
   npcTo: { method: 'npc', defaultBidirectional: false },
   itemTo: { method: 'item', defaultBidirectional: false },
@@ -173,15 +185,16 @@ class Builder implements GraphBuilder {
       edgeTo: (other, method, opts) =>
         this.pushEdge(id, other.id, { ...opts, method, defaultBidirectional: false }),
       // The named verbs are populated below — keeps the type explicit while
-      // avoiding five near-identical method bodies.
+      // avoiding six near-identical method bodies.
       walk: () => undefined,
+      transportTo: () => undefined,
       portalTo: () => undefined,
       npcTo: () => undefined,
       itemTo: () => undefined,
       skillTo: () => undefined,
     };
     for (const [verb, { method, defaultBidirectional }] of verbs) {
-      handle[verb] = (other: NodeHandle, opts?: EdgeOpts) =>
+      handle[verb] = (other: NodeHandle, opts?: TimedEdgeOpts) =>
         this.pushEdge(id, other.id, { ...opts, method, defaultBidirectional });
     }
     return handle;

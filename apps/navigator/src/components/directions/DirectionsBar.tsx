@@ -6,6 +6,7 @@ import { asNodeId, type NavGraph } from '@scrolled/nav-graph';
 import { useDirections } from '@/stores/useDirections';
 import { useEndpoints } from '@/hooks/useEndpoints';
 import { NodePicker } from './NodePicker';
+import { PathOptionsMenu } from './PathOptionsMenu';
 
 export interface DirectionsBarProps {
   graph: NavGraph;
@@ -53,6 +54,7 @@ export function DirectionsBar({ graph }: DirectionsBarProps) {
           onChange={(id) => setTo(id)}
         />
       </div>
+      <PathOptionsMenu />
       <Button onClick={onGo} disabled={!canGo} size="sm" className="gap-2">
         <Route className="h-4 w-4" aria-hidden />
         Get directions

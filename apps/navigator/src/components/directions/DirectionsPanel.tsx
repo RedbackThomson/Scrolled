@@ -13,6 +13,7 @@ export interface DirectionsPanelProps {
 export function DirectionsPanel({ graph }: DirectionsPanelProps) {
   const result = useDirections((s) => s.result);
   const clear = useDirections((s) => s.clear);
+  const fastTravel = useDirections((s) => s.options.fastTravel);
   if (!result) return null;
 
   const { steps, header, totalSeconds } = framesFromResult(result);
@@ -20,9 +21,16 @@ export function DirectionsPanel({ graph }: DirectionsPanelProps) {
   const lastTo = steps[steps.length - 1]?.to;
   const toName = lastTo ? graph.nodes.get(lastTo)?.name : undefined;
   const blocked = result.fallback?.blocked ?? [];
-  // Walk steps with no authored time fall back to an estimate, so the total is
-  // approximate whenever one appears on the route.
-  const approximate = steps.some((s) => s.method === 'walk' && s.seconds == null);
+  // A timed step with no authored time falls back to an estimate, so the total
+  // is approximate whenever one appears. Transport only counts when fast travel
+  // is off (with it on, transports are instant, not estimated).
+  const approximate = steps.some(
+    (s) =>
+      s.seconds == null &&
+      (s.method === 'walk' || (s.method === 'transport' && !fastTravel)),
+  );
+  // "on foot" is only right for a pure-walk route; label mixed routes neutrally.
+  const label = steps.some((s) => s.method === 'transport') ? 'travel time' : 'on foot';
 
   return (
     <aside className="border-border bg-background z-10 flex w-80 flex-none flex-col border-l">
@@ -47,7 +55,7 @@ export function DirectionsPanel({ graph }: DirectionsPanelProps) {
                 {approximate ? '~' : ''}
                 {formatDuration(totalSeconds)}
               </span>
-              <span>on foot</span>
+              <span>{label}</span>
             </p>
           ) : null}
         </div>
@@ -72,6 +80,7 @@ export function DirectionsPanel({ graph }: DirectionsPanelProps) {
               index={i}
               step={step}
               graph={graph}
+              fastTravel={fastTravel}
               blocked={blocked.includes(i)}
             />
           ))}

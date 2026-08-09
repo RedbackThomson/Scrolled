@@ -10,16 +10,21 @@ the design.
   (`src/ir/`). Branded `NodeId` / `GroupId`, the `TravelEdge` and `Requirement`
   unions, and a Zod schema that mirrors them.
 - **DSL** — `defineGraph(...)`, region scopes, and the verb methods (`walk`,
-  `portalTo`, `npcTo`, `itemTo`, `skillTo`) authors call on node handles
-  (`src/dsl/`). The requirement constructors (`meso`, `item`, `quest`, `level`)
-  live here too. The DSL emits `NavGraphSource` — nothing more.
+  `transportTo`, `portalTo`, `npcTo`, `itemTo`, `skillTo`) authors call on node
+  handles (`src/dsl/`). `walk` and `transportTo` accept a `seconds` travel time;
+  `transportTo` models a boarded conveyance (boat/train/carpet) that is instant
+  with fast travel and costs its ride time without it. The requirement
+  constructors (`meso`, `item`, `quest`, `level`) live here too. The DSL emits
+  `NavGraphSource` — nothing more.
 - **Compiler** — `compileGraph(source)` validates the source with Zod, runs the
   pre-merge duplicate pass, expands bidirectional edges, and freezes adjacency
   into a runtime `NavGraph` (`src/compile/`).
-- **Pathfinding** — `findPath(graph, from, to, opts?)` is BFS with optional
-  per-edge eligibility filtering. When filtering disconnects the destination it
-  returns the best unfiltered path with blocking step indices flagged
-  (`src/path/`).
+- **Pathfinding** — `findPath(graph, from, to, opts?)` is a least-time Dijkstra:
+  `walk` and `transport` edges cost their `seconds` (or a method default), every
+  other method is instant, and `opts.fastTravel` waives `transport` time so
+  routes prefer boats over long walks. Supports optional per-edge eligibility
+  filtering; when filtering disconnects the destination it returns the best
+  unfiltered path with blocking step indices flagged (`src/path/`).
 - **JSON** — `toJSON(graph)` serializes a compiled graph to the portability
   shape (`src/json/`); `vite-node src/cli/export.ts` runs it from the command
   line.

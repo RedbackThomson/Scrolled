@@ -64,6 +64,23 @@ describe('defineGraph', () => {
     expect(walk?.bidirectional).toBeUndefined();
   });
 
+  it('transportTo emits a bidirectional transport edge carrying via + seconds', () => {
+    const source = defineGraph({ profileId: 'test' }, (g) => {
+      const a = g.node('a', 'Alpha');
+      const b = g.node('b', 'Beta');
+      a.transportTo(b, { via: 'Ferry to Beta', seconds: 120 });
+    });
+
+    expect(source.edges[0]).toMatchObject({
+      from: 'a',
+      to: 'b',
+      method: 'transport',
+      bidirectional: true,
+      via: 'Ferry to Beta',
+      seconds: 120,
+    });
+  });
+
   it('merges cost + require into one requirements list', () => {
     const source = defineGraph({ profileId: 'test' }, (g) => {
       const a = g.node('a', 'Alpha');

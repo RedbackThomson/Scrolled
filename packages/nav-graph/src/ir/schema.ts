@@ -57,11 +57,15 @@ const travelEdgeSchema = z
     notes: z.string().optional(),
   })
   .superRefine((edge, ctx) => {
-    if (edge.seconds !== undefined && edge.method !== 'walk') {
+    if (
+      edge.seconds !== undefined &&
+      edge.method !== 'walk' &&
+      edge.method !== 'transport'
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['seconds'],
-        message: `seconds is only valid on walk edges; "${edge.method}" transitions are instant.`,
+        message: `seconds is only valid on walk or transport edges; "${edge.method}" transitions are instant.`,
       });
     }
   });

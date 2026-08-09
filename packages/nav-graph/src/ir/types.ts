@@ -9,7 +9,15 @@ export type NodeId = string & { readonly __brand: 'NodeId' };
 /** Author-invented region cluster id used for grouping (future semantic zoom). */
 export type GroupId = string & { readonly __brand: 'GroupId' };
 
-export const TRAVEL_METHODS = ['walk', 'portal', 'npc', 'item', 'skill', 'other'] as const;
+export const TRAVEL_METHODS = [
+  'walk',
+  'transport',
+  'portal',
+  'npc',
+  'item',
+  'skill',
+  'other',
+] as const;
 export type TravelMethod = (typeof TRAVEL_METHODS)[number];
 
 export type Requirement =
@@ -41,9 +49,13 @@ export interface TravelEdge {
   refs?: EntityRefs;
   requirements?: Requirement[];
   /**
-   * Estimated travel time for this edge, in seconds. Pathfinding minimizes the
-   * summed time of a route (Dijkstra). Omit when unknown — untimed edges fall
-   * back to `DEFAULT_EDGE_SECONDS`, so a graph with no times routes by hops.
+   * Estimated travel time for this edge, in seconds. Valid only on the timed
+   * methods — `walk` and `transport` (boats/trains/carpets); every other method
+   * is an instant transition and the schema rejects `seconds` on it. Pathfinding
+   * minimizes the summed time of a route (Dijkstra). Omit when unknown — untimed
+   * timed-edges fall back to their method default, so a graph with no times set
+   * still routes sensibly. A `transport` edge's time is waived entirely when the
+   * route is found with fast travel enabled (see `findPath`).
    */
   seconds?: number;
   notes?: string;

@@ -62,5 +62,10 @@ export const starterGraph: NavGraphSource = defineGraph(
       require: [quest(7_001)],
       ref: { questId: 7_001 },
     });
+    g.ref('harbour').transportTo(g.ref('summit'), {
+      via: 'Board the summit ferry',
+      seconds: 480,
+      notes: 'A long ride — instant with a fast-travel ticket.',
+    });
   },
 );
