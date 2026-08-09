@@ -35,20 +35,28 @@ export interface EdgeOpts {
    * - npcTo / itemTo / skillTo default directed → set true for paired transit.
    */
   both?: boolean;
-  /** Reserved for the future weighted-cost model. */
-  weight?: number;
   notes?: string;
+}
+
+/**
+ * Options for a walk edge. Only walking takes time, so `seconds` lives here and
+ * not on the base `EdgeOpts` — portal / npc / item / skill transitions are
+ * instant and the type system rejects a `seconds` on them.
+ */
+export interface WalkEdgeOpts extends EdgeOpts {
+  /** Estimated travel time on foot, in seconds. Drives weighted routing. */
+  seconds?: number;
 }
 
 export interface NodeHandle {
   readonly id: NodeId;
-  walk(other: NodeHandle, opts?: EdgeOpts): void;
+  walk(other: NodeHandle, opts?: WalkEdgeOpts): void;
   portalTo(other: NodeHandle, opts?: EdgeOpts): void;
   npcTo(other: NodeHandle, opts?: EdgeOpts): void;
   itemTo(other: NodeHandle, opts?: EdgeOpts): void;
   skillTo(other: NodeHandle, opts?: EdgeOpts): void;
-  /** Escape hatch when none of the named verbs fit. */
-  edgeTo(other: NodeHandle, method: TravelMethod, opts?: EdgeOpts): void;
+  /** Escape hatch when none of the named verbs fit. `seconds` applies only if method is 'walk'. */
+  edgeTo(other: NodeHandle, method: TravelMethod, opts?: WalkEdgeOpts): void;
 }
 
 export interface RegionScope {
@@ -68,7 +76,7 @@ interface NodeDecl {
   readonly declarationIndex: number;
 }
 
-interface EdgeBuildOpts extends EdgeOpts {
+interface EdgeBuildOpts extends WalkEdgeOpts {
   method: TravelMethod;
   defaultBidirectional: boolean;
 }
@@ -180,7 +188,7 @@ class Builder implements GraphBuilder {
   }
 
   private pushEdge(from: NodeId, to: NodeId, opts: EdgeBuildOpts): void {
-    const { method, defaultBidirectional, both, cost, require, ref, via, weight, notes } = opts;
+    const { method, defaultBidirectional, both, cost, require, ref, via, seconds, notes } = opts;
     const requirements = mergeRequirements(cost, require);
     const bidirectional = both ?? defaultBidirectional;
     const edge: TravelEdge = {
@@ -191,7 +199,7 @@ class Builder implements GraphBuilder {
       ...(via !== undefined ? { via } : {}),
       ...(ref ? { refs: ref } : {}),
       ...(requirements ? { requirements } : {}),
-      ...(weight !== undefined ? { weight } : {}),
+      ...(seconds !== undefined ? { seconds } : {}),
       ...(notes !== undefined ? { notes } : {}),
     };
     this.edges.push(edge);

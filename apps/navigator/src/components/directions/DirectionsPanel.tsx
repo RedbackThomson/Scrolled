@@ -1,7 +1,8 @@
 import { Button } from '@scrolled/ui';
-import { X } from 'lucide-react';
-import type { NavGraph, PathResult } from '@scrolled/nav-graph';
+import { Clock, X } from 'lucide-react';
+import type { NavGraph, PathResult, TravelEdge } from '@scrolled/nav-graph';
 
+import { formatDuration } from '@/lib/formatDuration';
 import { useDirections } from '@/stores/useDirections';
 import { DirectionStep } from './DirectionStep';
 
@@ -14,11 +15,14 @@ export function DirectionsPanel({ graph }: DirectionsPanelProps) {
   const clear = useDirections((s) => s.clear);
   if (!result) return null;
 
-  const { steps, header } = framesFromResult(result);
+  const { steps, header, totalSeconds } = framesFromResult(result);
   const fromName = steps[0] ? graph.nodes.get(steps[0].from)?.name : undefined;
   const lastTo = steps[steps.length - 1]?.to;
   const toName = lastTo ? graph.nodes.get(lastTo)?.name : undefined;
   const blocked = result.fallback?.blocked ?? [];
+  // Walk steps with no authored time fall back to an estimate, so the total is
+  // approximate whenever one appears on the route.
+  const approximate = steps.some((s) => s.method === 'walk' && s.seconds == null);
 
   return (
     <aside className="border-border bg-background z-10 flex w-80 flex-none flex-col border-l">
@@ -36,6 +40,16 @@ export function DirectionsPanel({ graph }: DirectionsPanelProps) {
           ) : (
             <p className="text-muted-foreground text-sm">No path</p>
           )}
+          {steps.length > 0 ? (
+            <p className="text-muted-foreground mt-0.5 flex items-center gap-1 text-xs">
+              <Clock className="h-3 w-3" aria-hidden />
+              <span className="tabular-nums">
+                {approximate ? '~' : ''}
+                {formatDuration(totalSeconds)}
+              </span>
+              <span>on foot</span>
+            </p>
+          ) : null}
         </div>
         <Button variant="ghost" size="icon" aria-label="Close directions" onClick={clear}>
           <X className="h-4 w-4" aria-hidden />
@@ -68,18 +82,23 @@ export function DirectionsPanel({ graph }: DirectionsPanelProps) {
 }
 
 interface Frames {
-  steps: PathResult['steps'];
+  steps: TravelEdge[];
+  /** Total estimated walking time of `steps`, in seconds. */
+  totalSeconds: number;
   /** Optional banner shown above the step list. */
   header: string | null;
 }
 
 function framesFromResult(result: PathResult): Frames {
-  if (result.status === 'found') return { steps: result.steps, header: null };
+  if (result.status === 'found') {
+    return { steps: result.steps, totalSeconds: result.totalSeconds, header: null };
+  }
   if (result.status === 'unreachable-when-filtered') {
     return {
       steps: result.fallback?.steps ?? [],
+      totalSeconds: result.fallback?.totalSeconds ?? 0,
       header: 'Some steps need things you don\'t have yet — showing the closest route.',
     };
   }
-  return { steps: [], header: null };
+  return { steps: [], totalSeconds: 0, header: null };
 }

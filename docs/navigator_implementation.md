@@ -162,8 +162,9 @@ export interface TravelEdge {
   /** Optional deep-link hooks for entities that DO exist in the game. */
   refs?: { itemId?: number; questId?: number; npcId?: number };
   requirements?: Requirement[];
-  /** Reserved for the future measured-time cost model; ignored by MVP BFS. */
-  weight?: number;
+  /** Estimated on-foot travel time, in seconds. Valid only on walk edges
+   *  (other methods are instant); drives the weighted Dijkstra routing. */
+  seconds?: number;
   notes?: string;
 }
 
@@ -345,12 +346,13 @@ Design notes:
   passes the predicate to `findPath`, which prunes ineligible edges *before*
   traversal. `meso` is treated as "can you afford a single use" (not cumulative
   budget) for MVP; cumulative-cost routing is a future weighted-cost concern.
-- **Unreachable handling (FR7) lives here**, not in the UI: BFS once with the
-  filter; if no path, BFS again unfiltered and mark which steps the user can't
-  satisfy, returning `status: 'unreachable-when-filtered'` + `fallback`.
-- **Weighted upgrade is a swap:** replace BFS with Dijkstra over `edge.weight`
-  behind the same `findPath` signature when the measured-time model lands. The IR
-  already carries `weight`.
+- **Unreachable handling (FR7) lives here**, not in the UI: Dijkstra once with the
+  filter; if no path, Dijkstra again unfiltered and mark which steps the user
+  can't satisfy, returning `status: 'unreachable-when-filtered'` + `fallback`.
+- **Routing is least-time Dijkstra** over walk-edge `seconds`; portal/npc/item/
+  skill transitions cost 0 (instant teleports) and untimed walks fall back to
+  `DEFAULT_WALK_SECONDS`. `findPath` returns `totalSeconds` alongside the steps.
+  With no times authored, uniform costs make this equivalent to fewest-hops BFS.
 - **`toJSON` is the portability guarantee** the requirements asked for — a tiny
   CLI (`pnpm --filter @scrolled/nav-graph export`) writes the JSON so the graph can
   be shipped to a non-TS target without the authoring toolchain.
@@ -580,9 +582,10 @@ pathfinding/search test suite is green.
    fallback UX.
 6. **M6 — Content + polish.** Author the full MVP data set (major hubs +
    inter-region transport), optional palette, analytics gate, deploy target.
-7. **Post-MVP (per requirements):** measured-time weights (BFS→Dijkstra), region
-   grouping / semantic zoom (React Flow sub-flows), off-page connectors (custom
-   edge/node types), frozen layout coords, in-app authoring tool.
+7. **Post-MVP (per requirements):** empirical (recorded) walk times refining the
+   authored `seconds` estimates, region grouping / semantic zoom (React Flow
+   sub-flows), off-page connectors (custom edge/node types), frozen layout coords,
+   in-app authoring tool.
 
 ## 13. Open questions / decisions to confirm
 

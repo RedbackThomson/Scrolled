@@ -1,8 +1,9 @@
 import type { LucideIcon } from 'lucide-react';
 import { Footprints, MoreHorizontal, Package, Sparkles, Train, Users } from 'lucide-react';
 import { cn } from '@scrolled/ui';
-import type { NavGraph, TravelEdge, TravelMethod } from '@scrolled/nav-graph';
+import { edgeSeconds, type NavGraph, type TravelEdge, type TravelMethod } from '@scrolled/nav-graph';
 
+import { formatDuration } from '@/lib/formatDuration';
 import { npcUrl } from '@/lib/scrolledLinks';
 import { RequirementChip } from './RequirementChip';
 
@@ -55,6 +56,12 @@ export function DirectionStep({ index, step, graph, blocked }: DirectionStepProp
             <span className="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">
               {METHOD_LABELS[step.method]}
             </span>
+            {step.method === 'walk' ? (
+              <span className="text-muted-foreground text-[10px] tabular-nums">
+                · {step.seconds == null ? '~' : ''}
+                {formatDuration(edgeSeconds(step))}
+              </span>
+            ) : null}
           </div>
           <p className="mt-1 break-words text-sm leading-snug">
             <span className="font-medium">{fromName}</span>

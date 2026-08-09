@@ -27,6 +27,7 @@ export type {
   GraphBuilder,
   NodeHandle,
   RegionScope,
+  WalkEdgeOpts,
 } from './dsl/builder';
 export { item, level, meso, quest } from './dsl/requirements';
 
@@ -35,7 +36,7 @@ export { compileGraph } from './compile/compileGraph';
 export type { NavGraph } from './compile/compileGraph';
 
 // Pathfinding
-export { findPath } from './path/findPath';
+export { DEFAULT_WALK_SECONDS, edgeSeconds, findPath } from './path/findPath';
 export { eligibilityFilter } from './path/eligibility';
 export type {
   FindPathOptions,

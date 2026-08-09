@@ -13,8 +13,8 @@ export const starterGraph: NavGraphSource = defineGraph(
       const meadow = r.node('meadow', 'Meadow Crossing');
       const oldFort = r.node('old-fort', 'Old Fort');
 
-      riverside.walk(meadow);
-      meadow.walk(oldFort);
+      riverside.walk(meadow, { seconds: 90 });
+      meadow.walk(oldFort, { seconds: 120 });
       riverside.npcTo(oldFort, {
         via: 'Hire the wagon driver at the inn',
         cost: meso(500),
@@ -27,7 +27,7 @@ export const starterGraph: NavGraphSource = defineGraph(
       const harbour = r.node('harbour', 'Harbour Town');
       const lighthouse = r.node('lighthouse', 'Lighthouse Point');
 
-      harbour.walk(lighthouse);
+      harbour.walk(lighthouse, { seconds: 150 });
       harbour.skillTo(lighthouse, {
         via: 'Use the bridge-keeper teleport',
         cost: meso(100),
@@ -39,6 +39,7 @@ export const starterGraph: NavGraphSource = defineGraph(
       const summit = r.node('summit', 'Summit Shrine');
 
       trailhead.walk(summit, {
+        seconds: 300,
         require: [level(20)],
         notes: 'Steep climb — recommended past level 20.',
       });

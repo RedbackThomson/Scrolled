@@ -40,8 +40,12 @@ export interface TravelEdge {
   via?: string;
   refs?: EntityRefs;
   requirements?: Requirement[];
-  /** Reserved for the future weighted-cost model; BFS ignores it. */
-  weight?: number;
+  /**
+   * Estimated travel time for this edge, in seconds. Pathfinding minimizes the
+   * summed time of a route (Dijkstra). Omit when unknown — untimed edges fall
+   * back to `DEFAULT_EDGE_SECONDS`, so a graph with no times routes by hops.
+   */
+  seconds?: number;
   notes?: string;
 }
 

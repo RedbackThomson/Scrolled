@@ -44,17 +44,27 @@ const areaNodeSchema = z.object({
   group: groupIdSchema.optional(),
 });
 
-const travelEdgeSchema = z.object({
-  from: nodeIdSchema,
-  to: nodeIdSchema,
-  bidirectional: z.boolean().optional(),
-  method: travelMethodSchema,
-  via: z.string().optional(),
-  refs: entityRefsSchema.optional(),
-  requirements: z.array(requirementSchema).optional(),
-  weight: z.number().nonnegative().optional(),
-  notes: z.string().optional(),
-});
+const travelEdgeSchema = z
+  .object({
+    from: nodeIdSchema,
+    to: nodeIdSchema,
+    bidirectional: z.boolean().optional(),
+    method: travelMethodSchema,
+    via: z.string().optional(),
+    refs: entityRefsSchema.optional(),
+    requirements: z.array(requirementSchema).optional(),
+    seconds: z.number().positive().optional(),
+    notes: z.string().optional(),
+  })
+  .superRefine((edge, ctx) => {
+    if (edge.seconds !== undefined && edge.method !== 'walk') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['seconds'],
+        message: `seconds is only valid on walk edges; "${edge.method}" transitions are instant.`,
+      });
+    }
+  });
 
 const groupDefSchema = z.object({
   id: groupIdSchema,

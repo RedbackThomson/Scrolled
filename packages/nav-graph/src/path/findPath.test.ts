@@ -4,21 +4,21 @@ import { defineGraph } from '../dsl/builder';
 import { item, level, meso, quest } from '../dsl/requirements';
 import { asNodeId } from '../ir/types';
 import { eligibilityFilter } from './eligibility';
-import { findPath } from './findPath';
+import { DEFAULT_WALK_SECONDS, findPath } from './findPath';
 
 const a = asNodeId('a');
 const b = asNodeId('b');
 const c = asNodeId('c');
 const d = asNodeId('d');
 
-describe('findPath — BFS', () => {
+describe('findPath — connectivity', () => {
   it('returns an empty step list when from === to', () => {
     const graph = compileGraph(
       defineGraph({ profileId: 'test' }, (g) => {
         g.node('a', 'A');
       }),
     );
-    expect(findPath(graph, a, a)).toEqual({ status: 'found', steps: [] });
+    expect(findPath(graph, a, a)).toEqual({ status: 'found', steps: [], totalSeconds: 0 });
   });
 
   it('finds the fewest-hops path through a chain', () => {
@@ -59,7 +59,7 @@ describe('findPath — BFS', () => {
         g.node('b', 'B');
       }),
     );
-    expect(findPath(graph, a, b)).toEqual({ status: 'unreachable', steps: [] });
+    expect(findPath(graph, a, b)).toEqual({ status: 'unreachable', steps: [], totalSeconds: 0 });
   });
 
   it('throws if either endpoint is unknown to the graph', () => {
@@ -82,6 +82,64 @@ describe('findPath — BFS', () => {
     );
     expect(findPath(graph, a, b).status).toBe('found');
     expect(findPath(graph, b, a).status).toBe('unreachable');
+  });
+});
+
+describe('findPath — weighted (travel time)', () => {
+  it('routes around a slow walk via more but faster hops', () => {
+    const graph = compileGraph(
+      defineGraph({ profileId: 'test' }, (g) => {
+        const na = g.node('a', 'A');
+        const nb = g.node('b', 'B');
+        const nc = g.node('c', 'C');
+        na.walk(nb, { seconds: 500 }); // slow one-hop
+        na.walk(nc, { seconds: 10 });
+        nc.walk(nb, { seconds: 10 }); // two hops, 20s total — faster
+      }),
+    );
+    const result = findPath(graph, a, b);
+    expect(result.status).toBe('found');
+    expect(result.steps.map((s) => `${s.from}->${s.to}`)).toEqual(['a->c', 'c->b']);
+    expect(result.totalSeconds).toBe(20);
+  });
+
+  it('treats non-walk transitions as instant, beating a timed walk', () => {
+    const graph = compileGraph(
+      defineGraph({ profileId: 'test' }, (g) => {
+        const na = g.node('a', 'A');
+        const nb = g.node('b', 'B');
+        na.walk(nb, { seconds: 300 });
+        na.portalTo(nb); // instant teleport
+      }),
+    );
+    const result = findPath(graph, a, b);
+    expect(result.steps).toHaveLength(1);
+    expect(result.steps[0].method).toBe('portal');
+    expect(result.totalSeconds).toBe(0);
+  });
+
+  it('falls back to the default time for an untimed walk edge', () => {
+    const graph = compileGraph(
+      defineGraph({ profileId: 'test' }, (g) => {
+        const na = g.node('a', 'A');
+        const nb = g.node('b', 'B');
+        na.walk(nb);
+      }),
+    );
+    expect(findPath(graph, a, b).totalSeconds).toBe(DEFAULT_WALK_SECONDS);
+  });
+
+  it('rejects a seconds weight on a non-walk edge at compile time', () => {
+    const source = {
+      profileId: 'test',
+      nodes: [
+        { id: 'a', name: 'A' },
+        { id: 'b', name: 'B' },
+      ],
+      edges: [{ from: 'a', to: 'b', method: 'npc', seconds: 30 }],
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- hand-written IR bypassing the DSL's type guard
+    expect(() => compileGraph(source as any)).toThrow(/seconds is only valid on walk/);
   });
 });
 

@@ -54,9 +54,9 @@ easier to understand and navigate; Scrolled (the wiki) was the first.
 
 3. **Edge model with directionality + requirements.** Edges are directional or
    bi-directional and carry requirements: meso cost, item (distinguishing *held*
-   vs *consumed*), completed quest(s), and minimum level. Edges also carry an
-   **optional `weight`/`duration` field that the MVP ignores**, reserved for the
-   future cost model (see deferred features).
+   vs *consumed*), completed quest(s), and minimum level. Walk edges also carry
+   an **optional `seconds` field** (estimated on-foot travel time) that feeds the
+   weighted routing in FR5; portal/npc/item/skill transitions are instant.
    - *Acceptance:* the IR can express every requirement type; directions render
      each edge's requirements per step.
 
@@ -67,13 +67,15 @@ easier to understand and navigate; Scrolled (the wiki) was the first.
    - *Acceptance:* the MVP graph (major hubs + inter-region transport) loads and
      is navigable by pan and zoom.
 
-5. **Get Directions (fewest hops).** The user selects a start node and an end
-   node and requests directions. The app finds the shortest path by **fewest
-   hops** (unweighted BFS), highlights it on the graph, and shows a step-by-step
-   summary listing each edge's travel method and any requirements.
-   - *Acceptance:* for any connected A→B, a correct minimal-hop path is
+5. **Get Directions (least travel time).** The user selects a start node and an
+   end node and requests directions. The app finds the shortest path by **summed
+   travel time** (Dijkstra over walk-edge `seconds`; non-walk transitions are
+   instant), highlights it on the graph, and shows a step-by-step summary listing
+   each edge's travel method, its walking time, and any requirements. With no
+   times authored, uniform edge costs make this collapse to fewest hops.
+   - *Acceptance:* for any connected A→B, a correct least-time path is
      highlighted on the graph and listed as ordered steps, each stating its
-     travel method and requirements.
+     travel method, walking time, and requirements; the panel shows the total.
 
 6. **Optional eligibility filter (hard filter).** The user may declare their
    state — current level, items held, quests completed — and ineligible edges are
@@ -90,9 +92,10 @@ easier to understand and navigate; Scrolled (the wiki) was the first.
 
 ### Deferred Features (Should / Could Have — post-MVP)
 
-- **Measured-time cost model.** Replace fewest-hops with empirically recorded
-  traversal times as edge weights (BFS → Dijkstra). The IR already carries the
-  field, so this is an algorithm change, not an IR migration.
+- **Measured-time refinement.** Weighted routing over walk-edge `seconds` ships
+  in FR5 (Dijkstra). The remaining post-MVP work is *empirical* times — replacing
+  authored estimates with recorded traversal data — plus per-method costs for the
+  transitions currently modeled as instant, if they prove non-negligible.
 - **Region grouping & semantic zoom.** Nodes are tagged with authored region
   names; the zoomed-out view collapses to region super-nodes and expands on
   zoom-in, giving a "big picture" overview.
@@ -175,7 +178,7 @@ easier to understand and navigate; Scrolled (the wiki) was the first.
 | 2 | Relationship to Scrolled | Separate app, shared packages, one monorepo | Product independence with entity-ID and UI reuse |
 | 3 | Storage & authoring | TypeScript IR, PR-based; compiled to a runtime form, serializable to JSON | Easy community contributions without graph-DB syntax; type-checked; portable |
 | 4 | Node identity & entity refs | Nodes = author-assigned names/slugs (no `mapId`); requirements reference `itemId`/`questId`; fully handwritten; data set targets a server profile | Keeps the graph self-contained and offline, decoupled from extracted map data; item/quest refs stay accurate and linkable into Scrolled |
-| 5 | Cost model | Fewest hops (MVP); measured-time weights later | Simplest correct MVP; IR carries an unused weight field for the upgrade |
+| 5 | Cost model | Least travel time — Dijkstra over walk-edge `seconds`; non-walk transitions instant; falls back to fewest hops when no times are authored | Reflects that walking dominates real travel time while teleports do not; empirical times remain a post-MVP refinement |
 | 6 | Requirements model | Optional hard filter; all edges eligible by default | Matches the intended UX; requires graceful unreachable handling |
 | 7 | Graph layout | Auto force-directed (MVP); region grouping + off-page connectors + frozen coords later | Lowest authoring cost first; clutter-management features designed into the IR |
 | 8 | MVP content scope | Major hubs + inter-region transport only | Proves cross-world directions with the fewest curated nodes |
