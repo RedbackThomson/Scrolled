@@ -30,7 +30,7 @@ export function DirectionsBar({ graph }: DirectionsBarProps) {
   const canGo = !!fromId && !!toId && fromId !== toId;
 
   return (
-    <div className="border-border bg-background flex flex-none items-center gap-2 border-b px-4 py-2">
+    <div className="border-border bg-background flex flex-none flex-col gap-2 border-b px-4 py-2 md:flex-row md:items-center">
       <div className="grid flex-1 grid-cols-[1fr_auto_1fr] items-end gap-2">
         <NodePicker
           label="From"
@@ -54,16 +54,18 @@ export function DirectionsBar({ graph }: DirectionsBarProps) {
           onChange={(id) => setTo(id)}
         />
       </div>
-      <PathOptionsMenu />
-      <Button onClick={onGo} disabled={!canGo} size="sm" className="gap-2">
-        <Route className="h-4 w-4" aria-hidden />
-        Get directions
-      </Button>
-      {(fromId || toId || hasResult) && (
-        <Button variant="ghost" size="icon" aria-label="Clear directions" onClick={onClear}>
-          <X className="h-4 w-4" aria-hidden />
+      <div className="flex items-center gap-2">
+        <PathOptionsMenu />
+        <Button onClick={onGo} disabled={!canGo} size="sm" className="flex-1 gap-2 md:flex-none">
+          <Route className="h-4 w-4" aria-hidden />
+          Get directions
         </Button>
-      )}
+        {(fromId || toId || hasResult) && (
+          <Button variant="ghost" size="icon" aria-label="Clear directions" onClick={onClear}>
+            <X className="h-4 w-4" aria-hidden />
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

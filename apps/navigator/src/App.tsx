@@ -21,8 +21,8 @@ function NavigatorBody() {
   return (
     <div className="flex h-full flex-col">
       <DirectionsBar graph={graph} />
-      <div className="relative flex min-h-0 flex-1">
-        <div className="flex-1">
+      <div className="relative flex min-h-0 flex-1 flex-col md:flex-row">
+        <div className="min-h-0 min-w-0 flex-1">
           <GraphCanvas graph={graph} />
         </div>
         <DirectionsPanel graph={graph} />

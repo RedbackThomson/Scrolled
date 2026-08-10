@@ -1,8 +1,10 @@
-import { Button } from '@scrolled/ui';
+import { Button, cn } from '@scrolled/ui';
 import { Clock, X } from 'lucide-react';
 import type { NavGraph, PathResult, TravelEdge } from '@scrolled/nav-graph';
 
 import { formatDuration } from '@/lib/formatDuration';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import { useResizableHeight } from '@/hooks/useResizableHeight';
 import { useDirections } from '@/stores/useDirections';
 import { DirectionStep } from './DirectionStep';
 
@@ -10,10 +12,19 @@ export interface DirectionsPanelProps {
   graph: NavGraph;
 }
 
+// Enough height to keep the drag handle and the summary header on screen when
+// the panel is dragged all the way down.
+const MIN_PANEL_HEIGHT = 112;
+
+// A flex sibling of the graph — a right rail on desktop, a bottom panel on
+// mobile. On mobile a drag handle resizes it: pull down to reveal the full
+// graph, pull up to hide the graph and read more steps.
 export function DirectionsPanel({ graph }: DirectionsPanelProps) {
   const result = useDirections((s) => s.result);
   const clear = useDirections((s) => s.clear);
   const fastTravel = useDirections((s) => s.options.fastTravel);
+  const isMobile = useIsMobile();
+  const { height, ref, onHandlePointerDown } = useResizableHeight(MIN_PANEL_HEIGHT);
   if (!result) return null;
 
   const { steps, header, totalSeconds } = framesFromResult(result);
@@ -33,8 +44,27 @@ export function DirectionsPanel({ graph }: DirectionsPanelProps) {
   // teleport, or scroll neutrally.
   const label = steps.every((s) => s.method === 'walk') ? 'on foot' : 'travel time';
 
+  // The pixel height only applies to the mobile bottom panel; the desktop rail
+  // is a fixed-width, full-height sibling.
+  const resized = isMobile && height != null;
+
   return (
-    <aside className="border-border bg-background z-10 flex w-80 flex-none flex-col border-l">
+    <aside
+      ref={ref}
+      style={resized ? { height } : undefined}
+      className={cn(
+        'border-border bg-background z-10 flex flex-none flex-col overflow-hidden border-t md:h-auto md:max-h-none md:w-80 md:border-l md:border-t-0',
+        !resized && 'max-h-[55vh]',
+      )}
+    >
+      <button
+        type="button"
+        aria-label="Resize directions panel"
+        onPointerDown={onHandlePointerDown}
+        className="flex flex-none touch-none cursor-row-resize items-center justify-center py-2.5 md:hidden"
+      >
+        <span className="bg-muted-foreground/30 h-1.5 w-10 rounded-full" />
+      </button>
       <header className="border-border flex flex-none items-start justify-between gap-2 border-b px-4 py-3">
         <div className="min-w-0">
           <p className="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">
@@ -74,7 +104,7 @@ export function DirectionsPanel({ graph }: DirectionsPanelProps) {
           No path between these places — try a different start or end.
         </div>
       ) : (
-        <ol className="flex flex-col gap-2 overflow-y-auto p-3">
+        <ol className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3">
           {steps.map((step, i) => (
             <DirectionStep
               key={`${step.from}->${step.to}#${i}`}

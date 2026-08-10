@@ -82,7 +82,7 @@ export function PathOptionsMenu() {
         <div
           role="dialog"
           aria-label="Travel setup"
-          className="border-border bg-card text-card-foreground absolute right-0 top-full z-20 mt-2 w-72 rounded-md border p-3 shadow-md"
+          className="border-border bg-card text-card-foreground absolute left-0 top-full z-20 mt-2 w-[calc(100vw-2rem)] max-w-72 rounded-md border p-3 shadow-md md:left-auto md:right-0 md:w-72"
         >
           <p className="text-sm font-medium">Travel setup</p>
           <p className="text-muted-foreground mt-0.5 text-xs">Configure your travel options</p>

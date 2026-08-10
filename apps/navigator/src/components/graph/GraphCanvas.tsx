@@ -7,6 +7,7 @@ import {
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
+  useStore,
   type Edge,
   type EdgeTypes,
   type Node,
@@ -23,6 +24,7 @@ import {
 import { nestedLayout } from '@/lib/layout/nestedLayout';
 import { useDirections } from '@/stores/useDirections';
 import { useEndpoints } from '@/hooks/useEndpoints';
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 import { AreaNodeView, type AreaHighlight } from './AreaNodeView';
 import { RegionNodeView } from './RegionNodeView';
@@ -52,6 +54,12 @@ function GraphCanvasInner({ graph }: GraphCanvasProps) {
   const result = useDirections((s) => s.result);
   const { fromId, toId } = useEndpoints(graph);
   const { fitView } = useReactFlow();
+  const isMobile = useIsMobile();
+  // React Flow's own tracked canvas size. The directions panel is a flex
+  // sibling, so opening it shrinks the canvas; re-fitting when these change
+  // frames the route against the new size instead of the old one.
+  const canvasWidth = useStore((s) => s.width);
+  const canvasHeight = useStore((s) => s.height);
 
   // Regions the user has opened by hand. Route regions expand on top of this
   // (see collapseView), so removing one here never hides a node on the route.
@@ -178,25 +186,39 @@ function GraphCanvasInner({ graph }: GraphCanvasProps) {
     [view.edges, routeActive, focusSet],
   );
 
-  // Re-frame whenever the visible set changes (route computed, region toggled).
+  // Re-frame whenever the visible set changes (route computed, region toggled)
+  // or the canvas is resized. A fit against a zero-sized canvas no-ops, so skip
+  // until React Flow reports real dimensions.
   useEffect(() => {
-    const id = window.requestAnimationFrame(() => fitView({ duration: 300, padding: 0.2 }));
+    if (canvasWidth === 0 || canvasHeight === 0) return;
+    const id = window.requestAnimationFrame(() =>
+      fitView({ duration: 300, padding: 0.2, minZoom: 0.2 }),
+    );
     return () => window.cancelAnimationFrame(id);
-  }, [fitView, view]);
+  }, [fitView, view, canvasWidth, canvasHeight]);
 
-  const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
-    const groupId = (node.data as { groupId?: GroupId }).groupId;
-    if (!groupId) return;
-    if (node.type === 'region') {
-      setManualExpanded((prev) => new Set(prev).add(groupId));
-    } else if (node.type === 'region-container') {
-      setManualExpanded((prev) => {
-        const next = new Set(prev);
-        next.delete(groupId);
-        return next;
-      });
-    }
-  }, []);
+  const onNodeClick = useCallback(
+    (_: React.MouseEvent, node: Node) => {
+      // Touch has no hover, so a tap on an area node stands in for it: toggle a
+      // sticky focus that lights up its connections (same machinery as hover).
+      if (isMobile && node.type === 'area') {
+        setHoveredId((prev) => (prev === node.id ? null : node.id));
+        return;
+      }
+      const groupId = (node.data as { groupId?: GroupId }).groupId;
+      if (!groupId) return;
+      if (node.type === 'region') {
+        setManualExpanded((prev) => new Set(prev).add(groupId));
+      } else if (node.type === 'region-container') {
+        setManualExpanded((prev) => {
+          const next = new Set(prev);
+          next.delete(groupId);
+          return next;
+        });
+      }
+    },
+    [isMobile],
+  );
 
   return (
     <ReactFlow
@@ -205,16 +227,22 @@ function GraphCanvasInner({ graph }: GraphCanvasProps) {
       nodeTypes={nodeTypes}
       edgeTypes={edgeTypes}
       onNodeClick={onNodeClick}
-      onNodeMouseEnter={(_, node) => setHoveredId(node.id)}
-      onNodeMouseLeave={() => setHoveredId(null)}
+      onPaneClick={() => setHoveredId(null)}
+      {...(isMobile
+        ? {}
+        : {
+            onNodeMouseEnter: (_: React.MouseEvent, node: Node) => setHoveredId(node.id),
+            onNodeMouseLeave: () => setHoveredId(null),
+          })}
       nodesDraggable={false}
       nodesConnectable={false}
+      minZoom={0.2}
       fitView
       proOptions={{ hideAttribution: true }}
     >
       <Background />
-      <Controls showInteractive={false} />
-      <MiniMap pannable zoomable />
+      {!isMobile && <Controls showInteractive={false} />}
+      {!isMobile && <MiniMap pannable zoomable />}
     </ReactFlow>
   );
 }
