@@ -28,7 +28,7 @@ export function NodePicker({ label, graph, value, onChange }: NodePickerProps) {
         variant="outline"
         size="sm"
         onClick={() => setOpen(true)}
-        className="w-full justify-between gap-2"
+        className="h-auto w-full justify-between gap-2 py-2"
       >
         <span className="flex min-w-0 flex-col items-start leading-tight">
           <span className="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">
