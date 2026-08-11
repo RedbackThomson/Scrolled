@@ -142,15 +142,23 @@ jobs:
         # required for the OIDC flow and also publishes the Sigstore-signed
         # provenance attestation that shows on the package page.
         #
-        # --ignore-scripts skips prepublishOnly (typecheck/test/clean/build/
-        # LICENSE copy) — we already did all of that in explicit CI steps,
-        # and the dist + LICENSE staged above is what we want to ship as-is.
+        # We publish the exact tarball produced by `pnpm pack` above, NOT the
+        # source directory. This is deliberate: package.json points main/module/
+        # types/exports at ./src/* for in-repo workspace consumers, and relies
+        # on publishConfig to repoint them at ./dist/* for the published
+        # package. Those field overrides are a pnpm feature — `npm publish` from
+        # a directory ignores them and would ship a package.json still pointing
+        # at ./src/index.ts, which is not in the tarball (files=[dist]). `pnpm
+        # pack` applies the overrides, so publishing its tarball guarantees the
+        # published package matches the uploaded preview artifact. Publishing a
+        # tarball also never runs lifecycle scripts, so prepublishOnly is
+        # skipped as intended (we already ran typecheck/test/build as CI steps).
         env:
           ACTIONS_ID_TOKEN_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
           ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
         run: |
-          npm publish \
+          tarball=$(ls scrolled-nav-graph-*.tgz)
+          npm publish "$tarball" \
             --access public \
             --provenance \
-            --tag ${{ steps.target.outputs.dist_tag }} \
-            --ignore-scripts
+            --tag ${{ steps.target.outputs.dist_tag }}
