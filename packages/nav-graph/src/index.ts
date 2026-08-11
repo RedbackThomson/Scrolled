@@ -44,10 +44,20 @@ export {
   findPath,
 } from './path/findPath';
 export { eligibilityFilter } from './path/eligibility';
+export {
+  collectUnlockables,
+  isUnlockable,
+  lockedRequirementsFilter,
+  requirementEntityId,
+  requirementKey,
+} from './path/unlockables';
 export type {
   EdgeCostOptions,
   FindPathOptions,
   PathResult,
+  UnlockableEntry,
+  UnlockableKind,
+  UnlockableRequirement,
   UserCapability,
 } from './path/index';
 
@@ -56,9 +66,4 @@ export { toJSON } from './json/toJSON';
 export type { NavGraphJSON } from './json/toJSON';
 
 // Authored graphs registry (per-profile NavGraphSources). See src/graphs/README.md.
-export {
-  DEFAULT_GRAPH_ID,
-  GRAPHS,
-  getGraph,
-  listGraphIds,
-} from './graphs/index';
+export { DEFAULT_GRAPH_ID, GRAPHS, getGraph, listGraphIds } from './graphs/index';

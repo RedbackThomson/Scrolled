@@ -24,28 +24,33 @@ export function RequirementChip({ requirement }: RequirementChipProps) {
         </Chip>
       );
     case 'item': {
-      const qty = requirement.quantity && requirement.quantity > 1 ? ` ×${requirement.quantity}` : '';
+      const qty =
+        requirement.quantity && requirement.quantity > 1 ? ` ×${requirement.quantity}` : '';
       const verb = requirement.consumed ? 'Use' : 'Have';
+      const label = requirement.name ?? `item #${requirement.itemId}`;
       return (
         <Chip
           tone="emerald"
           icon={<Package className="h-3 w-3" aria-hidden />}
           href={itemUrl(requirement.itemId)}
         >
-          {verb} item #{requirement.itemId}{qty}
+          {verb} {label}
+          {qty}
         </Chip>
       );
     }
-    case 'quest':
+    case 'quest': {
+      const label = requirement.name ?? `quest #${requirement.questId}`;
       return (
         <Chip
           tone="violet"
           icon={<ScrollText className="h-3 w-3" aria-hidden />}
           href={questUrl(requirement.questId)}
         >
-          Complete quest #{requirement.questId}
+          Complete {label}
         </Chip>
       );
+    }
   }
 }
 

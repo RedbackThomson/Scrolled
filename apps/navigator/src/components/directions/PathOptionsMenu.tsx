@@ -1,11 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, cn } from '@scrolled/ui';
 import { SlidersHorizontal } from 'lucide-react';
+import type { NavGraph } from '@scrolled/nav-graph';
 
 import { useDirections, type PathOptions } from '@/stores/useDirections';
+import { RequirementUnlocks } from './RequirementUnlocks';
+import { ToggleSwitch } from './ToggleSwitch';
+
+// Only the boolean travel toggles live in this list; the unlocked-requirements
+// section is rendered separately from the graph's own requirements.
+type BooleanOptionKey = {
+  [K in keyof PathOptions]: PathOptions[K] extends boolean ? K : never;
+}[keyof PathOptions];
 
 interface OptionDef {
-  key: keyof PathOptions;
+  key: BooleanOptionKey;
   label: string;
   description: string;
 }
@@ -25,7 +34,11 @@ const OPTIONS: OptionDef[] = [
   },
 ];
 
-export function PathOptionsMenu() {
+export interface PathOptionsMenuProps {
+  graph: NavGraph;
+}
+
+export function PathOptionsMenu({ graph }: PathOptionsMenuProps) {
   const options = useDirections((s) => s.options);
   const setOption = useDirections((s) => s.setOption);
   const acknowledged = useDirections((s) => s.optionsAcknowledged);
@@ -82,7 +95,7 @@ export function PathOptionsMenu() {
         <div
           role="dialog"
           aria-label="Travel setup"
-          className="border-border bg-card text-card-foreground absolute left-0 top-full z-20 mt-2 w-[calc(100vw-2rem)] max-w-72 rounded-md border p-3 shadow-md md:left-auto md:right-0 md:w-72"
+          className="border-border bg-card text-card-foreground absolute left-0 top-full z-20 mt-2 flex max-h-[min(70vh,32rem)] w-[calc(100vw-2rem)] max-w-72 flex-col overflow-y-auto rounded-md border p-3 shadow-md md:left-auto md:right-0 md:w-72"
         >
           <p className="text-sm font-medium">Travel setup</p>
           <p className="text-muted-foreground mt-0.5 text-xs">Configure your travel options</p>
@@ -102,23 +115,12 @@ export function PathOptionsMenu() {
                     <span className="block text-sm font-medium">{opt.label}</span>
                     <span className="text-muted-foreground block text-xs">{opt.description}</span>
                   </span>
-                  <span
-                    className={cn(
-                      'relative mt-0.5 inline-flex h-5 w-9 flex-none items-center rounded-full transition-colors',
-                      checked ? 'bg-primary' : 'bg-muted border-border border',
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        'bg-background inline-block h-4 w-4 rounded-full shadow transition-transform',
-                        checked ? 'translate-x-4' : 'translate-x-0.5',
-                      )}
-                    />
-                  </span>
+                  <ToggleSwitch checked={checked} />
                 </button>
               );
             })}
           </div>
+          <RequirementUnlocks graph={graph} />
         </div>
       ) : null}
     </div>

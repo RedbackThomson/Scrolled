@@ -99,6 +99,37 @@ describe('defineGraph', () => {
     ]);
   });
 
+  it('carries optional names on item and quest requirements', () => {
+    const source = defineGraph({ profileId: 'test' }, (g) => {
+      const a = g.node('a', 'Alpha');
+      const b = g.node('b', 'Beta');
+      a.itemTo(b, {
+        require: [
+          item(2_000_001, { consumed: true, name: 'Lighthouse Pass' }),
+          quest(7_001, 'Summit Survey'),
+        ],
+      });
+    });
+
+    expect(source.edges[0].requirements).toEqual([
+      { kind: 'item', itemId: 2_000_001, consumed: true, name: 'Lighthouse Pass' },
+      { kind: 'quest', questId: 7_001, name: 'Summit Survey' },
+    ]);
+  });
+
+  it('omits the name key when no name is given', () => {
+    const source = defineGraph({ profileId: 'test' }, (g) => {
+      const a = g.node('a', 'Alpha');
+      const b = g.node('b', 'Beta');
+      a.itemTo(b, { require: [item(4031746), quest(7)] });
+    });
+
+    expect(source.edges[0].requirements).toEqual([
+      { kind: 'item', itemId: 4031746, consumed: false },
+      { kind: 'quest', questId: 7 },
+    ]);
+  });
+
   it('g.ref() resolves forward and cross-region references', () => {
     const source = defineGraph({ profileId: 'test' }, (g) => {
       // declare an edge whose target is declared later

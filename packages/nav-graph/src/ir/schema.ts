@@ -27,8 +27,13 @@ const requirementSchema: z.ZodType<Requirement> = z.discriminatedUnion('kind', [
     itemId: z.number().int().positive(),
     consumed: z.boolean(),
     quantity: z.number().int().positive().optional(),
+    name: z.string().min(1).optional(),
   }),
-  z.object({ kind: z.literal('quest'), questId: z.number().int().positive() }),
+  z.object({
+    kind: z.literal('quest'),
+    questId: z.number().int().positive(),
+    name: z.string().min(1).optional(),
+  }),
   z.object({ kind: z.literal('level'), min: z.number().int().min(1).max(300) }),
 ]);
 
@@ -59,11 +64,7 @@ const travelEdgeSchema = z
     minor: z.boolean().optional(),
   })
   .superRefine((edge, ctx) => {
-    if (
-      edge.seconds !== undefined &&
-      edge.method !== 'walk' &&
-      edge.method !== 'transport'
-    ) {
+    if (edge.seconds !== undefined && edge.method !== 'walk' && edge.method !== 'transport') {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['seconds'],

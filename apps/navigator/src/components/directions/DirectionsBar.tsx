@@ -55,7 +55,7 @@ export function DirectionsBar({ graph }: DirectionsBarProps) {
         />
       </div>
       <div className="flex items-center gap-2">
-        <PathOptionsMenu />
+        <PathOptionsMenu graph={graph} />
         <Button onClick={onGo} disabled={!canGo} size="sm" className="flex-1 gap-2 md:flex-none">
           <Route className="h-4 w-4" aria-hidden />
           Get directions

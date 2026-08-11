@@ -21,10 +21,15 @@ export const TRAVEL_METHODS = [
 ] as const;
 export type TravelMethod = (typeof TRAVEL_METHODS)[number];
 
+// The `item` and `quest` requirements gate on an opaque game entity id, which
+// means nothing to a reader on its own. `name` is an optional human-readable
+// label the UI prefers over the raw id (e.g. "Lighthouse Pass" instead of
+// "item #2000001"). `meso` and `level` carry self-describing scalars, so they
+// need no name.
 export type Requirement =
   | { kind: 'meso'; amount: number }
-  | { kind: 'item'; itemId: number; consumed: boolean; quantity?: number }
-  | { kind: 'quest'; questId: number }
+  | { kind: 'item'; itemId: number; consumed: boolean; quantity?: number; name?: string }
+  | { kind: 'quest'; questId: number; name?: string }
   | { kind: 'level'; min: number };
 
 export interface AreaNode {
