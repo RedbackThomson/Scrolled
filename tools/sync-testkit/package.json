@@ -1,0 +1,24 @@
+{
+  "name": "@scrolled/sync-testkit",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Development-only harness for running the app against a local Supabase stack: reads the running project's config, seeds test accounts, and integration-tests the sync adapter against real Postgres, PostgREST and Realtime.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "seed": "vite-node src/cli.ts",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@scrolled/sync-core": "workspace:*",
+    "@scrolled/sync-supabase": "workspace:*",
+    "@supabase/supabase-js": "^2.108.2",
+    "@types/node": "^22.7.5",
+    "vite-node": "^2.1.9",
+    "vitest": "^2.1.2"
+  }
+}

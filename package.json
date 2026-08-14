@@ -27,7 +27,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "pnpm -r test",
-    "prepare": "husky"
+    "prepare": "husky",
+    "dev:supabase": "pnpm --filter @scrolled/web dev:supabase",
+    "supabase:seed": "pnpm --filter @scrolled/sync-testkit seed"
   },
   "devDependencies": {
     "@eslint/js": "^9.12.0",

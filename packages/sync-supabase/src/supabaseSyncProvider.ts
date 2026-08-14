@@ -63,6 +63,8 @@ export interface SyncRestClient {
     limit: number,
     offset: number,
   ): Promise<RemoteRow[]>;
+  /** Every row sharing one `server_time`, so a tie group is never split. */
+  selectAt(table: string, serverTime: string): Promise<RemoteRow[]>;
   selectOne(table: string, where: RemoteRow): Promise<RemoteRow | null>;
   deleteTombstones(table: string, before: string): Promise<void>;
   protocol(): Promise<{ protocol_version: number; min_client_revision: number }>;
@@ -129,12 +131,15 @@ export function createSupabaseSyncProvider(config: SupabaseSyncConfig): SyncProv
     if (!(await config.getAccessToken())) throw new SyncAuthError();
   }
 
-  async function upsertBatch(entity: SyncEntity, rows: RemoteRow[]): Promise<UpsertResult['applied']> {
-    const returned = await rest.upsert(
-      ENTITY_TABLE[entity],
-      rows,
-      ENTITY_KEY_COLUMNS[entity].join(','),
-    );
+  async function upsertBatch(
+    entity: SyncEntity,
+    rows: RemoteRow[],
+  ): Promise<UpsertResult['applied']> {
+    // Every table is account-scoped, so its primary key leads with `account_id`
+    // and the conflict target must too. The column is filled by its default
+    // rather than sent, which is why it is absent from the record's own key.
+    const conflictTarget = ['account_id', ...ENTITY_KEY_COLUMNS[entity]].join(',');
+    const returned = await rest.upsert(ENTITY_TABLE[entity], rows, conflictTarget);
     return returned.map((row) => ({ key: recordKey(entity, row), seq: Number(row.seq ?? 0) }));
   }
 
@@ -167,9 +172,6 @@ export function createSupabaseSyncProvider(config: SupabaseSyncConfig): SyncProv
     async fetchSince(cursor): Promise<FetchPage> {
       await requireToken();
 
-      // Each table contributes at most a page. Because a table that returns a
-      // full page has a maximum at or beyond the merged cut-off, truncating the
-      // merged list can never strand a row behind the advancing cursor.
       let anyFull = false;
       const tagged: TaggedRow[] = [];
       for (const entity of SYNC_ENTITIES) {
@@ -177,12 +179,32 @@ export function createSupabaseSyncProvider(config: SupabaseSyncConfig): SyncProv
         if (rows.length >= pageSize) anyFull = true;
         for (const row of rows) tagged.push(toTagged(entity, row));
       }
+      tagged.sort(byServerTimeThenSeq);
 
-      tagged.sort((a, b) => (a.serverTime < b.serverTime ? -1 : a.serverTime > b.serverTime ? 1 : 0));
-      const truncated = tagged.length > pageSize;
-      const page = truncated ? tagged.slice(0, pageSize) : tagged;
-      const next = page.length > 0 ? page[page.length - 1].serverTime : (cursor ?? '');
-      return { rows: page, cursor: next, complete: !truncated && !anyFull };
+      if (!anyFull) {
+        const next = tagged.length > 0 ? tagged[tagged.length - 1].serverTime : (cursor ?? '');
+        return { rows: tagged, cursor: next, complete: true };
+      }
+
+      // A table filled its page, so rows sharing the last timestamp may still be
+      // unfetched. Postgres stamps `now()` once per transaction, so a whole push
+      // lands on one timestamp; stopping mid-group would skip its remainder for
+      // good, since the next page asks for rows strictly after that timestamp.
+      const boundary = tagged[tagged.length - 1].serverTime;
+      const whole = tagged.filter((r) => r.serverTime < boundary);
+      if (whole.length > 0) {
+        return { rows: whole, cursor: whole[whole.length - 1].serverTime, complete: false };
+      }
+
+      // Every fetched row shares one timestamp, so the group has to be taken in
+      // full or the cursor can never move past it.
+      const group: TaggedRow[] = [];
+      for (const entity of SYNC_ENTITIES) {
+        const rows = await rest.selectAt(ENTITY_TABLE[entity], boundary);
+        for (const row of rows) group.push(toTagged(entity, row));
+      }
+      group.sort(byServerTimeThenSeq);
+      return { rows: group, cursor: boundary, complete: false };
     },
 
     async fetchAll(): Promise<TaggedRow[]> {
@@ -250,6 +272,11 @@ export function createSupabaseSyncProvider(config: SupabaseSyncConfig): SyncProv
   };
 }
 
+function byServerTimeThenSeq(a: TaggedRow, b: TaggedRow): number {
+  if (a.serverTime !== b.serverTime) return a.serverTime < b.serverTime ? -1 : 1;
+  return a.seq - b.seq;
+}
+
 function toTagged(entity: SyncEntity, row: RemoteRow): TaggedRow {
   return {
     entity,
@@ -300,9 +327,22 @@ function toRestClient(supabase: SupabaseClient): SyncRestClient {
     },
 
     async selectSince(table, cursor, limit, offset) {
-      let query = from(table).select('*').order('server_time').range(offset, offset + limit - 1);
+      let query = from(table)
+        .select('*')
+        .order('server_time')
+        .order('seq')
+        .range(offset, offset + limit - 1);
       if (cursor) query = query.gt('server_time', cursor);
       const { data, error } = await query;
+      if (error) throwMapped(error as PostgrestError);
+      return (data ?? []) as RemoteRow[];
+    },
+
+    async selectAt(table, serverTime) {
+      const { data, error } = await from(table)
+        .select('*')
+        .eq('server_time', serverTime)
+        .order('seq');
       if (error) throwMapped(error as PostgrestError);
       return (data ?? []) as RemoteRow[];
     },

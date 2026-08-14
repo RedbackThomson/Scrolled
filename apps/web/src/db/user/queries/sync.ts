@@ -74,9 +74,30 @@ function appendOutbox(
   db.exec(
     `INSERT INTO sync_outbox (entity, uuid, op, payload, base_revision, created_at, idempotency)
      VALUES (?, ?, ?, ?, 0, ?, '')`,
-    [entity, uuid, op, JSON.stringify(payload), now],
+    [entity, uuid, op, JSON.stringify(withParentKeys(db, entity, payload)), now],
   );
   outboxListener?.(entity);
+}
+
+/**
+ * Resolve a child's parent keys while the parent row still exists. Deleting a
+ * collection queues tombstones for its members and groups and then removes the
+ * collection, so by the time the queue drains there is nothing left to look the
+ * parent up from — without this the child's entry could never be sent.
+ */
+function withParentKeys(db: Sqlite, entity: SyncEntity, payload: Row): Row {
+  if (entity === 'collection_group') {
+    return { ...payload, collection_uuid: uuidOfId(db, 'collections', payload.collection_id) };
+  }
+  if (entity === 'collection_member') {
+    return {
+      ...payload,
+      collection_uuid: uuidOfId(db, 'collections', payload.collection_id),
+      group_uuid:
+        payload.group_id == null ? null : uuidOfId(db, 'collection_groups', payload.group_id),
+    };
+  }
+  return payload;
 }
 
 /**
@@ -316,7 +337,31 @@ export function rekeyLocal(
       entity,
       fromKey,
     ]);
+    // Queued children captured the old key when they were written; without this
+    // they would be sent referencing a parent that no longer exists.
+    const column = entity === 'collection' ? 'collection_uuid' : 'group_uuid';
+    if (entity === 'collection' || entity === 'collection_group') {
+      repointQueuedChildren(db, column, fromKey, toKey);
+    }
   });
+}
+
+function repointQueuedChildren(
+  db: Sqlite,
+  column: string,
+  fromKey: string,
+  toKey: string,
+): void {
+  const rows = db.selectObjects<Row>('SELECT seq, payload FROM sync_outbox');
+  for (const row of rows) {
+    const payload = JSON.parse(String(row.payload)) as Row;
+    if (payload[column] !== fromKey) continue;
+    payload[column] = toKey;
+    db.exec('UPDATE sync_outbox SET payload = ? WHERE seq = ?', [
+      JSON.stringify(payload),
+      Number(row.seq),
+    ]);
+  }
 }
 
 // -- bootstrap ----------------------------------------------------------------
@@ -627,7 +672,7 @@ function toRemoteRow(
         created_at: num(stored.created_at),
       };
     case 'collection_group': {
-      const collectionKey = uuidOfId(db, 'collections', stored.collection_id);
+      const collectionKey = parentKey(db, stored, 'collection_uuid', 'collections', 'collection_id');
       if (collectionKey == null) return null;
       return {
         ...base,
@@ -639,15 +684,14 @@ function toRemoteRow(
       };
     }
     case 'collection_member': {
-      const collectionKey = uuidOfId(db, 'collections', stored.collection_id);
+      const collectionKey = parentKey(db, stored, 'collection_uuid', 'collections', 'collection_id');
       if (collectionKey == null) return null;
       return {
         ...base,
         collection_key: collectionKey,
         entity_type: str(stored.entity_type),
         entity_id: num(stored.entity_id),
-        group_key:
-          stored.group_id == null ? null : uuidOfId(db, 'collection_groups', stored.group_id),
+        group_key: parentKey(db, stored, 'group_uuid', 'collection_groups', 'group_id'),
         note: nstr(stored.note),
         quantity: nnum(stored.quantity),
         done: !!num(stored.done),
@@ -665,6 +709,21 @@ function toRemoteRow(
         viewed_at: num(stored.viewed_at),
       };
   }
+}
+
+/** Prefer the key captured when the entry was queued; the live row may since
+ *  have been deleted along with its parent. */
+function parentKey(
+  db: Sqlite,
+  stored: Row,
+  captured: string,
+  table: string,
+  idColumn: string,
+): string | null {
+  const fromCapture = stored[captured];
+  if (typeof fromCapture === 'string' && fromCapture.length > 0) return fromCapture;
+  if (stored[idColumn] == null) return null;
+  return uuidOfId(db, table, stored[idColumn] as SqlValue);
 }
 
 function uuidOfId(db: Sqlite, table: string, id: SqlValue): string | null {

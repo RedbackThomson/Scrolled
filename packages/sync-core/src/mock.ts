@@ -53,9 +53,7 @@ export interface MockSyncProviderOptions {
   minClientRevision?: number;
 }
 
-/** `startTime` defaults to now so stamped cursors look recent to the engine's
- *  staleness check; pass a fixed value to assert on exact timestamps. */
-export function createMockSyncServer(startTime = Date.now()): MockSyncServer {
+export function createMockSyncServer(): MockSyncServer {
   const tables = new Map<SyncEntity, Map<string, TaggedRow>>();
   for (const entity of SYNC_ENTITIES) tables.set(entity, new Map());
   const subscribers = new Set<(originDevice: string) => void>();
@@ -65,10 +63,11 @@ export function createMockSyncServer(startTime = Date.now()): MockSyncServer {
 
   const table = (entity: SyncEntity) => tables.get(entity)!;
 
-  // Strictly increasing so ordering is deterministic; real clocks can repeat.
+  // Wall-clock, but forced strictly increasing: a cursor must never see two rows
+  // sharing an instant, and a stored cursor must stay comparable to `Date.now()`.
   const stamp = (): string => {
-    clock += 1;
-    return new Date(startTime + clock).toISOString();
+    clock = Math.max(clock + 1, Date.now());
+    return new Date(clock).toISOString();
   };
 
   const liveRows = (entity: SyncEntity): TaggedRow[] =>

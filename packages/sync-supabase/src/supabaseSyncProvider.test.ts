@@ -12,6 +12,7 @@ function makeRest(overrides: Partial<SyncRestClient> = {}): SyncRestClient {
   return {
     upsert: async (_t, rows) => rows.map((r, i) => ({ ...r, seq: i + 1 })),
     selectSince: async () => [],
+    selectAt: async () => [],
     selectOne: async () => null,
     deleteTombstones: async () => {},
     protocol: async () => ({ protocol_version: 3, min_client_revision: 3 }),
@@ -32,7 +33,7 @@ function makeProvider(rest: SyncRestClient, pageSize = 500, token: string | null
 const collection = (key: string, name: string): RemoteRow => ({ key, name });
 
 describe('upsert', () => {
-  it('conflicts on the entity key columns', async () => {
+  it('conflicts on account_id plus the entity key columns', async () => {
     const upsert = vi.fn(async (_t: string, rows: RemoteRow[]) => rows.map((r) => ({ ...r, seq: 7 })));
     const provider = makeProvider(makeRest({ upsert }));
 
@@ -43,7 +44,7 @@ describe('upsert', () => {
     expect(upsert).toHaveBeenCalledWith(
       'sync_collection_members',
       expect.any(Array),
-      'collection_key,entity_type,entity_id',
+      'account_id,collection_key,entity_type,entity_id',
     );
   });
 

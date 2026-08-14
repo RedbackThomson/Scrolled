@@ -13,7 +13,8 @@
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
     "lint": "eslint .",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "dev:supabase": "vite --host 0.0.0.0 --mode supabase"
   },
   "dependencies": {
     "@dagrejs/dagre": "^3.0.0",
