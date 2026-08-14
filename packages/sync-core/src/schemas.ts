@@ -1,61 +1,53 @@
-// Zod schemas for the wire contract (docs/sync_design.md §8, §15). Whatever a
-// provider returns crosses a trust boundary — it may be a remote server — so
-// the engine validates `PushResult`/`PullResult` against these before acting on
-// them. Record payloads stay `unknown` here (their per-entity shape is decoded
-// closer to the data); what we pin down is the envelope every change carries.
+// Zod schemas for whatever a provider returns — it may be a remote store, so the
+// engine validates before acting. Row contents stay loose; the local layer that
+// writes actual columns coerces per-column.
 
 import { z } from 'zod';
-import { SYNC_ENTITIES } from './types';
+import { SYNC_ENTITIES, ENTITY_KEY_COLUMNS, type RemoteRow, type SyncEntity } from './types';
 
 /**
- * The wire protocol version, exchanged via `SyncProvider.hello()`. A server
- * rejects clients below its `minClientRevision`; the client surfaces a clear
- * "please refresh" rather than corrupting data. Bump on any incompatible change
- * to the change envelope or push/pull semantics.
+ * Exchanged via `SyncProvider.hello()`. The remote store rejects clients below
+ * its `minClientRevision` so an incompatible client is told to refresh rather
+ * than corrupting data.
  *
- * v2: `PullResult` gained `rebootstrapRequired` — the cursor-staleness signal
- * (§15). Additive (older clients ignore it), so `minClientRevision` stays 1.
+ * v3: the store became relational — records are rows keyed by their natural key,
+ * push is an unconditional upsert, and pull pages on a timestamp cursor. Not
+ * compatible with v2, hence the matching `minClientRevision`.
  */
-export const PROTOCOL_VERSION = 2;
+export const PROTOCOL_VERSION = 3;
 
 export const syncEntitySchema = z.enum(SYNC_ENTITIES);
 export const syncOpSchema = z.enum(['upsert', 'delete']);
 
-export const syncChangeSchema = z.object({
+export const remoteRowSchema = z.record(z.string(), z.unknown());
+
+export const taggedRowSchema = z.object({
   entity: syncEntitySchema,
-  uuid: z.string().min(1),
-  op: syncOpSchema,
-  payload: z.unknown(),
-  baseRevision: z.number().int().nonnegative(),
-  idempotency: z.string().min(1),
+  row: remoteRowSchema,
+  seq: z.number().int().nonnegative(),
+  serverTime: z.string().min(1),
 });
 
-export const serverChangeSchema = syncChangeSchema.extend({
-  revision: z.number().int().positive(),
-  serverSeq: z.number().int().positive(),
-});
-
-export const pushResultSchema = z.object({
+export const upsertResultSchema = z.object({
   applied: z.array(
     z.object({
-      uuid: z.string().min(1),
-      revision: z.number().int().positive(),
-      serverSeq: z.number().int().positive(),
+      key: z.string().min(1),
+      seq: z.number().int().nonnegative(),
     }),
   ),
-  conflicts: z.array(
+  nameCollisions: z.array(
     z.object({
-      uuid: z.string().min(1),
-      remote: syncChangeSchema.extend({ revision: z.number().int().nonnegative() }),
+      key: z.string().min(1),
+      entity: syncEntitySchema,
+      row: remoteRowSchema,
     }),
   ),
 });
 
-export const pullResultSchema = z.object({
-  changes: z.array(serverChangeSchema),
-  nextCursor: z.number().int().nonnegative(),
-  hasMore: z.boolean(),
-  rebootstrapRequired: z.boolean().optional(),
+export const fetchPageSchema = z.object({
+  rows: z.array(taggedRowSchema),
+  cursor: z.string(),
+  complete: z.boolean(),
 });
 
 export const protocolHandshakeSchema = z.object({
@@ -63,19 +55,15 @@ export const protocolHandshakeSchema = z.object({
   minClientRevision: z.number().int().positive(),
 });
 
-/**
- * The sync columns common to every record payload. The conflict handler reads
- * these to compare a local vs. remote record; `safeParse` with sensible
- * fallbacks keeps a malformed payload from throwing mid-merge. `recents` rows
- * additionally carry `viewed_at`, used by that entity's conflict override.
- */
-export const syncRecordMetaSchema = z
-  .object({
-    updated_at: z.coerce.number().catch(0),
-    origin_device: z.string().catch(''),
-    viewed_at: z.coerce.number().optional(),
-    deleted_at: z.coerce.number().nullish(),
-  })
-  .passthrough();
+/** A unit separator, so a value containing the delimiter cannot forge another
+ *  record's identity. */
+const KEY_SEPARATOR = '\u001f';
 
-export type SyncRecordMeta = z.infer<typeof syncRecordMetaSchema>;
+export function recordKey(entity: SyncEntity, row: RemoteRow): string {
+  const cols: readonly string[] = ENTITY_KEY_COLUMNS[entity];
+  return cols.map((c) => String(row[c] ?? '')).join(KEY_SEPARATOR);
+}
+
+export function splitRecordKey(key: string): string[] {
+  return key.split(KEY_SEPARATOR);
+}

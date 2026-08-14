@@ -7,6 +7,7 @@ import { Button } from '@scrolled/ui';
 import { getUserDbClient } from '@/db/user';
 import { cn } from '@scrolled/ui';
 import { presentSyncStatus, formatLastSynced } from './syncPresentation';
+import { SyncResyncButton } from './SyncResyncButton';
 
 const TONE_TEXT: Record<string, string> = {
   slate: 'text-muted-foreground',
@@ -62,16 +63,17 @@ export function SyncControls() {
             <p className="text-muted-foreground mt-0.5 text-xs">{presentation.detail}</p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="shrink-0"
-          disabled={syncing}
-          onClick={() => void onSyncNow()}
-        >
-          {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-          Sync now
-        </Button>
+        <div className="flex shrink-0 items-center gap-1">
+          <SyncResyncButton disabled={syncing} />
+          <Button variant="outline" size="sm" disabled={syncing} onClick={() => void onSyncNow()}>
+            {syncing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            Sync now
+          </Button>
+        </div>
       </div>
 
       {status.errorKind === 'auth' && (

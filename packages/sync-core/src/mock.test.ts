@@ -1,116 +1,140 @@
 import { describe, expect, it } from 'vitest';
-import { createMockSyncProvider, createMockSyncServer } from './mock';
-import { PROTOCOL_VERSION } from './schemas';
-import type { SyncChange } from './types';
+import { createMockSyncServer, MockForeignKeyError } from './mock';
+import type { RemoteRow } from './types';
 
-let counter = 0;
-function change(uuid: string, baseRevision: number, payload: Record<string, unknown> = {}): SyncChange {
-  counter += 1;
-  return {
-    entity: 'user_setting',
-    uuid,
-    op: 'upsert',
-    payload: { uuid, ...payload },
-    baseRevision,
-    idempotency: `idem-${counter}`,
-  };
-}
-
-describe('mock server — push semantics', () => {
-  it('assigns monotonic revisions and server seqs to accepted writes', () => {
-    const server = createMockSyncServer();
-    const r1 = server.applyPush([change('a', 0), change('b', 0)]);
-    expect(r1.conflicts).toHaveLength(0);
-    expect(r1.applied.map((a) => a.revision)).toEqual([1, 1]);
-    expect(r1.applied.map((a) => a.serverSeq)).toEqual([1, 2]);
-
-    const r2 = server.applyPush([change('a', 1)]);
-    expect(r2.applied[0]).toMatchObject({ uuid: 'a', revision: 2, serverSeq: 3 });
-  });
-
-  it('rejects a stale baseRevision with a 409 carrying the current record', () => {
-    const server = createMockSyncServer();
-    server.applyPush([change('a', 0, { v: 1 })]); // now at revision 1
-    const stale = server.applyPush([change('a', 0, { v: 2 })]); // still thinks base 0
-    expect(stale.applied).toHaveLength(0);
-    expect(stale.conflicts).toHaveLength(1);
-    expect(stale.conflicts[0]).toMatchObject({ uuid: 'a', remote: { revision: 1 } });
-  });
-
-  it('dedups an at-least-once retry via the idempotency ledger', () => {
-    const server = createMockSyncServer();
-    const batch = [change('a', 0)];
-    const first = server.applyPush(batch);
-    const retry = server.applyPush(batch); // identical idempotency key
-    expect(retry.applied).toEqual(first.applied); // replayed, not re-applied
-    expect(retry.conflicts).toHaveLength(0);
-    expect(server.size()).toBe(1);
-    // revision was not double-bumped
-    const pulled = server.readPull(0, 100);
-    expect(pulled.changes[0].revision).toBe(1);
-  });
-
-  it('processes sequential edits to one record within a single batch', () => {
-    const server = createMockSyncServer();
-    const r = server.applyPush([change('a', 0), change('a', 1)]);
-    expect(r.conflicts).toHaveLength(0);
-    expect(r.applied.map((a) => a.revision)).toEqual([1, 2]);
-  });
+const collection = (key: string, name: string): RemoteRow => ({
+  key,
+  name,
+  created_at: 1,
+  updated_at: 1,
+  origin_device: 'dev-a',
 });
 
-describe('mock server — pull semantics', () => {
-  it('returns only records after the cursor, ordered, paginated', () => {
-    const server = createMockSyncServer();
-    server.applyPush([change('a', 0), change('b', 0), change('c', 0)]);
-    const page1 = server.readPull(0, 2);
-    expect(page1.changes.map((c) => c.uuid)).toEqual(['a', 'b']);
-    expect(page1.hasMore).toBe(true);
-    expect(page1.nextCursor).toBe(2);
-
-    const page2 = server.readPull(page1.nextCursor, 2);
-    expect(page2.changes.map((c) => c.uuid)).toEqual(['c']);
-    expect(page2.hasMore).toBe(false);
-  });
-
-  it('re-surfaces a record only when it changes (bumped seq)', () => {
-    const server = createMockSyncServer();
-    server.applyPush([change('a', 0), change('b', 0)]);
-    const afterB = server.readPull(2, 100);
-    expect(afterB.changes).toHaveLength(0);
-    server.applyPush([change('a', 1)]); // a now at seq 3
-    const delta = server.readPull(2, 100);
-    expect(delta.changes.map((c) => c.uuid)).toEqual(['a']);
-  });
-
-  it('carries delete tombstones through pull', () => {
-    const server = createMockSyncServer();
-    server.applyPush([change('a', 0)]);
-    server.applyPush([{ ...change('a', 1), op: 'delete', payload: { uuid: 'a', deleted_at: 9 } }]);
-    const delta = server.readPull(1, 100);
-    expect(delta.changes[0]).toMatchObject({ uuid: 'a', op: 'delete', revision: 2 });
-  });
+const member = (collectionKey: string, entityId: number): RemoteRow => ({
+  collection_key: collectionKey,
+  entity_type: 'mob',
+  entity_id: entityId,
+  added_at: 1,
+  updated_at: 1,
+  origin_device: 'dev-a',
 });
 
-describe('mock provider — wrapper', () => {
-  it('reports the protocol handshake and rings the doorbell on apply', async () => {
-    const provider = createMockSyncProvider();
-    await expect(provider.hello()).resolves.toEqual({
-      protocolVersion: PROTOCOL_VERSION,
-      minClientRevision: PROTOCOL_VERSION,
-    });
+describe('mock sync server', () => {
+  it('collapses repeat writes of one record onto a single row', () => {
+    const server = createMockSyncServer();
+    server.applyUpsert('collection', [collection('c1', 'Bosses')]);
+    server.applyUpsert('collection', [{ ...collection('c1', 'Bosses'), name: 'Renamed' }]);
 
-    let poked = 0;
-    provider.subscribe(() => {
-      poked += 1;
-    });
-    await provider.push([change('a', 0)]);
-    expect(poked).toBe(1);
+    expect(server.rows('collection')).toHaveLength(1);
+    expect(server.rows('collection')[0].name).toBe('Renamed');
   });
 
-  it('injects a transient fault for the next call only', async () => {
-    const provider = createMockSyncProvider();
-    provider.server.setFault('transient');
-    await expect(provider.push([change('a', 0)])).rejects.toThrow(/network/);
-    await expect(provider.push([change('a', 0)])).resolves.toBeTruthy();
+  it('collapses the same member added by two devices', () => {
+    const server = createMockSyncServer();
+    server.applyUpsert('collection', [collection('c1', 'Bosses')]);
+
+    server.applyUpsert('collection_member', [{ ...member('c1', 100), origin_device: 'dev-a' }]);
+    server.applyUpsert('collection_member', [{ ...member('c1', 100), origin_device: 'dev-b' }]);
+
+    expect(server.rows('collection_member')).toHaveLength(1);
+  });
+
+  it('reports a name collision instead of storing a duplicate', () => {
+    const server = createMockSyncServer();
+    server.applyUpsert('collection', [collection('c1', 'Favourites')]);
+
+    const result = server.applyUpsert('collection', [collection('c2', 'Favourites')]);
+
+    expect(result.applied).toHaveLength(0);
+    expect(result.nameCollisions).toHaveLength(1);
+    expect(result.nameCollisions[0].key).toBe('c2');
+    expect(server.rows('collection')).toHaveLength(1);
+  });
+
+  it('scopes group name uniqueness to the collection', () => {
+    const server = createMockSyncServer();
+    server.applyUpsert('collection', [collection('c1', 'A'), collection('c2', 'B')]);
+
+    const group = (key: string, collectionKey: string): RemoteRow => ({
+      key,
+      collection_key: collectionKey,
+      name: 'Tier 1',
+      position: 0,
+      created_at: 1,
+      updated_at: 1,
+      origin_device: 'dev-a',
+    });
+
+    expect(server.applyUpsert('collection_group', [group('g1', 'c1')]).applied).toHaveLength(1);
+    expect(server.applyUpsert('collection_group', [group('g2', 'c2')]).applied).toHaveLength(1);
+    expect(server.applyUpsert('collection_group', [group('g3', 'c1')]).nameCollisions).toHaveLength(
+      1,
+    );
+  });
+
+  it('lets a tombstoned name be reused', () => {
+    const server = createMockSyncServer();
+    server.applyUpsert('collection', [collection('c1', 'Bosses')]);
+    server.applyUpsert('collection', [
+      { ...collection('c1', 'Bosses'), deleted_at: new Date().toISOString() },
+    ]);
+
+    expect(server.applyUpsert('collection', [collection('c2', 'Bosses')]).applied).toHaveLength(1);
+  });
+
+  it('rejects a child whose collection is absent', () => {
+    const server = createMockSyncServer();
+    expect(() => server.applyUpsert('collection_member', [member('missing', 100)])).toThrow(
+      MockForeignKeyError,
+    );
+  });
+
+  it('pages rows after the cursor without repeating them', () => {
+    const server = createMockSyncServer();
+    server.applyUpsert('collection', [
+      collection('c1', 'A'),
+      collection('c2', 'B'),
+      collection('c3', 'C'),
+    ]);
+
+    const first = server.readSince(null, 2);
+    expect(first.rows).toHaveLength(2);
+    expect(first.complete).toBe(false);
+
+    const second = server.readSince(first.cursor, 2);
+    expect(second.rows).toHaveLength(1);
+    expect(second.complete).toBe(true);
+    expect(server.readSince(second.cursor, 2).rows).toHaveLength(0);
+  });
+
+  it('finds the live row holding a name', () => {
+    const server = createMockSyncServer();
+    server.applyUpsert('collection', [collection('c1', 'Favourites')]);
+
+    expect(server.findByUnique('collection', { name: 'Favourites' })?.key).toBe('c1');
+    expect(server.findByUnique('collection', { name: 'Nope' })).toBeNull();
+  });
+
+  it('reaps only tombstones older than the cutoff', () => {
+    const server = createMockSyncServer();
+    server.applyUpsert('collection', [
+      { ...collection('c1', 'Old'), deleted_at: '2020-01-01T00:00:00.000Z' },
+      { ...collection('c2', 'New'), deleted_at: '2030-01-01T00:00:00.000Z' },
+      collection('c3', 'Live'),
+    ]);
+
+    server.gcTombstones('2025-01-01T00:00:00.000Z');
+
+    expect(server.rows('collection').map((r) => r.key).sort()).toEqual(['c2', 'c3']);
+  });
+
+  it('names the writing device in the poke so a client can skip its own echo', () => {
+    const server = createMockSyncServer();
+    const seen: string[] = [];
+    server.subscribe((device) => seen.push(device));
+
+    server.applyUpsert('collection', [{ ...collection('c1', 'A'), origin_device: 'dev-b' }]);
+
+    expect(seen).toEqual(['dev-b']);
   });
 });

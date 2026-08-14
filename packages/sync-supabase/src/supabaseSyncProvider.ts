@@ -1,30 +1,32 @@
-// The Supabase sync transport (docs/sync_design.md §12, §16 Phases 3–4). It
-// implements the provider-agnostic `SyncProvider` from `@scrolled/sync-core`
-// over three Postgres RPCs — `sync_push`, `sync_pull`, `sync_hello` — reached
-// with the signed-in user's bearer token, plus a Realtime Broadcast doorbell
-// (`subscribe`). The functions are `security definer` and derive the account
-// from `auth.uid()`, so the client never names a tenant (§14); this adapter just
-// shuttles batches, opens the per-account poke channel, and maps errors onto the
-// engine's error vocabulary.
+// The Supabase transport. It implements the provider-agnostic `SyncProvider`
+// over plain PostgREST table operations — no RPCs and no server-side logic, so
+// the backend is a database rather than a service.
 //
-// This is the only sync package that imports the Supabase SDK. The app reaches
-// it through a dynamic import behind a build constant, so self-hosted builds
-// drop it entirely (mirrors `@scrolled/identity-cloud`).
+// Tenancy is enforced by row-level security on every table, which is why this
+// adapter never names an account: `account_id` defaults to the caller's own id
+// and RLS refuses anything else.
+//
+// This is the only sync package importing the Supabase SDK. The app reaches it
+// through a dynamic import behind a build constant, so self-hosted builds drop it
+// entirely.
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import {
+  ENTITY_KEY_COLUMNS,
+  ENTITY_TABLE,
   PROTOCOL_VERSION,
-  pullResultSchema,
-  pushResultSchema,
-  protocolHandshakeSchema,
+  recordKey,
+  SYNC_ENTITIES,
   SyncAuthError,
   SyncTransientError,
+  type FetchPage,
   type ProtocolHandshake,
-  type PullResult,
-  type PushResult,
-  type SyncChange,
+  type RemoteRow,
+  type SyncEntity,
   type SyncProvider,
+  type TaggedRow,
   type Unsubscribe,
+  type UpsertResult,
 } from '@scrolled/sync-core';
 
 export interface SupabaseSyncConfig {
@@ -33,71 +35,67 @@ export interface SupabaseSyncConfig {
   supabaseKey: string;
   /** Bearer token thunk, sourced from the identity provider. */
   getAccessToken: () => Promise<string | null>;
-  /**
-   * Test seam: inject an RPC client instead of constructing a Supabase one.
-   * Production leaves this unset and a real client is created.
-   */
-  client?: SyncRpcClient;
-  /**
-   * Test seam for the Broadcast doorbell. Production leaves it unset and the
-   * channel methods are taken from the same real Supabase client; injecting
-   * `client` (the RPC seam) suppresses real-client construction, so a subscribe
-   * test that wants the doorbell injects this too.
-   */
+  /** Test seam: inject a REST client instead of constructing a Supabase one. */
+  rest?: SyncRestClient;
+  /** Test seam for the doorbell; injecting `rest` alone suppresses the real
+   *  client, so a subscribe test needs this too. */
   realtime?: SyncRealtimeClient;
-  /** Max rows per pull page; forwarded to `sync_pull` so the server paginates. */
-  pullPageSize?: number;
+  /** Rows per page. Must stay under the project's PostgREST `max_rows`. */
+  pageSize?: number;
 }
 
-interface SupabaseRpcError {
-  message: string;
-  code?: string;
-  status?: number;
+/** A unique-constraint rejection, distinguished from a genuine failure because
+ *  it means the record already exists under another key. */
+export class UniqueViolation extends Error {
+  constructor(readonly constraint: string) {
+    super(`unique constraint ${constraint}`);
+    this.name = 'UniqueViolation';
+  }
 }
 
-/** The slice of the Supabase client this adapter uses — just `rpc`. Narrowed to
- *  an interface so tests can drive push/pull/hello with a fake. */
-export interface SyncRpcClient {
-  rpc(
-    fn: string,
-    args?: Record<string, unknown>,
-  ): PromiseLike<{ data: unknown; error: SupabaseRpcError | null }>;
+/** The table operations this adapter needs, narrowed so tests can drive it
+ *  without a live PostgREST. */
+export interface SyncRestClient {
+  upsert(table: string, rows: RemoteRow[], onConflict: string): Promise<RemoteRow[]>;
+  selectSince(
+    table: string,
+    cursor: string | null,
+    limit: number,
+    offset: number,
+  ): Promise<RemoteRow[]>;
+  selectOne(table: string, where: RemoteRow): Promise<RemoteRow | null>;
+  deleteTombstones(table: string, before: string): Promise<void>;
+  protocol(): Promise<{ protocol_version: number; min_client_revision: number }>;
 }
 
-/** A subscribed Realtime channel — the slice the doorbell drives. */
 export interface SyncRealtimeChannel {
-  on(type: 'broadcast', filter: { event: string }, cb: () => void): SyncRealtimeChannel;
+  on(
+    type: 'broadcast',
+    filter: { event: string },
+    cb: (message: { payload?: { device?: string } }) => void,
+  ): SyncRealtimeChannel;
   subscribe(cb?: (status: string, err?: Error) => void): SyncRealtimeChannel;
 }
 
-/** The slice of the Supabase client the Broadcast doorbell uses. Narrowed so a
- *  test can drive subscribe/unsubscribe without a live WebSocket. */
 export interface SyncRealtimeClient {
-  /** Hand Realtime the current JWT so RLS on the private channel can authorize. */
+  /** Realtime authorizes the private channel from the JWT claims. */
   setAuth(token: string): void | Promise<void>;
   channel(topic: string, opts: { config: { private: boolean } }): SyncRealtimeChannel;
   removeChannel(channel: SyncRealtimeChannel): void | Promise<void>;
 }
 
-const DEFAULT_PULL_PAGE_SIZE = 500;
-
-/** The Broadcast event the `sync_records` poke trigger emits (must match the
- *  `realtime.send(..., 'poke', ...)` call in the sync_realtime migration). */
+const DEFAULT_PAGE_SIZE = 500;
 const POKE_EVENT = 'poke';
 
-/**
- * The per-account channel a client subscribes to. The server's RLS policy on
- * `realtime.messages` only authorizes `sync:<own auth.uid()>`, so this must be
- * derived from the same JWT the connection authenticates with — read the `sub`
- * claim. A bad guess authorizes nothing (and the poke carries no data anyway).
- */
+/** RLS only authorizes `sync:<own auth.uid()>`, so the topic must come from the
+ *  same token the connection authenticates with. */
 function channelTopic(accountId: string): string {
   return `sync:${accountId}`;
 }
 
-/** Read the `sub` claim from a JWT without verifying it — RLS does the real
- *  enforcement server-side; we only need the topic name. Returns null on any
- *  malformed token, so the caller degrades to the safety tick. */
+/** Read the `sub` claim without verifying it — RLS does the real enforcement and
+ *  we only need the topic name. Null on a malformed token, so the caller falls
+ *  back to the engine's periodic tick. */
 function decodeJwtSub(token: string): string | null {
   const parts = token.split('.');
   if (parts.length < 2) return null;
@@ -112,82 +110,109 @@ function decodeJwtSub(token: string): string | null {
   }
 }
 
-// PostgREST surfaces an expired/invalid JWT as a 401 with one of these codes;
-// our `security definer` functions raise SQLSTATE 28000 when `auth.uid()` is
-// null. Either means "re-authenticate", which the engine handles by refreshing
-// the token once before surfacing "session expired".
-const AUTH_ERROR_CODES = new Set(['PGRST301', 'PGRST302', '42501', '28000']);
-
-function isAuthError(error: SupabaseRpcError): boolean {
-  if (error.status === 401 || error.status === 403) return true;
-  if (error.code && AUTH_ERROR_CODES.has(error.code)) return true;
-  return /jwt|token|unauthor|not authenticated/i.test(error.message);
-}
-
-/** Map a PostgREST error onto the engine's error vocabulary: auth failures ask
- *  for a token refresh, everything else backs off as transient. */
-function throwMapped(error: SupabaseRpcError): never {
-  if (isAuthError(error)) throw new SyncAuthError();
-  throw new SyncTransientError(error.message || 'sync request failed');
-}
-
 export function createSupabaseSyncProvider(config: SupabaseSyncConfig): SyncProvider {
-  const pageSize = config.pullPageSize ?? DEFAULT_PULL_PAGE_SIZE;
+  const pageSize = config.pageSize ?? DEFAULT_PAGE_SIZE;
 
   // A data-only client: identity-cloud owns the auth session, so this one never
-  // persists or refreshes a session. The `accessToken` thunk hands PostgREST the
-  // current bearer per request, which is exactly the third-party-auth contract
-  // the Supabase SDK exposes for "bring your own auth". The same client backs
-  // both the RPCs and the Realtime channel; we build it only when the RPC seam
-  // is absent (production), so an RPC-only test never opens a real connection.
-  const realClient = config.client
+  // persists or refreshes one and just hands PostgREST the current bearer.
+  const realClient = config.rest
     ? null
     : createClient(config.supabaseUrl, config.supabaseKey, {
         auth: { persistSession: false, autoRefreshToken: false },
         accessToken: async () => (await config.getAccessToken()) ?? '',
       });
-  const client: SyncRpcClient = config.client ?? realClient!;
-
-  // The Broadcast doorbell drives channel/removeChannel and realtime.setAuth on
-  // the same real client; the injected seam replaces it in tests. Null when only
-  // the RPC seam was injected, so `subscribe` degrades to the engine's tick.
+  const rest: SyncRestClient = config.rest ?? toRestClient(realClient!);
   const realtime: SyncRealtimeClient | null =
     config.realtime ?? (realClient ? toRealtimeClient(realClient) : null);
 
-  /** Fail fast with a clean auth error when signed out, before a pointless trip. */
   async function requireToken(): Promise<void> {
-    const token = await config.getAccessToken();
-    if (!token) throw new SyncAuthError();
+    if (!(await config.getAccessToken())) throw new SyncAuthError();
+  }
+
+  async function upsertBatch(entity: SyncEntity, rows: RemoteRow[]): Promise<UpsertResult['applied']> {
+    const returned = await rest.upsert(
+      ENTITY_TABLE[entity],
+      rows,
+      ENTITY_KEY_COLUMNS[entity].join(','),
+    );
+    return returned.map((row) => ({ key: recordKey(entity, row), seq: Number(row.seq ?? 0) }));
   }
 
   return {
-    async push(changes: SyncChange[]): Promise<PushResult> {
+    async upsert(entity, rows): Promise<UpsertResult> {
       await requireToken();
-      const { data, error } = await client.rpc('sync_push', { p_changes: changes });
-      if (error) throwMapped(error);
-      // Validate the envelope at this trust boundary (it came off the wire), then
-      // return the contract type — record payloads stay `unknown` by design.
-      pushResultSchema.parse(data);
-      return data as PushResult;
+      if (rows.length === 0) return { applied: [], nameCollisions: [] };
+
+      try {
+        return { applied: await upsertBatch(entity, rows), nameCollisions: [] };
+      } catch (err) {
+        if (!(err instanceof UniqueViolation)) throw err;
+      }
+
+      // A rejection fails the whole statement, so isolate the offending rows.
+      // Collisions are rare, which is why this slow path is acceptable.
+      const applied: UpsertResult['applied'] = [];
+      const nameCollisions: UpsertResult['nameCollisions'] = [];
+      for (const row of rows) {
+        try {
+          applied.push(...(await upsertBatch(entity, [row])));
+        } catch (err) {
+          if (!(err instanceof UniqueViolation)) throw err;
+          nameCollisions.push({ key: recordKey(entity, row), entity, row });
+        }
+      }
+      return { applied, nameCollisions };
     },
 
-    async pull(cursor: number): Promise<PullResult> {
+    async fetchSince(cursor): Promise<FetchPage> {
       await requireToken();
-      const { data, error } = await client.rpc('sync_pull', {
-        p_cursor: cursor,
-        p_limit: pageSize,
-      });
-      if (error) throwMapped(error);
-      pullResultSchema.parse(data);
-      return data as PullResult;
+
+      // Each table contributes at most a page. Because a table that returns a
+      // full page has a maximum at or beyond the merged cut-off, truncating the
+      // merged list can never strand a row behind the advancing cursor.
+      let anyFull = false;
+      const tagged: TaggedRow[] = [];
+      for (const entity of SYNC_ENTITIES) {
+        const rows = await rest.selectSince(ENTITY_TABLE[entity], cursor, pageSize, 0);
+        if (rows.length >= pageSize) anyFull = true;
+        for (const row of rows) tagged.push(toTagged(entity, row));
+      }
+
+      tagged.sort((a, b) => (a.serverTime < b.serverTime ? -1 : a.serverTime > b.serverTime ? 1 : 0));
+      const truncated = tagged.length > pageSize;
+      const page = truncated ? tagged.slice(0, pageSize) : tagged;
+      const next = page.length > 0 ? page[page.length - 1].serverTime : (cursor ?? '');
+      return { rows: page, cursor: next, complete: !truncated && !anyFull };
     },
 
-    // Open the private per-account Broadcast channel and ring `onPoke` on each
-    // message; the engine responds with a pull. The poke carries no data, so a
-    // missed message is harmless — the 60s safety tick (and the next push) close
-    // any gap. Channel setup is async (token fetch + setAuth), so the returned
-    // Unsubscribe guards against tearing down a channel that hasn't opened yet.
-    subscribe(onPoke: () => void): Unsubscribe {
+    async fetchAll(): Promise<TaggedRow[]> {
+      await requireToken();
+      const out: TaggedRow[] = [];
+      for (const entity of SYNC_ENTITIES) {
+        for (let offset = 0; ; offset += pageSize) {
+          const rows = await rest.selectSince(ENTITY_TABLE[entity], null, pageSize, offset);
+          for (const row of rows) out.push(toTagged(entity, row));
+          if (rows.length < pageSize) break;
+        }
+      }
+      return out;
+    },
+
+    async findByUnique(entity, where): Promise<RemoteRow | null> {
+      await requireToken();
+      return rest.selectOne(ENTITY_TABLE[entity], where);
+    },
+
+    async gcTombstones(before): Promise<void> {
+      await requireToken();
+      for (const entity of SYNC_ENTITIES) {
+        await rest.deleteTombstones(ENTITY_TABLE[entity], before);
+      }
+    },
+
+    // The poke carries no row data, so a missed message costs only latency; the
+    // engine's periodic tick and the next push close any gap.
+    subscribe(onPoke): Unsubscribe {
       if (!realtime) return () => {};
       let channel: SyncRealtimeChannel | null = null;
       let cancelled = false;
@@ -196,14 +221,16 @@ export function createSupabaseSyncProvider(config: SupabaseSyncConfig): SyncProv
         const token = await config.getAccessToken();
         if (!token || cancelled) return;
         const accountId = decodeJwtSub(token);
-        if (!accountId) return; // can't derive the topic; rely on the safety tick
-        // Realtime authorizes the private channel from the JWT claims, so hand it
-        // the current token before subscribing.
+        if (!accountId) return;
         await realtime.setAuth(token);
         if (cancelled) return;
         const ch = realtime.channel(channelTopic(accountId), { config: { private: true } });
-        ch.on('broadcast', { event: POKE_EVENT }, () => onPoke());
+        ch.on('broadcast', { event: POKE_EVENT }, (message) => onPoke(message.payload?.device ?? ''));
         ch.subscribe();
+        if (cancelled) {
+          void realtime.removeChannel(ch);
+          return;
+        }
         channel = ch;
       })();
 
@@ -214,18 +241,98 @@ export function createSupabaseSyncProvider(config: SupabaseSyncConfig): SyncProv
     },
 
     async hello(): Promise<ProtocolHandshake> {
-      const { data, error } = await client.rpc('sync_hello');
-      if (error) throwMapped(error);
-      return protocolHandshakeSchema.parse(data) satisfies ProtocolHandshake;
+      const row = await rest.protocol();
+      return {
+        protocolVersion: row.protocol_version,
+        minClientRevision: row.min_client_revision,
+      };
     },
   };
 }
 
+function toTagged(entity: SyncEntity, row: RemoteRow): TaggedRow {
+  return {
+    entity,
+    row,
+    seq: Number(row.seq ?? 0),
+    serverTime: String(row.server_time ?? ''),
+  };
+}
+
+interface PostgrestError {
+  message: string;
+  code?: string;
+  details?: string;
+  status?: number;
+}
+
+// PostgREST surfaces an expired or invalid JWT as a 401 with one of these codes.
+const AUTH_ERROR_CODES = new Set(['PGRST301', 'PGRST302', '42501', '28000']);
+
+function isAuthError(error: PostgrestError): boolean {
+  if (error.status === 401 || error.status === 403) return true;
+  if (error.code && AUTH_ERROR_CODES.has(error.code)) return true;
+  return /jwt|token|unauthor|not authenticated/i.test(error.message);
+}
+
+function throwMapped(error: PostgrestError): never {
+  if (error.code === '23505') {
+    throw new UniqueViolation(error.details ?? error.message);
+  }
+  if (isAuthError(error)) throw new SyncAuthError();
+  throw new SyncTransientError(error.message || 'sync request failed');
+}
+
 /**
- * Adapt a real SupabaseClient to the narrowed `SyncRealtimeClient` slice. FFI
- * boundary: supabase-js types `channel`/`realtime.setAuth` more loosely than our
- * doorbell needs, so the casts pin them to the shape `subscribe` drives.
+ * Adapt a real SupabaseClient to the narrowed client this adapter drives. FFI
+ * boundary: the SDK's builders are typed against a generated database schema we
+ * do not generate, so the casts pin them to the shapes used here.
  */
+function toRestClient(supabase: SupabaseClient): SyncRestClient {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- untyped schema
+  const from = (table: string) => supabase.from(table) as any;
+
+  return {
+    async upsert(table, rows, onConflict) {
+      const { data, error } = await from(table).upsert(rows, { onConflict }).select();
+      if (error) throwMapped(error as PostgrestError);
+      return (data ?? []) as RemoteRow[];
+    },
+
+    async selectSince(table, cursor, limit, offset) {
+      let query = from(table).select('*').order('server_time').range(offset, offset + limit - 1);
+      if (cursor) query = query.gt('server_time', cursor);
+      const { data, error } = await query;
+      if (error) throwMapped(error as PostgrestError);
+      return (data ?? []) as RemoteRow[];
+    },
+
+    async selectOne(table, where) {
+      const { data, error } = await from(table)
+        .select('*')
+        .match(where)
+        .is('deleted_at', null)
+        .maybeSingle();
+      if (error) throwMapped(error as PostgrestError);
+      return (data ?? null) as RemoteRow | null;
+    },
+
+    async deleteTombstones(table, before) {
+      const { error } = await from(table).delete().lt('deleted_at', before);
+      if (error) throwMapped(error as PostgrestError);
+    },
+
+    async protocol() {
+      const { data, error } = await from('sync_protocol')
+        .select('protocol_version, min_client_revision')
+        .eq('id', 1)
+        .single();
+      if (error) throwMapped(error as PostgrestError);
+      return data as { protocol_version: number; min_client_revision: number };
+    },
+  };
+}
+
 function toRealtimeClient(supabase: SupabaseClient): SyncRealtimeClient {
   return {
     setAuth: (token) => {

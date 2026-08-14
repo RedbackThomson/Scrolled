@@ -1,11 +1,7 @@
-// The provider-agnostic sync contract (docs/sync_design.md §8). The core app is
-// sync-AWARE — it reads a status and consumes the engine — but never aware of
-// *how* the wire is implemented. Concrete providers (mock, Supabase, a
-// self-hosted server) implement `SyncProvider`; only the bootstrap layer
-// chooses one. Nothing here imports a network SDK.
+// The provider-agnostic sync contract. The app is sync-aware but never aware of
+// how the wire is implemented; concrete providers implement `SyncProvider` and
+// only the bootstrap layer picks one. Nothing here imports a network SDK.
 
-/** The user-owned record kinds that participate in sync. Mirrors the
- *  `SyncEntity` union the user-DB outbox emits (apps/web/src/db/user). */
 export type SyncEntity =
   | 'collection'
   | 'collection_member'
@@ -14,159 +10,170 @@ export type SyncEntity =
   | 'user_setting'
   | 'recent';
 
+/** Ordered so a record's parent always comes first. */
 export const SYNC_ENTITIES = [
   'collection',
-  'collection_member',
   'collection_group',
+  'collection_member',
   'pinned_search',
   'user_setting',
   'recent',
 ] as const satisfies readonly SyncEntity[];
 
-export type SyncOp = 'upsert' | 'delete';
+export const ENTITY_TABLE = {
+  collection: 'sync_collections',
+  collection_group: 'sync_collection_groups',
+  collection_member: 'sync_collection_members',
+  pinned_search: 'sync_pinned_searches',
+  user_setting: 'sync_user_settings',
+  recent: 'sync_recents',
+} as const satisfies Record<SyncEntity, string>;
+
+export type SyncTable = (typeof ENTITY_TABLE)[SyncEntity];
 
 /**
- * One logical change on the wire. `payload` is the record snapshot at write
- * time, validated with zod at the boundary (`schemas.ts`) before it is trusted.
- * `baseRevision` is the revision the edit was based on — the server accepts the
- * write only if it still matches, otherwise it reports a 409 conflict.
+ * The columns forming a record's identity, matching its primary key both
+ * remotely and locally. Everything that has to decide "are these the same
+ * record?" derives it from here, so the outbox, the apply path and the upsert
+ * conflict target can never disagree.
  */
-export interface SyncChange {
+export const ENTITY_KEY_COLUMNS = {
+  collection: ['key'],
+  collection_group: ['key'],
+  collection_member: ['collection_key', 'entity_type', 'entity_id'],
+  pinned_search: ['key'],
+  user_setting: ['key'],
+  recent: ['kind', 'ref'],
+} as const satisfies Record<SyncEntity, readonly string[]>;
+
+/**
+ * Entities with a user-visible unique name. A rejected insert on that column is
+ * a merge signal, not an error: the record already exists under another key.
+ */
+export const ENTITY_UNIQUE_NAME = {
+  collection: { column: 'name', scope: [] },
+  collection_group: { column: 'name', scope: ['collection_key'] },
+  pinned_search: { column: 'name', scope: [] },
+} as const satisfies Partial<Record<SyncEntity, { column: string; scope: readonly string[] }>>;
+
+export type NameCollidingEntity = keyof typeof ENTITY_UNIQUE_NAME;
+
+export function collidesByName(entity: SyncEntity): entity is NameCollidingEntity {
+  return entity in ENTITY_UNIQUE_NAME;
+}
+
+export type SyncOp = 'upsert' | 'delete';
+
+/** A row in the remote store: plain column→value, no envelope. */
+export type RemoteRow = Record<string, unknown>;
+
+export interface TaggedRow {
   entity: SyncEntity;
-  uuid: string;
+  row: RemoteRow;
+  /** Staleness comparator, stamped remotely. */
+  seq: number;
+  /** Pull cursor position, stamped remotely. */
+  serverTime: string;
+}
+
+/** A local change awaiting push. A delete is an upsert setting `deleted_at`, so
+ *  an offline device still learns of it on its next pull. */
+export interface OutboxChange {
+  seq: number;
+  entity: SyncEntity;
+  key: string;
   op: SyncOp;
-  payload: unknown;
-  baseRevision: number;
-  /** Stable key for at-least-once retry dedup (Stripe-style idempotency). */
-  idempotency: string;
+  row: RemoteRow;
 }
 
-/** A change the server has accepted: it carries the assigned monotonic
- *  `revision` and the per-account total-order `serverSeq`. */
-export interface ServerChange extends SyncChange {
-  revision: number;
-  serverSeq: number;
+export interface UpsertResult {
+  applied: { key: string; seq: number }[];
+  /** The whole rejected row comes back so the resolver can rebuild the unique
+   *  lookup — a group's name is only unique within its collection. */
+  nameCollisions: { key: string; entity: SyncEntity; row: RemoteRow }[];
 }
 
-export interface PushResult {
-  /** Accepted changes, with the revision + seq the server assigned each. */
-  applied: { uuid: string; revision: number; serverSeq: number }[];
-  /** Rejected changes (stale `baseRevision`), each with the server's current
-   *  record so the client can resolve the conflict and re-push. */
-  conflicts: { uuid: string; remote: SyncChange & { revision: number } }[];
-}
-
-export interface PullResult {
-  changes: ServerChange[];
-  /** Cursor to pass to the next `pull`. */
-  nextCursor: number;
-  /** True while a paginated bootstrap still has changes beyond this page. */
-  hasMore: boolean;
-  /**
-   * The client's cursor predates the server's tombstone GC horizon, so a delta
-   * pull could silently miss GC'd deletes (docs/sync_design.md §15). When set,
-   * `changes` is empty and the client must re-bootstrap (pull from cursor 0)
-   * rather than apply a partial delta. Absent/false in the normal case.
-   */
-  rebootstrapRequired?: boolean;
+export interface FetchPage {
+  rows: TaggedRow[];
+  cursor: string;
+  complete: boolean;
 }
 
 export interface ProtocolHandshake {
   protocolVersion: number;
-  /** Lowest client protocol version the server still accepts. */
   minClientRevision: number;
 }
 
 export type Unsubscribe = () => void;
 
+/**
+ * The remote store. Every method is a plain table operation, so anything that
+ * can upsert by key and select by cursor can back sync.
+ */
 export interface SyncProvider {
-  /** Push a batch; the server assigns revisions/seqs and reports conflicts. */
-  push(changes: SyncChange[]): Promise<PushResult>;
-  /** Pull all changes after `cursor`, paginated. */
-  pull(cursor: number): Promise<PullResult>;
-  /** Live "there are new changes, pull now" doorbell. May be a no-op. */
-  subscribe(onPoke: () => void): Unsubscribe;
-  /** Protocol/compat handshake; lets the server reject incompatible clients. */
+  /** Conflict target is `ENTITY_KEY_COLUMNS[entity]`, making this idempotent —
+   *  which is why there is no idempotency ledger. */
+  upsert(entity: SyncEntity, rows: RemoteRow[]): Promise<UpsertResult>;
+  /** Rows at or after `cursor`, across all tables. Null means everything. */
+  fetchSince(cursor: string | null): Promise<FetchPage>;
+  /** Every row the account holds, parents first. */
+  fetchAll(): Promise<TaggedRow[]>;
+  /** How a client learns the canonical key after a name collision. */
+  findByUnique(entity: SyncEntity, where: RemoteRow): Promise<RemoteRow | null>;
+  /** Client-driven because there is no server to schedule it. */
+  gcTombstones(before: string): Promise<void>;
+  /** `originDevice` lets a client ignore the echo of its own write. */
+  subscribe(onPoke: (originDevice: string) => void): Unsubscribe;
   hello(): Promise<ProtocolHandshake>;
 }
 
-// -- engine ↔ worker boundary -------------------------------------------------
-
-/** An outbox row drained for pushing: a `SyncChange` plus its local `seq`. */
-export interface OutboxChange extends SyncChange {
-  seq: number;
-}
-
-/** The server identity + cursor the engine needs to drive a sync cycle. */
 export interface SyncMeta {
-  serverSeq: number;
+  /** `server_time` of the newest row applied; '' before the first pull. */
+  cursor: string;
   deviceId: string;
   /** Whose data this DB currently holds; null before the first sign-in. */
   accountId: string | null;
 }
 
-/** The revision + seq the server assigned an accepted change, fed back to the
- *  worker so the live row's `revision` tracks the server's. */
-export interface AssignedRevision {
-  uuid: string;
-  revision: number;
-  serverSeq: number;
-}
-
-/** Outcome of applying a remote batch: the TanStack query-key roots that
- *  changed, so the engine can invalidate exactly those. */
 export interface ApplyResult {
-  /** Query-key roots to invalidate, e.g. `['user','collections']`. */
+  /** TanStack query-key roots to invalidate. */
   invalidatedKeys: string[][];
-  /** New cursor after applying (the highest `serverSeq` seen). */
-  serverSeq: number;
+  applied: number;
 }
 
 /**
- * The worker-side surface the engine drives over comlink. Abstracted here so
- * `sync-core` stays free of comlink, SQLite, and the app's UserDbApi shape —
- * the app provides a thin adapter binding these to `UserDbApi`.
+ * The worker-side surface the engine drives over comlink, abstracted so this
+ * package stays free of comlink and SQLite.
  */
 export interface SyncBackend {
   drainOutbox(limit: number): Promise<OutboxChange[]>;
-  markOutboxSynced(seqs: number[], assigned: AssignedRevision[]): Promise<void>;
-  applyRemoteChanges(batch: ServerChange[]): Promise<ApplyResult>;
+  markOutboxSynced(seqs: number[], applied: { key: string; seq: number }[]): Promise<void>;
+  /** Skips rows whose key has a pending local edit, or whose `seq` we hold. */
+  applyRemoteRows(rows: TaggedRow[]): Promise<ApplyResult>;
+  /** Discards local divergence and restores agreement with the remote store. */
+  replaceAllFromSnapshot(rows: TaggedRow[]): Promise<ApplyResult>;
+  /** Adopt the remote key for a record minted under a different one. */
+  rekeyLocal(entity: SyncEntity, fromKey: string, toKey: string): Promise<void>;
   getSyncMeta(): Promise<SyncMeta>;
-  /** Discard local synced rows + cursor so the next pull re-bootstraps from 0,
-   *  after the server reports the cursor is past its GC horizon (§15). Returns
-   *  the query-key roots to invalidate (every synced view must refetch). */
-  rebootstrap(): Promise<string[][]>;
-  /** Hard-delete soft-tombstones older than the cutoff (§10). Optional: a
-   *  backend with no local tombstone retention can omit it. */
-  gcTombstones?(cutoff: number): Promise<number>;
+  setCursor(cursor: string): Promise<void>;
+  pendingCount(): Promise<number>;
 }
-
-// -- status -------------------------------------------------------------------
 
 export type SyncState =
   | 'idle' // signed out / not started
-  | 'syncing' // a push/pull cycle is in flight
-  | 'synced' // up to date, nothing pending
-  | 'offline' // a network error backed us off; will retry
-  | 'error'; // a non-retryable error (e.g. session expired, incompatible)
+  | 'syncing'
+  | 'synced'
+  | 'offline' // backed off after a network error; will retry
+  | 'error'; // non-retryable, e.g. session expired
 
-/**
- * Why the last cycle failed, so the UI can offer the right next step without
- * parsing the error message. `transient` pairs with `offline`; `auth` and
- * `protocol` pair with `error` (session expired → re-auth; client too old →
- * refresh). Null when healthy.
- */
+/** Lets the UI offer the right next step without parsing an error message. */
 export type SyncErrorKind = 'transient' | 'auth' | 'protocol';
 
 export interface SyncStatus {
   state: SyncState;
-  /** Wall-clock ms of the last fully-successful cycle; null if never. */
   lastSyncedAt: number | null;
-  /** Outbox rows still awaiting a successful push. */
   pendingChanges: number;
-  /** Human-readable last error; null when healthy. */
   error: string | null;
-  /** Machine-readable error category for UI branching; null when healthy. */
   errorKind: SyncErrorKind | null;
 }
 

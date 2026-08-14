@@ -6,6 +6,9 @@ interface SyncStatusContextValue {
   status: SyncStatus;
   /** Trigger a sync cycle now ("sync now"). No-op when no engine is mounted. */
   syncNow: () => Promise<void>;
+  /** Discard local state and rebuild it from the backend. Destructive to any
+   *  unsynced local change, so callers must confirm first. */
+  resync: () => Promise<void>;
 }
 
 const SyncStatusContext = createContext<SyncStatusContextValue | null>(null);
@@ -39,6 +42,7 @@ export function SyncStatusProvider({ engine, children }: SyncStatusProviderProps
     () => ({
       status,
       syncNow: () => engine?.syncNow() ?? Promise.resolve(),
+      resync: () => engine?.resync() ?? Promise.resolve(),
     }),
     [engine, status],
   );
@@ -53,6 +57,7 @@ export function useSyncStatus(): SyncStatusContextValue {
     useContext(SyncStatusContext) ?? {
       status: INITIAL_SYNC_STATUS,
       syncNow: () => Promise.resolve(),
+      resync: () => Promise.resolve(),
     }
   );
 }

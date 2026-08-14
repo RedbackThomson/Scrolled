@@ -33,10 +33,10 @@ import type {
 import type { EntityKind } from '@scrolled/game-db/db/types';
 import type {
   ApplyResult,
-  AssignedRevision,
   OutboxChange,
-  ServerChange,
+  SyncEntity,
   SyncMeta,
+  TaggedRow,
 } from '@scrolled/sync-core';
 import type { BootstrapAction } from './sync';
 import * as collections from './collections';
@@ -277,10 +277,22 @@ export class UserDbApi implements UserDatabase {
     recents.clearRecents(this.db, kind);
   }
 
-  // -- sync (docs/sync_design.md §8) ------------------------------------------
+  // -- sync --------------------------------------------------------------------
 
   async getSyncMeta(): Promise<SyncMeta> {
     return sync.getSyncMeta(this.db);
+  }
+
+  async detachSyncAccount(): Promise<void> {
+    sync.detachSyncAccount(this.db);
+  }
+
+  async setSyncCursor(cursor: string): Promise<void> {
+    sync.setCursor(this.db, cursor);
+  }
+
+  async pendingSyncCount(): Promise<number> {
+    return sync.pendingCount(this.db);
   }
 
   async bootstrapSyncAccount(accountId: string): Promise<BootstrapAction> {
@@ -291,23 +303,21 @@ export class UserDbApi implements UserDatabase {
     return sync.drainOutbox(this.db, limit);
   }
 
-  async markOutboxSynced(seqs: number[], assigned: AssignedRevision[]): Promise<void> {
-    sync.markOutboxSynced(this.db, seqs, assigned);
+  async markOutboxSynced(seqs: number[], applied: { key: string; seq: number }[]): Promise<void> {
+    sync.markOutboxSynced(this.db, seqs, applied);
   }
 
-  async applyRemoteChanges(batch: ServerChange[]): Promise<ApplyResult> {
-    return sync.applyRemoteChanges(this.db, batch);
+  async applyRemoteRows(rows: TaggedRow[]): Promise<ApplyResult> {
+    return sync.applyRemoteRows(this.db, rows);
   }
 
-  async rebootstrapSyncStaleCursor(): Promise<string[][]> {
-    return sync.rebootstrapStaleCursor(this.db);
+  async replaceAllFromSnapshot(rows: TaggedRow[]): Promise<ApplyResult> {
+    return sync.replaceAllFromSnapshot(this.db, rows);
   }
 
-  async gcLocalTombstones(cutoff: number): Promise<number> {
-    return sync.gcLocalTombstones(this.db, cutoff);
+  async rekeyLocal(entity: SyncEntity, fromKey: string, toKey: string): Promise<void> {
+    sync.rekeyLocal(this.db, entity, fromKey, toKey);
   }
-
-  // -- raw bytes --------------------------------------------------------------
 
   async exportBytes(): Promise<Uint8Array> {
     return this.db.exportBytes();

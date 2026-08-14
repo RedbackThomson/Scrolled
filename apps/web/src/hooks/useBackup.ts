@@ -19,6 +19,7 @@ import {
   type BackupParts,
 } from '@scrolled/game-db/db/backup';
 import { downloadBytes, todayStamp } from '@/components/collections';
+import { invalidateSyncEpoch } from '@/stores/syncEpoch';
 import { createLogger, describeError } from '@scrolled/game-db/lib/logger';
 
 const log = createLogger('backup');
@@ -75,6 +76,7 @@ export async function importBackupBytes(bytes: Uint8Array): Promise<ImportBackup
     }
     if (contents.user) {
       const r = await userDb.importBytes(contents.user);
+      await userDb.detachSyncAccount();
       imported.push('user');
       backend ??= r.backend;
       schemaVersion ??= r.schemaVersion;
@@ -87,6 +89,7 @@ export async function importBackupBytes(bytes: Uint8Array): Promise<ImportBackup
     const target = classifyRawSqlite(bytes);
     if (target === 'user') {
       const r = await userDb.importBytes(bytes);
+      await userDb.detachSyncAccount();
       return {
         imported: ['user'],
         warnings: [],
@@ -160,6 +163,9 @@ export function useImportBackup(): UseMutationResult<ImportBackupResult, Error, 
     onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: ['db'] });
       qc.invalidateQueries({ queryKey: ['user', 'collections'] });
+      // The restored file carries another install's sync identity, so restart
+      // the engine to re-reconcile against the account.
+      if (result.imported.includes('user')) invalidateSyncEpoch();
       log.info('import complete', result);
     },
     onError: (e) => log.error('import failed', describeError(e)),

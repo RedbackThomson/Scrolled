@@ -295,4 +295,36 @@ export const USER_MIGRATIONS: readonly Migration[] = [
          AND (SELECT account_id FROM sync_cursor WHERE id = 1) IS NULL;
     `,
   },
+  {
+    version: 8,
+    name: 'relational sync contract',
+    // The backend now holds real per-entity tables keyed by natural key, so a
+    // row tracks the backend's `seq` for the version it holds rather than an
+    // optimistic-concurrency revision. The pull cursor becomes a timestamp.
+    //
+    // Existing cursors and outbox entries speak the old protocol and cannot be
+    // translated, so they are cleared; the account is re-adopted on next sign-in
+    // and local rows are re-pushed. No user data is touched.
+    sql: `
+      ALTER TABLE collections        RENAME COLUMN revision TO remote_seq;
+      ALTER TABLE collection_members RENAME COLUMN revision TO remote_seq;
+      ALTER TABLE collection_groups  RENAME COLUMN revision TO remote_seq;
+      ALTER TABLE pinned_searches    RENAME COLUMN revision TO remote_seq;
+      ALTER TABLE user_settings      RENAME COLUMN revision TO remote_seq;
+      ALTER TABLE recents            RENAME COLUMN revision TO remote_seq;
+
+      UPDATE collections        SET remote_seq = 0;
+      UPDATE collection_members SET remote_seq = 0;
+      UPDATE collection_groups  SET remote_seq = 0;
+      UPDATE pinned_searches    SET remote_seq = 0;
+      UPDATE user_settings      SET remote_seq = 0;
+      UPDATE recents            SET remote_seq = 0;
+
+      ALTER TABLE sync_cursor ADD COLUMN cursor TEXT NOT NULL DEFAULT '';
+      UPDATE sync_cursor SET server_seq = 0, cursor = '', account_id = NULL WHERE id = 1;
+
+      DELETE FROM sync_outbox;
+      DROP TABLE IF EXISTS sync_state;
+    `,
+  },
 ];

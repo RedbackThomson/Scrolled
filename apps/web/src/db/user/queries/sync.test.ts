@@ -32,8 +32,6 @@ interface OutboxRow {
   uuid: string;
   op: 'upsert' | 'delete';
   payload: string;
-  base_revision: number;
-  idempotency: string;
 }
 
 function outbox(db: Sqlite): OutboxRow[] {
@@ -63,10 +61,10 @@ describe('outbox accumulation (sync phase 1)', () => {
     expect(cursor!.account_id).toBeNull();
   });
 
-  it('backfilled the seeded collection with a uuid and revision', () => {
-    const row = db.selectObject<Row>('SELECT uuid, revision FROM collections LIMIT 1');
+  it('backfilled the seeded collection with a key the backend will know it by', () => {
+    const row = db.selectObject<Row>('SELECT uuid, remote_seq FROM collections LIMIT 1');
     expect(String(row!.uuid)).toMatch(/^[0-9a-f]{32}$/);
-    expect(Number(row!.revision)).toBe(1);
+    expect(Number(row!.remote_seq)).toBe(0);
   });
 
   it('records an upsert when a collection is created', () => {
@@ -75,32 +73,28 @@ describe('outbox accumulation (sync phase 1)', () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].entity).toBe('collection');
     expect(rows[0].op).toBe('upsert');
-    expect(rows[0].base_revision).toBe(0);
 
     const payload = JSON.parse(rows[0].payload) as Row;
     expect(payload.name).toBe('Bosses');
     expect(String(payload.uuid)).toBe(rows[0].uuid);
-    expect(Number(payload.revision)).toBe(1);
     expect(String(payload.origin_device)).toMatch(/^[0-9a-f]{32}$/);
     expect(payload.deleted_at).toBeNull();
 
     // The live row carries the same identity.
-    const live = db.selectObject<Row>('SELECT uuid, revision FROM collections WHERE id = ?', [
-      created.id,
-    ]);
+    const live = db.selectObject<Row>('SELECT uuid FROM collections WHERE id = ?', [created.id]);
     expect(String(live!.uuid)).toBe(rows[0].uuid);
   });
 
-  it('bumps revision and reuses the uuid on update', () => {
+  it('reuses the key on update', () => {
     const created = createCollection(db, { name: 'Bosses' });
+    const key = db.selectValue<string>('SELECT uuid FROM collections WHERE id = ?', [created.id]);
     clearOutbox(db);
     updateCollection(db, created.id, { description: 'end-game' });
     const rows = outbox(db);
     expect(rows).toHaveLength(1);
     expect(rows[0].op).toBe('upsert');
-    expect(rows[0].base_revision).toBe(1);
+    expect(rows[0].uuid).toBe(key);
     const payload = JSON.parse(rows[0].payload) as Row;
-    expect(Number(payload.revision)).toBe(2);
     expect(payload.description).toBe('end-game');
   });
 
@@ -190,10 +184,10 @@ describe('outbox accumulation (sync phase 1)', () => {
     expect(outbox(db).some((r) => r.entity === 'recent' && r.op === 'delete')).toBe(true);
   });
 
-  it('gives every outbox entry a distinct idempotency key', () => {
+  it('keys each entry by the record it belongs to', () => {
     createCollection(db, { name: 'A' });
     createCollection(db, { name: 'B' });
-    const keys = outbox(db).map((r) => r.idempotency);
+    const keys = outbox(db).map((r) => r.uuid);
     expect(new Set(keys).size).toBe(keys.length);
     expect(keys.every((k) => /^[0-9a-f]{32}$/.test(k))).toBe(true);
   });

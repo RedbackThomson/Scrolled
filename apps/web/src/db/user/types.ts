@@ -8,10 +8,10 @@
 import type { EntityKind } from '@scrolled/game-db/db/types';
 import type {
   ApplyResult,
-  AssignedRevision,
   OutboxChange,
-  ServerChange,
+  SyncEntity,
   SyncMeta,
+  TaggedRow,
 } from '@scrolled/sync-core';
 import type { BootstrapAction } from './queries/sync';
 import type { CollectionsExportJson, ImportConflictMode, ImportReport } from './collectionsJson';
@@ -349,28 +349,24 @@ export interface UserDatabase {
   /** Clear all recents of one kind. */
   clearRecents(kind: 'entity' | 'query'): Promise<void>;
 
-  /** Read the sync cursor/identity the engine needs (server_seq, device_id,
-   *  account_id). */
   getSyncMeta(): Promise<SyncMeta>;
+  setSyncCursor(cursor: string): Promise<void>;
+  /** Forget the account this DB belongs to, keeping its data. */
+  detachSyncAccount(): Promise<void>;
+  pendingSyncCount(): Promise<number>;
   /** Reconcile the local DB with a signing-in account before the first sync
-   *  cycle (docs/sync_design.md §11): adopt anonymous data, reset on an account
-   *  switch, or resume. Returns which path was taken. */
+   *  cycle: adopt anonymous data, reset on an account switch, or resume. */
   bootstrapSyncAccount(accountId: string): Promise<BootstrapAction>;
-  /** Next batch of pending local changes (wire-projected), oldest first. */
+  /** Next batch of pending local changes, coalesced to one per record. */
   drainOutbox(limit: number): Promise<OutboxChange[]>;
-  /** Acknowledge pushed rows and stamp the server-assigned revisions. */
-  markOutboxSynced(seqs: number[], assigned: AssignedRevision[]): Promise<void>;
-  /** Apply a server-ordered remote batch in one transaction (conflict handler
-   *  against pending edits, cursor advanced atomically). Returns the TanStack
-   *  query-key roots to invalidate. */
-  applyRemoteChanges(batch: ServerChange[]): Promise<ApplyResult>;
-  /** Discard local synced rows + cursor for a re-bootstrap from 0, after the
-   *  server reports the cursor is past its GC horizon (§15). Returns the query
-   *  roots to invalidate. */
-  rebootstrapSyncStaleCursor(): Promise<string[][]>;
-  /** Hard-delete local soft-tombstones older than `cutoff` (§10). Returns the
-   *  number reclaimed. */
-  gcLocalTombstones(cutoff: number): Promise<number>;
+  markOutboxSynced(seqs: number[], applied: { key: string; seq: number }[]): Promise<void>;
+  /** Apply backend rows in one transaction. Returns the TanStack query-key roots
+   *  to invalidate. */
+  applyRemoteRows(rows: TaggedRow[]): Promise<ApplyResult>;
+  /** Rebuild local synced state from a full backend snapshot. */
+  replaceAllFromSnapshot(rows: TaggedRow[]): Promise<ApplyResult>;
+  /** Adopt the backend's key for a record minted locally under a different one. */
+  rekeyLocal(entity: SyncEntity, fromKey: string, toKey: string): Promise<void>;
 
   /** Serialize the live user.sqlite3 to a Uint8Array. */
   exportBytes(): Promise<Uint8Array>;

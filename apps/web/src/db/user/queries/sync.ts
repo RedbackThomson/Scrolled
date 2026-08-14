@@ -1,27 +1,26 @@
-// The mutation chokepoint for sync (docs/sync_design.md §6.6).
+// The mutation chokepoint for sync.
 //
-// Every user-DB write funnels one of these helpers in alongside its data
-// change, inside the same transaction, so the data write and its `sync_outbox`
-// entry commit atomically — no mutation can escape the outbox, and a crash
-// can't leave the two inconsistent. The engine (a later phase) drains the
-// outbox; here we only ever append to it. Nothing leaves the device.
+// Every user-DB write funnels one of these helpers in alongside its data change,
+// inside the same transaction, so the data write and its `sync_outbox` entry
+// commit atomically. Deletes are captured before the caller hard-deletes the
+// row, since the backend keeps a tombstone so other devices learn of the delete.
 //
-// Deletes are captured as `op='delete'` outbox entries holding the record's
-// uuid and a final snapshot; the live row is still hard-deleted by the caller,
-// so reads and unique constraints are unaffected. The `deleted_at` column
-// exists for the remote-apply/conflict path a later phase adds.
+// Local rows keep their integer primary keys; `uuid` is the key the backend
+// knows a collection, group or pinned search by. Members, settings and recents
+// have no minted key at all — their natural key is their identity everywhere.
 
 import type { Sqlite, Row } from '@scrolled/game-db/db/sqlite';
 import type { SqlValue } from '@sqlite.org/sqlite-wasm';
 import {
-  resolveConflict,
+  recordKey,
+  splitRecordKey,
+  SYNC_ENTITIES,
   type ApplyResult,
-  type AssignedRevision,
   type OutboxChange,
-  type ServerChange,
-  type SyncChange,
+  type RemoteRow,
   type SyncEntity,
   type SyncMeta,
+  type TaggedRow,
 } from '@scrolled/sync-core';
 
 export type { SyncEntity };
@@ -37,17 +36,20 @@ const ENTITY_TABLE: Record<SyncEntity, string> = {
   recent: 'recents',
 };
 
+/** TanStack query-key root each entity feeds, so a remote apply invalidates the
+ *  same views a local mutation would. */
+const ENTITY_QUERY_KEY: Record<SyncEntity, string[]> = {
+  collection: ['user', 'collections'],
+  collection_member: ['user', 'collections'],
+  collection_group: ['user', 'collections'],
+  pinned_search: ['user', 'pinned'],
+  user_setting: ['user', 'settings'],
+  recent: ['recents'],
+};
+
 function mintId(db: Sqlite): string {
   return db.selectValue<string>('SELECT lower(hex(randomblob(16)))') ?? '';
 }
-
-// -- outbox doorbell ---------------------------------------------------------
-//
-// Every outbox append funnels through `appendOutbox`, so it is the single place
-// to signal "local data changed, drain me." The worker registers a listener
-// that rings a cross-context doorbell (a BroadcastChannel) the main-thread sync
-// engine debounces into a push (docs/sync_design.md §13). Fires in every build;
-// with no engine listening (signed out / self-hosted) it is a harmless no-op.
 
 type OutboxListener = (entity: SyncEntity) => void;
 let outboxListener: OutboxListener | null = null;
@@ -67,22 +69,19 @@ function appendOutbox(
   uuid: string,
   op: 'upsert' | 'delete',
   payload: Row,
-  baseRevision: number,
   now: number,
 ): void {
   db.exec(
     `INSERT INTO sync_outbox (entity, uuid, op, payload, base_revision, created_at, idempotency)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [entity, uuid, op, JSON.stringify(payload), baseRevision, now, mintId(db)],
+     VALUES (?, ?, ?, ?, 0, ?, '')`,
+    [entity, uuid, op, JSON.stringify(payload), now],
   );
   outboxListener?.(entity);
 }
 
 /**
- * Stamp the sync columns on a row the caller just inserted or updated, and
- * append an `upsert` to the outbox capturing the post-write snapshot. `where`
- * identifies the single affected row; its `params` are reused for the readback
- * and update. A no-op if the row is gone (defensive).
+ * Stamp the sync columns on a row the caller just inserted or updated and queue
+ * it for push. `where` must identify a single row.
  */
 export function recordUpsert(
   db: Sqlite,
@@ -94,24 +93,20 @@ export function recordUpsert(
   const bind = [...params];
   const before = db.selectObject<Row>(`SELECT * FROM ${table} WHERE ${where}`, bind);
   if (!before) return;
-  const base = Number(before.revision ?? 0);
   const uuid =
     typeof before.uuid === 'string' && before.uuid.length > 0 ? before.uuid : mintId(db);
   const now = Date.now();
   db.exec(
     `UPDATE ${table}
-        SET uuid = ?, revision = ?, updated_at = ?, origin_device = ?, deleted_at = NULL
+        SET uuid = ?, updated_at = ?, origin_device = ?, deleted_at = NULL
       WHERE ${where}`,
-    [uuid, base + 1, now, deviceId(db), ...bind],
+    [uuid, now, deviceId(db), ...bind],
   );
   const snapshot = db.selectObject<Row>(`SELECT * FROM ${table} WHERE ${where}`, bind);
-  if (snapshot) appendOutbox(db, entity, uuid, 'upsert', snapshot, base, now);
+  if (snapshot) appendOutbox(db, entity, uuid, 'upsert', snapshot, now);
 }
 
-/**
- * Capture a `delete` for the row matched by `where` before the caller
- * hard-deletes it. A no-op if the row is already gone.
- */
+/** Capture a delete before the caller hard-deletes the row. */
 export function recordDelete(
   db: Sqlite,
   entity: SyncEntity,
@@ -123,16 +118,14 @@ export function recordDelete(
   const row = db.selectObject<Row>(`SELECT * FROM ${table} WHERE ${where}`, bind);
   if (!row) return;
   const uuid = typeof row.uuid === 'string' ? row.uuid : '';
-  const base = Number(row.revision ?? 0);
   const now = Date.now();
-  appendOutbox(db, entity, uuid, 'delete', { ...row, deleted_at: now }, base, now);
+  appendOutbox(db, entity, uuid, 'delete', { ...row, deleted_at: now }, now);
 }
 
 /**
- * Sweep a table for rows the caller bulk-inserted without a sync identity
- * (uuid still `''`), stamp each, and enqueue an upsert. Used by the import
- * path, which writes many rows at once rather than through a single-row
- * mutation. Caller is responsible for running this inside its transaction.
+ * Stamp rows a caller bulk-inserted without a sync identity. Used by the import
+ * path, which writes many rows at once rather than through single-row mutations.
+ * Must run inside the caller's transaction.
  */
 export function recordNewRows(db: Sqlite, entity: SyncEntity): void {
   const table = ENTITY_TABLE[entity];
@@ -142,192 +135,204 @@ export function recordNewRows(db: Sqlite, entity: SyncEntity): void {
   for (const rowid of rowids) recordUpsert(db, entity, 'rowid = ?', [rowid]);
 }
 
-// === The engine-facing surface (docs/sync_design.md §8) =====================
-//
-// Phase 2 adds the worker methods the `sync-core` engine drives over comlink:
-// drain the outbox to push, ack pushed rows, apply a remote batch (running the
-// conflict handler against locally-pending rows, in one transaction, advancing
-// the cursor atomically), and read the sync metadata. No network here — the
-// engine owns the wire; this owns the SQLite.
-
-/** TanStack query-key root each entity feeds, so a remote apply invalidates
- *  exactly the views that already react to local mutations of that entity. */
-const ENTITY_QUERY_KEY: Record<SyncEntity, string[]> = {
-  collection: ['user', 'collections'],
-  collection_member: ['user', 'collections'],
-  collection_group: ['user', 'collections'],
-  pinned_search: ['user', 'pinned'],
-  user_setting: ['user', 'settings'],
-  recent: ['recents'],
-};
-
-/** Tables carrying a `uuid`, swept by `markOutboxSynced` to bump revisions. */
-const SYNCED_TABLES = [
-  'collections',
-  'collection_members',
-  'collection_groups',
-  'pinned_searches',
-  'user_settings',
-  'recents',
-] as const;
+// -- engine-facing surface ----------------------------------------------------
 
 export function getSyncMeta(db: Sqlite): SyncMeta {
   const row = db.selectObject<Row>(
-    'SELECT server_seq, device_id, account_id FROM sync_cursor WHERE id = 1',
+    'SELECT cursor, device_id, account_id FROM sync_cursor WHERE id = 1',
   );
   return {
-    serverSeq: Number(row?.server_seq ?? 0),
+    cursor: String(row?.cursor ?? ''),
     deviceId: String(row?.device_id ?? ''),
     accountId: row?.account_id == null ? null : String(row.account_id),
   };
 }
 
 /**
- * The next batch of pending local changes, oldest first. Each row's stored
- * snapshot is projected to the *wire* shape: local-only columns are dropped
- * (`recents.name` — game-derived names never sync) and local integer foreign
- * keys are replaced by the parent's cross-device `uuid` (members/groups
- * reference their collection by uuid on the wire, §6.1).
+ * Forget which account this DB belongs to, without touching the data. Restoring
+ * a backup drops in another install's cursor and queue, which would otherwise be
+ * pushed as if it were ours; clearing them makes the next sign-in re-adopt the
+ * restored rows instead.
  */
-export function drainOutbox(db: Sqlite, limit: number): OutboxChange[] {
-  const rows = db.selectObjects<Row>(
-    `SELECT seq, entity, uuid, op, payload, base_revision, idempotency
-       FROM sync_outbox ORDER BY seq LIMIT ?`,
-    [limit],
-  );
-  return rows.map((r) => {
-    const entity = String(r.entity) as SyncEntity;
-    const stored = JSON.parse(String(r.payload)) as Row;
-    return {
-      seq: Number(r.seq),
-      entity,
-      uuid: String(r.uuid),
-      op: String(r.op) as 'upsert' | 'delete',
-      payload: toWirePayload(db, entity, stored),
-      baseRevision: Number(r.base_revision),
-      idempotency: String(r.idempotency),
-    };
+export function detachSyncAccount(db: Sqlite): void {
+  db.transaction(() => {
+    db.exec('DELETE FROM sync_outbox');
+    db.exec(`UPDATE sync_cursor SET cursor = '', account_id = NULL WHERE id = 1`);
+    for (const entity of SYNC_ENTITIES) {
+      db.exec(`UPDATE ${ENTITY_TABLE[entity]} SET remote_seq = 0`);
+    }
   });
 }
 
+export function setCursor(db: Sqlite, cursor: string): void {
+  db.exec('UPDATE sync_cursor SET cursor = ? WHERE id = 1', [cursor]);
+}
+
+export function pendingCount(db: Sqlite): number {
+  return db.selectValue<number>('SELECT COUNT(*) FROM sync_outbox') ?? 0;
+}
+
 /**
- * Acknowledge pushed rows: remove their outbox entries and advance each live
- * row's `revision` to the one the server assigned (matched by `uuid`), so the
- * next local edit pushes with the correct `base_revision`.
+ * The next batch of pending changes, oldest first, collapsed to one entry per
+ * record. Coalescing matters because a single reorder or bulk edit queues a row
+ * per shifted sibling; only the final state is worth sending.
+ *
+ * The returned `seq` is the newest entry for that record, and `markOutboxSynced`
+ * clears every entry sharing its key, so superseded entries are not left behind.
+ */
+export function drainOutbox(db: Sqlite, limit: number): OutboxChange[] {
+  const rows = db.selectObjects<Row>(
+    'SELECT seq, entity, uuid, op, payload FROM sync_outbox ORDER BY seq',
+  );
+
+  const latest = new Map<string, OutboxChange>();
+  for (const r of rows) {
+    const entity = String(r.entity) as SyncEntity;
+    const stored = JSON.parse(String(r.payload)) as Row;
+    const row = toRemoteRow(db, entity, stored, String(r.uuid));
+    if (!row) continue;
+    const change: OutboxChange = {
+      seq: Number(r.seq),
+      entity,
+      key: recordKey(entity, row),
+      op: String(r.op) as 'upsert' | 'delete',
+      row,
+    };
+    latest.set(`${entity}:${change.key}`, change);
+  }
+
+  return [...latest.values()].sort((a, b) => a.seq - b.seq).slice(0, limit);
+}
+
+/**
+ * Drop acked entries and record the backend `seq` each row now holds, so a later
+ * pull recognises the row as already applied.
  */
 export function markOutboxSynced(
   db: Sqlite,
   seqs: number[],
-  assigned: AssignedRevision[],
+  applied: { key: string; seq: number }[],
 ): void {
   db.transaction(() => {
-    for (const seq of seqs) db.exec('DELETE FROM sync_outbox WHERE seq = ?', [seq]);
-    for (const a of assigned) {
-      for (const table of SYNCED_TABLES) {
-        db.exec(`UPDATE ${table} SET revision = ? WHERE uuid = ?`, [a.revision, a.uuid]);
+    for (const seq of seqs) {
+      const row = db.selectObject<Row>('SELECT entity, uuid FROM sync_outbox WHERE seq = ?', [seq]);
+      if (!row) continue;
+      const entity = String(row.entity) as SyncEntity;
+      // Clear superseded entries for the same record, not just this one.
+      db.exec('DELETE FROM sync_outbox WHERE entity = ? AND uuid = ? AND seq <= ?', [
+        entity,
+        String(row.uuid),
+        seq,
+      ]);
+    }
+    for (const a of applied) {
+      for (const entity of SYNC_ENTITIES) {
+        const match = liveMatchByKey(entity, a.key);
+        if (!match) continue;
+        db.exec(`UPDATE ${match.table} SET remote_seq = ? WHERE ${match.where}`, [
+          a.seq,
+          ...match.params,
+        ]);
       }
     }
   });
 }
 
 /**
- * Apply a batch of server-ordered remote changes in one transaction. For each
- * change: if a local edit for the same record is still pending, run the
- * conflict handler — remote-wins applies it and drops the pending edit;
- * local-wins rebases the pending edit so its re-push lands on top. With no
- * pending edit, apply when the remote revision is newer (idempotent on
- * re-delivery). The cursor advances to the highest seq seen, atomically with
- * the rows. Returns the query-key roots touched.
+ * Apply rows from the backend in one transaction, skipping any record with a
+ * pending local edit — that push is about to overwrite it — and any row we
+ * already hold at the same or a newer `seq`.
  */
-export function applyRemoteChanges(db: Sqlite, batch: ServerChange[]): ApplyResult {
+export function applyRemoteRows(db: Sqlite, rows: TaggedRow[]): ApplyResult {
   const invalidated = new Set<string>();
-  let cursor = getSyncMeta(db).serverSeq;
+  let applied = 0;
+
   db.transaction(() => {
-    for (const change of batch) {
-      applyOne(db, change);
-      cursor = Math.max(cursor, change.serverSeq);
-      invalidated.add(JSON.stringify(ENTITY_QUERY_KEY[change.entity]));
+    // Parents first so a member never lands before the collection it points at.
+    for (const entity of SYNC_ENTITIES) {
+      for (const tagged of rows) {
+        if (tagged.entity !== entity) continue;
+        if (!applyOne(db, tagged)) continue;
+        applied += 1;
+        invalidated.add(JSON.stringify(ENTITY_QUERY_KEY[entity]));
+      }
     }
-    db.exec('UPDATE sync_cursor SET server_seq = ? WHERE id = 1', [cursor]);
   });
+
   return {
     invalidatedKeys: [...invalidated].map((s) => JSON.parse(s) as string[]),
-    serverSeq: cursor,
+    applied,
   };
 }
 
 /**
- * Sweep any soft-tombstoned rows older than `cutoff` (a wall-clock ms cutoff,
- * typically `now - retentionWindow`) and hard-delete them (docs/sync_design.md
- * §10). The apply path hard-deletes now, so this is a belt-and-suspenders
- * cleanup: it reclaims tombstones left by older builds and guards the invariant
- * that the user DB never grows an unbounded graveyard. Runs across every synced
- * table; returns the number of rows reclaimed.
+ * Discard local synced state and rebuild it from a full backend snapshot. The
+ * recovery path when a device has diverged; pending local changes are dropped
+ * along with the rest, which is the trade for guaranteed agreement.
  */
-export function gcLocalTombstones(db: Sqlite, cutoff: number): number {
-  let removed = 0;
+export function replaceAllFromSnapshot(db: Sqlite, rows: TaggedRow[]): ApplyResult {
   db.transaction(() => {
-    for (const table of SYNCED_TABLES) {
-      db.exec(`DELETE FROM ${table} WHERE deleted_at IS NOT NULL AND deleted_at < ?`, [cutoff]);
-      removed += db.selectValue<number>('SELECT changes()') ?? 0;
+    for (const entity of [...SYNC_ENTITIES].reverse()) {
+      db.exec(`DELETE FROM ${ENTITY_TABLE[entity]}`);
+    }
+    db.exec('DELETE FROM sync_outbox');
+    for (const entity of SYNC_ENTITIES) {
+      for (const tagged of rows) {
+        if (tagged.entity === entity) applyOne(db, tagged, { force: true });
+      }
     }
   });
-  return removed;
+
+  const roots = new Set<string>();
+  for (const key of Object.values(ENTITY_QUERY_KEY)) roots.add(JSON.stringify(key));
+  return {
+    invalidatedKeys: [...roots].map((s) => JSON.parse(s) as string[]),
+    applied: rows.length,
+  };
 }
 
 /**
- * Re-bootstrap after the server reports our cursor is older than its tombstone
- * GC horizon (docs/sync_design.md §15) — meaning we may have missed deletes that
- * have since been GC'd, so a delta pull can't reconcile us. The account's
- * authoritative state lives on the server, so we discard local synced rows, the
- * outbox, and the cursor (keeping the account + device id) and let the engine
- * re-pull from 0. A device this stale (offline past the retention window) trades
- * any unsynced local-only edits for guaranteed convergence — the design's
- * stated preference over silently keeping deleted rows.
+ * Adopt the backend's key for a record this device minted under a different one,
+ * re-pointing its children. Resolves a duplicate created by two devices naming
+ * the same thing while offline.
  */
-export function rebootstrapStaleCursor(db: Sqlite): string[][] {
+export function rekeyLocal(
+  db: Sqlite,
+  entity: SyncEntity,
+  fromKey: string,
+  toKey: string,
+): void {
+  const table = ENTITY_TABLE[entity];
   db.transaction(() => {
-    for (const table of SYNCED_TABLES) db.exec(`DELETE FROM ${table}`);
-    db.exec('DELETE FROM sync_outbox');
-    db.exec('UPDATE sync_cursor SET server_seq = 0 WHERE id = 1');
+    // A local row may already carry the canonical key if the backend's version
+    // arrived first; merging into it would need a member-level union, so keep
+    // both rows and let the pull settle the survivor.
+    const taken = db.selectValue(`SELECT 1 FROM ${table} WHERE uuid = ?`, [toKey]) != null;
+    if (taken) return;
+
+    db.exec(`UPDATE ${table} SET uuid = ?, remote_seq = 0 WHERE uuid = ?`, [toKey, fromKey]);
+    db.exec('UPDATE sync_outbox SET uuid = ? WHERE entity = ? AND uuid = ?', [
+      toKey,
+      entity,
+      fromKey,
+    ]);
   });
-  // Every view that reads synced data must refetch: the wipe emptied the tables
-  // and the from-0 re-pull will repopulate only what still lives on the server.
-  const roots = new Set<string>();
-  for (const key of Object.values(ENTITY_QUERY_KEY)) roots.add(JSON.stringify(key));
-  return [...roots].map((s) => JSON.parse(s) as string[]);
 }
 
-// === Bootstrap / "claim local data" (docs/sync_design.md §11) ===============
+// -- bootstrap ----------------------------------------------------------------
 //
-// `sync_cursor.account_id` records whose data this DB currently holds. The
-// engine calls `bootstrapSyncAccount` once when a session becomes authenticated,
-// before its first cycle, to reconcile the local DB with the account:
+// `sync_cursor.account_id` records whose data this DB holds. Called once when a
+// session becomes authenticated:
 //
-// - **resumed**: already this account — nothing to do, resume delta sync.
-// - **adopted**: anonymous data, no prior account — claim it for the account by
-//   enqueuing every live row as a fresh insert, so the user's offline work
-//   converges with anything already on the server (server-side LWW merges).
-// - **reset**: a *different* account — wipe the local user data (it belongs to
-//   the other account and lives on the server) and pull this account from 0, so
-//   two users' data never mix on one device.
+// - resumed: already this account, nothing to do.
+// - adopted: anonymous data with no prior account — queue every row so the
+//   user's offline work merges with whatever the account already holds.
+// - reset: a different account — discard local data so two users never mix.
 //
-// Signing out of the *same* account does NOT reset — local data stays for
-// offline use; the engine just stops.
+// Signing out of the same account does not reset; local data stays for offline
+// use and the engine simply stops.
 
 export type BootstrapAction = 'resumed' | 'adopted' | 'reset';
-
-/** Order parents before children so the adopted outbox pushes — and a fresh
- *  device's pull applies — collections before their groups before their
- *  members (a child whose parent isn't present yet is skipped on apply). */
-const ADOPTION_ORDER: readonly SyncEntity[] = [
-  'collection',
-  'collection_group',
-  'collection_member',
-  'pinned_search',
-  'user_setting',
-  'recent',
-];
 
 export function bootstrapSyncAccount(db: Sqlite, accountId: string): BootstrapAction {
   const meta = getSyncMeta(db);
@@ -342,132 +347,30 @@ export function bootstrapSyncAccount(db: Sqlite, accountId: string): BootstrapAc
   }
 
   db.transaction(() => {
-    for (const table of SYNCED_TABLES) db.exec(`DELETE FROM ${table}`);
+    for (const entity of [...SYNC_ENTITIES].reverse()) {
+      db.exec(`DELETE FROM ${ENTITY_TABLE[entity]}`);
+    }
     db.exec('DELETE FROM sync_outbox');
-    db.exec('UPDATE sync_cursor SET server_seq = 0, account_id = ? WHERE id = 1', [accountId]);
+    db.exec("UPDATE sync_cursor SET cursor = '', account_id = ? WHERE id = 1", [accountId]);
   });
   return 'reset';
 }
 
-/**
- * Enqueue every live local row as a fresh insert for the account being adopted.
- * The anonymous-era outbox (intermediate edit history the server never saw) is
- * cleared first and collapsed into one `upsert` per record at `base_revision=0`,
- * so each lands as a new server record (or, for natural-key rows like settings,
- * conflicts cleanly against an existing one and resolves by LWW). Must run
- * inside the caller's transaction.
- */
+/** Queue every live row for push, parents first. Must run inside a transaction. */
 function adoptLocalData(db: Sqlite): void {
   db.exec('DELETE FROM sync_outbox');
   const now = Date.now();
-  for (const entity of ADOPTION_ORDER) {
+  for (const entity of SYNC_ENTITIES) {
     const table = ENTITY_TABLE[entity];
     const rows = db.selectObjects<Row>(`SELECT * FROM ${table} WHERE deleted_at IS NULL`);
     for (const row of rows) {
       const uuid = typeof row.uuid === 'string' ? row.uuid : '';
-      if (!uuid) continue; // every persisted row carries a uuid; defensive
-      appendOutbox(db, entity, uuid, 'upsert', row, 0, now);
+      appendOutbox(db, entity, uuid, 'upsert', row, now);
     }
   }
 }
 
-// -- remote-apply internals --------------------------------------------------
-
-function applyOne(db: Sqlite, change: ServerChange): void {
-  const entity = change.entity;
-  const pending = pendingOutboxFor(db, entity, change);
-
-  if (pending.length > 0) {
-    const local = outboxRowToChange(pending[pending.length - 1]);
-    const winner = resolveConflict({ entity, local, remote: change });
-    if (winner === 'remote') {
-      applyRow(db, change);
-      for (const p of pending) db.exec('DELETE FROM sync_outbox WHERE seq = ?', [p.seq]);
-    } else {
-      // Local wins: rebase the pending edit onto the server's revision so the
-      // engine's re-push is accepted and lands on top.
-      for (const p of pending) {
-        db.exec('UPDATE sync_outbox SET base_revision = ? WHERE seq = ?', [change.revision, p.seq]);
-      }
-    }
-    return;
-  }
-
-  const localRevision = liveRevision(db, entity, change);
-  if (localRevision != null && change.revision <= localRevision) return; // already applied / stale
-  applyRow(db, change);
-}
-
-interface OutboxRow {
-  seq: number;
-  entity: SyncEntity;
-  uuid: string;
-  op: 'upsert' | 'delete';
-  payload: Row;
-  baseRevision: number;
-  idempotency: string;
-}
-
-function pendingOutboxFor(db: Sqlite, entity: SyncEntity, change: ServerChange): OutboxRow[] {
-  const rows = db.selectObjects<Row>(
-    `SELECT seq, uuid, op, payload, base_revision, idempotency
-       FROM sync_outbox WHERE entity = ? ORDER BY seq`,
-    [entity],
-  );
-  const remoteKey = matchKey(entity, asRow(change.payload), change.uuid);
-  const out: OutboxRow[] = [];
-  for (const r of rows) {
-    const payload = JSON.parse(String(r.payload)) as Row;
-    const uuid = String(r.uuid);
-    if (matchKey(entity, payload, uuid) !== remoteKey) continue;
-    out.push({
-      seq: Number(r.seq),
-      entity,
-      uuid,
-      op: String(r.op) as 'upsert' | 'delete',
-      payload,
-      baseRevision: Number(r.base_revision),
-      idempotency: String(r.idempotency),
-    });
-  }
-  return out;
-}
-
-function outboxRowToChange(row: OutboxRow): SyncChange {
-  return {
-    entity: row.entity,
-    uuid: row.uuid,
-    op: row.op,
-    payload: row.payload,
-    baseRevision: row.baseRevision,
-    idempotency: row.idempotency,
-  };
-}
-
-/**
- * The stable cross-device identity for matching a record. Records whose natural
- * key is user-editable (collection/group/member/pinned) key on the random
- * `uuid`; records with a stable natural key (a setting's `key`, a recent's
- * `kind`+`ref`) key on that, so two devices that minted the same row
- * independently still converge.
- */
-function matchKey(entity: SyncEntity, payload: Row, uuid: string): string {
-  switch (entity) {
-    case 'user_setting':
-      return `setting:${String(payload.key)}`;
-    case 'recent':
-      return `recent:${String(payload.kind)}:${String(payload.ref)}`;
-    default:
-      return `uuid:${uuid}`;
-  }
-}
-
-/** The live row matched by `liveMatch`'s revision, or null if absent. */
-function liveRevision(db: Sqlite, entity: SyncEntity, change: ServerChange): number | null {
-  const { table, where, params } = liveMatch(entity, change);
-  const v = db.selectValue<number>(`SELECT revision FROM ${table} WHERE ${where}`, params);
-  return v == null ? null : Number(v);
-}
+// -- apply internals ----------------------------------------------------------
 
 interface LiveMatch {
   table: string;
@@ -475,272 +378,306 @@ interface LiveMatch {
   params: SqlValue[];
 }
 
-function liveMatch(entity: SyncEntity, change: ServerChange): LiveMatch {
-  const p = asRow(change.payload);
-  switch (entity) {
-    case 'collection':
-      return { table: 'collections', where: 'uuid = ?', params: [change.uuid] };
-    case 'collection_group':
-      return { table: 'collection_groups', where: 'uuid = ?', params: [change.uuid] };
-    case 'collection_member':
-      return { table: 'collection_members', where: 'uuid = ?', params: [change.uuid] };
-    case 'pinned_search':
-      return { table: 'pinned_searches', where: 'uuid = ?', params: [change.uuid] };
-    case 'user_setting':
-      return { table: 'user_settings', where: 'key = ?', params: [str(p.key)] };
-    case 'recent':
-      return { table: 'recents', where: 'kind = ? AND ref = ?', params: [str(p.kind), str(p.ref)] };
+/** Returns false when the row was skipped as pending or stale. */
+function applyOne(db: Sqlite, tagged: TaggedRow, opts?: { force: boolean }): boolean {
+  const { entity, row, seq } = tagged;
+  const match = liveMatchByRow(db, entity, row);
+  if (!match) return false;
+
+  if (!opts?.force) {
+    if (hasPendingEdit(db, entity, row)) return false;
+    const held = db.selectValue<number>(
+      `SELECT remote_seq FROM ${match.table} WHERE ${match.where}`,
+      match.params,
+    );
+    if (held != null && Number(held) >= seq) return false;
   }
-}
 
-function applyRow(db: Sqlite, change: ServerChange): void {
-  if (change.op === 'delete') {
-    applyDelete(db, change);
-    return;
+  if (row.deleted_at != null) {
+    const exists = db.selectValue(`SELECT 1 FROM ${match.table} WHERE ${match.where}`, match.params);
+    if (exists == null) return false;
+    db.exec(`DELETE FROM ${match.table} WHERE ${match.where}`, match.params);
+    return true;
   }
-  applyUpsert(db, change);
-}
 
-function applyDelete(db: Sqlite, change: ServerChange): void {
-  const { table, where, params } = liveMatch(change.entity, change);
-  const exists = db.selectValue(`SELECT 1 FROM ${table} WHERE ${where}`, params);
-  if (exists == null) return; // we never held this row; nothing to delete
-  // Hard-delete locally rather than retain a soft-tombstone row. Tombstone
-  // *retention* lives on the server change log (so an offline device can still
-  // learn of the delete on its next pull, §10); the cursor advances only past
-  // applied changes, so a stale upsert can never re-deliver and resurrect this
-  // row, and a concurrent edit is already decided by the server-ordered conflict
-  // handler before it reaches here (§7). Keeping a local soft-tombstone would
-  // instead keep the row visible to every read and keep its UNIQUE name / PK
-  // reserved (which SQLite can't release without a table rebuild), so a hard
-  // delete is both simpler and correct. `gcLocalTombstones` sweeps up any soft
-  // tombstones left by older code.
-  db.exec(`DELETE FROM ${table} WHERE ${where}`, params);
-}
+  const cols = localColumns(db, entity, row, seq);
+  if (!cols) return false;
 
-function applyUpsert(db: Sqlite, change: ServerChange): void {
-  const cols = upsertColumns(db, change);
-  if (!cols) return; // parent not present yet; a later batch/pull resolves it
-  dedupeUniqueName(db, change, cols);
-  const { table, where, params } = liveMatch(change.entity, change);
-  const exists = db.selectValue(`SELECT 1 FROM ${table} WHERE ${where}`, params) != null;
+  const exists =
+    db.selectValue(`SELECT 1 FROM ${match.table} WHERE ${match.where}`, match.params) != null;
   if (exists) {
     const sets = Object.keys(cols)
       .map((c) => `${c} = ?`)
       .join(', ');
-    db.exec(`UPDATE ${table} SET ${sets} WHERE ${where}`, [...Object.values(cols), ...params]);
+    db.exec(`UPDATE ${match.table} SET ${sets} WHERE ${match.where}`, [
+      ...Object.values(cols),
+      ...match.params,
+    ]);
   } else {
     const names = Object.keys(cols);
-    const placeholders = names.map(() => '?').join(', ');
     db.exec(
-      `INSERT INTO ${table} (${names.join(', ')}) VALUES (${placeholders})`,
+      `INSERT INTO ${match.table} (${names.join(', ')}) VALUES (${names.map(() => '?').join(', ')})`,
       Object.values(cols),
     );
   }
+  return true;
 }
 
-/**
- * The column→value map written when applying a remote upsert. Sync columns are
- * stamped from the change; data columns come from the wire payload; member and
- * group foreign keys are resolved from the parent's uuid back to the local
- * integer id. Returns null when a referenced parent isn't present locally yet.
- */
-function upsertColumns(db: Sqlite, change: ServerChange): Record<string, SqlValue> | null {
-  const p = asRow(change.payload);
+function hasPendingEdit(db: Sqlite, entity: SyncEntity, row: RemoteRow): boolean {
+  const rows = db.selectObjects<Row>(
+    'SELECT uuid, payload FROM sync_outbox WHERE entity = ?',
+    [entity],
+  );
+  const target = recordKey(entity, row);
+  for (const r of rows) {
+    const stored = JSON.parse(String(r.payload)) as Row;
+    const asRemote = toRemoteRow(db, entity, stored, String(r.uuid));
+    if (asRemote && recordKey(entity, asRemote) === target) return true;
+  }
+  return false;
+}
+
+/** Locate the local row a backend row corresponds to, resolving parent keys to
+ *  local integer ids. Null when the parent is not present. */
+function liveMatchByRow(db: Sqlite, entity: SyncEntity, row: RemoteRow): LiveMatch | null {
+  switch (entity) {
+    case 'collection':
+      return { table: 'collections', where: 'uuid = ?', params: [str(row.key)] };
+    case 'collection_group':
+      return { table: 'collection_groups', where: 'uuid = ?', params: [str(row.key)] };
+    case 'pinned_search':
+      return { table: 'pinned_searches', where: 'uuid = ?', params: [str(row.key)] };
+    case 'user_setting':
+      return { table: 'user_settings', where: 'key = ?', params: [str(row.key)] };
+    case 'recent':
+      return {
+        table: 'recents',
+        where: 'kind = ? AND ref = ?',
+        params: [str(row.kind), str(row.ref)],
+      };
+    case 'collection_member': {
+      const collectionId = idOfUuid(db, 'collections', row.collection_key);
+      if (collectionId == null) return null;
+      return {
+        table: 'collection_members',
+        where: 'collection_id = ? AND entity_type = ? AND entity_id = ?',
+        params: [collectionId, str(row.entity_type), num(row.entity_id)],
+      };
+    }
+  }
+}
+
+/** Locate a local row from a coalesced record key, for ack bookkeeping. */
+function liveMatchByKey(entity: SyncEntity, key: string): LiveMatch | null {
+  const parts = splitRecordKey(key);
+  switch (entity) {
+    case 'collection':
+      return { table: 'collections', where: 'uuid = ?', params: [parts[0]] };
+    case 'collection_group':
+      return { table: 'collection_groups', where: 'uuid = ?', params: [parts[0]] };
+    case 'pinned_search':
+      return { table: 'pinned_searches', where: 'uuid = ?', params: [parts[0]] };
+    case 'user_setting':
+      return { table: 'user_settings', where: 'key = ?', params: [parts[0]] };
+    case 'recent':
+      if (parts.length < 2) return null;
+      return { table: 'recents', where: 'kind = ? AND ref = ?', params: [parts[0], parts[1]] };
+    case 'collection_member':
+      if (parts.length < 3) return null;
+      return {
+        table: 'collection_members',
+        where:
+          'collection_id = (SELECT id FROM collections WHERE uuid = ?) AND entity_type = ? AND entity_id = ?',
+        params: [parts[0], parts[1], Number(parts[2])],
+      };
+  }
+}
+
+/** Backend row → local columns. Null when a referenced parent is absent. */
+function localColumns(
+  db: Sqlite,
+  entity: SyncEntity,
+  row: RemoteRow,
+  seq: number,
+): Record<string, SqlValue> | null {
   const sync: Record<string, SqlValue> = {
-    uuid: change.uuid,
-    revision: change.revision,
+    remote_seq: seq,
     deleted_at: null,
-    origin_device: str(p.origin_device),
+    origin_device: str(row.origin_device),
   };
 
-  switch (change.entity) {
-    case 'collection':
-      return {
-        name: str(p.name),
-        description: nstr(p.description),
-        color: nstr(p.color),
-        icon: nstr(p.icon),
-        created_at: num(p.created_at),
-        updated_at: num(p.updated_at),
-        pinned: num(p.pinned),
-        pinned_position: nnum(p.pinned_position),
-        grouping: str(p.grouping),
-        subgrouping: str(p.subgrouping),
-        sort_key: str(p.sort_key),
-        sort_dir: str(p.sort_dir),
-        ...sync,
-      };
-    case 'pinned_search':
-      return {
-        name: str(p.name),
-        entity: str(p.entity),
-        params_json: str(p.params_json),
-        created_at: num(p.created_at),
-        updated_at: num(p.updated_at),
-        ...sync,
-      };
-    case 'collection_group': {
-      const collectionId = resolveByUuid(db, 'collections', p.collection_uuid);
-      if (collectionId == null) return null;
-      return {
-        collection_id: collectionId,
-        name: str(p.name),
-        position: num(p.position),
-        created_at: num(p.created_at),
-        updated_at: num(p.updated_at),
-        ...sync,
-      };
-    }
-    case 'collection_member': {
-      const collectionId = resolveByUuid(db, 'collections', p.collection_uuid);
-      if (collectionId == null) return null;
-      const groupId =
-        p.group_uuid == null ? null : resolveByUuid(db, 'collection_groups', p.group_uuid);
-      return {
-        collection_id: collectionId,
-        entity_type: str(p.entity_type),
-        entity_id: num(p.entity_id),
-        note: nstr(p.note),
-        quantity: nnum(p.quantity),
-        done: num(p.done),
-        added_at: num(p.added_at),
-        group_id: groupId,
-        position: num(p.position),
-        updated_at: num(p.updated_at),
-        ...sync,
-      };
-    }
-    case 'user_setting':
-      return {
-        key: str(p.key),
-        value: str(p.value),
-        updated_at: num(p.updated_at),
-        ...sync,
-      };
-    case 'recent':
-      // `name` is local-only and never on the wire; an inserted row keeps NULL
-      // (the UI falls back to the ref) and an update leaves any local name be.
-      return {
-        kind: str(p.kind),
-        ref: str(p.ref),
-        viewed_at: num(p.viewed_at),
-        updated_at: num(p.updated_at),
-        ...sync,
-      };
-  }
-}
-
-/**
- * Keep a remote upsert from violating a UNIQUE `name` constraint held by a
- * *different* record. Collections and pinned searches are unique on `name`;
- * groups on `(collection_id, name)`. When two devices independently mint a
- * record with the same name but different uuids (the universal seeded
- * "Favourites", or a user creating "Bosses" on both), inserting the second one
- * by uuid would otherwise throw `SQLITE_CONSTRAINT_UNIQUE` and wedge the engine
- * in an infinite retry. Distinct uuids are distinct records, so we disambiguate
- * by suffixing the incoming name ("Bosses (2)") rather than merging them. The
- * suffix is local-only and not re-pushed: pulls apply in `server_seq` order,
- * identical on every device, so the same record is suffixed everywhere and they
- * still converge. (The v7 migration pins the seeded Favourites to one shared
- * uuid, so the common case takes the same-uuid UPDATE path and never lands here.)
- */
-function dedupeUniqueName(
-  db: Sqlite,
-  change: ServerChange,
-  cols: Record<string, SqlValue>,
-): void {
-  switch (change.entity) {
-    case 'collection':
-      cols.name = resolveUniqueName(db, 'collections', str(cols.name), change.uuid);
-      break;
-    case 'pinned_search':
-      cols.name = resolveUniqueName(db, 'pinned_searches', str(cols.name), change.uuid);
-      break;
-    case 'collection_group':
-      cols.name = resolveUniqueName(db, 'collection_groups', str(cols.name), change.uuid, {
-        column: 'collection_id',
-        value: cols.collection_id,
-      });
-      break;
-    default:
-      break;
-  }
-}
-
-function resolveUniqueName(
-  db: Sqlite,
-  table: string,
-  name: string,
-  selfUuid: string,
-  scope?: { column: string; value: SqlValue },
-): string {
-  const scopeClause = scope ? ` AND ${scope.column} = ?` : '';
-  const scopeParams: SqlValue[] = scope ? [scope.value] : [];
-  const taken = (candidate: string): boolean =>
-    db.selectValue(
-      `SELECT 1 FROM ${table} WHERE name = ? AND uuid <> ?${scopeClause}`,
-      [candidate, selfUuid, ...scopeParams],
-    ) != null;
-  if (!taken(name)) return name;
-  for (let n = 2; n < 1000; n++) {
-    const candidate = `${name} (${n})`;
-    if (!taken(candidate)) return candidate;
-  }
-  // Pathological fan-out; fall back to a guaranteed-unique suffix so apply
-  // never throws (the whole point of this path).
-  return `${name} (${selfUuid.slice(0, 8)})`;
-}
-
-/** Drop local-only columns and rewrite local foreign keys to parent uuids. */
-function toWirePayload(db: Sqlite, entity: SyncEntity, stored: Row): Row {
-  const p: Row = { ...stored };
   switch (entity) {
-    case 'recent':
-      delete p.name;
-      break;
     case 'collection':
+      return {
+        uuid: str(row.key),
+        name: str(row.name),
+        description: nstr(row.description),
+        color: nstr(row.color),
+        icon: nstr(row.icon),
+        created_at: num(row.created_at),
+        updated_at: num(row.updated_at),
+        pinned: bit(row.pinned),
+        pinned_position: nnum(row.pinned_position),
+        grouping: str(row.grouping),
+        subgrouping: str(row.subgrouping),
+        sort_key: str(row.sort_key),
+        sort_dir: str(row.sort_dir),
+        ...sync,
+      };
     case 'pinned_search':
-      delete p.id;
-      break;
+      return {
+        uuid: str(row.key),
+        name: str(row.name),
+        entity: str(row.entity),
+        params_json: str(row.params_json),
+        created_at: num(row.created_at),
+        updated_at: num(row.updated_at),
+        ...sync,
+      };
     case 'collection_group': {
-      const collectionUuid = uuidOf(db, 'collections', p.collection_id);
-      delete p.id;
-      delete p.collection_id;
-      if (collectionUuid != null) p.collection_uuid = collectionUuid;
-      break;
+      const collectionId = idOfUuid(db, 'collections', row.collection_key);
+      if (collectionId == null) return null;
+      return {
+        uuid: str(row.key),
+        collection_id: collectionId,
+        name: str(row.name),
+        position: num(row.position),
+        created_at: num(row.created_at),
+        updated_at: num(row.updated_at),
+        ...sync,
+      };
     }
     case 'collection_member': {
-      const collectionUuid = uuidOf(db, 'collections', p.collection_id);
-      const groupUuid = p.group_id == null ? null : uuidOf(db, 'collection_groups', p.group_id);
-      delete p.collection_id;
-      delete p.group_id;
-      if (collectionUuid != null) p.collection_uuid = collectionUuid;
-      p.group_uuid = groupUuid;
-      break;
+      const collectionId = idOfUuid(db, 'collections', row.collection_key);
+      if (collectionId == null) return null;
+      return {
+        collection_id: collectionId,
+        entity_type: str(row.entity_type),
+        entity_id: num(row.entity_id),
+        note: nstr(row.note),
+        quantity: nnum(row.quantity),
+        done: bit(row.done),
+        added_at: num(row.added_at),
+        // A group that has not arrived yet leaves the member ungrouped; the next
+        // pull carrying the group re-links it.
+        group_id: row.group_key == null ? null : idOfUuid(db, 'collection_groups', row.group_key),
+        position: num(row.position),
+        updated_at: num(row.updated_at),
+        ...sync,
+      };
     }
     case 'user_setting':
-      break;
+      return {
+        key: str(row.key),
+        value: str(row.value),
+        updated_at: num(row.updated_at),
+        ...sync,
+      };
+    case 'recent':
+      // `name` is a local display label and never leaves the device, so an
+      // inserted row keeps NULL and an update leaves any local name alone.
+      return {
+        kind: str(row.kind),
+        ref: str(row.ref),
+        viewed_at: num(row.viewed_at),
+        updated_at: num(row.updated_at),
+        ...sync,
+      };
   }
-  return p;
 }
 
-function uuidOf(db: Sqlite, table: string, id: SqlValue): string | null {
+/** Local row → backend row: drop local-only columns and replace integer foreign
+ *  keys with the parent's key. Null when the parent has vanished. */
+function toRemoteRow(
+  db: Sqlite,
+  entity: SyncEntity,
+  stored: Row,
+  uuid: string,
+): RemoteRow | null {
+  const base: RemoteRow = {
+    updated_at: num(stored.updated_at),
+    origin_device: str(stored.origin_device),
+    deleted_at: stored.deleted_at == null ? null : new Date(num(stored.deleted_at)).toISOString(),
+  };
+
+  switch (entity) {
+    case 'collection':
+      return {
+        ...base,
+        key: uuid,
+        name: str(stored.name),
+        description: nstr(stored.description),
+        color: nstr(stored.color),
+        icon: nstr(stored.icon),
+        created_at: num(stored.created_at),
+        pinned: !!num(stored.pinned),
+        pinned_position: nnum(stored.pinned_position),
+        grouping: str(stored.grouping),
+        subgrouping: str(stored.subgrouping),
+        sort_key: str(stored.sort_key),
+        sort_dir: str(stored.sort_dir),
+      };
+    case 'pinned_search':
+      return {
+        ...base,
+        key: uuid,
+        name: str(stored.name),
+        entity: str(stored.entity),
+        params_json: str(stored.params_json),
+        created_at: num(stored.created_at),
+      };
+    case 'collection_group': {
+      const collectionKey = uuidOfId(db, 'collections', stored.collection_id);
+      if (collectionKey == null) return null;
+      return {
+        ...base,
+        key: uuid,
+        collection_key: collectionKey,
+        name: str(stored.name),
+        position: num(stored.position),
+        created_at: num(stored.created_at),
+      };
+    }
+    case 'collection_member': {
+      const collectionKey = uuidOfId(db, 'collections', stored.collection_id);
+      if (collectionKey == null) return null;
+      return {
+        ...base,
+        collection_key: collectionKey,
+        entity_type: str(stored.entity_type),
+        entity_id: num(stored.entity_id),
+        group_key:
+          stored.group_id == null ? null : uuidOfId(db, 'collection_groups', stored.group_id),
+        note: nstr(stored.note),
+        quantity: nnum(stored.quantity),
+        done: !!num(stored.done),
+        added_at: num(stored.added_at),
+        position: num(stored.position),
+      };
+    }
+    case 'user_setting':
+      return { ...base, key: str(stored.key), value: str(stored.value) };
+    case 'recent':
+      return {
+        ...base,
+        kind: str(stored.kind),
+        ref: str(stored.ref),
+        viewed_at: num(stored.viewed_at),
+      };
+  }
+}
+
+function uuidOfId(db: Sqlite, table: string, id: SqlValue): string | null {
   if (id == null) return null;
   return db.selectValue<string>(`SELECT uuid FROM ${table} WHERE id = ?`, [id]);
 }
 
-function resolveByUuid(db: Sqlite, table: string, uuid: SqlValue): number | null {
+function idOfUuid(db: Sqlite, table: string, uuid: unknown): number | null {
   if (uuid == null) return null;
   const v = db.selectValue<number>(`SELECT id FROM ${table} WHERE uuid = ?`, [String(uuid)]);
   return v == null ? null : Number(v);
 }
 
-// -- payload coercion (the wire payload is `unknown` until read here) --------
-
-function asRow(payload: unknown): Row {
-  return payload && typeof payload === 'object' ? (payload as Row) : {};
-}
 function str(v: unknown): string {
   return v == null ? '' : String(v);
 }
@@ -752,4 +689,8 @@ function num(v: unknown): number {
 }
 function nnum(v: unknown): number | null {
   return v == null ? null : Number(v);
+}
+/** SQLite has no boolean type; the backend does. */
+function bit(v: unknown): number {
+  return v === true || v === 1 || v === '1' ? 1 : 0;
 }

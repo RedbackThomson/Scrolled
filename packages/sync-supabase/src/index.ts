@@ -1,7 +1,7 @@
-export { createSupabaseSyncProvider } from './supabaseSyncProvider';
+export { createSupabaseSyncProvider, UniqueViolation } from './supabaseSyncProvider';
 export type {
   SupabaseSyncConfig,
   SyncRealtimeChannel,
   SyncRealtimeClient,
-  SyncRpcClient,
+  SyncRestClient,
 } from './supabaseSyncProvider';
