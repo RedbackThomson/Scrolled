@@ -109,7 +109,7 @@ You are responsible for ensuring that any files you load are files you are legal
 
 ## Contributing
 
-Development setup, project layout, scripts, and debugging guidance live in [DEVELOPMENT.md](DEVELOPMENT.md). Repository-wide rules for contributors and AI assistants are in [CLAUDE.md](CLAUDE.md).
+Development setup, project layout, scripts, and debugging guidance live in [DEVELOPMENT.md](DEVELOPMENT.md). How to run the test suites — including the sync integration tests, which need a local Supabase stack — is in [TESTING.md](TESTING.md). Repository-wide rules for contributors and AI assistants are in [CLAUDE.md](CLAUDE.md).
 
 ## License
 

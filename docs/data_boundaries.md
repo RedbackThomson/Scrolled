@@ -55,14 +55,15 @@ extraction hooks). UI/display code never reaches into the write path.
 @scrolled/identity-cloud  → deps: identity-core, @supabase/supabase-js
                                 Supabase provider; hosted builds only
 @scrolled/sync-core      leaf — provider-agnostic sync contract: SyncProvider,
-                                protocol types/zod schemas, conflict handler,
-                                SyncEngine, in-memory mock provider; React status
-                                context/hooks on /react subpath. Ships everywhere.
-@scrolled/sync-supabase  → deps: sync-core, identity-core, @supabase/supabase-js
-                                Supabase sync transport (sync_push/sync_pull RPCs +
-                                a private Broadcast doorbell for subscribe);
-                                hosted builds only — dynamic-imported, DCE'd from
-                                self-hosted bundles
+                                record identity + zod schemas, SyncEngine, the
+                                name-collision merge, in-memory mock provider;
+                                React status context/hooks on /react subpath.
+                                Ships everywhere.
+@scrolled/sync-supabase  → deps: sync-core, @supabase/supabase-js
+                                Supabase sync transport (PostgREST table reads and
+                                upserts + a private Broadcast doorbell for
+                                subscribe); hosted builds only — dynamic-imported,
+                                DCE'd from self-hosted bundles
 apps/web  → deps: game-db (display), extractor (in-browser extraction),
                   dataset-client/-core/-repository, config, wz, mcp-protocol,
                   identity-core (display), identity-cloud (bootstrap only),
@@ -90,14 +91,14 @@ app is the only integrator.
 | hosted dataset resolve / download / install | `dataset-repository`, `dataset-client` | dataset-core |
 | **display / read of extracted data** | `apps/web` | **game-db, dataset-\*** |
 | **driving in-browser extraction** | `apps/web` (`workers/`, `hooks/extraction/`, `parser/`, `components/wizard/`) | **extractor** |
-| user DB (collections, pinned searches, prefs) | `apps/web/db/user` | game-db/db (sqlite), sync-core (conflict handler + wire types) |
+| user DB (collections, pinned searches, prefs) | `apps/web/db/user` | game-db/db (sqlite), sync-core (record identity + wire types) |
 | identity contract (session, provider interface, hooks) | `identity-core` | (leaf) |
 | concrete cloud identity (Supabase) | `identity-cloud` | identity-core, supabase-js |
 | **choosing the identity provider** | `apps/web` (`identity/` only) | **identity-core, identity-cloud (dynamic)** |
-| sync protocol, engine, conflict handler, status hooks | `sync-core` | (leaf) |
-| concrete Supabase sync transport | `sync-supabase` | sync-core, identity-core, supabase-js |
+| sync protocol, engine, merge resolver, status hooks | `sync-core` | (leaf) |
+| concrete Supabase sync transport | `sync-supabase` | sync-core, supabase-js |
 | **choosing the sync provider** | `apps/web` (`sync/` only) | **sync-core, sync-supabase (dynamic)** |
-| local sync metadata (outbox, cursor, tombstones) | `apps/web/db/user` | game-db/db (sqlite), sync-core |
+| local sync metadata (outbox, cursor) | `apps/web/db/user` | game-db/db (sqlite), sync-core |
 
 ## The hard rule, lint-enforced
 
@@ -180,14 +181,14 @@ its provider. Enforced in `eslint.config.js`:
 Sync mirrors the identity split exactly. Only the user DB (`/user.sqlite3`)
 syncs; the game DB never does. The core app consumes the provider-agnostic
 contract `@scrolled/sync-core` (the `SyncProvider` interface, protocol
-types/schemas, the conflict handler, the `SyncEngine`, and `useSyncStatus()`) and
+types/schemas, the `SyncEngine`, and `useSyncStatus()`) and
 nothing else — it is sync-aware but not provider-aware. The concrete Supabase
 transport (`@scrolled/sync-supabase`) is chosen at bootstrap in
 `apps/web/src/sync/createProvider.ts` via a **dynamic `import()`** behind the
 `__SYNC_SUPABASE__` build constant, so self-hosted/forked builds
 that configure no sync never bundle it or `@supabase/*`. The user-DB worker
-(`apps/web/src/db/user`) additionally imports `sync-core` for the conflict
-handler and wire types its `applyRemoteChanges` runs. Enforced in
+(`apps/web/src/db/user`) additionally imports `sync-core` for the record
+identity and wire types its `applyRemoteRows` runs. Enforced in
 `eslint.config.js`:
 
 - `apps/web` display dirs (`components/` except `wizard/`, `routes/`, `lib/`,

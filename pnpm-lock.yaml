@@ -538,9 +538,6 @@ importers:
 
   packages/sync-supabase:
     dependencies:
-      '@scrolled/identity-core':
-        specifier: workspace:*
-        version: link:../identity-core
       '@scrolled/sync-core':
         specifier: workspace:*
         version: link:../sync-core

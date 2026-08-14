@@ -41,18 +41,20 @@ All scripts in this repo are expected to run inside the flake dev shell. If you'
 
 ## Scripts
 
-| Script               | What it does                                                                    |
-| -------------------- | ------------------------------------------------------------------------------- |
+| Script               | What it does                                                                     |
+| -------------------- | -------------------------------------------------------------------------------- |
 | `pnpm dev`           | Start the Vite dev server for the web app (generic profile: user imports files). |
-| `pnpm dev:fixed`     | Start the dev server in fixed hosted-dataset mode. See below.                   |
-| `pnpm build`         | Production build.                                                               |
-| `pnpm build:fixed`   | Production build in fixed hosted-dataset mode (`dist-fixed`).                   |
-| `pnpm dataset:build` | Headless dataset builder — WZ files → `.scrolled-dataset` bundle.               |
-| `pnpm preview`       | Preview the production build locally.                                           |
-| `pnpm typecheck`     | Run TypeScript in all packages.                                                 |
-| `pnpm lint`          | Run ESLint in all packages.                                                     |
-| `pnpm test`          | Run Vitest in all packages.                                                     |
-| `pnpm format`        | Format the repo with Prettier.                                                  |
+| `pnpm dev:fixed`     | Start the dev server in fixed hosted-dataset mode. See below.                    |
+| `pnpm build`         | Production build.                                                                |
+| `pnpm build:fixed`   | Production build in fixed hosted-dataset mode (`dist-fixed`).                    |
+| `pnpm dataset:build` | Headless dataset builder — WZ files → `.scrolled-dataset` bundle.                |
+| `pnpm preview`       | Preview the production build locally.                                            |
+| `pnpm typecheck`     | Run TypeScript in all packages.                                                  |
+| `pnpm lint`          | Run ESLint in all packages.                                                      |
+| `pnpm test`          | Run Vitest in all packages. See [TESTING.md](TESTING.md).                        |
+| `pnpm supabase:seed` | Seed test accounts against a local Supabase stack and write the app's env.       |
+| `pnpm dev:supabase`  | Start the dev server pointed at that local stack, for exercising sync.           |
+| `pnpm format`        | Format the repo with Prettier.                                                   |
 
 ## Fixed-dataset local dev
 
@@ -104,6 +106,7 @@ first load. Rebuild step 1 with a new `--version` and refresh to pick up changes
 ```
 apps/web/        Vite + React + TS app (the wiki UI)
 packages/        Shared libraries (parser, extractors, db, search)
+tools/           Repo-internal tooling — not published, not shipped
 docs/            Product and technical requirements
 ```
 
@@ -111,7 +114,7 @@ The source of truth for product scope is [`docs/mapleroyals_wiki_clone_requireme
 
 Which package owns which domain — and the rule that **game-data translation (code→term vocabulary) lives in `@scrolled/game-db/domain`, not the web app** — is the canonical boundary spec [`docs/data_boundaries.md`](docs/data_boundaries.md). Read it before adding a label map, enum, or `switch` over WZ codes; the web app renders game data but never defines what it means.
 
-Cross-device sync is designed in [`docs/sync_design.md`](docs/sync_design.md); to make a new piece of user data sync, follow [`docs/adding_a_synced_entity.md`](docs/adding_a_synced_entity.md).
+Cross-device sync has its own section [below](#sync); it is designed in [`docs/sync_design.md`](docs/sync_design.md), and to make a new piece of user data sync, follow [`docs/adding_a_synced_entity.md`](docs/adding_a_synced_entity.md).
 
 ## Schema and data versioning
 
@@ -181,6 +184,50 @@ not be edited.
 redirects (passing `{ reason: 'data-incompatible' }` for the explainer in
 `Setup.tsx`); `Sidebar.tsx` shows the status chip; `DataUpdatePrompt.tsx` is the
 soft toast.
+
+## Sync
+
+Only the **user DB** (`/user.sqlite3` — collections, groups, members, pinned
+searches, settings, recents) syncs, and only while signed in. The game DB is a
+derived cache and never leaves the device. Signed out, self-hosted without sync,
+or offline, the local DB is authoritative and the app is fully functional.
+
+A record's identity is its **natural key**, the same columns locally and on the
+backend: a member is `(collection, entity_type, entity_id)`, a setting is its own
+name. `ENTITY_KEY_COLUMNS` in `@scrolled/sync-core` is the single definition, and
+the outbox, the apply path, and the upsert conflict target all derive from it.
+Two devices doing the same thing therefore write the same row rather than
+accumulating duplicates.
+
+Collections, groups and pinned searches also carry a client-minted `key`, because
+a device has to create one offline and reference it before the backend has seen
+it. Their user-visible name has a unique constraint instead, and a rejection is a
+**merge signal**: the client adopts the key already in use, re-parents its
+children, and re-pushes.
+
+The backend is a database, not a service — no RPCs and nothing to run. Push is a
+PostgREST upsert, pull a select, and tenancy is enforced by row-level security.
+
+### Three versions move independently
+
+| Change                                | What to bump                                                             |
+| ------------------------------------- | ------------------------------------------------------------------------ |
+| A local column or table               | Append a user-DB migration in `apps/web/src/db/user/migrations.ts`       |
+| A backend column, constraint or index | Add a migration in `supabase/migrations/`                                |
+| The wire contract itself              | `PROTOCOL_VERSION` in `@scrolled/sync-core`, and the `sync_protocol` row |
+
+The user DB has its own migration namespace, independent of the game DB's schema
+version and data revision above. The same `NOT NULL` needs a `DEFAULT` rule
+applies — those tables hold rows when the migration runs.
+
+Keep the backend's constraints matching the local ones. That equivalence is what
+makes a pulled row impossible to reject on arrival, and it is the property the
+whole design rests on.
+
+Design rationale is in [`docs/sync_design.md`](docs/sync_design.md); the
+step-by-step for a new synced entity is
+[`docs/adding_a_synced_entity.md`](docs/adding_a_synced_entity.md). Verifying a
+change takes two devices and a real backend — see [TESTING.md](TESTING.md).
 
 ## Reporting parser issues
 
