@@ -15,6 +15,16 @@ const basePath = process.env.BASE_PATH ?? '/';
 // set it ship root-relative URLs — fine for the app, just no rich embeds.
 const siteUrl = (process.env.VITE_SITE_URL ?? '').replace(/\/+$/, '');
 
+// Extra Host headers the dev server should accept, beyond localhost. Vite
+// rejects unknown hosts to guard against DNS-rebinding, which blocks reaching
+// the dev server over a Tailscale/LAN hostname. `DEV_ALLOWED_HOSTS` is a
+// comma-separated list (e.g. `homelab-0-devbox`); left unset it stays empty so
+// the default localhost-only behaviour is unchanged.
+const allowedHosts = (process.env.DEV_ALLOWED_HOSTS ?? '')
+  .split(',')
+  .map((host) => host.trim())
+  .filter(Boolean);
+
 /** Stable vendor splits — smaller route chunks and better long-term caching. */
 function manualChunks(id: string): string | undefined {
   if (!id.includes('node_modules')) return;
@@ -49,6 +59,9 @@ export default defineConfig(({ mode }) => {
 
   return {
     base: basePath,
+    server: {
+      allowedHosts,
+    },
     define: {
       __IDENTITY_CLOUD__: JSON.stringify(identityCloud),
       __SYNC_SUPABASE__: JSON.stringify(syncSupabase),

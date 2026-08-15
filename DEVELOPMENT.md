@@ -39,6 +39,22 @@ Or, with [direnv](https://direnv.net/) installed, `direnv allow` will load the d
 
 All scripts in this repo are expected to run inside the flake dev shell. If you're not using direnv, prefix commands with `nix develop -c`, e.g. `nix develop -c pnpm typecheck`.
 
+### Reaching the dev server over a remote hostname
+
+Vite rejects requests whose `Host` header it doesn't recognize (a DNS-rebinding
+guard), so hitting the dev server over a Tailscale or LAN hostname fails with
+`Blocked request. This host (...) is not allowed`. Set `DEV_ALLOWED_HOSTS` to a
+comma-separated list of hostnames to allow; `apps/web/vite.config.ts` feeds it
+into `server.allowedHosts`. Unset, the default localhost-only behaviour is
+unchanged.
+
+```bash
+export DEV_ALLOWED_HOSTS="my-devbox,my-devbox.tailnet.ts.net"
+```
+
+If you use direnv, add the export to your `.envrc` so it loads with the dev
+shell (run `direnv allow` after editing).
+
 ## Scripts
 
 | Script               | What it does                                                                     |
