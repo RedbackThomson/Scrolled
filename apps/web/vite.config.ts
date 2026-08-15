@@ -2,6 +2,7 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import fs from 'node:fs';
 import path from 'node:path';
 
 // Deploying to a GitHub Pages project site (`<user>.github.io/<repo>/`) means
@@ -24,6 +25,18 @@ const allowedHosts = (process.env.DEV_ALLOWED_HOSTS ?? '')
   .split(',')
   .map((host) => host.trim())
   .filter(Boolean);
+
+// OPFS (and other secure-context APIs the app relies on) only works over
+// HTTPS, so reaching the dev server over a Tailscale/LAN hostname needs TLS.
+// Point `DEV_TLS_CERT`/`DEV_TLS_KEY` at a cert+key pair — e.g. one minted by
+// `tailscale cert <host>.<tailnet>.ts.net` — and the dev server serves HTTPS.
+// Left unset, dev stays plain HTTP (fine for localhost, a secure context).
+const tlsCertPath = process.env.DEV_TLS_CERT?.trim();
+const tlsKeyPath = process.env.DEV_TLS_KEY?.trim();
+const https =
+  tlsCertPath && tlsKeyPath
+    ? { cert: fs.readFileSync(tlsCertPath), key: fs.readFileSync(tlsKeyPath) }
+    : undefined;
 
 /** Stable vendor splits — smaller route chunks and better long-term caching. */
 function manualChunks(id: string): string | undefined {
@@ -61,6 +74,7 @@ export default defineConfig(({ mode }) => {
     base: basePath,
     server: {
       allowedHosts,
+      https,
     },
     define: {
       __IDENTITY_CLOUD__: JSON.stringify(identityCloud),

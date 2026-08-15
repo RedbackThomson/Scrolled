@@ -55,6 +55,22 @@ export DEV_ALLOWED_HOSTS="my-devbox,my-devbox.tailnet.ts.net"
 If you use direnv, add the export to your `.envrc` so it loads with the dev
 shell (run `direnv allow` after editing).
 
+### Serving the dev server over HTTPS
+
+The app stores its library in OPFS, which — like other secure-context APIs — is
+only available over HTTPS or on `localhost`. Reaching the dev server over a
+Tailscale/LAN hostname therefore needs TLS, or the app fails to open its
+database. Mint a cert for the hostname (Tailscale can issue one for your
+tailnet) and point `DEV_TLS_CERT`/`DEV_TLS_KEY` at the resulting files;
+`apps/web/vite.config.ts` feeds them into `server.https`. Unset, dev stays
+plain HTTP (fine for `localhost`).
+
+```bash
+tailscale cert my-devbox.tailnet.ts.net
+export DEV_TLS_CERT="$PWD/my-devbox.tailnet.ts.net.crt"
+export DEV_TLS_KEY="$PWD/my-devbox.tailnet.ts.net.key"
+```
+
 ## Scripts
 
 | Script               | What it does                                                                     |
