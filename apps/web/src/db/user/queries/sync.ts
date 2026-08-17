@@ -212,14 +212,17 @@ export function drainOutbox(db: Sqlite, limit: number): OutboxChange[] {
     const stored = JSON.parse(String(r.payload)) as Row;
     const row = toRemoteRow(db, entity, stored, String(r.uuid));
     if (!row) continue;
+    const key = recordKey(entity, row);
+    // Coalescing is by key, so a keyless change would absorb every other one.
+    if (splitRecordKey(key).every((part) => part === '')) continue;
     const change: OutboxChange = {
       seq: Number(r.seq),
       entity,
-      key: recordKey(entity, row),
+      key,
       op: String(r.op) as 'upsert' | 'delete',
       row,
     };
-    latest.set(`${entity}:${change.key}`, change);
+    latest.set(`${entity}:${key}`, change);
   }
 
   return [...latest.values()].sort((a, b) => a.seq - b.seq).slice(0, limit);
@@ -323,6 +326,7 @@ export function rekeyLocal(
   fromKey: string,
   toKey: string,
 ): void {
+  if (!fromKey || !toKey || fromKey === toKey) return;
   const table = ENTITY_TABLE[entity];
   db.transaction(() => {
     // A local row may already carry the canonical key if the backend's version
@@ -407,11 +411,13 @@ function adoptLocalData(db: Sqlite): void {
   const now = Date.now();
   for (const entity of SYNC_ENTITIES) {
     const table = ENTITY_TABLE[entity];
+    // Keyless rows are indistinguishable from one another, so they would collapse
+    // onto a single record and all but one would be lost.
+    db.exec(
+      `UPDATE ${table} SET uuid = lower(hex(randomblob(16))) WHERE uuid IS NULL OR uuid = ''`,
+    );
     const rows = db.selectObjects<Row>(`SELECT * FROM ${table} WHERE deleted_at IS NULL`);
-    for (const row of rows) {
-      const uuid = typeof row.uuid === 'string' ? row.uuid : '';
-      appendOutbox(db, entity, uuid, 'upsert', row, now);
-    }
+    for (const row of rows) appendOutbox(db, entity, String(row.uuid), 'upsert', row, now);
   }
 }
 
@@ -423,9 +429,12 @@ interface LiveMatch {
   params: SqlValue[];
 }
 
-/** Returns false when the row was skipped as pending or stale. */
+/** Returns false when the row was skipped as pending, stale, or unidentifiable. */
 function applyOne(db: Sqlite, tagged: TaggedRow, opts?: { force: boolean }): boolean {
   const { entity, row, seq } = tagged;
+  // A keyless row cannot be told apart from any other, so taking it would let a
+  // damaged backend row collapse local records together.
+  if (splitRecordKey(recordKey(entity, row)).every((part) => part === '')) return false;
   const match = liveMatchByRow(db, entity, row);
   if (!match) return false;
 

@@ -16,7 +16,7 @@ import {
 } from './types';
 import { fetchPageSchema, upsertResultSchema, PROTOCOL_VERSION } from './schemas';
 import { resolveCollisions } from './rekey';
-import { SyncAuthError, SyncProtocolError } from './errors';
+import { SyncAuthError, SyncError, SyncProtocolError } from './errors';
 
 export interface SyncEngineConfig {
   pushDebounceMs: number;
@@ -87,6 +87,8 @@ export class SyncEngine {
   private failures = 0;
   private protocolChecked = false;
   private deviceId = '';
+  /** Incremented to abandon in-flight work; see `resync`. */
+  private generation = 0;
   /** Set by `resync()`; the next cycle replaces local state from a snapshot. */
   private reconcilePending = false;
 
@@ -182,11 +184,23 @@ export class SyncEngine {
     await this.run();
   }
 
-  /** Discard local state and rebuild it from the remote store. The escape hatch
-   *  when a device has diverged; also used after restoring a backup. */
+  /**
+   * Discard local state and rebuild it from the remote store. The escape hatch
+   * when a device has diverged; also used after restoring a backup.
+   *
+   * Bumps the generation so a cycle already in flight abandons its remaining
+   * work — the device that needs this most is the one whose cycle is not
+   * finishing, and waiting for it to end would strand the user.
+   */
   async resync(): Promise<void> {
     this.reconcilePending = true;
+    this.generation += 1;
     await this.run();
+  }
+
+  /** True when a newer request has superseded the work `gen` belongs to. */
+  private superseded(gen: number): boolean {
+    return this.generation !== gen;
   }
 
   private async gcTombstones(): Promise<void> {
@@ -243,7 +257,9 @@ export class SyncEngine {
   }
 
   private async pushPhase(): Promise<void> {
+    const gen = this.generation;
     for (let guard = 0; guard < 1000; guard++) {
+      if (this.superseded(gen)) return;
       const batch = await this.backend.drainOutbox(this.cfg.pushLimit);
       if (batch.length === 0) {
         this.setStatus({ pendingChanges: 0 });
@@ -287,6 +303,9 @@ export class SyncEngine {
       // Nothing landed and nothing rekeyed: retrying the same batch would spin.
       if (!progressed) return;
     }
+    // Falling out of the loop means the queue kept re-offering work it could not
+    // clear. Surfacing it beats spinning silently while the UI reads "syncing".
+    throw new SyncError('Sync could not drain pending changes; they will be retried.');
   }
 
   private async pullPhase(): Promise<void> {
@@ -300,7 +319,9 @@ export class SyncEngine {
     }
 
     let cursor = overlap(meta.cursor, this.cfg.cursorOverlapMs);
+    const gen = this.generation;
     for (let guard = 0; guard < 1000; guard++) {
+      if (this.superseded(gen)) return;
       const page = await this.provider.fetchSince(cursor);
       fetchPageSchema.parse(page);
 
@@ -312,6 +333,7 @@ export class SyncEngine {
       }
       if (page.complete) return;
     }
+    throw new SyncError('Sync could not reach the end of the change feed.');
   }
 
   /** A cursor older than the tombstone window may have missed reaped deletes, so

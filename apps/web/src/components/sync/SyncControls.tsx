@@ -64,7 +64,9 @@ export function SyncControls() {
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
-          <SyncResyncButton disabled={syncing} />
+          {/* Never gated on `syncing`: a device that cannot finish a cycle is
+              exactly the one that needs to rebuild from the account. */}
+          <SyncResyncButton />
           <Button variant="outline" size="sm" disabled={syncing} onClick={() => void onSyncNow()}>
             {syncing ? (
               <Loader2 className="h-4 w-4 animate-spin" />

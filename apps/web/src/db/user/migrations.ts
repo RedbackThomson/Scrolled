@@ -327,4 +327,22 @@ export const USER_MIGRATIONS: readonly Migration[] = [
       DROP TABLE IF EXISTS sync_state;
     `,
   },
+  {
+    version: 9,
+    name: 'give every row a key',
+    // A row with an empty key is indistinguishable from every other keyless row,
+    // so they collapse onto one record: only the last one reaches the backend and
+    // the rest are silently dropped. Mint the missing keys and discard anything
+    // already queued under one, so the next sign-in re-adopts them cleanly.
+    sql: `
+      UPDATE collections        SET uuid = lower(hex(randomblob(16))) WHERE uuid IS NULL OR uuid = '';
+      UPDATE collection_members SET uuid = lower(hex(randomblob(16))) WHERE uuid IS NULL OR uuid = '';
+      UPDATE collection_groups  SET uuid = lower(hex(randomblob(16))) WHERE uuid IS NULL OR uuid = '';
+      UPDATE pinned_searches    SET uuid = lower(hex(randomblob(16))) WHERE uuid IS NULL OR uuid = '';
+      UPDATE user_settings      SET uuid = lower(hex(randomblob(16))) WHERE uuid IS NULL OR uuid = '';
+      UPDATE recents            SET uuid = lower(hex(randomblob(16))) WHERE uuid IS NULL OR uuid = '';
+
+      DELETE FROM sync_outbox WHERE uuid IS NULL OR uuid = '';
+    `,
+  },
 ];

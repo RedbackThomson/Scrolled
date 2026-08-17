@@ -234,6 +234,29 @@ describe('two devices', () => {
     expect(b.db.selectValue<number>('SELECT COUNT(*) FROM collection_members')).toBe(0);
   });
 
+  it('gives keyless rows an identity rather than collapsing them together', async () => {
+    const bDb = await newDb('dev-b');
+    const bosses = createCollection(bDb, { name: 'Bosses' });
+    addMember(bDb, bosses.id, 'mob', 200);
+    createCollection(bDb, { name: 'Scrolls' });
+    // Rows that reached the table without going through the mutation chokepoint.
+    bDb.exec("UPDATE collections SET uuid = '' WHERE name IN ('Bosses', 'Scrolls')");
+
+    bootstrapSyncAccount(bDb, ACCOUNT_A);
+    await engineFor(bDb, server).syncNow();
+
+    // Coalescing is by key, so sharing one would have sent a single collection
+    // and dropped the rest.
+    expect(server.rows('collection').map((r) => r.name).sort()).toEqual([
+      'Bosses',
+      'Favourites',
+      'Scrolls',
+    ]);
+    expect(server.rows('collection').every((r) => String(r.key).length > 0)).toBe(true);
+    expect(server.rows('collection_member')).toHaveLength(1);
+    expect(pendingCount(bDb)).toBe(0);
+  });
+
   it('carries groups and their members to a fresh device', async () => {
     const a = await device('dev-a', server);
     const c = createCollection(a.db, { name: 'Bosses' });

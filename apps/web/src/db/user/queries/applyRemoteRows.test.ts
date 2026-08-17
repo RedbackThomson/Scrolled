@@ -139,6 +139,13 @@ describe('applyRemoteRows', () => {
     expect(db.selectValue('SELECT 1 FROM collections WHERE uuid = ?', ['c1'])).toBeNull();
   });
 
+  it('ignores a backend row that carries no key', () => {
+    const result = applyRemoteRows(db, [tagged('collection', remoteCollection('', 'Keyless'))]);
+
+    expect(result.applied).toBe(0);
+    expect(db.selectValue("SELECT 1 FROM collections WHERE uuid = ''")).toBeNull();
+  });
+
   it('translates backend booleans into the local integer columns', () => {
     applyRemoteRows(db, [
       tagged('collection', { ...remoteCollection('c1', 'Bosses'), pinned: true }),
