@@ -359,7 +359,7 @@ export interface UserDatabase {
   bootstrapSyncAccount(accountId: string): Promise<BootstrapAction>;
   /** Next batch of pending local changes, coalesced to one per record. */
   drainOutbox(limit: number): Promise<OutboxChange[]>;
-  markOutboxSynced(seqs: number[], applied: { key: string; seq: number }[]): Promise<void>;
+  markOutboxSynced(seqs: number[], applied: { key: string; seq: number }[]): Promise<number>;
   /** Apply backend rows in one transaction. Returns the TanStack query-key roots
    *  to invalidate. */
   applyRemoteRows(rows: TaggedRow[]): Promise<ApplyResult>;

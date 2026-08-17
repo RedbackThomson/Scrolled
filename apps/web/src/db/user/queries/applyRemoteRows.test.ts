@@ -9,10 +9,12 @@ import type { RemoteRow, SyncEntity, TaggedRow } from '@scrolled/sync-core';
 import { USER_MIGRATIONS } from '../migrations';
 import { addMember, createCollection } from './collections';
 import { createGroup } from './collectionGroups';
+import { setUserSetting } from './userSettings';
 import {
   applyRemoteRows,
   drainOutbox,
   getSyncMeta,
+  markOutboxSynced,
   pendingCount,
   rekeyLocal,
   replaceAllFromSnapshot,
@@ -212,6 +214,28 @@ describe('rekeyLocal', () => {
 
     expect(count('collections')).toBe(3); // both, plus the seeded Favourites
     expect(db.selectValue('SELECT uuid FROM collections WHERE id = ?', [other.id])).toBe(otherKey);
+  });
+});
+
+describe('markOutboxSynced', () => {
+  it('clears a naturally-keyed record whose stored uuid differs', () => {
+    setUserSetting(db, 'home.layout', '{"a":1}');
+    // A second write under a different uuid, as a rekey or a backfill leaves it.
+    db.exec("UPDATE user_settings SET uuid = 'later-uuid' WHERE key = 'home.layout'");
+    setUserSetting(db, 'home.layout', '{"b":2}');
+    expect(pendingCount(db)).toBe(2);
+
+    const [change] = drainOutbox(db, 100).filter((c) => c.entity === 'user_setting');
+    const removed = markOutboxSynced(db, [change.seq], [{ key: change.key, seq: 1 }]);
+
+    // Deleting by the stored uuid would leave the earlier entry queued, and the
+    // engine would send the same record again on every pass.
+    expect(removed).toBe(2);
+    expect(pendingCount(db)).toBe(0);
+  });
+
+  it('reports nothing removed when the acked entry is already gone', () => {
+    expect(markOutboxSynced(db, [9999], [])).toBe(0);
   });
 });
 

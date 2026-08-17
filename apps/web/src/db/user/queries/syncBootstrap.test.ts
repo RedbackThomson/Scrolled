@@ -43,10 +43,7 @@ async function newDb(tag: string): Promise<Sqlite> {
 function backendFor(db: Sqlite): SyncBackend {
   return {
     drainOutbox: (limit) => Promise.resolve(drainOutbox(db, limit)),
-    markOutboxSynced: (seqs, applied) => {
-      markOutboxSynced(db, seqs, applied);
-      return Promise.resolve();
-    },
+    markOutboxSynced: (seqs, applied) => Promise.resolve(markOutboxSynced(db, seqs, applied)),
     applyRemoteRows: (rows) => Promise.resolve(applyRemoteRows(db, rows)),
     replaceAllFromSnapshot: (rows) => Promise.resolve(replaceAllFromSnapshot(db, rows)),
     rekeyLocal: (entity, from, to) => {

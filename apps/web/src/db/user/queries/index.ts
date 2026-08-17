@@ -303,8 +303,8 @@ export class UserDbApi implements UserDatabase {
     return sync.drainOutbox(this.db, limit);
   }
 
-  async markOutboxSynced(seqs: number[], applied: { key: string; seq: number }[]): Promise<void> {
-    sync.markOutboxSynced(this.db, seqs, applied);
+  async markOutboxSynced(seqs: number[], applied: { key: string; seq: number }[]): Promise<number> {
+    return sync.markOutboxSynced(this.db, seqs, applied);
   }
 
   async applyRemoteRows(rows: TaggedRow[]): Promise<ApplyResult> {

@@ -283,11 +283,13 @@ export class SyncEngine {
 
         if (result.applied.length > 0) {
           const acked = new Set(result.applied.map((a) => a.key));
-          await this.backend.markOutboxSynced(
+          // Progress is the queue shrinking. A write the server accepted but
+          // that stayed queued would otherwise be re-sent on every pass.
+          const removed = await this.backend.markOutboxSynced(
             forEntity.filter((c) => acked.has(c.key)).map((c) => c.seq),
             result.applied,
           );
-          progressed = true;
+          if (removed > 0) progressed = true;
         }
 
         if (result.nameCollisions.length > 0) {

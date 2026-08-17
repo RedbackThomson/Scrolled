@@ -147,7 +147,8 @@ export interface ApplyResult {
  */
 export interface SyncBackend {
   drainOutbox(limit: number): Promise<OutboxChange[]>;
-  markOutboxSynced(seqs: number[], applied: { key: string; seq: number }[]): Promise<void>;
+  /** Returns how many queued entries were removed. */
+  markOutboxSynced(seqs: number[], applied: { key: string; seq: number }[]): Promise<number>;
   /** Skips rows whose key has a pending local edit, or whose `seq` we hold. */
   applyRemoteRows(rows: TaggedRow[]): Promise<ApplyResult>;
   /** Discards local divergence and restores agreement with the remote store. */

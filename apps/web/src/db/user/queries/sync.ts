@@ -236,18 +236,35 @@ export function markOutboxSynced(
   db: Sqlite,
   seqs: number[],
   applied: { key: string; seq: number }[],
-): void {
+): number {
+  let removed = 0;
   db.transaction(() => {
     for (const seq of seqs) {
-      const row = db.selectObject<Row>('SELECT entity, uuid FROM sync_outbox WHERE seq = ?', [seq]);
+      const row = db.selectObject<Row>(
+        'SELECT entity, uuid, payload FROM sync_outbox WHERE seq = ?',
+        [seq],
+      );
       if (!row) continue;
       const entity = String(row.entity) as SyncEntity;
-      // Clear superseded entries for the same record, not just this one.
-      db.exec('DELETE FROM sync_outbox WHERE entity = ? AND uuid = ? AND seq <= ?', [
-        entity,
-        String(row.uuid),
-        seq,
-      ]);
+      const key = outboxKey(db, entity, row);
+      if (key == null) {
+        db.exec('DELETE FROM sync_outbox WHERE seq = ?', [seq]);
+        removed += 1;
+        continue;
+      }
+      // Clear every entry the drain coalesced into this one. Matching must use
+      // the same identity the drain did: a member or a setting is keyed
+      // naturally, so deleting by the stored uuid would leave the entry queued
+      // and the record would be sent again on every pass.
+      const queued = db.selectObjects<Row>(
+        'SELECT seq, uuid, payload FROM sync_outbox WHERE entity = ? AND seq <= ?',
+        [entity, seq],
+      );
+      for (const candidate of queued) {
+        if (outboxKey(db, entity, candidate) !== key) continue;
+        db.exec('DELETE FROM sync_outbox WHERE seq = ?', [Number(candidate.seq)]);
+        removed += 1;
+      }
     }
     for (const a of applied) {
       for (const entity of SYNC_ENTITIES) {
@@ -260,6 +277,15 @@ export function markOutboxSynced(
       }
     }
   });
+  return removed;
+}
+
+/** The identity a queued entry coalesced under, or null if it can no longer be
+ *  projected onto the wire. */
+function outboxKey(db: Sqlite, entity: SyncEntity, row: Row): string | null {
+  const stored = JSON.parse(String(row.payload)) as Row;
+  const remote = toRemoteRow(db, entity, stored, String(row.uuid));
+  return remote ? recordKey(entity, remote) : null;
 }
 
 /**
