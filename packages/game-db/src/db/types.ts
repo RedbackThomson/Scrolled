@@ -999,6 +999,9 @@ export interface GameDatabase {
   upsertItem(item: ItemRecord): Promise<void>;
   upsertItems(items: ItemRecord[]): Promise<number>;
   getItem(id: number): Promise<ItemRecord | null>;
+  /** Fetch many items by id in one query. Missing ids are omitted; order is
+   *  not guaranteed to match the input. */
+  getItems(ids: readonly number[]): Promise<ItemRecord[]>;
   listItems(opts?: ListOptsBase & { category?: string }): Promise<PageResult<ItemListRow>>;
   /** Distinct non-null `category` values for filter UIs / sidebar nav. */
   listItemCategories(): Promise<string[]>;
@@ -1132,6 +1135,8 @@ export interface GameDatabase {
 
   upsertQuests(quests: QuestRecord[]): Promise<number>;
   getQuest(id: number): Promise<QuestRecord | null>;
+  /** Fetch many quests by id in one query. Missing ids are omitted. */
+  getQuestsMany(ids: readonly number[]): Promise<QuestRecord[]>;
   listQuests(opts?: ListOptsBase & { parent?: string }): Promise<PageResult<QuestRecord>>;
   /** Distinct quest `parent` values for filter UIs. */
   listQuestParents(): Promise<string[]>;
@@ -1139,7 +1144,11 @@ export interface GameDatabase {
   listQuestLevelBandCounts(bandSize?: number): Promise<LevelBandCount[]>;
   /** Requirements / rewards joined to the target's display name. */
   getQuestRequirements(questId: number): Promise<QuestRequirementWithName[]>;
+  /** Requirements for many quests in one query; each row carries its `questId`. */
+  getQuestRequirementsMany(questIds: readonly number[]): Promise<QuestRequirementWithName[]>;
   getQuestRewards(questId: number): Promise<QuestRewardWithName[]>;
+  /** Rewards for many quests in one query; each row carries its `questId`. */
+  getQuestRewardsMany(questIds: readonly number[]): Promise<QuestRewardWithName[]>;
   /** Quests an NPC offers (start or end). */
   getNpcQuests(npcId: number): Promise<QuestSummary[]>;
   /** Quests that ask for the given item as a requirement. */
@@ -1164,6 +1173,8 @@ export interface GameDatabase {
   computeAndStoreQuestChains(): Promise<number>;
   /** Hydrated chain shape for the detail page + graph viewer. */
   getQuestChain(id: number): Promise<QuestChainDetail | null>;
+  /** Hydrated chains for many ids in one call. Missing ids are omitted. */
+  getQuestChainsMany(ids: readonly number[]): Promise<QuestChainDetail[]>;
   /** Paged listing for the chain index. `preview` carries the first few
    *  member quests so the index can show a "starts with …" hint. */
   listQuestChains(

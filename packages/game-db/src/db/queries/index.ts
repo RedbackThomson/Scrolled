@@ -146,6 +146,10 @@ export class DbApi implements GameDatabase {
     return items.getItem(this.sql, id);
   }
 
+  async getItems(ids: readonly number[]): Promise<ItemRecord[]> {
+    return items.getItems(this.sql, ids);
+  }
+
   async getItemIcon(id: number): Promise<Uint8Array | null> {
     return items.getItemIcon(this.sql, id);
   }
@@ -389,6 +393,10 @@ export class DbApi implements GameDatabase {
     return quests.getQuest(this.sql, id);
   }
 
+  async getQuestsMany(ids: readonly number[]): Promise<QuestRecord[]> {
+    return quests.getQuestsMany(this.sql, ids);
+  }
+
   async listQuests(
     opts: ListOptsBase & { parent?: string } = {},
   ): Promise<PageResult<QuestRecord>> {
@@ -407,8 +415,18 @@ export class DbApi implements GameDatabase {
     return quests.getQuestRequirements(this.sql, questId);
   }
 
+  async getQuestRequirementsMany(
+    questIds: readonly number[],
+  ): Promise<QuestRequirementWithName[]> {
+    return quests.getQuestRequirementsMany(this.sql, questIds);
+  }
+
   async getQuestRewards(questId: number): Promise<QuestRewardWithName[]> {
     return quests.getQuestRewards(this.sql, questId);
+  }
+
+  async getQuestRewardsMany(questIds: readonly number[]): Promise<QuestRewardWithName[]> {
+    return quests.getQuestRewardsMany(this.sql, questIds);
   }
 
   async getNpcQuests(npcId: number): Promise<QuestSummary[]> {
@@ -442,6 +460,10 @@ export class DbApi implements GameDatabase {
 
   async getQuestChain(id: number): Promise<QuestChainDetail | null> {
     return questChains.getQuestChain(this.sql, id);
+  }
+
+  async getQuestChainsMany(ids: readonly number[]): Promise<QuestChainDetail[]> {
+    return questChains.getQuestChainsMany(this.sql, ids);
   }
 
   async listQuestChains(

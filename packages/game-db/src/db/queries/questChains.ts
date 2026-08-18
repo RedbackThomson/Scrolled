@@ -221,6 +221,21 @@ export function getQuestChain(sql: Sqlite, id: number): QuestChainDetail | null 
   return { chain, members, edges, externalEdges };
 }
 
+export function getQuestChainsMany(
+  sql: Sqlite,
+  ids: readonly number[],
+): QuestChainDetail[] {
+  const seen = new Set<number>();
+  const out: QuestChainDetail[] = [];
+  for (const id of ids) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const detail = getQuestChain(sql, id);
+    if (detail) out.push(detail);
+  }
+  return out;
+}
+
 export function listQuestChains(
   sql: Sqlite,
   opts: ListOptsBase & { parent?: string } = {},

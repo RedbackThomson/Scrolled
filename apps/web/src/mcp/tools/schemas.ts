@@ -5,6 +5,7 @@ import { z } from 'zod';
 
 export const idSchema = z.number().int().nonnegative();
 export const optionalIdSchema = idSchema.optional();
+export const idsSchema = z.array(idSchema).min(1);
 
 export const paginationSchema = z.object({
   limit: z.number().int().min(1).max(500).optional(),

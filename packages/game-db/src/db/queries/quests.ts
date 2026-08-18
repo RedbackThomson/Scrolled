@@ -68,6 +68,14 @@ export function getQuest(sql: Sqlite, id: number): QuestRecord | null {
   return row ? rowToQuest(row) : null;
 }
 
+export function getQuestsMany(sql: Sqlite, ids: readonly number[]): QuestRecord[] {
+  if (ids.length === 0) return [];
+  const placeholders = ids.map(() => '?').join(',');
+  return sql
+    .selectObjects<QuestRow>(`SELECT * FROM quests WHERE id IN (${placeholders})`, [...ids])
+    .map(rowToQuest);
+}
+
 export function listQuests(
   sql: Sqlite,
   opts: ListOptsBase & { parent?: string } = {},
@@ -138,6 +146,15 @@ export function listQuestLevelBandCounts(
 }
 
 export function getQuestRequirements(sql: Sqlite, questId: number): QuestRequirementWithName[] {
+  return getQuestRequirementsMany(sql, [questId]);
+}
+
+export function getQuestRequirementsMany(
+  sql: Sqlite,
+  questIds: readonly number[],
+): QuestRequirementWithName[] {
+  if (questIds.length === 0) return [];
+  const placeholders = questIds.map(() => '?').join(',');
   // The display name comes from whichever side of the union the kind points
   // at. We compute it inline with CASE so the result is a single homogenous
   // result set the caller can render directly.
@@ -167,9 +184,9 @@ export function getQuestRequirements(sql: Sqlite, questId: number): QuestRequire
        LEFT JOIN equips e ON qr.kind = 'item'     AND e.id = qr.target_id
        LEFT JOIN mobs   m ON qr.kind = 'mob'      AND m.id = qr.target_id
        LEFT JOIN quests q ON qr.kind = 'questPre' AND q.id = qr.target_id
-       WHERE qr.quest_id = ?
-       ORDER BY qr.kind, qr.target_id`,
-      [questId],
+       WHERE qr.quest_id IN (${placeholders})
+       ORDER BY qr.quest_id, qr.kind, qr.target_id`,
+      [...questIds],
     )
     .map((r) => ({
       questId: r.quest_id,
@@ -182,6 +199,15 @@ export function getQuestRequirements(sql: Sqlite, questId: number): QuestRequire
 }
 
 export function getQuestRewards(sql: Sqlite, questId: number): QuestRewardWithName[] {
+  return getQuestRewardsMany(sql, [questId]);
+}
+
+export function getQuestRewardsMany(
+  sql: Sqlite,
+  questIds: readonly number[],
+): QuestRewardWithName[] {
+  if (questIds.length === 0) return [];
+  const placeholders = questIds.map(() => '?').join(',');
   return sql
     .selectObjects<{
       quest_id: number;
@@ -217,9 +243,9 @@ export function getQuestRewards(sql: Sqlite, questId: number): QuestRewardWithNa
        FROM quest_rewards qr
        LEFT JOIN items  i ON qr.kind = 'item' AND i.id = qr.target_id
        LEFT JOIN equips e ON qr.kind = 'item' AND e.id = qr.target_id
-       WHERE qr.quest_id = ?
-       ORDER BY qr.kind, qr.idx, qr.target_id`,
-      [questId],
+       WHERE qr.quest_id IN (${placeholders})
+       ORDER BY qr.quest_id, qr.kind, qr.idx, qr.target_id`,
+      [...questIds],
     )
     .map((r) => ({
       questId: r.quest_id,

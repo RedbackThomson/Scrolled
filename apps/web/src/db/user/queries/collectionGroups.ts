@@ -64,6 +64,37 @@ export function createGroup(
   return rowToGroup(row);
 }
 
+/** Get the group named `rawName` in a collection, creating it if absent.
+ *  Names are unique per collection, so this is the safe "resolve a name to an
+ *  id" primitive callers reach for before a bulk add. */
+export function ensureGroup(
+  db: Sqlite,
+  collectionId: number,
+  rawName: string,
+): CollectionGroup {
+  const name = rawName.trim();
+  if (!name) throw new Error('Group name is required');
+  const existing = db.selectObject<Row>(
+    `SELECT id, collection_id, name, position, created_at, updated_at
+     FROM collection_groups WHERE collection_id = ? AND name = ?`,
+    [collectionId, name],
+  );
+  if (existing) return rowToGroup(existing);
+  return createGroup(db, collectionId, name);
+}
+
+/** Create several groups. Names that already exist return the existing group
+ *  rather than erroring, so the call is idempotent. Each group is its own
+ *  transaction (createGroup already wraps one), so a mid-batch failure leaves
+ *  the groups created so far — a re-run returns them unchanged. */
+export function createGroups(
+  db: Sqlite,
+  collectionId: number,
+  names: readonly string[],
+): CollectionGroup[] {
+  return names.map((name) => ensureGroup(db, collectionId, name));
+}
+
 export function renameGroup(
   db: Sqlite,
   groupId: number,

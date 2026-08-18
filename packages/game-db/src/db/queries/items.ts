@@ -90,6 +90,14 @@ export function getItem(sql: Sqlite, id: number): ItemRecord | null {
   return row ? rowToItem(row) : null;
 }
 
+export function getItems(sql: Sqlite, ids: readonly number[]): ItemRecord[] {
+  if (ids.length === 0) return [];
+  const placeholders = ids.map(() => '?').join(',');
+  return sql
+    .selectObjects<ItemRow>(`SELECT * FROM items WHERE id IN (${placeholders})`, [...ids])
+    .map(rowToItem);
+}
+
 export function getItemIcon(sql: Sqlite, id: number): Uint8Array | null {
   const row = sql.selectObject<{ icon_data: Uint8Array | null }>(
     'SELECT icon_data FROM items WHERE id = ?',

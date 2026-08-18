@@ -12,6 +12,7 @@ import {
   COLLECTION_SORT_DIRS,
   COLLECTION_SORT_KEYS,
   type AddMemberOptions,
+  type BulkAddRef,
   type BulkAddResult,
   type CollectionEntityType,
   type CollectionMember,
@@ -359,7 +360,7 @@ export function updateMember(
 export function bulkAddMembers(
   db: Sqlite,
   collectionId: number,
-  refs: readonly EntityRef[],
+  refs: readonly BulkAddRef[],
   groupId: number | null = null,
 ): BulkAddResult {
   if (refs.length === 0) return { added: 0, skipped: 0 };
@@ -382,8 +383,18 @@ export function bulkAddMembers(
       db.exec(
         `INSERT INTO collection_members
            (collection_id, entity_type, entity_id, note, quantity, done, added_at, group_id, position)
-         VALUES (?, ?, ?, NULL, NULL, 0, ?, ?, ?)`,
-        [collectionId, ref.entityType, ref.entityId, now, groupId, nextPos],
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          collectionId,
+          ref.entityType,
+          ref.entityId,
+          ref.note ?? null,
+          ref.quantity ?? null,
+          ref.done ? 1 : 0,
+          now,
+          groupId,
+          nextPos,
+        ],
       );
       recordUpsert(db, 'collection_member', MEMBER_WHERE, [
         collectionId,

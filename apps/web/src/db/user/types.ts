@@ -147,6 +147,15 @@ export interface EntityRef {
   entityId: number;
 }
 
+/** A bulk-add ref that may carry the same per-member metadata as
+ *  {@link AddMemberOptions}. Metadata is written only when the row is newly
+ *  inserted; existing members keep their group, position, and metadata. */
+export interface BulkAddRef extends EntityRef {
+  note?: string | null;
+  quantity?: number | null;
+  done?: boolean;
+}
+
 /**
  * Per-collection membership info for a single entity. Carries both the
  * collection's display fields (name/icon/color) and the membership-row's
@@ -258,6 +267,11 @@ export interface UserDatabase {
 
   listGroups(collectionId: number): Promise<CollectionGroup[]>;
   createGroup(collectionId: number, name: string): Promise<CollectionGroup>;
+  /** Create several groups at once. Names that already exist return the
+   *  existing group rather than erroring. */
+  createGroups(collectionId: number, names: readonly string[]): Promise<CollectionGroup[]>;
+  /** Get the named group, creating it if absent. */
+  ensureGroup(collectionId: number, name: string): Promise<CollectionGroup>;
   renameGroup(groupId: number, name: string): Promise<CollectionGroup>;
   deleteGroup(groupId: number): Promise<void>;
   /** Persist a new ordering of the collection's groups (top to bottom). */
@@ -302,7 +316,7 @@ export interface UserDatabase {
    */
   bulkAddMembers(
     collectionId: number,
-    refs: readonly EntityRef[],
+    refs: readonly BulkAddRef[],
     groupId?: number | null,
   ): Promise<BulkAddResult>;
   bulkRemoveMembers(collectionId: number, refs: readonly EntityRef[]): Promise<void>;

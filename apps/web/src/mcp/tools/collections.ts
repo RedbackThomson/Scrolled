@@ -167,20 +167,41 @@ export const collectionsListMemberships: ToolDefinition<
   execute: (input, ctx) => ctx.userDb.listMembershipsFor(input.entityType, input.entityId),
 };
 
-const collectionsBulkAddSchema = z.object({
-  collectionId: idSchema,
-  refs: z.array(z.object({ entityType: collectionEntityTypeSchema, entityId: idSchema })).min(1),
-  groupId: idSchema.nullable().optional(),
-});
+const collectionsBulkAddSchema = z
+  .object({
+    collectionId: idSchema,
+    refs: z
+      .array(
+        z.object({
+          entityType: collectionEntityTypeSchema,
+          entityId: idSchema,
+          quantity: z.number().int().nullable().optional(),
+          note: z.string().nullable().optional(),
+          done: z.boolean().optional(),
+        }),
+      )
+      .min(1),
+    groupId: idSchema.nullable().optional(),
+    groupName: z.string().min(1).optional(),
+  })
+  .refine((v) => !(v.groupId != null && v.groupName != null), {
+    message: 'Pass groupId or groupName, not both.',
+  });
 export const collectionsBulkAdd: ToolDefinition<typeof collectionsBulkAddSchema, unknown> = {
   name: 'collections.bulkAdd',
   category: 'Collections',
   description:
-    'Add many entities to a collection in one transaction. Pass `groupId` to land them in a named group; omit or null for the default group.',
+    'Add many entities to a collection in one transaction, each with optional quantity/note/done. Target a group by `groupId`, or by `groupName` (created if absent); omit both for the default group. Existing members are skipped without touching their metadata.',
   inputSchema: collectionsBulkAddSchema,
   annotations: WRITE_IDEMPOTENT,
-  execute: (input, ctx) =>
-    ctx.userDb.bulkAddMembers(input.collectionId, input.refs, input.groupId ?? null),
+  execute: async (input, ctx) => {
+    let groupId = input.groupId ?? null;
+    if (input.groupName != null) {
+      const group = await ctx.userDb.ensureGroup(input.collectionId, input.groupName);
+      groupId = group.id;
+    }
+    return ctx.userDb.bulkAddMembers(input.collectionId, input.refs, groupId);
+  },
 };
 
 const collectionsBulkRemoveSchema = z.object({

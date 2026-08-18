@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { NotFoundError } from '../errors';
 import type { ToolDefinition } from '../types';
 import { READ } from './annotations';
-import { idSchema, listOptsBaseSchema } from './schemas';
+import { idSchema, idsSchema, optionalIdSchema, listOptsBaseSchema } from './schemas';
 
 const questsSearchSchema = listOptsBaseSchema.extend({
   parent: z.string().optional(),
@@ -40,25 +40,65 @@ export const questsParents: ToolDefinition<typeof questsParentsSchema, unknown> 
   execute: (_input, ctx) => ctx.db.listQuestParents(),
 };
 
-const questsRequirementsSchema = z.object({ id: idSchema });
+const questsRequirementsSchema = z
+  .object({ id: optionalIdSchema, ids: idsSchema.optional() })
+  .refine((v) => v.id != null || v.ids != null, { message: 'Pass id or ids.' });
 export const questsRequirements: ToolDefinition<typeof questsRequirementsSchema, unknown> = {
   name: 'quests.listRequirements',
   category: 'Quests',
-  description: 'Requirements for a quest, joined to target names.',
+  description:
+    'Requirements joined to target names. Pass `id` for one quest or `ids` for many; the result is always a flat array with each row keyed by `questId`.',
   inputSchema: questsRequirementsSchema,
   annotations: READ,
-  execute: (input, ctx) => ctx.db.getQuestRequirements(input.id),
+  execute: (input, ctx) => ctx.db.getQuestRequirementsMany(input.ids ?? [input.id!]),
 };
 
-const questsRewardsSchema = z.object({ id: idSchema });
+const questsRewardsSchema = z
+  .object({ id: optionalIdSchema, ids: idsSchema.optional() })
+  .refine((v) => v.id != null || v.ids != null, { message: 'Pass id or ids.' });
 export const questsRewards: ToolDefinition<typeof questsRewardsSchema, unknown> = {
   name: 'quests.listRewards',
   category: 'Quests',
-  description: 'Rewards for a quest, joined to target names.',
+  description:
+    'Rewards joined to target names. Pass `id` for one quest or `ids` for many; the result is always a flat array with each row keyed by `questId`.',
   inputSchema: questsRewardsSchema,
   annotations: READ,
-  execute: (input, ctx) => ctx.db.getQuestRewards(input.id),
+  execute: (input, ctx) => ctx.db.getQuestRewardsMany(input.ids ?? [input.id!]),
 };
+
+const questsBundleSchema = z.object({ ids: idsSchema });
+export const questsBundle: ToolDefinition<typeof questsBundleSchema, unknown> = {
+  name: 'quests.bundle',
+  category: 'Quests',
+  description:
+    'Fetch many quests with their requirements and rewards in one call, as [{ quest, requirements, rewards }].',
+  inputSchema: questsBundleSchema,
+  annotations: READ,
+  execute: async (input, ctx) => {
+    const [records, requirements, rewards] = await Promise.all([
+      ctx.db.getQuestsMany(input.ids),
+      ctx.db.getQuestRequirementsMany(input.ids),
+      ctx.db.getQuestRewardsMany(input.ids),
+    ]);
+    const reqBy = groupByQuestId(requirements);
+    const rewardBy = groupByQuestId(rewards);
+    return records.map((quest) => ({
+      quest,
+      requirements: reqBy.get(quest.id) ?? [],
+      rewards: rewardBy.get(quest.id) ?? [],
+    }));
+  },
+};
+
+function groupByQuestId<T extends { questId: number }>(rows: T[]): Map<number, T[]> {
+  const by = new Map<number, T[]>();
+  for (const row of rows) {
+    const arr = by.get(row.questId);
+    if (arr) arr.push(row);
+    else by.set(row.questId, [row]);
+  }
+  return by;
+}
 
 export const questTools = [
   questsSearch,
@@ -66,4 +106,5 @@ export const questTools = [
   questsParents,
   questsRequirements,
   questsRewards,
+  questsBundle,
 ];

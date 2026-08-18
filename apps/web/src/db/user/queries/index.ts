@@ -11,6 +11,7 @@ import { USER_MIGRATIONS } from '../migrations';
 import type { CollectionsExportJson, ImportConflictMode, ImportReport } from '../collectionsJson';
 import type {
   AddMemberOptions,
+  BulkAddRef,
   BulkAddResult,
   CollectionEntityType,
   CollectionGroup,
@@ -112,6 +113,17 @@ export class UserDbApi implements UserDatabase {
     return collectionGroups.createGroup(this.db, collectionId, name);
   }
 
+  async createGroups(
+    collectionId: number,
+    names: readonly string[],
+  ): Promise<CollectionGroup[]> {
+    return collectionGroups.createGroups(this.db, collectionId, names);
+  }
+
+  async ensureGroup(collectionId: number, name: string): Promise<CollectionGroup> {
+    return collectionGroups.ensureGroup(this.db, collectionId, name);
+  }
+
   async renameGroup(groupId: number, name: string): Promise<CollectionGroup> {
     return collectionGroups.renameGroup(this.db, groupId, name);
   }
@@ -178,7 +190,7 @@ export class UserDbApi implements UserDatabase {
 
   async bulkAddMembers(
     collectionId: number,
-    refs: readonly EntityRef[],
+    refs: readonly BulkAddRef[],
     groupId: number | null = null,
   ): Promise<BulkAddResult> {
     return collections.bulkAddMembers(this.db, collectionId, refs, groupId);

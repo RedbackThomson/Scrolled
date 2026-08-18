@@ -26,6 +26,20 @@ export const groupsCreate: ToolDefinition<typeof groupsCreateSchema, unknown> = 
   execute: (input, ctx) => ctx.userDb.createGroup(input.collectionId, input.name),
 };
 
+const groupsCreateManySchema = z.object({
+  collectionId: idSchema,
+  names: z.array(z.string().min(1)).min(1),
+});
+export const groupsCreateMany: ToolDefinition<typeof groupsCreateManySchema, unknown> = {
+  name: 'collectionGroups.createMany',
+  category: 'Groups',
+  description:
+    'Create several groups in a collection at once. Names that already exist return the existing group rather than erroring.',
+  inputSchema: groupsCreateManySchema,
+  annotations: WRITE_NEW,
+  execute: (input, ctx) => ctx.userDb.createGroups(input.collectionId, input.names),
+};
+
 const groupsRenameSchema = z.object({ groupId: idSchema, name: z.string().min(1) });
 export const groupsRename: ToolDefinition<typeof groupsRenameSchema, unknown> = {
   name: 'collectionGroups.rename',
@@ -94,6 +108,7 @@ export const groupsMoveMember: ToolDefinition<typeof groupsMoveMemberSchema, unk
 export const groupTools = [
   groupsList,
   groupsCreate,
+  groupsCreateMany,
   groupsRename,
   groupsDelete,
   groupsReorder,
