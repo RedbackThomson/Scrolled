@@ -1,9 +1,10 @@
 import { useMemo, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { GitBranch, ScrollText } from 'lucide-react';
+import { GitBranch, ScrollText, Sparkles } from 'lucide-react';
 import { HoverPopover } from '@scrolled/ui';
 import { HoverCardSaveFooter } from '@/components/collections';
+import { ExpValue } from '@/components/entity-display/ExpValue';
 import { getDbClient } from '@/db';
 import { useFeatures } from '@/hooks/useFeatures';
 import { useShowEntityIds } from '@/stores/showEntityIds';
@@ -92,9 +93,14 @@ function QuestHoverCard({ id }: { id: number }) {
               </span>
             </div>
           )}
-          {q.description && (
-            <p className="text-muted-foreground line-clamp-3 text-xs">{q.description}</p>
-          )}
+          {q.rewardExp ? (
+            <div className="text-muted-foreground flex items-center gap-1 text-[11px]">
+              <Sparkles className="h-3 w-3 shrink-0" aria-hidden />
+              <span>
+                <ExpValue exp={q.rewardExp} /> EXP
+              </span>
+            </div>
+          ) : null}
         </div>
       </div>
       <HoverCardSaveFooter entityType="quest" entityId={id} />
