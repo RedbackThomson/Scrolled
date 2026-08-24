@@ -81,6 +81,13 @@ export function NavigationProvider() {
       icon: Cog,
     },
     {
+      id: 'nav-settings-customization',
+      label: 'Settings → Customization',
+      keywords: ['tooltips', 'hover', 'fields', 'preview', 'customize'],
+      to: '/settings#customization',
+      icon: Cog,
+    },
+    {
       id: 'nav-settings-import',
       label: appConfig.features.enableUserImport
         ? 'Settings → Import & Export'

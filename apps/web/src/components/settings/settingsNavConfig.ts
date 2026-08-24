@@ -11,6 +11,7 @@ const BASE_SECTIONS: SettingsSectionNavItem[] = [
   // reflects that when sync is enabled — see getSettingsNavItems.
   { kind: 'section', id: 'account', label: 'Account' },
   { kind: 'section', id: 'appearance', label: 'Appearance' },
+  { kind: 'section', id: 'customization', label: 'Customization' },
   { kind: 'section', id: 'collections', label: 'Collections' },
   { kind: 'section', id: 'game-data', label: 'Game Data' },
   { kind: 'section', id: 'import-export', label: 'Import & Export' },

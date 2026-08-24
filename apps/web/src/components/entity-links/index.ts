@@ -7,3 +7,4 @@ export { QuestLink } from './QuestLink';
 export { QuestChainLink } from './QuestChainLink';
 export { SkillLink, SkillHoverCard } from './SkillLink';
 export { EntityLink } from './EntityLink';
+export { GenericHoverCard } from './GenericHoverCard';

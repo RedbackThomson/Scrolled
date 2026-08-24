@@ -1,12 +1,8 @@
-import { useMemo, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Map as MapIcon } from 'lucide-react';
-import { EntityIcon } from '@/components/entity-display/EntityIcon';
 import { HoverPopover } from '@scrolled/ui';
-import { HoverCardSaveFooter } from '@/components/collections';
-import { getDbClient } from '@/db';
-import { useShowEntityIds } from '@/stores/showEntityIds';
+import { routeForEntity } from '@/lib/entityRoutes';
+import { GenericHoverCard } from './GenericHoverCard';
 
 interface MapLinkProps {
   id: number;
@@ -18,69 +14,18 @@ interface MapLinkProps {
 
 export function MapLink({ id, children, className, noPreview, triggerClassName }: MapLinkProps) {
   const link = (
-    <Link to={`/maps/${id}`} className={className}>
+    <Link to={routeForEntity('map', id)} className={className}>
       {children}
     </Link>
   );
   if (noPreview) return link;
   return (
-    <HoverPopover content={<MapHoverCard id={id} />} triggerClassName={triggerClassName}>
+    <HoverPopover content={<GenericHoverCard entity="map" id={id} />} triggerClassName={triggerClassName}>
       {link}
     </HoverPopover>
   );
 }
 
 export function MapHoverCard({ id }: { id: number }) {
-  const client = useMemo(() => getDbClient(), []);
-  const showIds = useShowEntityIds((s) => s.enabled);
-  const mapQ = useQuery({
-    queryKey: ['db', 'map', id],
-    queryFn: () => client.getMap(id),
-    staleTime: 5 * 60_000,
-  });
-
-  if (mapQ.isLoading) {
-    return <p className="text-muted-foreground text-xs">Loading…</p>;
-  }
-  if (!mapQ.data) {
-    return <p className="text-muted-foreground text-xs">Map {id} not found.</p>;
-  }
-  const m = mapQ.data;
-  const display = m.name ?? `Map ${id}`;
-
-  return (
-    <div className="w-72 max-w-[calc(100vw-1rem)] space-y-1.5">
-      <div className="flex gap-3">
-        <EntityIcon
-          entity="map-mini"
-          id={id}
-          placeholder={MapIcon}
-          fit={{ maxWidth: 72, maxHeight: 64 }}
-          alt={display}
-        />
-        <div className="min-w-0 flex-1 space-y-1.5">
-          <div>
-            <Link
-              to={`/maps/${id}`}
-              className="hover:text-primary block truncate text-sm font-semibold hover:underline"
-            >
-              {display}
-            </Link>
-            {showIds && (
-              <div className="text-muted-foreground font-mono text-[10px]">Map #{id}</div>
-            )}
-          </div>
-          {m.streetName && (
-            <div className="text-muted-foreground truncate text-[11px]">{m.streetName}</div>
-          )}
-          {m.mobRate !== null && (
-            <div className="text-muted-foreground text-[11px]">
-              Mob rate: <span className="text-foreground font-mono">{m.mobRate.toFixed(2)}</span>
-            </div>
-          )}
-        </div>
-      </div>
-      <HoverCardSaveFooter entityType="map" entityId={id} />
-    </div>
-  );
+  return <GenericHoverCard entity="map" id={id} />;
 }
