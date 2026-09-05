@@ -4,10 +4,10 @@
 // `ColumnFilter.tsx`: outside-click and Escape close, recompute position
 // on resize / scroll.
 //
-// Toggling a row's checkbox adds the entity to that collection and reveals
-// a small panel underneath with quantity + note inputs, so a user can set
-// "need 5x — drops from Zakum" in one place without opening the collection
-// detail page.
+// Checking a collection adds the entity to its default (ungrouped) bucket and
+// reveals a panel: group chips let the user also place it in named groups (an
+// entity can be in more than one group, at most once each), plus quantity +
+// note inputs so a user can set "need 5x — drops from Zakum" in one place.
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { usePopover } from '@/hooks/usePopover';
@@ -15,9 +15,11 @@ import { createPortal } from 'react-dom';
 import { Check, Loader2, Plus, Search } from 'lucide-react';
 import { Button } from '@scrolled/ui';
 import {
+  useCollectionGroups,
   useCollectionsList,
   useCreateCollection,
   useMembership,
+  useToggleGroupPlacement,
   useToggleMembership,
   useUpdateMember,
 } from '@/hooks/useCollections';
@@ -42,9 +44,15 @@ export function CollectionPicker({ entityType, entityId, children }: CollectionP
   const toggleM = useToggleMembership();
   const createM = useCreateCollection();
 
-  const membershipByCollection = useMemo(() => {
-    const m = new Map<number, MembershipBadge>();
-    for (const row of membershipQ.data ?? []) m.set(row.collectionId, row);
+  // One entity can hold several placements in a collection (different groups),
+  // so group the membership rows by collection.
+  const placementsByCollection = useMemo(() => {
+    const m = new Map<number, MembershipBadge[]>();
+    for (const row of membershipQ.data ?? []) {
+      const list = m.get(row.collectionId);
+      if (list) list.push(row);
+      else m.set(row.collectionId, [row]);
+    }
     return m;
   }, [membershipQ.data]);
 
@@ -60,10 +68,10 @@ export function CollectionPicker({ entityType, entityId, children }: CollectionP
 
   const onToggleMembership = useCallback(
     (collectionId: number) => {
-      const isMember = membershipByCollection.has(collectionId);
+      const isMember = placementsByCollection.has(collectionId);
       toggleM.mutate({ collectionId, entityType, entityId, member: !isMember });
     },
-    [membershipByCollection, toggleM, entityType, entityId],
+    [placementsByCollection, toggleM, entityType, entityId],
   );
 
   const onCreateAndAdd = useCallback(async () => {
@@ -89,7 +97,7 @@ export function CollectionPicker({ entityType, entityId, children }: CollectionP
   return (
     <>
       <span ref={triggerRef} className="inline-flex">
-        {children({ open, toggle, memberCount: membershipByCollection.size })}
+        {children({ open, toggle, memberCount: placementsByCollection.size })}
       </span>
       {open &&
         coords &&
@@ -134,21 +142,18 @@ export function CollectionPicker({ entityType, entityId, children }: CollectionP
                   {query.trim() ? 'No matches' : 'No collections yet.'}
                 </li>
               ) : (
-                filtered.map((c) => {
-                  const membership = membershipByCollection.get(c.id);
-                  return (
-                    <PickerRow
-                      key={c.id}
-                      collectionId={c.id}
-                      collectionName={c.name}
-                      collectionMemberCount={c.memberCount}
-                      membership={membership}
-                      entityType={entityType}
-                      entityId={entityId}
-                      onToggle={() => onToggleMembership(c.id)}
-                    />
-                  );
-                })
+                filtered.map((c) => (
+                  <PickerRow
+                    key={c.id}
+                    collectionId={c.id}
+                    collectionName={c.name}
+                    collectionMemberCount={c.memberCount}
+                    placements={placementsByCollection.get(c.id) ?? []}
+                    entityType={entityType}
+                    entityId={entityId}
+                    onToggle={() => onToggleMembership(c.id)}
+                  />
+                ))
               )}
             </ul>
             {!hasExactMatch && query.trim() && (
@@ -181,7 +186,7 @@ interface PickerRowProps {
   collectionId: number;
   collectionName: string;
   collectionMemberCount: number;
-  membership: MembershipBadge | undefined;
+  placements: MembershipBadge[];
   entityType: CollectionEntityType;
   entityId: number;
   onToggle: () => void;
@@ -191,61 +196,83 @@ function PickerRow({
   collectionId,
   collectionName,
   collectionMemberCount,
-  membership,
+  placements,
   entityType,
   entityId,
   onToggle,
 }: PickerRowProps) {
-  const isMember = !!membership;
+  const isMember = placements.length > 0;
   const updateM = useUpdateMember();
+  const togglePlacementM = useToggleGroupPlacement();
+  // Only member rows need the group list, so the query stays disabled otherwise.
+  const groupsQ = useCollectionGroups(isMember ? collectionId : null);
 
-  const [qtyDraft, setQtyDraft] = useState<string>(
-    membership?.quantity == null ? '' : String(membership.quantity),
+  const placedGroupIds = useMemo(() => {
+    const s = new Set<number | null>();
+    for (const p of placements) s.add(p.groupId);
+    return s;
+  }, [placements]);
+
+  // Quantity + note edit one placement. Bind to the ungrouped one when present,
+  // else the first placement — the common single-placement case is unchanged.
+  const representative = useMemo(
+    () => placements.find((p) => p.groupId == null) ?? placements[0],
+    [placements],
   );
-  const [noteDraft, setNoteDraft] = useState<string>(membership?.note ?? '');
 
-  // Re-sync drafts whenever the server-side row changes (toggling
-  // membership off then on resets to blank; another surface editing the
-  // same row needs to land here too).
+  const [qtyDraft, setQtyDraft] = useState<string>('');
+  const [noteDraft, setNoteDraft] = useState<string>('');
+
   useEffect(() => {
-    setQtyDraft(membership?.quantity == null ? '' : String(membership.quantity));
-  }, [membership?.quantity]);
+    setQtyDraft(representative?.quantity == null ? '' : String(representative.quantity));
+  }, [representative?.quantity]);
   useEffect(() => {
-    setNoteDraft(membership?.note ?? '');
-  }, [membership?.note]);
+    setNoteDraft(representative?.note ?? '');
+  }, [representative?.note]);
 
   const commitQty = () => {
-    if (!membership) return;
+    if (!representative) return;
     const trimmed = qtyDraft.trim();
     let next: number | null = null;
     if (trimmed !== '') {
       const n = Number(trimmed);
       if (!Number.isFinite(n) || n < 0) {
-        // Reject — reset to last good value.
-        setQtyDraft(membership.quantity == null ? '' : String(membership.quantity));
+        setQtyDraft(representative.quantity == null ? '' : String(representative.quantity));
         return;
       }
       next = Math.floor(n);
     }
-    if (next === (membership.quantity ?? null)) return;
+    if (next === (representative.quantity ?? null)) return;
     updateM.mutate({
       collectionId,
       entityType,
       entityId,
+      groupId: representative.groupId,
       patch: { quantity: next },
     });
   };
 
   const commitNote = () => {
-    if (!membership) return;
+    if (!representative) return;
     const trimmed = noteDraft.trim();
     const next = trimmed === '' ? null : trimmed;
-    if (next === (membership.note ?? null)) return;
+    if (next === (representative.note ?? null)) return;
     updateM.mutate({
       collectionId,
       entityType,
       entityId,
+      groupId: representative.groupId,
       patch: { note: next },
+    });
+  };
+
+  const togglePlacement = (groupId: number | null) => {
+    togglePlacementM.mutate({
+      collectionId,
+      entityType,
+      entityId,
+      groupId,
+      present: !placedGroupIds.has(groupId),
     });
   };
 
@@ -284,6 +311,24 @@ function PickerRow({
           // here mustn't bubble up and re-toggle the checkbox.
           onClick={(e) => e.stopPropagation()}
         >
+          <div className="flex flex-wrap items-center gap-1">
+            <span className="text-muted-foreground mr-0.5 w-8 shrink-0 text-[10px] uppercase tracking-wide">
+              In
+            </span>
+            <GroupChip
+              label="Ungrouped"
+              active={placedGroupIds.has(null)}
+              onClick={() => togglePlacement(null)}
+            />
+            {(groupsQ.data ?? []).map((g) => (
+              <GroupChip
+                key={g.id}
+                label={g.name}
+                active={placedGroupIds.has(g.id)}
+                onClick={() => togglePlacement(g.id)}
+              />
+            ))}
+          </div>
           <label className="flex items-center gap-2 text-[11px]">
             <span className="text-muted-foreground w-12 shrink-0 uppercase tracking-wide">Qty</span>
             <input
@@ -304,9 +349,7 @@ function PickerRow({
             />
           </label>
           <label className="flex items-center gap-2 text-[11px]">
-            <span className="text-muted-foreground w-12 shrink-0 uppercase tracking-wide">
-              Note
-            </span>
+            <span className="text-muted-foreground w-12 shrink-0 uppercase tracking-wide">Note</span>
             <input
               type="text"
               value={noteDraft}
@@ -317,7 +360,7 @@ function PickerRow({
                   e.preventDefault();
                   (e.target as HTMLInputElement).blur();
                 } else if (e.key === 'Escape') {
-                  setNoteDraft(membership?.note ?? '');
+                  setNoteDraft(representative?.note ?? '');
                   (e.target as HTMLInputElement).blur();
                 }
               }}
@@ -329,5 +372,32 @@ function PickerRow({
         </div>
       )}
     </li>
+  );
+}
+
+function GroupChip({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] transition-colors',
+        active
+          ? 'bg-primary border-primary text-primary-foreground'
+          : 'border-border text-muted-foreground hover:bg-accent hover:text-foreground border-dashed',
+      )}
+    >
+      {active ? <Check className="h-2.5 w-2.5" aria-hidden /> : <Plus className="h-2.5 w-2.5" aria-hidden />}
+      <span className="max-w-[7rem] truncate">{label}</span>
+    </button>
   );
 }

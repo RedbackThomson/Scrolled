@@ -122,6 +122,7 @@ const collectionsRemoveEntitySchema = z.object({
   collectionId: idSchema,
   entityType: collectionEntityTypeSchema,
   entityId: idSchema,
+  groupId: idSchema.nullable().optional(),
 });
 export const collectionsRemoveEntity: ToolDefinition<
   typeof collectionsRemoveEntitySchema,
@@ -129,11 +130,21 @@ export const collectionsRemoveEntity: ToolDefinition<
 > = {
   name: 'collections.removeEntity',
   category: 'Collections',
-  description: 'Remove an entity from a collection.',
+  description:
+    'Remove an entity from a collection. Pass `groupId` (or null for the default group) to remove only that placement; omit it to remove the entity from every group.',
   inputSchema: collectionsRemoveEntitySchema,
   annotations: DESTRUCTIVE,
   execute: async (input, ctx) => {
-    await ctx.userDb.removeMember(input.collectionId, input.entityType, input.entityId);
+    if (input.groupId !== undefined) {
+      await ctx.userDb.removeMember(
+        input.collectionId,
+        input.entityType,
+        input.entityId,
+        input.groupId,
+      );
+    } else {
+      await ctx.userDb.removeEntity(input.collectionId, input.entityType, input.entityId);
+    }
     return { ok: true };
   },
 };

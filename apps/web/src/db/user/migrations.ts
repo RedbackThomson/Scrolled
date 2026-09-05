@@ -345,4 +345,59 @@ export const USER_MIGRATIONS: readonly Migration[] = [
       DELETE FROM sync_outbox WHERE uuid IS NULL OR uuid = '';
     `,
   },
+  {
+    version: 10,
+    name: 'member identity gains group',
+    // A member was keyed by (collection, entity), so an entity could be in a
+    // collection once. The identity now includes its group, letting the same
+    // entity live in more than one group — at most once per group. The default
+    // (ungrouped) bucket is a NULL `group_id`; the unique index folds it to a
+    // sentinel so two ungrouped rows for one entity still collide.
+    //
+    // The old composite PRIMARY KEY enforces the narrower identity and SQLite
+    // cannot drop it in place, so the table is rebuilt. Old rows are unique on
+    // (collection, entity) and so are trivially unique under the wider key.
+    // The entity-type check is widened to the kinds now collectable.
+    sql: `
+      CREATE TABLE collection_members_new (
+        collection_id INTEGER NOT NULL REFERENCES collections(id) ON DELETE CASCADE,
+        entity_type   TEXT    NOT NULL CHECK (entity_type IN
+          ('item','equip','mob','npc','map','quest','questChain','skill')),
+        entity_id     INTEGER NOT NULL,
+        note          TEXT,
+        quantity      INTEGER,
+        done          INTEGER NOT NULL DEFAULT 0 CHECK (done IN (0,1)),
+        added_at      INTEGER NOT NULL,
+        group_id      INTEGER REFERENCES collection_groups(id) ON DELETE SET NULL,
+        position      INTEGER NOT NULL DEFAULT 0,
+        uuid          TEXT    NOT NULL DEFAULT '',
+        remote_seq    INTEGER NOT NULL DEFAULT 0,
+        updated_at    INTEGER NOT NULL DEFAULT 0,
+        deleted_at    INTEGER,
+        origin_device TEXT    NOT NULL DEFAULT ''
+      );
+
+      INSERT INTO collection_members_new
+        (collection_id, entity_type, entity_id, note, quantity, done, added_at,
+         group_id, position, uuid, remote_seq, updated_at, deleted_at, origin_device)
+      SELECT
+        collection_id, entity_type, entity_id, note, quantity, done, added_at,
+        group_id, position, uuid, remote_seq, updated_at, deleted_at, origin_device
+      FROM collection_members;
+
+      DROP TABLE collection_members;
+      ALTER TABLE collection_members_new RENAME TO collection_members;
+
+      CREATE INDEX collection_members_entity_idx
+        ON collection_members (entity_type, entity_id);
+      CREATE INDEX collection_members_collection_idx
+        ON collection_members (collection_id);
+      CREATE INDEX collection_members_group_idx
+        ON collection_members (collection_id, group_id, position);
+      CREATE INDEX collection_members_uuid_idx
+        ON collection_members (uuid);
+      CREATE UNIQUE INDEX collection_members_identity_idx
+        ON collection_members (collection_id, IFNULL(group_id, -1), entity_type, entity_id);
+    `,
+  },
 ];

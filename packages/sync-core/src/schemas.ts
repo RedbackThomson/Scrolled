@@ -13,8 +13,12 @@ import { SYNC_ENTITIES, ENTITY_KEY_COLUMNS, type RemoteRow, type SyncEntity } fr
  * v3: the store became relational — records are rows keyed by their natural key,
  * push is an unconditional upsert, and pull pages on a timestamp cursor. Not
  * compatible with v2, hence the matching `minClientRevision`.
+ *
+ * v4: a collection member's natural key gained `group_key`, so the same entity
+ * can live in more than one group of a collection. A v3 client keys members
+ * without the group and would collapse the new placements onto one row.
  */
-export const PROTOCOL_VERSION = 3;
+export const PROTOCOL_VERSION = 4;
 
 export const syncEntitySchema = z.enum(SYNC_ENTITIES);
 export const syncOpSchema = z.enum(['upsert', 'delete']);

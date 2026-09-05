@@ -24,11 +24,10 @@ import {
   type UpdateMemberPatch,
 } from '../types';
 import { rowToCollection, rowToMember } from './rowMappers';
+import { memberIdentity } from './memberKey';
 import { listPinnedSearches } from './pinnedSearches';
 import { listUserSettings, setUserSetting } from './userSettings';
 import { recordDelete, recordNewRows, recordUpsert } from './sync';
-
-const MEMBER_WHERE = 'collection_id = ? AND entity_type = ? AND entity_id = ?';
 
 export function listCollections(db: Sqlite): CollectionRecord[] {
   // Pinned collections come first in the order chosen on the home page; the
@@ -211,15 +210,17 @@ export function deleteCollection(db: Sqlite, id: number): void {
   // then drop the collection.
   db.transaction(() => {
     const members = db.selectObjects<Row>(
-      'SELECT entity_type, entity_id FROM collection_members WHERE collection_id = ?',
+      'SELECT group_id, entity_type, entity_id FROM collection_members WHERE collection_id = ?',
       [id],
     );
     for (const m of members) {
-      recordDelete(db, 'collection_member', 'collection_id = ? AND entity_type = ? AND entity_id = ?', [
+      const identity = memberIdentity(
         id,
+        m.group_id == null ? null : Number(m.group_id),
         String(m.entity_type),
         Number(m.entity_id),
-      ]);
+      );
+      recordDelete(db, 'collection_member', identity.where, identity.params);
     }
     const groups = db.selectObjects<{ id: number }>(
       'SELECT id FROM collection_groups WHERE collection_id = ?',
@@ -278,50 +279,97 @@ export function addMember(
   entityId: number,
   opts: AddMemberOptions = {},
 ): void {
-  // Insert into `opts.groupId` (or the default group when null/omitted) at
-  // the end. On conflict we preserve the existing row's `group_id` and
-  // `position` so resaving an item doesn't tear the user's manual ordering.
+  // Add the entity to `opts.groupId` (or the default group when null/omitted).
+  // Re-adding to the same group only refreshes the metadata and keeps the
+  // existing position, so resaving an item doesn't tear the user's manual
+  // ordering. Adding to a different group is a separate placement.
   const targetGroupId = opts.groupId ?? null;
+  const identity = memberIdentity(collectionId, targetGroupId, entityType, entityId);
   db.transaction(() => {
-    const pos = nextMemberPosition(db, collectionId, targetGroupId);
-    db.exec(
-      `INSERT INTO collection_members
-         (collection_id, entity_type, entity_id, note, quantity, done, added_at, group_id, position)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT (collection_id, entity_type, entity_id) DO UPDATE SET
-         note     = excluded.note,
-         quantity = excluded.quantity,
-         done     = excluded.done`,
-      [
-        collectionId,
-        entityType,
-        entityId,
-        opts.note ?? null,
-        opts.quantity ?? null,
-        opts.done ? 1 : 0,
-        Date.now(),
-        targetGroupId,
-        pos,
-      ],
+    const existing = db.selectValue<number>(
+      `SELECT 1 FROM collection_members WHERE ${identity.where}`,
+      identity.params,
     );
-    recordUpsert(db, 'collection_member', MEMBER_WHERE, [collectionId, entityType, entityId]);
+    if (existing != null) {
+      db.exec(
+        `UPDATE collection_members SET note = ?, quantity = ?, done = ? WHERE ${identity.where}`,
+        [opts.note ?? null, opts.quantity ?? null, opts.done ? 1 : 0, ...identity.params],
+      );
+    } else {
+      const pos = nextMemberPosition(db, collectionId, targetGroupId);
+      db.exec(
+        `INSERT INTO collection_members
+           (collection_id, entity_type, entity_id, note, quantity, done, added_at, group_id, position)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          collectionId,
+          entityType,
+          entityId,
+          opts.note ?? null,
+          opts.quantity ?? null,
+          opts.done ? 1 : 0,
+          Date.now(),
+          targetGroupId,
+          pos,
+        ],
+      );
+    }
+    recordUpsert(db, 'collection_member', identity.where, identity.params);
   });
 }
 
+/** Remove a single placement — the entity's membership in one group. */
 export function removeMember(
   db: Sqlite,
   collectionId: number,
   entityType: CollectionEntityType,
   entityId: number,
+  groupId: number | null,
 ): void {
+  const identity = memberIdentity(collectionId, groupId, entityType, entityId);
   db.transaction(() => {
-    recordDelete(db, 'collection_member', MEMBER_WHERE, [collectionId, entityType, entityId]);
-    db.exec(
-      `DELETE FROM collection_members
-       WHERE collection_id = ? AND entity_type = ? AND entity_id = ?`,
-      [collectionId, entityType, entityId],
-    );
+    recordDelete(db, 'collection_member', identity.where, identity.params);
+    db.exec(`DELETE FROM collection_members WHERE ${identity.where}`, identity.params);
   });
+}
+
+/** Remove every placement of an entity from a collection, across all groups.
+ *  Caller-transaction-free so it can compose inside a bulk operation. */
+function removeEntityRows(
+  db: Sqlite,
+  collectionId: number,
+  entityType: CollectionEntityType,
+  entityId: number,
+): void {
+  const rows = db.selectObjects<Row>(
+    `SELECT group_id FROM collection_members
+     WHERE collection_id = ? AND entity_type = ? AND entity_id = ?`,
+    [collectionId, entityType, entityId],
+  );
+  for (const r of rows) {
+    const identity = memberIdentity(
+      collectionId,
+      r.group_id == null ? null : Number(r.group_id),
+      entityType,
+      entityId,
+    );
+    recordDelete(db, 'collection_member', identity.where, identity.params);
+  }
+  db.exec(
+    `DELETE FROM collection_members
+     WHERE collection_id = ? AND entity_type = ? AND entity_id = ?`,
+    [collectionId, entityType, entityId],
+  );
+}
+
+/** Remove every placement of an entity from a collection, across all groups. */
+export function removeEntity(
+  db: Sqlite,
+  collectionId: number,
+  entityType: CollectionEntityType,
+  entityId: number,
+): void {
+  db.transaction(() => removeEntityRows(db, collectionId, entityType, entityId));
 }
 
 export function updateMember(
@@ -329,6 +377,7 @@ export function updateMember(
   collectionId: number,
   entityType: CollectionEntityType,
   entityId: number,
+  groupId: number | null,
   patch: UpdateMemberPatch,
 ): void {
   const sets: string[] = [];
@@ -346,14 +395,13 @@ export function updateMember(
     params.push(patch.done ? 1 : 0);
   }
   if (sets.length === 0) return;
-  params.push(collectionId, entityType, entityId);
+  const identity = memberIdentity(collectionId, groupId, entityType, entityId);
   db.transaction(() => {
     db.exec(
-      `UPDATE collection_members SET ${sets.join(', ')}
-       WHERE collection_id = ? AND entity_type = ? AND entity_id = ?`,
-      params,
+      `UPDATE collection_members SET ${sets.join(', ')} WHERE ${identity.where}`,
+      [...params, ...identity.params],
     );
-    recordUpsert(db, 'collection_member', MEMBER_WHERE, [collectionId, entityType, entityId]);
+    recordUpsert(db, 'collection_member', identity.where, identity.params);
   });
 }
 
@@ -370,11 +418,11 @@ export function bulkAddMembers(
   db.transaction(() => {
     let nextPos = nextMemberPosition(db, collectionId, groupId);
     for (const ref of refs) {
+      const identity = memberIdentity(collectionId, groupId, ref.entityType, ref.entityId);
       const before =
         db.selectValue<number>(
-          `SELECT 1 FROM collection_members
-           WHERE collection_id = ? AND entity_type = ? AND entity_id = ?`,
-          [collectionId, ref.entityType, ref.entityId],
+          `SELECT 1 FROM collection_members WHERE ${identity.where}`,
+          identity.params,
         ) ?? null;
       if (before !== null) {
         skipped++;
@@ -396,11 +444,7 @@ export function bulkAddMembers(
           nextPos,
         ],
       );
-      recordUpsert(db, 'collection_member', MEMBER_WHERE, [
-        collectionId,
-        ref.entityType,
-        ref.entityId,
-      ]);
+      recordUpsert(db, 'collection_member', identity.where, identity.params);
       nextPos++;
       added++;
     }
@@ -415,18 +459,7 @@ export function bulkRemoveMembers(
 ): void {
   if (refs.length === 0) return;
   db.transaction(() => {
-    for (const ref of refs) {
-      recordDelete(db, 'collection_member', MEMBER_WHERE, [
-        collectionId,
-        ref.entityType,
-        ref.entityId,
-      ]);
-      db.exec(
-        `DELETE FROM collection_members
-         WHERE collection_id = ? AND entity_type = ? AND entity_id = ?`,
-        [collectionId, ref.entityType, ref.entityId],
-      );
-    }
+    for (const ref of refs) removeEntityRows(db, collectionId, ref.entityType, ref.entityId);
   });
 }
 
@@ -435,13 +468,19 @@ export function listMembershipsFor(
   entityType: CollectionEntityType,
   entityId: number,
 ): MembershipBadge[] {
+  // One row per placement: an entity in two groups of a collection yields two
+  // badges, each carrying its own group + note/quantity/done.
   const rows = db.selectObjects<Row>(
     `SELECT c.id AS collection_id, c.name, c.description, c.icon, c.color,
+            m.group_id, g.name AS group_name,
             m.note, m.quantity, m.done
      FROM collections c
      INNER JOIN collection_members m ON m.collection_id = c.id
+     LEFT JOIN collection_groups g ON g.id = m.group_id
      WHERE m.entity_type = ? AND m.entity_id = ?
-     ORDER BY c.name COLLATE NOCASE ASC`,
+     ORDER BY c.name COLLATE NOCASE ASC,
+              CASE WHEN m.group_id IS NULL THEN 0 ELSE 1 END,
+              g.position ASC, m.position ASC`,
     [entityType, entityId],
   );
   return rows.map((r) => ({
@@ -450,6 +489,8 @@ export function listMembershipsFor(
     description: r.description == null ? null : String(r.description),
     icon: r.icon == null ? null : String(r.icon),
     color: r.color == null ? null : String(r.color),
+    groupId: r.group_id == null ? null : Number(r.group_id),
+    groupName: r.group_name == null ? null : String(r.group_name),
     note: r.note == null ? null : String(r.note),
     quantity: r.quantity == null ? null : Number(r.quantity),
     done: Number(r.done) === 1,
@@ -805,18 +846,18 @@ function insertBundleMembers(
   });
 
   for (const m of sortedMembers) {
+    const groupId =
+      m.groupName == null ? null : (groupIdByName.get(m.groupName) ?? null);
+    const identity = memberIdentity(collectionId, groupId, m.entityType, m.entityId);
     const exists =
       db.selectValue<number>(
-        `SELECT 1 FROM collection_members
-         WHERE collection_id = ? AND entity_type = ? AND entity_id = ?`,
-        [collectionId, m.entityType, m.entityId],
+        `SELECT 1 FROM collection_members WHERE ${identity.where}`,
+        identity.params,
       ) ?? null;
     if (exists !== null) {
       report.skippedMembers++;
       continue;
     }
-    const groupId =
-      m.groupName == null ? null : (groupIdByName.get(m.groupName) ?? null);
     const pos = seedPosition(groupId);
     nextPosByBucket.set(bucketKey(groupId), pos + 1);
     db.exec(

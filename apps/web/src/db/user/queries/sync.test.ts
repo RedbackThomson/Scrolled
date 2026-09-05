@@ -117,8 +117,8 @@ describe('outbox accumulation (sync phase 1)', () => {
     const c = createCollection(db, { name: 'Farm' });
     clearOutbox(db);
     addMember(db, c.id, 'item', 1302000);
-    updateMember(db, c.id, 'item', 1302000, { quantity: 5 });
-    removeMember(db, c.id, 'item', 1302000);
+    updateMember(db, c.id, 'item', 1302000, null, { quantity: 5 });
+    removeMember(db, c.id, 'item', 1302000, null);
     const rows = outbox(db);
     expect(rows.map((r) => `${r.entity}:${r.op}`)).toEqual([
       'collection_member:upsert',

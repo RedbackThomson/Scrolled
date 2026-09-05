@@ -538,13 +538,35 @@ function liveMatchByRow(db: Sqlite, entity: SyncEntity, row: RemoteRow): LiveMat
     case 'collection_member': {
       const collectionId = idOfUuid(db, 'collections', row.collection_key);
       if (collectionId == null) return null;
-      return {
-        table: 'collection_members',
-        where: 'collection_id = ? AND entity_type = ? AND entity_id = ?',
-        params: [collectionId, str(row.entity_type), num(row.entity_id)],
-      };
+      const groupId = memberGroupId(db, row.group_key);
+      // A named group that has not arrived yet can't be told apart from the
+      // ungrouped bucket, so defer the member until it does.
+      if (groupId === DEFER) return null;
+      return groupId == null
+        ? {
+            table: 'collection_members',
+            where: 'collection_id = ? AND group_id IS NULL AND entity_type = ? AND entity_id = ?',
+            params: [collectionId, str(row.entity_type), num(row.entity_id)],
+          }
+        : {
+            table: 'collection_members',
+            where: 'collection_id = ? AND group_id = ? AND entity_type = ? AND entity_id = ?',
+            params: [collectionId, groupId, str(row.entity_type), num(row.entity_id)],
+          };
     }
   }
+}
+
+/** Sentinel: the member names a group we don't hold yet, so it must wait. */
+const DEFER = Symbol('defer');
+
+/** Resolve a wire `group_key` to a local group id. Empty/absent is the
+ *  ungrouped bucket (null); an unknown non-empty key means the group has not
+ *  been applied yet and the caller should defer. */
+function memberGroupId(db: Sqlite, groupKey: unknown): number | null | typeof DEFER {
+  if (groupKey == null || groupKey === '') return null;
+  const id = idOfUuid(db, 'collection_groups', groupKey);
+  return id == null ? DEFER : id;
 }
 
 /** Locate a local row from a coalesced record key, for ack bookkeeping. */
@@ -562,14 +584,22 @@ function liveMatchByKey(entity: SyncEntity, key: string): LiveMatch | null {
     case 'recent':
       if (parts.length < 2) return null;
       return { table: 'recents', where: 'kind = ? AND ref = ?', params: [parts[0], parts[1]] };
-    case 'collection_member':
-      if (parts.length < 3) return null;
-      return {
-        table: 'collection_members',
-        where:
-          'collection_id = (SELECT id FROM collections WHERE uuid = ?) AND entity_type = ? AND entity_id = ?',
-        params: [parts[0], parts[1], Number(parts[2])],
-      };
+    case 'collection_member': {
+      if (parts.length < 4) return null;
+      const [collectionKey, groupKey, entityType, entityId] = parts;
+      const collectionSub = 'collection_id = (SELECT id FROM collections WHERE uuid = ?)';
+      return groupKey === ''
+        ? {
+            table: 'collection_members',
+            where: `${collectionSub} AND group_id IS NULL AND entity_type = ? AND entity_id = ?`,
+            params: [collectionKey, entityType, Number(entityId)],
+          }
+        : {
+            table: 'collection_members',
+            where: `${collectionSub} AND group_id = (SELECT id FROM collection_groups WHERE uuid = ?) AND entity_type = ? AND entity_id = ?`,
+            params: [collectionKey, groupKey, entityType, Number(entityId)],
+          };
+    }
   }
 }
 
@@ -630,6 +660,11 @@ function localColumns(
     case 'collection_member': {
       const collectionId = idOfUuid(db, 'collections', row.collection_key);
       if (collectionId == null) return null;
+      const groupId = memberGroupId(db, row.group_key);
+      // The group is part of the member's identity now, so an unresolved group
+      // can't fall back to ungrouped — that would collide with a real ungrouped
+      // placement of the same entity. Defer until the group arrives.
+      if (groupId === DEFER) return null;
       return {
         collection_id: collectionId,
         entity_type: str(row.entity_type),
@@ -638,9 +673,7 @@ function localColumns(
         quantity: nnum(row.quantity),
         done: bit(row.done),
         added_at: num(row.added_at),
-        // A group that has not arrived yet leaves the member ungrouped; the next
-        // pull carrying the group re-links it.
-        group_id: row.group_key == null ? null : idOfUuid(db, 'collection_groups', row.group_key),
+        group_id: groupId,
         position: num(row.position),
         updated_at: num(row.updated_at),
         ...sync,
@@ -726,7 +759,9 @@ function toRemoteRow(
         collection_key: collectionKey,
         entity_type: str(stored.entity_type),
         entity_id: num(stored.entity_id),
-        group_key: parentKey(db, stored, 'group_uuid', 'collection_groups', 'group_id'),
+        // The ungrouped bucket is the empty string on the wire so it can sit in
+        // the backend's primary key, which cannot hold a null.
+        group_key: parentKey(db, stored, 'group_uuid', 'collection_groups', 'group_id') ?? '',
         note: nstr(stored.note),
         quantity: nnum(stored.quantity),
         done: !!num(stored.done),

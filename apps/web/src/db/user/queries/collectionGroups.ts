@@ -12,9 +12,8 @@ import type {
   CollectionGroup,
 } from '../types';
 import { rowToGroup } from './rowMappers';
+import { memberIdentity } from './memberKey';
 import { recordDelete, recordUpsert } from './sync';
-
-const MEMBER_WHERE = 'collection_id = ? AND entity_type = ? AND entity_id = ?';
 
 export function listGroups(db: Sqlite, collectionId: number): CollectionGroup[] {
   const rows = db.selectObjects<Row>(
@@ -121,12 +120,17 @@ export function renameGroup(
 }
 
 /**
- * Delete a group. Members are moved into the default (implicit) group,
+ * Delete a group. Its members move into the default (implicit) group,
  * appended to its tail in their existing relative order. We do this
  * *before* the DELETE so we can compute clean target positions —
  * `ON DELETE SET NULL` on the FK would otherwise leave the moved-in
  * rows holding their old positions, which can collide with the
  * default group's existing positions.
+ *
+ * A member's identity includes its group, so reparenting changes its natural
+ * key: the grouped record is tombstoned and the ungrouped one upserted. If the
+ * entity is already ungrouped, the two placements would merge — so the grouped
+ * one is simply dropped rather than moved onto the existing ungrouped row.
  */
 export function deleteGroup(db: Sqlite, groupId: number): void {
   db.transaction(() => {
@@ -144,7 +148,7 @@ export function deleteGroup(db: Sqlite, groupId: number): void {
       [collectionId, groupId],
     );
 
-    const defaultTail =
+    let defaultTail =
       db.selectValue<number>(
         `SELECT COALESCE(MAX(position), -1) + 1
          FROM collection_members
@@ -152,19 +156,30 @@ export function deleteGroup(db: Sqlite, groupId: number): void {
         [collectionId],
       ) ?? 0;
 
-    affected.forEach((row, i) => {
-      db.exec(
-        `UPDATE collection_members
-           SET group_id = NULL, position = ?
-         WHERE collection_id = ? AND entity_type = ? AND entity_id = ?`,
-        [defaultTail + i, collectionId, String(row.entity_type), Number(row.entity_id)],
-      );
-      recordUpsert(db, 'collection_member', MEMBER_WHERE, [
-        collectionId,
-        String(row.entity_type),
-        Number(row.entity_id),
-      ]);
-    });
+    for (const row of affected) {
+      const entityType = String(row.entity_type);
+      const entityId = Number(row.entity_id);
+      const grouped = memberIdentity(collectionId, groupId, entityType, entityId);
+      const ungrouped = memberIdentity(collectionId, null, entityType, entityId);
+      const alreadyUngrouped =
+        db.selectValue<number>(
+          `SELECT 1 FROM collection_members WHERE ${ungrouped.where}`,
+          ungrouped.params,
+        ) != null;
+
+      // Either way the grouped record ceases to exist on the wire.
+      recordDelete(db, 'collection_member', grouped.where, grouped.params);
+      if (alreadyUngrouped) {
+        db.exec(`DELETE FROM collection_members WHERE ${grouped.where}`, grouped.params);
+      } else {
+        db.exec(
+          `UPDATE collection_members SET group_id = NULL, position = ? WHERE ${grouped.where}`,
+          [defaultTail, ...grouped.params],
+        );
+        recordUpsert(db, 'collection_member', ungrouped.where, ungrouped.params);
+        defaultTail++;
+      }
+    }
 
     recordDelete(db, 'collection_group', 'id = ?', [groupId]);
     db.exec(`DELETE FROM collection_groups WHERE id = ?`, [groupId]);
@@ -195,76 +210,87 @@ export function reorderGroups(
 }
 
 /**
- * Move a member to `(targetGroupId, targetIndex)`. Handles both
- * within-bucket reorders (same source and destination group) and
+ * Move a placement from `sourceGroupId` to `(targetGroupId, targetIndex)`.
+ * Handles both within-bucket reorders (same source and destination group) and
  * cross-bucket moves. Re-densifies positions in any bucket touched.
  *
- * `targetGroupId === null` means the default (implicit) group.
- * `targetIndex` is 0-based in the destination bucket *after* the source
- * row has been removed.
+ * A `null` group means the default (implicit) group. `targetIndex` is 0-based
+ * in the destination bucket *after* the source row has been removed.
+ *
+ * The entity may hold more than one placement, so the source group identifies
+ * which one moves. A cross-group move that would land on a group already holding
+ * the entity is a no-op — one entity can be in a group at most once. Because the
+ * group is part of the member's natural key, a cross-group move tombstones the
+ * old grouped record and upserts the new one.
  */
 export function moveMember(
   db: Sqlite,
   collectionId: number,
   entityType: CollectionEntityType,
   entityId: number,
+  sourceGroupId: number | null,
   targetGroupId: number | null,
   targetIndex: number,
 ): void {
   db.transaction(() => {
-    const current = db.selectObject<Row>(
-      `SELECT group_id, position FROM collection_members
-       WHERE collection_id = ? AND entity_type = ? AND entity_id = ?`,
-      [collectionId, entityType, entityId],
+    const source = memberIdentity(collectionId, sourceGroupId, entityType, entityId);
+    const current = db.selectValue<number>(
+      `SELECT 1 FROM collection_members WHERE ${source.where}`,
+      source.params,
     );
-    if (!current) {
+    if (current == null) {
       throw new Error(
-        `Member (${entityType}, ${entityId}) not found in collection ${collectionId}`,
+        `Member (${entityType}, ${entityId}) not found in group ${sourceGroupId} of collection ${collectionId}`,
       );
     }
-    const sourceGroupId = current.group_id == null ? null : Number(current.group_id);
 
-    // Temporarily park the moving row at position -1 so we can re-pack
-    // both buckets without colliding with it.
-    db.exec(
-      `UPDATE collection_members
-         SET position = -1
-       WHERE collection_id = ? AND entity_type = ? AND entity_id = ?`,
-      [collectionId, entityType, entityId],
-    );
+    const crossGroup = !sameGroup(sourceGroupId, targetGroupId);
+    if (crossGroup) {
+      const target = memberIdentity(collectionId, targetGroupId, entityType, entityId);
+      const clash = db.selectValue<number>(
+        `SELECT 1 FROM collection_members WHERE ${target.where}`,
+        target.params,
+      );
+      if (clash != null) return;
+      // The grouped record's key changes with the group, so capture the old
+      // one as a tombstone before we rewrite the row.
+      recordDelete(db, 'collection_member', source.where, source.params);
+    }
+
+    // Temporarily park the moving row at position -1 so we can re-pack both
+    // buckets without colliding with it.
+    db.exec(`UPDATE collection_members SET position = -1 WHERE ${source.where}`, source.params);
 
     redensify(db, collectionId, sourceGroupId);
-    if (sameGroup(sourceGroupId, targetGroupId)) {
-      // Re-densifying may have shifted the position values, but the
-      // moving row sits at -1 so it's still excluded. Insert it at
-      // targetIndex by shifting the destination tail up.
+    if (!crossGroup) {
+      // Re-densifying may have shifted the position values, but the moving row
+      // sits at -1 so it's still excluded. Insert it at targetIndex by shifting
+      // the destination tail up.
       shiftUp(db, collectionId, targetGroupId, targetIndex);
     } else {
       redensify(db, collectionId, targetGroupId);
       shiftUp(db, collectionId, targetGroupId, targetIndex);
     }
 
-    // Move the parked row into the target bucket at the requested index.
+    // Move the parked row into the target bucket at the requested index. The
+    // WHERE still filters on the source group, which the row carries until now.
     if (targetGroupId == null) {
       db.exec(
-        `UPDATE collection_members
-           SET group_id = NULL, position = ?
-         WHERE collection_id = ? AND entity_type = ? AND entity_id = ?`,
-        [targetIndex, collectionId, entityType, entityId],
+        `UPDATE collection_members SET group_id = NULL, position = ? WHERE ${source.where}`,
+        [targetIndex, ...source.params],
       );
     } else {
       db.exec(
-        `UPDATE collection_members
-           SET group_id = ?, position = ?
-         WHERE collection_id = ? AND entity_type = ? AND entity_id = ?`,
-        [targetGroupId, targetIndex, collectionId, entityType, entityId],
+        `UPDATE collection_members SET group_id = ?, position = ? WHERE ${source.where}`,
+        [targetGroupId, targetIndex, ...source.params],
       );
     }
 
     // Re-densify shifted sibling positions in both buckets, so every member
-    // whose position changed is recorded — not just the dragged one.
+    // whose position changed is recorded — not just the dragged one. On a
+    // cross-group move this also upserts the moved row under its new key.
     recordBucketMembers(db, collectionId, sourceGroupId);
-    if (!sameGroup(sourceGroupId, targetGroupId)) {
+    if (crossGroup) {
       recordBucketMembers(db, collectionId, targetGroupId);
     }
   });
@@ -286,11 +312,8 @@ function recordBucketMembers(db: Sqlite, collectionId: number, groupId: number |
           [collectionId, groupId],
         );
   for (const r of rows) {
-    recordUpsert(db, 'collection_member', MEMBER_WHERE, [
-      collectionId,
-      String(r.entity_type),
-      Number(r.entity_id),
-    ]);
+    const identity = memberIdentity(collectionId, groupId, String(r.entity_type), Number(r.entity_id));
+    recordUpsert(db, 'collection_member', identity.where, identity.params);
   }
 }
 

@@ -4,6 +4,7 @@
 // hasn't loaded (keeps the layout calm on detail pages that have a lot
 // going on).
 
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { BookmarkPlus } from 'lucide-react';
 import { HoverPopover } from '@scrolled/ui';
@@ -26,12 +27,20 @@ export function CollectionBadgeStrip({
   className,
 }: CollectionBadgeStripProps) {
   const membershipQ = useMembership(entityType, entityId);
-  const memberships = membershipQ.data ?? [];
+  // Membership is one row per placement; an entity in two groups of a collection
+  // still shows a single chip for that collection.
+  const collections = useMemo(() => {
+    const seen = new Map<number, MembershipBadge>();
+    for (const m of membershipQ.data ?? []) {
+      if (!seen.has(m.collectionId)) seen.set(m.collectionId, m);
+    }
+    return [...seen.values()];
+  }, [membershipQ.data]);
 
   return (
     <div className={cn('flex flex-wrap items-center gap-1.5', className)}>
-      {memberships.length > 0 ? (
-        memberships.map((m) => <BadgeChip key={m.collectionId} membership={m} />)
+      {collections.length > 0 ? (
+        collections.map((m) => <BadgeChip key={m.collectionId} membership={m} />)
       ) : (
         <></>
       )}

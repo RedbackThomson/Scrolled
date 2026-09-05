@@ -83,6 +83,7 @@ const groupsMoveMemberSchema = z.object({
   collectionId: idSchema,
   entityType: collectionEntityTypeSchema,
   entityId: idSchema,
+  sourceGroupId: idSchema.nullable(),
   targetGroupId: idSchema.nullable(),
   targetIndex: z.number().int().min(0),
 });
@@ -90,7 +91,7 @@ export const groupsMoveMember: ToolDefinition<typeof groupsMoveMemberSchema, unk
   name: 'collectionGroups.moveMember',
   category: 'Groups',
   description:
-    'Move a member to a (groupId|null, index). `null` group means the implicit default group.',
+    'Move a placement from `sourceGroupId` to a (targetGroupId|null, index). `null` group means the implicit default group. Moving onto a group that already holds the entity is a no-op.',
   inputSchema: groupsMoveMemberSchema,
   annotations: WRITE_IDEMPOTENT,
   execute: async (input, ctx) => {
@@ -98,6 +99,7 @@ export const groupsMoveMember: ToolDefinition<typeof groupsMoveMemberSchema, unk
       input.collectionId,
       input.entityType,
       input.entityId,
+      input.sourceGroupId,
       input.targetGroupId,
       input.targetIndex,
     );

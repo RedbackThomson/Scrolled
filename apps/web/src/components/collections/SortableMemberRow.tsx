@@ -27,7 +27,7 @@ interface SortableMemberRowProps {
 }
 
 export function SortableMemberRow({ member, name, disabled = false }: SortableMemberRowProps) {
-  const id = memberDndId(member.entityType, member.entityId);
+  const id = memberDndId(member.entityType, member.entityId, member.groupId);
   const {
     attributes,
     listeners,

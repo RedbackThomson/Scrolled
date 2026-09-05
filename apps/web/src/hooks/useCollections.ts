@@ -159,13 +159,41 @@ export interface ToggleMembershipArgs {
   member: boolean;
 }
 
+/** Toggle whether an entity is in a collection at all. Adding lands it in the
+ *  default (ungrouped) bucket; removing clears every group placement. */
 export function useToggleMembership(): UseMutationResult<void, Error, ToggleMembershipArgs> {
   const db = useUserDb();
   const invalidate = useInvalidateAll();
   return useMutation({
     mutationFn: async ({ collectionId, entityType, entityId, member }) => {
       if (member) await db.addMember(collectionId, entityType, entityId);
-      else await db.removeMember(collectionId, entityType, entityId);
+      else await db.removeEntity(collectionId, entityType, entityId);
+    },
+    onSuccess: () => invalidate(),
+  });
+}
+
+export interface ToggleGroupPlacementArgs {
+  collectionId: number;
+  entityType: CollectionEntityType;
+  entityId: number;
+  /** The group to add/remove the placement in; null = default bucket. */
+  groupId: number | null;
+  present: boolean;
+}
+
+/** Toggle whether an entity has a placement in a specific group. */
+export function useToggleGroupPlacement(): UseMutationResult<
+  void,
+  Error,
+  ToggleGroupPlacementArgs
+> {
+  const db = useUserDb();
+  const invalidate = useInvalidateAll();
+  return useMutation({
+    mutationFn: async ({ collectionId, entityType, entityId, groupId, present }) => {
+      if (present) await db.addMember(collectionId, entityType, entityId, { groupId });
+      else await db.removeMember(collectionId, entityType, entityId, groupId);
     },
     onSuccess: () => invalidate(),
   });
@@ -178,14 +206,15 @@ export function useUpdateMember(): UseMutationResult<
     collectionId: number;
     entityType: CollectionEntityType;
     entityId: number;
+    groupId: number | null;
     patch: UpdateMemberPatch;
   }
 > {
   const db = useUserDb();
   const invalidate = useInvalidateAll();
   return useMutation({
-    mutationFn: ({ collectionId, entityType, entityId, patch }) =>
-      db.updateMember(collectionId, entityType, entityId, patch),
+    mutationFn: ({ collectionId, entityType, entityId, groupId, patch }) =>
+      db.updateMember(collectionId, entityType, entityId, groupId, patch),
     onSuccess: () => invalidate(),
   });
 }
@@ -193,13 +222,13 @@ export function useUpdateMember(): UseMutationResult<
 export function useRemoveMember(): UseMutationResult<
   void,
   Error,
-  { collectionId: number; entityType: CollectionEntityType; entityId: number }
+  { collectionId: number; entityType: CollectionEntityType; entityId: number; groupId: number | null }
 > {
   const db = useUserDb();
   const invalidate = useInvalidateAll();
   return useMutation({
-    mutationFn: ({ collectionId, entityType, entityId }) =>
-      db.removeMember(collectionId, entityType, entityId),
+    mutationFn: ({ collectionId, entityType, entityId, groupId }) =>
+      db.removeMember(collectionId, entityType, entityId, groupId),
     onSuccess: () => invalidate(),
   });
 }
@@ -319,6 +348,8 @@ export interface MoveMemberArgs {
   collectionId: number;
   entityType: CollectionEntityType;
   entityId: number;
+  /** The placement being moved; null = default (implicit) group. */
+  sourceGroupId: number | null;
   /** Null = default (implicit) group. */
   targetGroupId: number | null;
   /** 0-based index in the destination bucket *after* the source was removed. */
@@ -329,8 +360,8 @@ export function useMoveMember(): UseMutationResult<void, Error, MoveMemberArgs> 
   const db = useUserDb();
   const invalidate = useInvalidateAll();
   return useMutation({
-    mutationFn: ({ collectionId, entityType, entityId, targetGroupId, targetIndex }) =>
-      db.moveMember(collectionId, entityType, entityId, targetGroupId, targetIndex),
+    mutationFn: ({ collectionId, entityType, entityId, sourceGroupId, targetGroupId, targetIndex }) =>
+      db.moveMember(collectionId, entityType, entityId, sourceGroupId, targetGroupId, targetIndex),
     onSuccess: () => invalidate(),
   });
 }

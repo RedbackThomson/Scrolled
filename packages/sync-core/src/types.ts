@@ -40,7 +40,7 @@ export type SyncTable = (typeof ENTITY_TABLE)[SyncEntity];
 export const ENTITY_KEY_COLUMNS = {
   collection: ['key'],
   collection_group: ['key'],
-  collection_member: ['collection_key', 'entity_type', 'entity_id'],
+  collection_member: ['collection_key', 'group_key', 'entity_type', 'entity_id'],
   pinned_search: ['key'],
   user_setting: ['key'],
   recent: ['kind', 'ref'],

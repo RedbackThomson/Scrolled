@@ -143,6 +143,7 @@ export class UserDbApi implements UserDatabase {
     collectionId: number,
     entityType: CollectionEntityType,
     entityId: number,
+    sourceGroupId: number | null,
     targetGroupId: number | null,
     targetIndex: number,
   ): Promise<void> {
@@ -151,6 +152,7 @@ export class UserDbApi implements UserDatabase {
       collectionId,
       entityType,
       entityId,
+      sourceGroupId,
       targetGroupId,
       targetIndex,
     );
@@ -175,17 +177,27 @@ export class UserDbApi implements UserDatabase {
     collectionId: number,
     entityType: CollectionEntityType,
     entityId: number,
+    groupId: number | null,
   ): Promise<void> {
-    collections.removeMember(this.db, collectionId, entityType, entityId);
+    collections.removeMember(this.db, collectionId, entityType, entityId, groupId);
+  }
+
+  async removeEntity(
+    collectionId: number,
+    entityType: CollectionEntityType,
+    entityId: number,
+  ): Promise<void> {
+    collections.removeEntity(this.db, collectionId, entityType, entityId);
   }
 
   async updateMember(
     collectionId: number,
     entityType: CollectionEntityType,
     entityId: number,
+    groupId: number | null,
     patch: UpdateMemberPatch,
   ): Promise<void> {
-    collections.updateMember(this.db, collectionId, entityType, entityId, patch);
+    collections.updateMember(this.db, collectionId, entityType, entityId, groupId, patch);
   }
 
   async bulkAddMembers(

@@ -138,7 +138,7 @@ A record's identity is the same set of columns locally and remotely:
 | --- | --- |
 | `collection` | `key` (client-minted) |
 | `collection_group` | `key` (client-minted) |
-| `collection_member` | `(collection_key, entity_type, entity_id)` |
+| `collection_member` | `(collection_key, group_key, entity_type, entity_id)` |
 | `pinned_search` | `key` (client-minted) |
 | `user_setting` | `key` (the setting's own name) |
 | `recent` | `(kind, ref)` |
@@ -308,15 +308,19 @@ can never violate a local constraint.
 | --- | --- | --- | --- |
 | `sync_collections` | `(account_id, key)` | `(account_id, name)` where live | — |
 | `sync_collection_groups` | `(account_id, key)` | `(account_id, collection_key, name)` where live | → collections |
-| `sync_collection_members` | `(account_id, collection_key, entity_type, entity_id)` | — | → collections |
+| `sync_collection_members` | `(account_id, collection_key, group_key, entity_type, entity_id)` | — | → collections |
 | `sync_pinned_searches` | `(account_id, key)` | `(account_id, name)` where live | — |
 | `sync_user_settings` | `(account_id, key)` | — | — |
 | `sync_recents` | `(account_id, kind, ref)` | — | — |
 
 The unique name indexes are partial on `deleted_at is null`, so a tombstone never
 reserves a name. `group_key` on members deliberately has no foreign key: deleting
-a group re-parents its members client-side, and a briefly dangling key renders as
-ungrouped and self-heals.
+a group re-parents its members client-side. Because the group is part of a
+member's identity, a member whose group has not been pulled yet is held back on
+apply — not dropped into the ungrouped bucket, where it could collide with a real
+ungrouped placement — and lands on the next pull once its group arrives. The
+ungrouped bucket is the empty string on the wire so it can sit in the primary
+key, which cannot hold a null.
 
 Two trigger-stamped columns, each doing one job. `seq` from a global sequence is
 the per-row staleness comparator; `server_time` is the pull cursor. Do not
@@ -393,6 +397,10 @@ non-retryable "please refresh" rather than corrupting data.
 
 v3 is the relational protocol. It is not compatible with v2's append-only jsonb
 log, so `min_client_revision` moved to 3 at the same time.
+
+v4 added `group_key` to a member's key so an entity can sit in more than one
+group of a collection. A v3 client keys members without the group and would
+collapse the extra placements onto one row, so `min_client_revision` moved to 4.
 
 Local schema changes are ordinary user-DB migrations, appended and never
 reordered. They are independent of the game DB's schema version and data

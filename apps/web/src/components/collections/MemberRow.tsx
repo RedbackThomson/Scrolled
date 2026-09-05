@@ -41,6 +41,7 @@ export function MemberRow({ member, name }: MemberRowProps) {
       collectionId: member.collectionId,
       entityType: member.entityType,
       entityId: member.entityId,
+      groupId: member.groupId,
       patch: { note: next || null },
     });
     setEditingNote(false);
@@ -62,6 +63,7 @@ export function MemberRow({ member, name }: MemberRowProps) {
       collectionId: member.collectionId,
       entityType: member.entityType,
       entityId: member.entityId,
+      groupId: member.groupId,
       patch: { quantity: next },
     });
   };
@@ -71,6 +73,7 @@ export function MemberRow({ member, name }: MemberRowProps) {
       collectionId: member.collectionId,
       entityType: member.entityType,
       entityId: member.entityId,
+      groupId: member.groupId,
       patch: { done: !member.done },
     });
   };
@@ -80,6 +83,7 @@ export function MemberRow({ member, name }: MemberRowProps) {
       collectionId: member.collectionId,
       entityType: member.entityType,
       entityId: member.entityId,
+      groupId: member.groupId,
     });
   };
 

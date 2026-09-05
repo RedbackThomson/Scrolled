@@ -169,6 +169,10 @@ export interface MembershipBadge {
   description: string | null;
   icon: string | null;
   color: string | null;
+  /** The placement's group; null means the default (implicit) group. An entity
+   *  in more than one group of a collection yields one badge per placement. */
+  groupId: number | null;
+  groupName: string | null;
   note: string | null;
   quantity: number | null;
   done: boolean;
@@ -277,15 +281,17 @@ export interface UserDatabase {
   /** Persist a new ordering of the collection's groups (top to bottom). */
   reorderGroups(collectionId: number, orderedGroupIds: readonly number[]): Promise<void>;
   /**
-   * Move a member to a target group + position. `targetGroupId` may be
-   * null for the default (implicit) group. `targetIndex` is 0-based;
-   * pass `members.length` to drop at the end. Re-densifies positions in
-   * both source and destination buckets in one transaction.
+   * Move a placement from `sourceGroupId` to a target group + position. Both
+   * group ids may be null for the default (implicit) group. `targetIndex` is
+   * 0-based; pass the destination bucket length to drop at the end. A
+   * cross-group move onto a group already holding the entity is a no-op.
+   * Re-densifies positions in both buckets in one transaction.
    */
   moveMember(
     collectionId: number,
     entityType: CollectionEntityType,
     entityId: number,
+    sourceGroupId: number | null,
     targetGroupId: number | null,
     targetIndex: number,
   ): Promise<void>;
@@ -297,15 +303,26 @@ export interface UserDatabase {
     entityId: number,
     opts?: AddMemberOptions,
   ): Promise<void>;
+  /** Remove a single placement — the entity's membership in one group
+   *  (`groupId` null for the default group). */
   removeMember(
     collectionId: number,
     entityType: CollectionEntityType,
     entityId: number,
+    groupId: number | null,
   ): Promise<void>;
+  /** Remove every placement of an entity from a collection, across all groups. */
+  removeEntity(
+    collectionId: number,
+    entityType: CollectionEntityType,
+    entityId: number,
+  ): Promise<void>;
+  /** Update one placement's metadata (`groupId` null for the default group). */
   updateMember(
     collectionId: number,
     entityType: CollectionEntityType,
     entityId: number,
+    groupId: number | null,
     patch: UpdateMemberPatch,
   ): Promise<void>;
   /**

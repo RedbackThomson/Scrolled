@@ -38,13 +38,13 @@ describe('upsert', () => {
     const provider = makeProvider(makeRest({ upsert }));
 
     await provider.upsert('collection_member', [
-      { collection_key: 'c1', entity_type: 'mob', entity_id: 100 },
+      { collection_key: 'c1', group_key: '', entity_type: 'mob', entity_id: 100 },
     ]);
 
     expect(upsert).toHaveBeenCalledWith(
       'sync_collection_members',
       expect.any(Array),
-      'account_id,collection_key,entity_type,entity_id',
+      'account_id,collection_key,group_key,entity_type,entity_id',
     );
   });
 

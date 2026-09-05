@@ -160,7 +160,10 @@ export function CollectionMembersBoard({
     const movingRef = parseMemberDndId(activeId);
     if (!movingRef) return;
     const moving = members.find(
-      (m) => m.entityType === movingRef.entityType && m.entityId === movingRef.entityId,
+      (m) =>
+        m.entityType === movingRef.entityType &&
+        m.entityId === movingRef.entityId &&
+        (m.groupId ?? null) === movingRef.groupId,
     );
     if (!moving) return;
 
@@ -171,6 +174,7 @@ export function CollectionMembersBoard({
         collectionId,
         entityType: moving.entityType,
         entityId: moving.entityId,
+        sourceGroupId: moving.groupId,
         targetGroupId: created.id,
         targetIndex: 0,
       });
@@ -184,6 +188,7 @@ export function CollectionMembersBoard({
         collectionId,
         entityType: moving.entityType,
         entityId: moving.entityId,
+        sourceGroupId: moving.groupId,
         targetGroupId: overGroupId,
         targetIndex: 0,
       });
@@ -194,7 +199,10 @@ export function CollectionMembersBoard({
     const overRef = parseMemberDndId(overId);
     if (!overRef) return;
     const overMember = members.find(
-      (m) => m.entityType === overRef.entityType && m.entityId === overRef.entityId,
+      (m) =>
+        m.entityType === overRef.entityType &&
+        m.entityId === overRef.entityId &&
+        (m.groupId ?? null) === overRef.groupId,
     );
     if (!overMember) return;
 
@@ -224,6 +232,7 @@ export function CollectionMembersBoard({
       collectionId,
       entityType: moving.entityType,
       entityId: moving.entityId,
+      sourceGroupId: moving.groupId,
       targetGroupId,
       targetIndex,
     });
@@ -590,14 +599,14 @@ function InnerSection({
         </div>
       )}
       <SortableContext
-        items={inner.members.map((m) => memberDndId(m.entityType, m.entityId))}
+        items={inner.members.map((m) => memberDndId(m.entityType, m.entityId, m.groupId))}
         strategy={verticalListSortingStrategy}
         disabled={!itemDragEnabled}
       >
         <div className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
           {inner.members.map((m) => (
             <SortableMemberRow
-              key={`${m.entityType}-${m.entityId}`}
+              key={`${m.entityType}-${m.entityId}-${m.groupId ?? 'default'}`}
               member={m}
               name={summaries?.[m.entityType]?.get(m.entityId) ?? null}
               disabled={!itemDragEnabled}

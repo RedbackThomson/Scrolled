@@ -7,6 +7,7 @@ const notesUpdateSchema = z.object({
   collectionId: idSchema,
   entityType: collectionEntityTypeSchema,
   entityId: idSchema,
+  groupId: idSchema.nullable().optional(),
   patch: z.object({
     note: z.string().nullable().optional(),
     quantity: z.number().int().nullable().optional(),
@@ -17,7 +18,7 @@ export const notesUpdate: ToolDefinition<typeof notesUpdateSchema, unknown> = {
   name: 'notes.update',
   category: 'Notes',
   description:
-    'Update a collection member\'s note / target quantity / done flag. Any subset of the patch is fine.',
+    "Update a collection member's note / target quantity / done flag. Any subset of the patch is fine. Pass `groupId` (or null for the default group) to target one placement when the entity is in more than one group.",
   inputSchema: notesUpdateSchema,
   annotations: WRITE_IDEMPOTENT,
   execute: async (input, ctx) => {
@@ -25,6 +26,7 @@ export const notesUpdate: ToolDefinition<typeof notesUpdateSchema, unknown> = {
       input.collectionId,
       input.entityType,
       input.entityId,
+      input.groupId ?? null,
       input.patch,
     );
     return { ok: true };

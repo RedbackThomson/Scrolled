@@ -86,13 +86,15 @@ describe('applyRemoteRows', () => {
     expect(count('collection_members')).toBe(1);
   });
 
-  it('leaves a member ungrouped when its group has not arrived', () => {
+  it('defers a member until its group arrives', () => {
     applyRemoteRows(db, [
       tagged('collection', remoteCollection('c1', 'Bosses')),
       tagged('collection_member', { ...remoteMember('c1', 100), group_key: 'g1' }),
     ]);
 
-    expect(db.selectValue('SELECT group_id FROM collection_members')).toBeNull();
+    // The named group is unknown, so the member is held back rather than dropped
+    // into the ungrouped bucket, where it could collide with a real placement.
+    expect(count('collection_members')).toBe(0);
 
     applyRemoteRows(db, [
       tagged('collection_group', {
@@ -106,6 +108,23 @@ describe('applyRemoteRows', () => {
     ]);
 
     expect(db.selectValue('SELECT group_id FROM collection_members')).not.toBeNull();
+  });
+
+  it('keeps two placements of one entity in different groups', () => {
+    applyRemoteRows(db, [
+      tagged('collection', remoteCollection('c1', 'Bosses')),
+      tagged('collection_group', {
+        key: 'g1',
+        collection_key: 'c1',
+        name: 'Daily',
+        position: 0,
+        created_at: 1,
+      }),
+      tagged('collection_member', remoteMember('c1', 100)),
+      tagged('collection_member', { ...remoteMember('c1', 100), group_key: 'g1' }),
+    ]);
+
+    expect(count('collection_members')).toBe(2);
   });
 
   it('ignores a row it already holds at the same seq', () => {
