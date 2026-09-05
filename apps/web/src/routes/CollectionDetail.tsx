@@ -202,7 +202,9 @@ export default function CollectionDetail() {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {hasMembers && <CollectionDisplayOptionsMenu collection={collection} />}
+            {(hasMembers || groups.length > 0) && (
+              <CollectionDisplayOptionsMenu collection={collection} />
+            )}
             <Button
               variant="outline"
               size="sm"
@@ -262,19 +264,23 @@ export default function CollectionDetail() {
         <p className="text-muted-foreground text-sm">
           <Loader2 className="inline h-4 w-4 animate-spin" /> Loading members…
         </p>
-      ) : !hasMembers ? (
-        <div className="border-border bg-muted/40 rounded-md border p-6 text-center text-sm">
-          <p className="text-muted-foreground">
-            No members yet. Open any item, mob, map, or quest page and click "Save".
-          </p>
-        </div>
       ) : (
-        <CollectionMembersBoard
-          collection={collection}
-          members={members}
-          groups={groups}
-          summaries={summariesQ.data}
-        />
+        <>
+          {!hasMembers && (
+            <div className="border-border bg-muted/40 rounded-md border p-4 text-sm">
+              <p className="text-muted-foreground">
+                No members yet. Open any item, mob, map, or quest page and click "Save" to add
+                one — or set up groups below to organize them as you go.
+              </p>
+            </div>
+          )}
+          <CollectionMembersBoard
+            collection={collection}
+            members={members}
+            groups={groups}
+            summaries={summariesQ.data}
+          />
+        </>
       )}
     </div>
   );
