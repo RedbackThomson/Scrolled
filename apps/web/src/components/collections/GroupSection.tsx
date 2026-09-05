@@ -13,7 +13,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Trash2, Pencil } from 'lucide-react';
 import { useDeleteGroup, useRenameGroup } from '@/hooks/useCollections';
 import { groupDndId } from './dndIds';
-import { cn } from '@scrolled/ui';
+import { cn, Input } from '@scrolled/ui';
 
 interface GroupSectionProps {
   /** Null for the default group. */
@@ -101,7 +101,7 @@ export function GroupSection({
           )}
 
           {editing && !isDefault ? (
-            <input
+            <Input
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               onBlur={commitRename}

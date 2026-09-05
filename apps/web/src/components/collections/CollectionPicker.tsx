@@ -13,7 +13,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { usePopover } from '@/hooks/usePopover';
 import { createPortal } from 'react-dom';
 import { Check, Loader2, Plus, Search } from 'lucide-react';
-import { Button } from '@scrolled/ui';
+import { Button, Input } from '@scrolled/ui';
 import {
   useCollectionGroups,
   useCollectionsList,
@@ -113,7 +113,7 @@ export function CollectionPicker({ entityType, entityId, children }: CollectionP
             <div className="border-border border-b p-2">
               <div className="relative">
                 <Search className="text-muted-foreground pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2" />
-                <input
+                <Input
                   autoFocus
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
@@ -367,7 +367,7 @@ function PlacementEditor({
         </div>
       )}
       <div className="flex items-center gap-1.5">
-        <input
+        <Input
           type="number"
           min={0}
           value={qtyDraft}
@@ -383,7 +383,7 @@ function PlacementEditor({
           aria-label={`Quantity for ${label}`}
           className="border-input bg-background focus-visible:ring-ring h-6 w-16 rounded-md border px-1.5 text-base tabular-nums focus-visible:outline-none focus-visible:ring-2 sm:text-[11px]"
         />
-        <input
+        <Input
           type="text"
           value={noteDraft}
           onChange={(e) => setNoteDraft(e.target.value)}

@@ -2,7 +2,7 @@ import { Fragment, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Loader2 } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { cn } from '@scrolled/ui';
+import { cn, Input } from '@scrolled/ui';
 
 interface Props<TData> {
   data: readonly TData[];
@@ -94,7 +94,7 @@ export function MobileCards<TData>({
           >
             {selectable && (
               <label className="z-10 flex shrink-0 items-center pl-3">
-                <input
+                <Input
                   type="checkbox"
                   checked={isSelected}
                   onChange={() => toggleRow(rowId)}

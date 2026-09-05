@@ -11,7 +11,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { Button } from '@scrolled/ui';
+import { Button, Input } from '@scrolled/ui';
 import { useCreatePinnedSearch } from '@/hooks/usePinnedSearches';
 import type { CollectionEntityType } from '@/db/user';
 
@@ -45,7 +45,7 @@ export function SaveSearchPrompt({ entity, onDone }: SaveSearchPromptProps) {
 
   return (
     <div className="flex items-center gap-1.5">
-      <input
+      <Input
         ref={inputRef}
         value={name}
         onChange={(e) => setName(e.target.value)}

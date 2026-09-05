@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { Button } from '@scrolled/ui';
+import { Button, Input, Textarea } from '@scrolled/ui';
 import { useCreateCollection, useUpdateCollection } from '@/hooks/useCollections';
 import type { CollectionRecord } from '@/db/user';
 import { cn } from '@scrolled/ui';
@@ -134,7 +134,7 @@ export function CollectionFormDialog({
           </div>
           <label className="block min-w-0 flex-1 space-y-1 text-sm">
             <span className="text-muted-foreground text-xs uppercase tracking-wide">Name</span>
-            <input
+            <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Boss drops to farm"
@@ -148,7 +148,7 @@ export function CollectionFormDialog({
             <span>Description</span>
             <span className="text-[10px] normal-case">Optional</span>
           </span>
-          <textarea
+          <Textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="What's this collection for? (multi-line)"

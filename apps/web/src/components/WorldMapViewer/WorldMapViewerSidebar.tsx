@@ -4,7 +4,7 @@ import type { WorldMapMarkerWithMaps } from '@/db';
 import { MapHoverCard } from '@/components/entity-links';
 import { HoverPopover } from '@scrolled/ui';
 import { useEntitySummaryNames } from '@/hooks/useEntitySummaries';
-import { cn } from '@scrolled/ui';
+import { cn, Input } from '@scrolled/ui';
 
 interface Props {
   markers: WorldMapMarkerWithMaps[];
@@ -86,7 +86,7 @@ export function WorldMapViewerSidebar({
   return (
     <aside className="border-border bg-card flex w-72 shrink-0 flex-col border-r">
       <div className="border-border flex shrink-0 items-center gap-1.5 border-b px-2 py-1.5">
-        <input
+        <Input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}

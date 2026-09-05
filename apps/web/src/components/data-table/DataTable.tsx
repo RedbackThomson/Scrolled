@@ -12,7 +12,7 @@ import {
   type VisibilityState,
 } from '@tanstack/react-table';
 import { Loader2, Search, X } from 'lucide-react';
-import { Button } from '@scrolled/ui';
+import { Button, Input } from '@scrolled/ui';
 import {
   Table,
   TableBody,
@@ -274,7 +274,7 @@ export function DataTable<TData>({
           // after them) while `sm:max-w-xs` keeps it from sprawling on desktop.
           <div className="relative min-w-0 flex-1 sm:max-w-xs">
             <Search className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
-            <input
+            <Input
               type="search"
               value={searchValue ?? ''}
               onChange={(e) => onSearchChange(e.target.value)}
@@ -349,7 +349,7 @@ export function DataTable<TData>({
             <TableRow key={group.id} className="hover:bg-transparent">
               {selectable && (
                 <TableHead className="w-9 pr-0">
-                  <input
+                  <Input
                     type="checkbox"
                     checked={allOnPageSelected}
                     ref={(el) => {
@@ -399,7 +399,7 @@ export function DataTable<TData>({
                   {selectable && (
                     <TableCell className="w-9 pr-0">
                       <span className="relative z-10 inline-flex">
-                        <input
+                        <Input
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => toggleRow(rowId)}

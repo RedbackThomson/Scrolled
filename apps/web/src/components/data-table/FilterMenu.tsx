@@ -30,7 +30,7 @@ import {
   CommandItem,
   CommandEmpty,
 } from '@scrolled/ui';
-import { Button } from '@scrolled/ui';
+import { Button, Input } from '@scrolled/ui';
 import { usePopover } from '@/hooks/usePopover';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import type { ColumnFilter } from '@/db';
@@ -556,7 +556,7 @@ function StringEditor({
 
   return (
     <div className="space-y-2 p-2">
-      <input
+      <Input
         ref={inputRef}
         type="search"
         value={value}
@@ -621,7 +621,7 @@ function NumberEditor({
   return (
     <div className="space-y-2 p-2">
       <div className="flex items-center gap-1.5">
-        <input
+        <Input
           autoFocus
           type="number"
           inputMode="numeric"
@@ -633,7 +633,7 @@ function NumberEditor({
           className="border-input bg-background focus-visible:ring-ring h-8 w-full rounded-md border px-2 text-base focus-visible:outline-none focus-visible:ring-2 sm:text-sm"
         />
         <span className="text-muted-foreground text-xs">–</span>
-        <input
+        <Input
           type="number"
           inputMode="numeric"
           value={maxStr}

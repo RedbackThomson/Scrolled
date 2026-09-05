@@ -16,7 +16,7 @@ import { ExtractAllPanel } from '@/components/data/ExtractAllPanel';
 import { ProgressBar } from '@/components/common/ProgressBar';
 import { getParserClient, type WzNodeInfo, type WzMapleVersionName } from '@/parser';
 import { getDbClient } from '@/db';
-import { cn } from '@scrolled/ui';
+import { cn, Input } from '@scrolled/ui';
 import { buildReport } from '@/lib/diagnosticsReport';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import type { ProgressUpdate } from '@scrolled/game-db/lib/progress';
@@ -175,7 +175,7 @@ export default function SettingsDeveloper() {
           re-uploading here.
         </p>
         <div className="flex items-center gap-2">
-          <input
+          <Input
             type="text"
             value={lookupPath}
             onChange={(e) => setLookupPath(e.target.value)}

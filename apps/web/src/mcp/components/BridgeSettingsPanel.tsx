@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plug } from 'lucide-react';
 import { useSettingsSection } from '@/components/settings/SettingsScrollSpy';
-import { cn } from '@scrolled/ui';
+import { cn, Input } from '@scrolled/ui';
 import {
   DEFAULT_BRIDGE_SETTINGS,
   readBridgeSettings,
@@ -92,7 +92,7 @@ export function BridgeSettingsPanel() {
         <div>
           <label className="block">
             <span className="text-sm font-medium">Bridge URL</span>
-            <input
+            <Input
               type="text"
               value={urlDraft}
               onChange={(e) => setUrlDraft(e.target.value)}

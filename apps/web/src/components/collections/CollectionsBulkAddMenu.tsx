@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { usePopover } from '@/hooks/usePopover';
 import { createPortal } from 'react-dom';
 import { BookmarkPlus, ChevronDown, Loader2, Plus, Search } from 'lucide-react';
-import { Button } from '@scrolled/ui';
+import { Button, Input } from '@scrolled/ui';
 import { useBulkAddMembers, useCollectionsList, useCreateCollection } from '@/hooks/useCollections';
 import type { CollectionEntityType, EntityRef } from '@/db/user';
 import { cn } from '@scrolled/ui';
@@ -127,7 +127,7 @@ export function CollectionsBulkAddMenu({
             <div className="border-border border-b p-2">
               <div className="relative">
                 <Search className="text-muted-foreground pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2" />
-                <input
+                <Input
                   autoFocus
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}

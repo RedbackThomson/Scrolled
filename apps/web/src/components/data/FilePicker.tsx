@@ -1,6 +1,6 @@
 import { useRef, type ChangeEvent } from 'react';
 import { Upload } from 'lucide-react';
-import { Button } from '@scrolled/ui';
+import { Button, Input } from '@scrolled/ui';
 
 interface Props {
   accept?: string;
@@ -29,7 +29,7 @@ export function FilePicker({
 
   return (
     <div className="flex items-center gap-3">
-      <input
+      <Input
         ref={inputRef}
         type="file"
         accept={accept}

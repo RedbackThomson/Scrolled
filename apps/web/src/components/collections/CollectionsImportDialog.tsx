@@ -9,7 +9,7 @@
 
 import { useState, type ChangeEvent } from 'react';
 import { AlertCircle, FileJson, Loader2, Upload } from 'lucide-react';
-import { Button } from '@scrolled/ui';
+import { Button, Input } from '@scrolled/ui';
 import { useImportJson } from '@/hooks/useCollections';
 import {
   collectionsExportSchema,
@@ -142,7 +142,7 @@ export function CollectionsImportDialog({
         <div className="space-y-3 text-sm">
           <label className="block space-y-1">
             <span className="text-muted-foreground text-xs uppercase tracking-wide">File</span>
-            <input
+            <Input
               type="file"
               accept="application/json,.json"
               onChange={onPickFile}
@@ -189,7 +189,7 @@ export function CollectionsImportDialog({
                     mode === opt.value && 'bg-accent border-foreground/20',
                   )}
                 >
-                  <input
+                  <Input
                     type="radio"
                     name="conflict-mode"
                     value={opt.value}

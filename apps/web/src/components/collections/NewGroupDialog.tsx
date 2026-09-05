@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { Button } from '@scrolled/ui';
+import { Button, Input } from '@scrolled/ui';
 import { useCreateGroup } from '@/hooks/useCollections';
 import type { CollectionGroup } from '@/db/user';
 import { Modal } from './Modal';
@@ -90,7 +90,7 @@ export function NewGroupDialog({
       >
         <label className="block space-y-1 text-sm">
           <span className="text-muted-foreground text-xs uppercase tracking-wide">Name</span>
-          <input
+          <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Daily bosses"

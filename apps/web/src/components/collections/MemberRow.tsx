@@ -4,7 +4,7 @@ import { EntityLink } from '@/components/entity-links';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 import { useRemoveMember, useUpdateMember } from '@/hooks/useCollections';
 import type { CollectionMember } from '@/db/user';
-import { cn } from '@scrolled/ui';
+import { cn, Input } from '@scrolled/ui';
 
 interface MemberRowProps {
   member: CollectionMember;
@@ -136,7 +136,7 @@ export function MemberRow({ member, name }: MemberRowProps) {
 
       <div className="ml-auto flex min-w-0 flex-1 basis-full items-center gap-2 sm:basis-auto">
         {editingNote ? (
-          <input
+          <Input
             value={noteDraft}
             onChange={(e) => setNoteDraft(e.target.value)}
             onBlur={commitNote}
@@ -172,7 +172,7 @@ export function MemberRow({ member, name }: MemberRowProps) {
         )}
         <label className="inline-flex shrink-0 items-center gap-1">
           <span className="text-muted-foreground text-[10px] uppercase tracking-wide">Qty</span>
-          <input
+          <Input
             type="number"
             min={0}
             value={qtyDraft}

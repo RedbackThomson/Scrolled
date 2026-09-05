@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Input } from '@scrolled/ui';
 import { getSearchIndex, querySearch } from '@/search';
 import { useFeatures } from '@/hooks/useFeatures';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
@@ -36,7 +37,7 @@ export function EntityPreviewPicker({
 
   return (
     <div className="space-y-1.5">
-      <input
+      <Input
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}

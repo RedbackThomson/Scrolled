@@ -5,7 +5,7 @@ import { useEntitySummaryNames } from '@/hooks/useEntitySummaries';
 import { MobHoverCard, NpcHoverCard } from '@/components/entity-links';
 import { HoverPopover } from '@scrolled/ui';
 import { classifyPortal, type PortalGraph } from '@scrolled/game-db/domain/portal-types';
-import { cn } from '@scrolled/ui';
+import { cn, Input } from '@scrolled/ui';
 import { useShowEntityIds } from '@/stores/showEntityIds';
 import type { LayerVisibility, MapViewerHighlight } from './types';
 import { PortalRow } from './PortalRow';
@@ -191,7 +191,7 @@ export function MapViewerSidebar({
       </div>
 
       <div className="border-border flex shrink-0 items-center gap-1.5 border-b px-2 py-1.5">
-        <input
+        <Input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
