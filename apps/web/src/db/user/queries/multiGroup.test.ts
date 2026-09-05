@@ -15,7 +15,7 @@ import {
   removeEntity,
   removeMember,
 } from './collections';
-import { createGroup, deleteGroup, moveMember } from './collectionGroups';
+import { createGroup, deleteGroup, listGroups, moveMember, updateGroup } from './collectionGroups';
 import { drainOutbox } from './sync';
 
 function newDb(): Sqlite {
@@ -144,6 +144,25 @@ describe('deleteGroup', () => {
     const rows = listMembers(db, collectionId).filter((m) => m.entityId === 100);
     expect(rows).toHaveLength(1);
     expect(rows[0].groupId).toBeNull();
+  });
+});
+
+describe('group descriptions', () => {
+  it('stores a multi-line description on create and edit', () => {
+    const g = createGroup(db, collectionId, 'Daily', 'line one\nline two');
+    expect(g.description).toBe('line one\nline two');
+
+    const updated = updateGroup(db, g.id, { description: 'changed' });
+    expect(updated.description).toBe('changed');
+    expect(listGroups(db, collectionId)[0].description).toBe('changed');
+  });
+
+  it('normalizes a blank description to null', () => {
+    const g = createGroup(db, collectionId, 'Weekly', '   ');
+    expect(g.description).toBeNull();
+
+    const cleared = updateGroup(db, g.id, { description: '' });
+    expect(cleared.description).toBeNull();
   });
 });
 

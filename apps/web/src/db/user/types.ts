@@ -84,10 +84,17 @@ export interface CollectionGroup {
   id: number;
   collectionId: number;
   name: string;
+  /** Optional multi-line blurb, shown on the collection detail page. */
+  description: string | null;
   /** Order within the collection's group list (0-based, dense). */
   position: number;
   createdAt: number;
   updatedAt: number;
+}
+
+export interface UpdateGroupPatch {
+  name?: string;
+  description?: string | null;
 }
 
 export interface CollectionMember {
@@ -270,13 +277,19 @@ export interface UserDatabase {
   setCollectionPinned(id: number, pinned: boolean): Promise<CollectionRecord>;
 
   listGroups(collectionId: number): Promise<CollectionGroup[]>;
-  createGroup(collectionId: number, name: string): Promise<CollectionGroup>;
+  createGroup(
+    collectionId: number,
+    name: string,
+    description?: string | null,
+  ): Promise<CollectionGroup>;
   /** Create several groups at once. Names that already exist return the
    *  existing group rather than erroring. */
   createGroups(collectionId: number, names: readonly string[]): Promise<CollectionGroup[]>;
   /** Get the named group, creating it if absent. */
   ensureGroup(collectionId: number, name: string): Promise<CollectionGroup>;
   renameGroup(groupId: number, name: string): Promise<CollectionGroup>;
+  /** Update a group's name and/or description. */
+  updateGroup(groupId: number, patch: UpdateGroupPatch): Promise<CollectionGroup>;
   deleteGroup(groupId: number): Promise<void>;
   /** Persist a new ordering of the collection's groups (top to bottom). */
   reorderGroups(collectionId: number, orderedGroupIds: readonly number[]): Promise<void>;

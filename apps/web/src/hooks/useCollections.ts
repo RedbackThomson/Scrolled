@@ -298,12 +298,13 @@ export function useImportUserDbBytes(): UseMutationResult<
 export function useCreateGroup(): UseMutationResult<
   CollectionGroup,
   Error,
-  { collectionId: number; name: string }
+  { collectionId: number; name: string; description?: string | null }
 > {
   const db = useUserDb();
   const invalidate = useInvalidateAll();
   return useMutation({
-    mutationFn: ({ collectionId, name }) => db.createGroup(collectionId, name),
+    mutationFn: ({ collectionId, name, description }) =>
+      db.createGroup(collectionId, name, description),
     onSuccess: () => invalidate(),
   });
 }
@@ -317,6 +318,19 @@ export function useRenameGroup(): UseMutationResult<
   const invalidate = useInvalidateAll();
   return useMutation({
     mutationFn: ({ groupId, name }) => db.renameGroup(groupId, name),
+    onSuccess: () => invalidate(),
+  });
+}
+
+export function useUpdateGroup(): UseMutationResult<
+  CollectionGroup,
+  Error,
+  { groupId: number; patch: { name?: string; description?: string | null } }
+> {
+  const db = useUserDb();
+  const invalidate = useInvalidateAll();
+  return useMutation({
+    mutationFn: ({ groupId, patch }) => db.updateGroup(groupId, patch),
     onSuccess: () => invalidate(),
   });
 }

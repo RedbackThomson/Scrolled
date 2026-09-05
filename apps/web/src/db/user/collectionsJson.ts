@@ -33,6 +33,8 @@ export const collectionMemberJsonSchema = z.object({
 
 export const collectionGroupJsonSchema = z.object({
   name: z.string().min(1),
+  /** Optional multi-line blurb. Optional so pre-description exports validate. */
+  description: z.string().nullable().optional(),
   position: z.number().int().nonnegative(),
 });
 

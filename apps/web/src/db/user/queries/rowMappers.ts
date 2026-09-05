@@ -29,6 +29,7 @@ export function rowToGroup(row: Row): CollectionGroup {
     id: Number(row.id),
     collectionId: Number(row.collection_id),
     name: String(row.name),
+    description: row.description == null ? null : String(row.description),
     position: Number(row.position),
     createdAt: Number(row.created_at),
     updatedAt: Number(row.updated_at),

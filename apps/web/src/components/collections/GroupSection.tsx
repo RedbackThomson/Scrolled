@@ -1,23 +1,25 @@
-// A user-defined group rendered as a sortable section. The header is the
-// drag handle for the group itself; clicking the title turns it into an
-// inline rename input. The body renders whatever member list the parent
-// chooses to put inside.
+// A user-defined group rendered as a sortable section. The header is the drag
+// handle for the group itself; the title opens an edit dialog (name +
+// description). The body renders whatever member list the parent puts inside,
+// and the group's description shows beneath the header.
 //
-// `groupId === null` means the default (implicit) group; the rename and
-// delete affordances are hidden in that case since the default group
-// has no row to operate on.
+// A null `group` means the default (implicit) group; edit and delete are hidden
+// there since it has no row to operate on.
 
 import { useState, type ReactNode } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Trash2, Pencil } from 'lucide-react';
-import { useDeleteGroup, useRenameGroup } from '@/hooks/useCollections';
+import { useDeleteGroup } from '@/hooks/useCollections';
+import type { CollectionGroup } from '@/db/user';
 import { groupDndId } from './dndIds';
-import { cn, Input } from '@scrolled/ui';
+import { GroupFormDialog } from './GroupFormDialog';
+import { cn } from '@scrolled/ui';
 
 interface GroupSectionProps {
-  /** Null for the default group. */
-  groupId: number | null;
+  /** The group record, or null for the default (implicit) group. */
+  group: CollectionGroup | null;
+  /** Display label — 'Ungrouped' for the default group. */
   name: string;
   count: number;
   /** When false the header is hidden (only-the-default-group case). */
@@ -27,14 +29,8 @@ interface GroupSectionProps {
   children: ReactNode;
 }
 
-export function GroupSection({
-  groupId,
-  name,
-  count,
-  showHeader,
-  draggable,
-  children,
-}: GroupSectionProps) {
+export function GroupSection({ group, name, count, showHeader, draggable, children }: GroupSectionProps) {
+  const groupId = group?.id ?? null;
   const id = groupDndId(groupId);
 
   // Default groups (and groups in axis = 'type') aren't draggable but
@@ -55,75 +51,44 @@ export function GroupSection({
     opacity: isDragging ? 0.85 : undefined,
   };
 
-  const renameM = useRenameGroup();
   const deleteM = useDeleteGroup();
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(name);
+  const [editOpen, setEditOpen] = useState(false);
 
-  const isDefault = groupId == null;
-
-  const commitRename = async () => {
-    const next = draft.trim();
-    if (!next || next === name || isDefault) {
-      setEditing(false);
-      setDraft(name);
-      return;
-    }
-    await renameM.mutateAsync({ groupId: groupId!, name: next });
-    setEditing(false);
-  };
+  const isDefault = group == null;
 
   const onDelete = async () => {
     if (isDefault) return;
     if (!confirm(`Delete group "${name}"? Its ${count} member(s) will move to the default group.`)) {
       return;
     }
-    await deleteM.mutateAsync(groupId!);
+    await deleteM.mutateAsync(group.id);
   };
 
   return (
     <section ref={setNodeRef} style={style} className="space-y-2">
       {showHeader && (
-        <header className="flex items-center gap-2">
-          {draggable && !isDefault ? (
-            <button
-              type="button"
-              {...attributes}
-              {...listeners}
-              className="text-muted-foreground hover:text-foreground -ml-1 flex h-6 w-6 cursor-grab items-center justify-center rounded-md transition-colors active:cursor-grabbing"
-              aria-label={`Drag to reorder group ${name}`}
-              title="Drag to reorder"
-            >
-              <GripVertical className="h-3.5 w-3.5" />
-            </button>
-          ) : (
-            <span className="w-5" />
-          )}
+        <header className="space-y-1">
+          <div className="flex items-center gap-2">
+            {draggable && !isDefault ? (
+              <button
+                type="button"
+                {...attributes}
+                {...listeners}
+                className="text-muted-foreground hover:text-foreground -ml-1 flex h-6 w-6 cursor-grab items-center justify-center rounded-md transition-colors active:cursor-grabbing"
+                aria-label={`Drag to reorder group ${name}`}
+                title="Drag to reorder"
+              >
+                <GripVertical className="h-3.5 w-3.5" />
+              </button>
+            ) : (
+              <span className="w-5" />
+            )}
 
-          {editing && !isDefault ? (
-            <Input
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onBlur={commitRename}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  commitRename();
-                } else if (e.key === 'Escape') {
-                  setDraft(name);
-                  setEditing(false);
-                }
-              }}
-              autoFocus
-              className="border-input bg-background focus-visible:ring-ring h-7 min-w-0 flex-1 rounded-md border px-2 text-sm focus-visible:outline-none focus-visible:ring-2"
-            />
-          ) : (
             <button
               type="button"
               onClick={() => {
                 if (isDefault) return;
-                setDraft(name);
-                setEditing(true);
+                setEditOpen(true);
               }}
               className={cn(
                 'group inline-flex items-center gap-1.5 text-left text-sm font-semibold tracking-tight',
@@ -136,24 +101,39 @@ export function GroupSection({
                 <Pencil className="text-muted-foreground/70 group-hover:text-muted-foreground h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
               )}
             </button>
-          )}
 
-          {!isDefault && (
-            <button
-              type="button"
-              onClick={onDelete}
-              disabled={deleteM.isPending}
-              className="text-muted-foreground hover:text-destructive ml-auto inline-flex h-6 w-6 items-center justify-center rounded-md"
-              aria-label={`Delete group ${name}`}
-              title="Delete group"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
+            {!isDefault && (
+              <button
+                type="button"
+                onClick={onDelete}
+                disabled={deleteM.isPending}
+                className="text-muted-foreground hover:text-destructive ml-auto inline-flex h-6 w-6 items-center justify-center rounded-md"
+                aria-label={`Delete group ${name}`}
+                title="Delete group"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+
+          {group?.description && (
+            <p className="text-muted-foreground whitespace-pre-line pl-7 text-xs leading-relaxed">
+              {group.description}
+            </p>
           )}
         </header>
       )}
 
       {children}
+
+      {group && (
+        <GroupFormDialog
+          open={editOpen}
+          onClose={() => setEditOpen(false)}
+          collectionId={group.collectionId}
+          group={group}
+        />
+      )}
     </section>
   );
 }

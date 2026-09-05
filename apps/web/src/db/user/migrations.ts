@@ -400,4 +400,13 @@ export const USER_MIGRATIONS: readonly Migration[] = [
         ON collection_members (collection_id, IFNULL(group_id, -1), entity_type, entity_id);
     `,
   },
+  {
+    version: 11,
+    name: 'group descriptions',
+    // Optional multi-line blurb shown on the collection detail page. Additive
+    // and nullable, so it lands on populated tables without a default.
+    sql: `
+      ALTER TABLE collection_groups ADD COLUMN description TEXT;
+    `,
+  },
 ];

@@ -28,7 +28,7 @@ import {
 } from '@/components/collections';
 import { CollectionMembersBoard } from '@/components/collections/CollectionMembersBoard';
 import { CollectionDisplayOptionsMenu } from '@/components/collections/CollectionDisplayOptionsMenu';
-import { NewGroupDialog } from '@/components/collections';
+import { GroupFormDialog } from '@/components/collections';
 import { usePaletteRegistration } from '@/components/command-palette/usePaletteContext';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import type { CommandItem } from '@/components/command-palette/types';
@@ -280,11 +280,10 @@ export default function CollectionDetail() {
         </>
       )}
 
-      <NewGroupDialog
+      <GroupFormDialog
         open={newGroupOpen}
         onClose={() => setNewGroupOpen(false)}
         collectionId={collection.id}
-        existingGroups={groups}
       />
     </div>
   );

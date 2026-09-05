@@ -17,7 +17,7 @@ import { recordDelete, recordUpsert } from './sync';
 
 export function listGroups(db: Sqlite, collectionId: number): CollectionGroup[] {
   const rows = db.selectObjects<Row>(
-    `SELECT id, collection_id, name, position, created_at, updated_at
+    `SELECT id, collection_id, name, description, position, created_at, updated_at
      FROM collection_groups
      WHERE collection_id = ?
      ORDER BY position ASC, name COLLATE NOCASE ASC`,
@@ -30,9 +30,11 @@ export function createGroup(
   db: Sqlite,
   collectionId: number,
   rawName: string,
+  description?: string | null,
 ): CollectionGroup {
   const name = rawName.trim();
   if (!name) throw new Error('Group name is required');
+  const desc = normalizeDescription(description);
 
   const id = db.transaction(() => {
     const nextPos =
@@ -45,9 +47,9 @@ export function createGroup(
     const now = Date.now();
     db.exec(
       `INSERT INTO collection_groups
-         (collection_id, name, position, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?)`,
-      [collectionId, name, nextPos, now, now],
+         (collection_id, name, description, position, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [collectionId, name, desc, nextPos, now, now],
     );
     const newId = db.selectValue<number>('SELECT last_insert_rowid()') ?? 0;
     recordUpsert(db, 'collection_group', 'id = ?', [newId]);
@@ -55,7 +57,7 @@ export function createGroup(
   });
 
   const row = db.selectObject<Row>(
-    `SELECT id, collection_id, name, position, created_at, updated_at
+    `SELECT id, collection_id, name, description, position, created_at, updated_at
      FROM collection_groups WHERE id = ?`,
     [id],
   );
@@ -74,7 +76,7 @@ export function ensureGroup(
   const name = rawName.trim();
   if (!name) throw new Error('Group name is required');
   const existing = db.selectObject<Row>(
-    `SELECT id, collection_id, name, position, created_at, updated_at
+    `SELECT id, collection_id, name, description, position, created_at, updated_at
      FROM collection_groups WHERE collection_id = ? AND name = ?`,
     [collectionId, name],
   );
@@ -111,12 +113,55 @@ export function renameGroup(
     recordUpsert(db, 'collection_group', 'id = ?', [groupId]);
   });
   const row = db.selectObject<Row>(
-    `SELECT id, collection_id, name, position, created_at, updated_at
+    `SELECT id, collection_id, name, description, position, created_at, updated_at
      FROM collection_groups WHERE id = ?`,
     [groupId],
   );
   if (!row) throw new Error(`Group ${groupId} not found after rename`);
   return rowToGroup(row);
+}
+
+/** Update a group's name and/or description. */
+export function updateGroup(
+  db: Sqlite,
+  groupId: number,
+  patch: { name?: string; description?: string | null },
+): CollectionGroup {
+  const sets: string[] = [];
+  const params: (string | number | null)[] = [];
+  if (patch.name !== undefined) {
+    const name = patch.name.trim();
+    if (!name) throw new Error('Group name is required');
+    sets.push('name = ?');
+    params.push(name);
+  }
+  if (patch.description !== undefined) {
+    sets.push('description = ?');
+    params.push(normalizeDescription(patch.description));
+  }
+  if (sets.length > 0) {
+    sets.push('updated_at = ?');
+    params.push(Date.now());
+    params.push(groupId);
+    db.transaction(() => {
+      db.exec(`UPDATE collection_groups SET ${sets.join(', ')} WHERE id = ?`, params);
+      recordUpsert(db, 'collection_group', 'id = ?', [groupId]);
+    });
+  }
+  const row = db.selectObject<Row>(
+    `SELECT id, collection_id, name, description, position, created_at, updated_at
+     FROM collection_groups WHERE id = ?`,
+    [groupId],
+  );
+  if (!row) throw new Error(`Group ${groupId} not found after update`);
+  return rowToGroup(row);
+}
+
+/** Trim to a stored value: empty/whitespace-only becomes null. */
+function normalizeDescription(description: string | null | undefined): string | null {
+  if (description == null) return null;
+  const trimmed = description.trim();
+  return trimmed === '' ? null : trimmed;
 }
 
 /**

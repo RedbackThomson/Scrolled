@@ -651,6 +651,7 @@ function localColumns(
         uuid: str(row.key),
         collection_id: collectionId,
         name: str(row.name),
+        description: nstr(row.description),
         position: num(row.position),
         created_at: num(row.created_at),
         updated_at: num(row.updated_at),
@@ -747,6 +748,7 @@ function toRemoteRow(
         key: uuid,
         collection_key: collectionKey,
         name: str(stored.name),
+        description: nstr(stored.description),
         position: num(stored.position),
         created_at: num(stored.created_at),
       };

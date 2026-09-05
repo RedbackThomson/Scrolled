@@ -316,6 +316,8 @@ type OuterBucket =
       kind: 'group';
       key: string;
       groupId: number | null; // null = default
+      /** The group record, or null for the default (implicit) group. */
+      group: CollectionGroup | null;
       name: string;
       count: number;
       /** Hide chrome when the only outer bucket is the default group. */
@@ -424,6 +426,7 @@ function buildTree({
         kind: 'group',
         key: `g-${g.id}`,
         groupId: g.id,
+        group: g,
         name: g.name,
         count: slice.length,
         showHeader: true,
@@ -440,6 +443,7 @@ function buildTree({
           kind: 'group',
           key: 'g-default',
           groupId: null,
+          group: null,
           name: 'Ungrouped',
           count: def.length,
           showHeader: hasUserGroups,
@@ -530,7 +534,7 @@ function OuterSection({
   if (outer.kind === 'group') {
     return (
       <GroupSection
-        groupId={outer.groupId}
+        group={outer.group}
         name={outer.name}
         count={outer.count}
         showHeader={outer.showHeader}

@@ -25,6 +25,7 @@ import type {
   RecentEntityRecord,
   RecentQueryRecord,
   UpdateCollectionPatch,
+  UpdateGroupPatch,
   UpdateMemberPatch,
   UpdatePinnedSearchPatch,
   UserDatabase,
@@ -109,8 +110,12 @@ export class UserDbApi implements UserDatabase {
     return collectionGroups.listGroups(this.db, collectionId);
   }
 
-  async createGroup(collectionId: number, name: string): Promise<CollectionGroup> {
-    return collectionGroups.createGroup(this.db, collectionId, name);
+  async createGroup(
+    collectionId: number,
+    name: string,
+    description?: string | null,
+  ): Promise<CollectionGroup> {
+    return collectionGroups.createGroup(this.db, collectionId, name, description);
   }
 
   async createGroups(
@@ -126,6 +131,10 @@ export class UserDbApi implements UserDatabase {
 
   async renameGroup(groupId: number, name: string): Promise<CollectionGroup> {
     return collectionGroups.renameGroup(this.db, groupId, name);
+  }
+
+  async updateGroup(groupId: number, patch: UpdateGroupPatch): Promise<CollectionGroup> {
+    return collectionGroups.updateGroup(this.db, groupId, patch);
   }
 
   async deleteGroup(groupId: number): Promise<void> {

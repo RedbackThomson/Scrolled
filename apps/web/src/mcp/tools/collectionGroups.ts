@@ -16,14 +16,16 @@ export const groupsList: ToolDefinition<typeof groupsListSchema, unknown> = {
 const groupsCreateSchema = z.object({
   collectionId: idSchema,
   name: z.string().min(1),
+  description: z.string().nullable().optional(),
 });
 export const groupsCreate: ToolDefinition<typeof groupsCreateSchema, unknown> = {
   name: 'collectionGroups.create',
   category: 'Groups',
-  description: 'Create a new group inside a collection.',
+  description: 'Create a new group inside a collection, with an optional multi-line description.',
   inputSchema: groupsCreateSchema,
   annotations: WRITE_NEW,
-  execute: (input, ctx) => ctx.userDb.createGroup(input.collectionId, input.name),
+  execute: (input, ctx) =>
+    ctx.userDb.createGroup(input.collectionId, input.name, input.description ?? null),
 };
 
 const groupsCreateManySchema = z.object({
@@ -48,6 +50,29 @@ export const groupsRename: ToolDefinition<typeof groupsRenameSchema, unknown> = 
   inputSchema: groupsRenameSchema,
   annotations: WRITE_IDEMPOTENT,
   execute: (input, ctx) => ctx.userDb.renameGroup(input.groupId, input.name),
+};
+
+const groupsUpdateSchema = z
+  .object({
+    groupId: idSchema,
+    name: z.string().min(1).optional(),
+    description: z.string().nullable().optional(),
+  })
+  .refine((v) => v.name !== undefined || v.description !== undefined, {
+    message: 'Pass name and/or description.',
+  });
+export const groupsUpdate: ToolDefinition<typeof groupsUpdateSchema, unknown> = {
+  name: 'collectionGroups.update',
+  category: 'Groups',
+  description:
+    "Update a group's name and/or its multi-line description. Pass description null to clear it.",
+  inputSchema: groupsUpdateSchema,
+  annotations: WRITE_IDEMPOTENT,
+  execute: (input, ctx) =>
+    ctx.userDb.updateGroup(input.groupId, {
+      name: input.name,
+      description: input.description,
+    }),
 };
 
 const groupsDeleteSchema = z.object({ groupId: idSchema });
@@ -112,6 +137,7 @@ export const groupTools = [
   groupsCreate,
   groupsCreateMany,
   groupsRename,
+  groupsUpdate,
   groupsDelete,
   groupsReorder,
   groupsMoveMember,

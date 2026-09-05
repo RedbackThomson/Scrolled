@@ -638,7 +638,7 @@ function buildBundle(db: Sqlite, id: number): CollectionBundleJson | null {
   );
   if (!c) return null;
   const groups = db.selectObjects<Row>(
-    `SELECT id, name, position
+    `SELECT id, name, description, position
      FROM collection_groups
      WHERE collection_id = ?
      ORDER BY position ASC, name COLLATE NOCASE ASC`,
@@ -666,6 +666,7 @@ function buildBundle(db: Sqlite, id: number): CollectionBundleJson | null {
     sortDir: pickEnum(c.sort_dir, COLLECTION_SORT_DIRS, 'asc'),
     groups: groups.map((g) => ({
       name: String(g.name),
+      description: g.description == null ? null : String(g.description),
       position: Number(g.position),
     })),
     members: members.map((m) => ({
@@ -788,9 +789,9 @@ function importBundleGroups(
     if (lookup.has(g.name)) continue;
     db.exec(
       `INSERT INTO collection_groups
-         (collection_id, name, position, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?)`,
-      [collectionId, g.name, nextPos, now, now],
+         (collection_id, name, description, position, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [collectionId, g.name, g.description ?? null, nextPos, now, now],
     );
     const newId = db.selectValue<number>('SELECT last_insert_rowid()');
     if (newId != null) lookup.set(g.name, Number(newId));
