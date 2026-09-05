@@ -202,7 +202,6 @@ function PickerRow({
   onToggle,
 }: PickerRowProps) {
   const isMember = placements.length > 0;
-  const updateM = useUpdateMember();
   const togglePlacementM = useToggleGroupPlacement();
   // Only member rows need the group list, so the query stays disabled otherwise.
   const groupsQ = useCollectionGroups(isMember ? collectionId : null);
@@ -212,59 +211,6 @@ function PickerRow({
     for (const p of placements) s.add(p.groupId);
     return s;
   }, [placements]);
-
-  // Quantity + note edit one placement. Bind to the ungrouped one when present,
-  // else the first placement — the common single-placement case is unchanged.
-  const representative = useMemo(
-    () => placements.find((p) => p.groupId == null) ?? placements[0],
-    [placements],
-  );
-
-  const [qtyDraft, setQtyDraft] = useState<string>('');
-  const [noteDraft, setNoteDraft] = useState<string>('');
-
-  useEffect(() => {
-    setQtyDraft(representative?.quantity == null ? '' : String(representative.quantity));
-  }, [representative?.quantity]);
-  useEffect(() => {
-    setNoteDraft(representative?.note ?? '');
-  }, [representative?.note]);
-
-  const commitQty = () => {
-    if (!representative) return;
-    const trimmed = qtyDraft.trim();
-    let next: number | null = null;
-    if (trimmed !== '') {
-      const n = Number(trimmed);
-      if (!Number.isFinite(n) || n < 0) {
-        setQtyDraft(representative.quantity == null ? '' : String(representative.quantity));
-        return;
-      }
-      next = Math.floor(n);
-    }
-    if (next === (representative.quantity ?? null)) return;
-    updateM.mutate({
-      collectionId,
-      entityType,
-      entityId,
-      groupId: representative.groupId,
-      patch: { quantity: next },
-    });
-  };
-
-  const commitNote = () => {
-    if (!representative) return;
-    const trimmed = noteDraft.trim();
-    const next = trimmed === '' ? null : trimmed;
-    if (next === (representative.note ?? null)) return;
-    updateM.mutate({
-      collectionId,
-      entityType,
-      entityId,
-      groupId: representative.groupId,
-      patch: { note: next },
-    });
-  };
 
   const togglePlacement = (groupId: number | null) => {
     togglePlacementM.mutate({
@@ -329,49 +275,134 @@ function PickerRow({
               />
             ))}
           </div>
-          <label className="flex items-center gap-2 text-[11px]">
-            <span className="text-muted-foreground w-12 shrink-0 uppercase tracking-wide">Qty</span>
-            <input
-              type="number"
-              min={0}
-              value={qtyDraft}
-              onChange={(e) => setQtyDraft(e.target.value)}
-              onBlur={commitQty}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  (e.target as HTMLInputElement).blur();
-                }
-              }}
-              placeholder="—"
-              aria-label={`Quantity for ${collectionName}`}
-              className="border-input bg-background focus-visible:ring-ring h-6 w-20 rounded-md border px-1.5 text-base tabular-nums focus-visible:outline-none focus-visible:ring-2 sm:text-[11px]"
-            />
-          </label>
-          <label className="flex items-center gap-2 text-[11px]">
-            <span className="text-muted-foreground w-12 shrink-0 uppercase tracking-wide">Note</span>
-            <input
-              type="text"
-              value={noteDraft}
-              onChange={(e) => setNoteDraft(e.target.value)}
-              onBlur={commitNote}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  (e.target as HTMLInputElement).blur();
-                } else if (e.key === 'Escape') {
-                  setNoteDraft(representative?.note ?? '');
-                  (e.target as HTMLInputElement).blur();
-                }
-              }}
-              placeholder="Optional note"
-              aria-label={`Note for ${collectionName}`}
-              className="border-input bg-background focus-visible:ring-ring h-6 min-w-0 flex-1 rounded-md border px-1.5 text-base focus-visible:outline-none focus-visible:ring-2 sm:text-[11px]"
-            />
-          </label>
+          <div className="space-y-2">
+            {placements.map((p) => (
+              <PlacementEditor
+                key={p.groupId ?? 'default'}
+                collectionId={collectionId}
+                entityType={entityType}
+                entityId={entityId}
+                placement={p}
+                showLabel={placements.length > 1}
+              />
+            ))}
+          </div>
         </div>
       )}
     </li>
+  );
+}
+
+interface PlacementEditorProps {
+  collectionId: number;
+  entityType: CollectionEntityType;
+  entityId: number;
+  placement: MembershipBadge;
+  /** Show the group name above the inputs, so several placements can be told
+   *  apart. Hidden when there's only one. */
+  showLabel: boolean;
+}
+
+function PlacementEditor({
+  collectionId,
+  entityType,
+  entityId,
+  placement,
+  showLabel,
+}: PlacementEditorProps) {
+  const updateM = useUpdateMember();
+  const [qtyDraft, setQtyDraft] = useState<string>(
+    placement.quantity == null ? '' : String(placement.quantity),
+  );
+  const [noteDraft, setNoteDraft] = useState<string>(placement.note ?? '');
+
+  useEffect(() => {
+    setQtyDraft(placement.quantity == null ? '' : String(placement.quantity));
+  }, [placement.quantity]);
+  useEffect(() => {
+    setNoteDraft(placement.note ?? '');
+  }, [placement.note]);
+
+  const label = placement.groupName ?? 'Ungrouped';
+
+  const commitQty = () => {
+    const trimmed = qtyDraft.trim();
+    let next: number | null = null;
+    if (trimmed !== '') {
+      const n = Number(trimmed);
+      if (!Number.isFinite(n) || n < 0) {
+        setQtyDraft(placement.quantity == null ? '' : String(placement.quantity));
+        return;
+      }
+      next = Math.floor(n);
+    }
+    if (next === (placement.quantity ?? null)) return;
+    updateM.mutate({
+      collectionId,
+      entityType,
+      entityId,
+      groupId: placement.groupId,
+      patch: { quantity: next },
+    });
+  };
+
+  const commitNote = () => {
+    const trimmed = noteDraft.trim();
+    const next = trimmed === '' ? null : trimmed;
+    if (next === (placement.note ?? null)) return;
+    updateM.mutate({
+      collectionId,
+      entityType,
+      entityId,
+      groupId: placement.groupId,
+      patch: { note: next },
+    });
+  };
+
+  return (
+    <div className="space-y-1">
+      {showLabel && (
+        <div className="text-muted-foreground text-[10px] font-medium uppercase tracking-wide">
+          {label}
+        </div>
+      )}
+      <div className="flex items-center gap-1.5">
+        <input
+          type="number"
+          min={0}
+          value={qtyDraft}
+          onChange={(e) => setQtyDraft(e.target.value)}
+          onBlur={commitQty}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              (e.target as HTMLInputElement).blur();
+            }
+          }}
+          placeholder="Qty"
+          aria-label={`Quantity for ${label}`}
+          className="border-input bg-background focus-visible:ring-ring h-6 w-16 rounded-md border px-1.5 text-base tabular-nums focus-visible:outline-none focus-visible:ring-2 sm:text-[11px]"
+        />
+        <input
+          type="text"
+          value={noteDraft}
+          onChange={(e) => setNoteDraft(e.target.value)}
+          onBlur={commitNote}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              (e.target as HTMLInputElement).blur();
+            } else if (e.key === 'Escape') {
+              setNoteDraft(placement.note ?? '');
+              (e.target as HTMLInputElement).blur();
+            }
+          }}
+          placeholder="Note"
+          aria-label={`Note for ${label}`}
+          className="border-input bg-background focus-visible:ring-ring h-6 min-w-0 flex-1 rounded-md border px-1.5 text-base focus-visible:outline-none focus-visible:ring-2 sm:text-[11px]"
+        />
+      </div>
+    </div>
   );
 }
 
