@@ -78,6 +78,9 @@ interface CollectionMembersBoardProps {
   members: readonly CollectionMember[];
   groups: readonly CollectionGroup[];
   summaries: Record<CollectionEntityType, Map<number, string>> | undefined;
+  /** Open the "New group" dialog (owned by the page so the command palette can
+   *  trigger it too). */
+  onRequestNewGroup: () => void;
 }
 
 export function CollectionMembersBoard({
@@ -85,6 +88,7 @@ export function CollectionMembersBoard({
   members,
   groups,
   summaries,
+  onRequestNewGroup,
 }: CollectionMembersBoardProps) {
   const collectionId = collection.id;
   const { display } = useCollectionDisplay(collection);
@@ -290,27 +294,11 @@ export function CollectionMembersBoard({
         <NewGroupButton
           isDragging={isDragging}
           acceptDrops={itemDragEnabled}
-          onClick={async () => {
-            const name = promptForGroupName(groups);
-            if (!name) return;
-            await createGroupM.mutateAsync({ collectionId, name });
-          }}
+          onClick={onRequestNewGroup}
         />
       )}
     </DndContext>
   );
-}
-
-function promptForGroupName(groups: readonly CollectionGroup[]): string | null {
-  const taken = new Set(groups.map((g) => g.name));
-  let suggestion = 'New group';
-  for (let i = 2; i < 1000 && taken.has(suggestion); i++) {
-    suggestion = `New group ${i}`;
-  }
-  const raw = window.prompt('Name this group:', suggestion);
-  if (raw == null) return null;
-  const trimmed = raw.trim();
-  return trimmed.length > 0 ? trimmed : null;
 }
 
 // -- tree --------------------------------------------------------------------

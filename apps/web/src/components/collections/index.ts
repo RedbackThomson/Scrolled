@@ -5,6 +5,7 @@ export { CollectionsBulkAddMenu } from './CollectionsBulkAddMenu';
 export { CollectionsImportDialog } from './CollectionsImportDialog';
 export { CollectionsOverflowMenu } from './CollectionsOverflowMenu';
 export { HoverCardSaveFooter } from './HoverCardSaveFooter';
+export { NewGroupDialog } from './NewGroupDialog';
 export { Modal } from './Modal';
 export { downloadJson, downloadBytes, slugify, todayStamp } from './download';
 export {

@@ -28,6 +28,7 @@ import {
 } from '@/components/collections';
 import { CollectionMembersBoard } from '@/components/collections/CollectionMembersBoard';
 import { CollectionDisplayOptionsMenu } from '@/components/collections/CollectionDisplayOptionsMenu';
+import { NewGroupDialog } from '@/components/collections';
 import { usePaletteRegistration } from '@/components/command-palette/usePaletteContext';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import type { CommandItem } from '@/components/command-palette/types';
@@ -36,7 +37,6 @@ import {
   useCollection,
   useCollectionGroups,
   useCollectionMembers,
-  useCreateGroup,
   useDeleteCollection,
   useExportCollectionJson,
   useSetCollectionPinned,
@@ -57,10 +57,10 @@ export default function CollectionDetail() {
   const groupsQ = useCollectionGroups(Number.isFinite(id) ? id : null);
 
   const [editOpen, setEditOpen] = useState(false);
+  const [newGroupOpen, setNewGroupOpen] = useState(false);
   const deleteM = useDeleteCollection();
   const exportM = useExportCollectionJson();
   const pinM = useSetCollectionPinned();
-  const createGroupM = useCreateGroup();
 
   const members = membersQ.data ?? EMPTY_MEMBERS;
   const groups = groupsQ.data ?? EMPTY_GROUPS;
@@ -130,14 +130,10 @@ export default function CollectionDetail() {
         label: 'Create group',
         keywords: ['new', 'group', 'create'],
         icon: FolderPlus,
-        onSelect: async () => {
-          const name = promptForGroupName(groups);
-          if (!name) return;
-          await createGroupM.mutateAsync({ collectionId: id, name });
-        },
+        onSelect: () => setNewGroupOpen(true),
       },
     ];
-  }, [id, collectionQ.data, groups, createGroupM]);
+  }, [id, collectionQ.data]);
 
   usePaletteRegistration({ items: paletteItems });
   usePageTitle(collectionQ.data?.name);
@@ -279,23 +275,19 @@ export default function CollectionDetail() {
             members={members}
             groups={groups}
             summaries={summariesQ.data}
+            onRequestNewGroup={() => setNewGroupOpen(true)}
           />
         </>
       )}
+
+      <NewGroupDialog
+        open={newGroupOpen}
+        onClose={() => setNewGroupOpen(false)}
+        collectionId={collection.id}
+        existingGroups={groups}
+      />
     </div>
   );
-}
-
-function promptForGroupName(existing: readonly CollectionGroup[]): string | null {
-  const taken = new Set(existing.map((g) => g.name));
-  let suggestion = 'New group';
-  for (let i = 2; i < 1000 && taken.has(suggestion); i++) {
-    suggestion = `New group ${i}`;
-  }
-  const raw = window.prompt('Name this group:', suggestion);
-  if (raw == null) return null;
-  const trimmed = raw.trim();
-  return trimmed.length > 0 ? trimmed : null;
 }
 
 function NotFound() {
