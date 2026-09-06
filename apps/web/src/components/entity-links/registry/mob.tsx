@@ -56,6 +56,23 @@ const fields: MobField[] = [
     render: ({ record }) => <Mono>{record.exp?.toLocaleString() ?? '—'}</Mono>,
   },
   {
+    key: 'expHp',
+    label: 'EXP / HP',
+    short: 'EXP/HP',
+    hint: 'Experience per point of HP (EXP ÷ HP).',
+    zone: 'meta',
+    metaVariant: 'gridCell',
+    defaultMode: 'never',
+    isPresent: ({ record }) => record.exp !== null && record.hp !== null && record.hp > 0,
+    render: ({ record }) => (
+      <Mono>
+        {record.exp !== null && record.hp
+          ? (record.exp / record.hp).toLocaleString(undefined, { maximumFractionDigits: 3 })
+          : '—'}
+      </Mono>
+    ),
+  },
+  {
     key: 'mp',
     label: 'MP',
     short: 'MP',
