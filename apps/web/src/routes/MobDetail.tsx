@@ -25,6 +25,7 @@ import { useFeatures } from '@/hooks/useFeatures';
 import { useListSort } from '@/hooks/useListSort';
 import { useShowEntityIds } from '@/stores/showEntityIds';
 import { MobElementsSection } from '@/components/entity-display/MobElementsSection';
+import { MobCalculatedSection } from '@/components/entity-display/MobCalculatedSection';
 
 export default function MobDetail() {
   const params = useParams<{ id: string }>();
@@ -136,6 +137,7 @@ export default function MobDetail() {
             <InfoRow label="EXP" value={<ExpValue exp={m.exp} />} />
           </InfoSection>
           <MobElementsSection element={m.elementAttack} />
+          <MobCalculatedSection mob={m} />
           <SourceSection path={m.sourcePath} />
         </>
       }

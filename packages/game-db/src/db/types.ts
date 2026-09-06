@@ -229,6 +229,17 @@ export interface EquipRecord {
   incSpeed: number | null;
   incJump: number | null;
   /**
+   * Elemental weapon bonus from `info` (`elemDefault` + `incRMA{F,I,L,S}`,
+   * ×100). Populated only for "elemental" wands/staves; the magic-damage
+   * calculator reads them off the equipped weapon. On armour the same WZ keys
+   * denote elemental resistance, so these are meaningful for weapons only.
+   */
+  elementBonusDefault: number | null;
+  elementBonusFire: number | null;
+  elementBonusIce: number | null;
+  elementBonusLightning: number | null;
+  elementBonusPoison: number | null;
+  /**
    * `info/cash` from the WZ tree. True means the equip is a cash-shop
    * cosmetic that provides no stats; false is a regular in-game equip.
    */
@@ -274,6 +285,14 @@ export interface MobRecord {
   isBoss: boolean;
   elementAttack: string | null;
   elementDefensesJson: string | null;
+  /** `info/MDDamage` — magic defense. */
+  magicDefense: number | null;
+  /** `info/PDDamage` — physical defense. */
+  physicalDefense: number | null;
+  /** `info/eva` — avoidability. */
+  avoidability: number | null;
+  /** `info/acc` — accuracy. */
+  accuracy: number | null;
   /** WZ path the sprite came from (e.g. `Mob.wz/0100100.img/stand/0`). */
   iconPath: string | null;
   /** Decoded PNG bytes for the stand sprite. */

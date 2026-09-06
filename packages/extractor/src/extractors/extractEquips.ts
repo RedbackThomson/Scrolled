@@ -161,6 +161,11 @@ export async function extractEquips(
       incMp: info.incMMP,
       incSpeed: info.incSpeed,
       incJump: info.incJump,
+      elementBonusDefault: info.elemDefault,
+      elementBonusFire: info.incRMAF,
+      elementBonusIce: info.incRMAI,
+      elementBonusLightning: info.incRMAL,
+      elementBonusPoison: info.incRMAS,
       cash: info.cash === 1,
       equipType: resolveEquipType(w.id),
       tradeBlock: info.tradeBlock === 1,
@@ -208,6 +213,15 @@ interface EquipInfo {
   incMMP: number | null;
   incSpeed: number | null;
   incJump: number | null;
+  // Elemental weapon bonus. Only "elemental" wands/staves carry these: a
+  // baseline (`elemDefault`, ~100) plus per-element multipliers ×100 in
+  // `incRMA{F,I,L,S}` (Fire/Ice/Lightning/poiSon). On armour the same keys mean
+  // elemental resistance; the magic-damage calculator reads them off weapons only.
+  elemDefault: number | null;
+  incRMAF: number | null;
+  incRMAI: number | null;
+  incRMAL: number | null;
+  incRMAS: number | null;
   tuc: number | null;
   /** 1 = cash-shop cosmetic, 0 / absent = regular in-game equip. */
   cash: number | null;
@@ -244,6 +258,11 @@ const EMPTY_INFO: EquipInfo = {
   incMMP: null,
   incSpeed: null,
   incJump: null,
+  elemDefault: null,
+  incRMAF: null,
+  incRMAI: null,
+  incRMAL: null,
+  incRMAS: null,
   tuc: null,
   cash: null,
   tradeBlock: null,
@@ -288,6 +307,11 @@ async function readInfo(source: GameDataSource, imagePath: string): Promise<Equi
     incMMP: nodeToNumber(map.get('incMMP')),
     incSpeed: nodeToNumber(map.get('incSpeed')),
     incJump: nodeToNumber(map.get('incJump')),
+    elemDefault: nodeToNumber(map.get('elemDefault')),
+    incRMAF: nodeToNumber(map.get('incRMAF')),
+    incRMAI: nodeToNumber(map.get('incRMAI')),
+    incRMAL: nodeToNumber(map.get('incRMAL')),
+    incRMAS: nodeToNumber(map.get('incRMAS')),
     tuc: nodeToNumber(map.get('tuc')),
     cash: nodeToNumber(map.get('cash')),
     tradeBlock: nodeToNumber(map.get('tradeBlock')),

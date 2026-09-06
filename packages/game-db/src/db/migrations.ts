@@ -1081,6 +1081,25 @@ export const MIGRATIONS: readonly Migration[] = [
       ALTER TABLE consumable_specs ADD COLUMN summon_mob_json TEXT;
     `,
   },
+  {
+    version: 38,
+    name: 'weapon elemental bonus + mob defensive stats',
+    sql: `
+      -- Elemental wands/staves carry their bonus in info/elemDefault +
+      -- info/incRMA{F,I,L,S}; mobs carry defensive stats the magic-damage
+      -- calculator (and future physical calcs) need. All nullable so the
+      -- migration is safe on populated tables; re-extraction backfills them.
+      ALTER TABLE equips ADD COLUMN element_bonus_default INTEGER;
+      ALTER TABLE equips ADD COLUMN element_bonus_fire INTEGER;
+      ALTER TABLE equips ADD COLUMN element_bonus_ice INTEGER;
+      ALTER TABLE equips ADD COLUMN element_bonus_lightning INTEGER;
+      ALTER TABLE equips ADD COLUMN element_bonus_poison INTEGER;
+      ALTER TABLE mobs ADD COLUMN magic_defense INTEGER;
+      ALTER TABLE mobs ADD COLUMN physical_defense INTEGER;
+      ALTER TABLE mobs ADD COLUMN avoidability INTEGER;
+      ALTER TABLE mobs ADD COLUMN accuracy INTEGER;
+    `,
+  },
 ];
 
 /**

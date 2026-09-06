@@ -77,6 +77,11 @@ export interface EquipRow extends Row {
   inc_mp: number | null;
   inc_speed: number | null;
   inc_jump: number | null;
+  element_bonus_default: number | null;
+  element_bonus_fire: number | null;
+  element_bonus_ice: number | null;
+  element_bonus_lightning: number | null;
+  element_bonus_poison: number | null;
   cash: number;
   equip_type: string | null;
   trade_block: number;
@@ -105,6 +110,10 @@ export interface MobRow extends Row {
   is_boss: number;
   element_attack: string | null;
   element_defenses_json: string | null;
+  magic_defense: number | null;
+  physical_defense: number | null;
+  avoidability: number | null;
+  accuracy: number | null;
   icon_path: string | null;
   icon_data: Uint8Array | null;
   source_path: string;
@@ -206,6 +215,10 @@ export function rowToMob(r: MobRow): MobRecord {
     isBoss: r.is_boss === 1,
     elementAttack: r.element_attack,
     elementDefensesJson: r.element_defenses_json,
+    magicDefense: r.magic_defense,
+    physicalDefense: r.physical_defense,
+    avoidability: r.avoidability,
+    accuracy: r.accuracy,
     iconPath: r.icon_path,
     iconData: r.icon_data,
     sourcePath: r.source_path,
@@ -394,6 +407,11 @@ export function rowToEquip(r: EquipRow): EquipRecord {
     incMp: r.inc_mp,
     incSpeed: r.inc_speed,
     incJump: r.inc_jump,
+    elementBonusDefault: r.element_bonus_default,
+    elementBonusFire: r.element_bonus_fire,
+    elementBonusIce: r.element_bonus_ice,
+    elementBonusLightning: r.element_bonus_lightning,
+    elementBonusPoison: r.element_bonus_poison,
     cash: r.cash === 1,
     equipType: r.equip_type,
     tradeBlock: r.trade_block === 1,

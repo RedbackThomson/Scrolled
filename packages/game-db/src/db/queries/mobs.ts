@@ -25,8 +25,10 @@ export function upsertMobs(sql: Sqlite, mobs: MobRecord[]): number {
       sql.exec(
         `INSERT INTO mobs (
           id, name, level, hp, mp, exp, is_boss,
-          element_attack, element_defenses_json, icon_path, icon_data, source_path
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          element_attack, element_defenses_json,
+          magic_defense, physical_defense, avoidability, accuracy,
+          icon_path, icon_data, source_path
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
           name                  = excluded.name,
           level                 = excluded.level,
@@ -36,6 +38,10 @@ export function upsertMobs(sql: Sqlite, mobs: MobRecord[]): number {
           is_boss               = excluded.is_boss,
           element_attack        = excluded.element_attack,
           element_defenses_json = excluded.element_defenses_json,
+          magic_defense         = excluded.magic_defense,
+          physical_defense      = excluded.physical_defense,
+          avoidability          = excluded.avoidability,
+          accuracy              = excluded.accuracy,
           icon_path             = excluded.icon_path,
           -- Preserve a previously-decoded icon when this run produced
           -- none (e.g. transient decode failure on one mob).
@@ -51,6 +57,10 @@ export function upsertMobs(sql: Sqlite, mobs: MobRecord[]): number {
           m.isBoss ? 1 : 0,
           m.elementAttack,
           m.elementDefensesJson,
+          m.magicDefense,
+          m.physicalDefense,
+          m.avoidability,
+          m.accuracy,
           m.iconPath,
           m.iconData,
           m.sourcePath,
@@ -98,7 +108,8 @@ export function listMobs(sql: Sqlite, opts: ListOptsBase = {}): PageResult<MobRe
     const rows = sql
       .selectObjects<MobRow>(
         `SELECT id, name, level, hp, mp, exp, is_boss, element_attack,
-                element_defenses_json, icon_path, NULL AS icon_data, source_path
+                element_defenses_json, magic_defense, physical_defense,
+                avoidability, accuracy, icon_path, NULL AS icon_data, source_path
          FROM mobs ${clause}
          ORDER BY ${order.col} ${order.dir === 'desc' ? 'DESC' : 'ASC'} NULLS LAST, id ASC
          LIMIT ? OFFSET ?`,

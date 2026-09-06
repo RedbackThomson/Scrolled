@@ -65,13 +65,17 @@ export async function extractMobs(
     });
 
     const infoPath = `${img.fullPath}/info`;
-    const [levelN, hpN, mpN, expN, bossN, elemN] = await Promise.all([
+    const [levelN, hpN, mpN, expN, bossN, elemN, mdefN, pdefN, evaN, accN] = await Promise.all([
       pathToNumber(source, `${infoPath}/level`),
       pathToNumber(source, `${infoPath}/maxHP`),
       pathToNumber(source, `${infoPath}/maxMP`),
       pathToNumber(source, `${infoPath}/exp`),
       pathToNumber(source, `${infoPath}/boss`),
       source.getNode(`${infoPath}/elemAttr`),
+      pathToNumber(source, `${infoPath}/MDDamage`),
+      pathToNumber(source, `${infoPath}/PDDamage`),
+      pathToNumber(source, `${infoPath}/eva`),
+      pathToNumber(source, `${infoPath}/acc`),
     ]);
 
     const name = strings.get(id)?.name ?? null;
@@ -94,6 +98,10 @@ export async function extractMobs(
       isBoss: bossN === 1,
       elementAttack: typeof elemN?.scalar === 'string' ? elemN.scalar : null,
       elementDefensesJson: null,
+      magicDefense: mdefN,
+      physicalDefense: pdefN,
+      avoidability: evaN,
+      accuracy: accN,
       iconPath,
       iconData,
       sourcePath: img.fullPath,

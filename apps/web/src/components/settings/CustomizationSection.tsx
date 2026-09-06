@@ -3,6 +3,7 @@ import { SlidersHorizontal } from 'lucide-react';
 import { useSettingsSection } from '@/components/settings/SettingsScrollSpy';
 import { resetAllTooltips } from '@/components/entity-links/registry';
 import { TooltipCustomizerPanel } from '@/components/settings/tooltips/TooltipCustomizerPanel';
+import { MagicStatsPanel } from '@/components/settings/MagicStatsPanel';
 
 export function CustomizationSection() {
   const sectionProps = useSettingsSection('customization');
@@ -40,6 +41,7 @@ export function CustomizationSection() {
         </div>
         <TooltipCustomizerPanel />
       </div>
+      <MagicStatsPanel />
     </section>
   );
 }
