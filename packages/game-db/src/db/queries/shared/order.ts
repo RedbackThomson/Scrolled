@@ -65,6 +65,9 @@ export const MOB_ORDER: Record<string, OrderSpec> = {
   hp: { col: 'hp', defaultDir: 'asc' },
   mp: { col: 'mp', defaultDir: 'asc' },
   exp: { col: 'exp', defaultDir: 'desc' },
+  // Derived training-efficiency ratio. SQLite yields NULL for /0 or NULL
+  // operands, which `NULLS LAST` pushes to the end.
+  expHp: { col: 'CAST(exp AS REAL) / hp', defaultDir: 'desc' },
   id: { col: 'id', defaultDir: 'asc' },
 };
 export const MOB_ORDER_DEFAULT = 'level';

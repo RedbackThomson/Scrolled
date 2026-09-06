@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { Crown, Flame, Gauge, Hash, Heart, Skull, Sparkles, TrendingUp } from 'lucide-react';
+import { Crown, Divide, Flame, Gauge, Hash, Heart, Skull, Sparkles, TrendingUp } from 'lucide-react';
 import { EntityIcon } from '@/components/entity-display/EntityIcon';
 import { ExpValue } from '@/components/entity-display/ExpValue';
 import { MobLink } from '@/components/entity-links';
@@ -17,6 +17,12 @@ const COLUMN_STATUSES: readonly { id: string; status: ElementStatus }[] = [
   { id: 'strongAgainst', status: 'resistant' },
   { id: 'immuneTo', status: 'immune' },
 ];
+
+function formatExpHp(m: MobRecord): string {
+  return m.exp !== null && m.hp
+    ? (m.exp / m.hp).toLocaleString(undefined, { maximumFractionDigits: 3 })
+    : '—';
+}
 
 const elementColumns: ColumnDef<MobRecord>[] = COLUMN_STATUSES.map(({ id, status }) => ({
   id,
@@ -104,6 +110,16 @@ export const columns: ColumnDef<MobRecord>[] = [
     header: 'EXP',
     meta: { filter: 'number', icon: TrendingUp },
     cell: ({ row }) => <ExpValue exp={row.original.exp} />,
+  },
+  {
+    id: 'expHp',
+    accessorFn: (m) => (m.exp !== null && m.hp ? m.exp / m.hp : null),
+    header: 'EXP/HP',
+    meta: {
+      icon: Divide,
+      card: { label: 'EXP/HP', render: (row) => formatExpHp(row) },
+    },
+    cell: ({ row }) => formatExpHp(row.original),
   },
   ...elementColumns,
   {
