@@ -1,31 +1,32 @@
+export type BurstVariant = 'save' | 'celebrate';
+
 export interface BurstPiece {
   dx: number;
   dy: number;
   shape: 'dot' | 'diamond';
   color: string;
+  size: number;
   delayMs: number;
 }
 
-const COLORS = ['var(--accent)', 'var(--gold)', 'var(--accent-hi)', 'var(--gold-hi)'];
+const HUES = [148, 80, 20, 240, 300];
 
-/**
- * Evenly spread pieces with a fixed wobble in angle and reach, so every burst
- * looks the same and nothing depends on Math.random during render.
- */
-export function burstPieces(
-  count: number,
-  radius: number,
-  shapes: 'mixed' | 'diamonds',
-): BurstPiece[] {
+/** Pieces for a burst: evenly spaced, deterministic, so every burst looks the same. */
+export function burstPieces(variant: BurstVariant): BurstPiece[] {
+  const celebrate = variant === 'celebrate';
+  const count = celebrate ? 14 : 10;
   return Array.from({ length: count }, (_, i) => {
-    const angle = ((i / count) * 360 + (i % 2 ? 14 : -9)) * (Math.PI / 180);
-    const reach = radius * (i % 3 === 0 ? 1 : i % 3 === 1 ? 0.78 : 0.9);
+    const angle = (i / count) * Math.PI * 2;
+    const reach = celebrate ? 70 + (i % 3) * 14 : 62;
     return {
       dx: Math.round(Math.cos(angle) * reach),
       dy: Math.round(Math.sin(angle) * reach),
-      shape: shapes === 'diamonds' || i % 2 ? 'diamond' : 'dot',
-      color: COLORS[i % COLORS.length]!,
-      delayMs: (i % 3) * 25,
+      shape: celebrate || i % 2 ? 'diamond' : 'dot',
+      color: celebrate
+        ? `oklch(0.8 0.15 ${HUES[i % HUES.length]})`
+        : `oklch(0.75 0.16 ${HUES[i % HUES.length]})`,
+      size: celebrate ? 10 : 8,
+      delayMs: celebrate ? 250 + (i % 4) * 40 : 140,
     };
   });
 }

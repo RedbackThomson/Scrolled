@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useSettingsSection } from '@/components/settings/useSettingsSection';
 import { useDatasetUpdate } from '@/hooks/dataset/useDatasetUpdate';
 import { getDbClient } from '@/db';
-import { Chip } from '@scrolled/design';
+import { Chip, RollingNumber } from '@scrolled/design';
 import { useMemo } from 'react';
 
 export function LibraryStatusSection() {
@@ -59,10 +59,12 @@ export function LibraryStatusSection() {
                   ['jobs', statusQ.data.counts.jobs],
                   ['datasets', statusQ.data.counts.datasets],
                 ] as const
-              ).map(([label, count]) => (
+              ).map(([label, count], i) => (
                 <div key={label} className="min-w-0">
                   <dt className="truncate uppercase tracking-wide">{label}</dt>
-                  <dd className="text-foreground font-mono text-sm tabular-nums">{count}</dd>
+                  <dd className="text-foreground font-mono text-sm tabular-nums">
+                    <RollingNumber text={count.toLocaleString()} delayMs={i * 30} />
+                  </dd>
                 </div>
               ))}
             </dl>

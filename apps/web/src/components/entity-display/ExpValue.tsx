@@ -1,4 +1,4 @@
-import { HoverPopover } from '@scrolled/design';
+import { HoverPopover, RollingNumber } from '@scrolled/design';
 import { useServerProfile } from '@/hooks/useServerProfile';
 
 /**
@@ -10,14 +10,20 @@ import { useServerProfile } from '@/hooks/useServerProfile';
  * one and hovering/focusing it reveals the base value and where the multiplier
  * comes from — so the adjustment is discoverable without cluttering the number.
  */
-export function ExpValue({ exp }: { exp: number | null }) {
+export function ExpValue({ exp, rollDelayMs }: { exp: number | null; rollDelayMs?: number }) {
   const { applyExp, expRate, profile } = useServerProfile();
   if (exp === null) return <>—</>;
   const adjusted = applyExp(exp) ?? exp;
 
   // No multiplier in play — the displayed value is the real value, nothing to
   // disambiguate.
-  if (expRate === 1) return <>{adjusted.toLocaleString()}</>;
+  const shown =
+    rollDelayMs === undefined ? (
+      adjusted.toLocaleString()
+    ) : (
+      <RollingNumber text={adjusted.toLocaleString()} delayMs={rollDelayMs} />
+    );
+  if (expRate === 1) return <>{shown}</>;
 
   return (
     <HoverPopover
@@ -35,7 +41,7 @@ export function ExpValue({ exp }: { exp: number | null }) {
         </div>
       }
     >
-      {adjusted.toLocaleString()}
+      {shown}
     </HoverPopover>
   );
 }

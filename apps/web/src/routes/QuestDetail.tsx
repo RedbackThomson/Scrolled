@@ -37,7 +37,7 @@ import { RewardFilterControl } from '@/components/common/RewardFilterControl';
 import { getDbClient } from '@/db';
 import type { QuestRequirementWithName, QuestRewardWithName } from '@/db';
 import { NpcLink } from '@/components/entity-links';
-import { SlotTile } from '@scrolled/design';
+import { RollingNumber, SlotTile } from '@scrolled/design';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -152,6 +152,9 @@ export default function QuestDetail() {
     (skillReward ? 1 : 0) +
     countRewardsInGroups(itemGroups);
   const hasAnyReward = rewards.length > 0;
+  // The reward cards present roll their numbers in turn, 30ms apart.
+  let rewardTile = 0;
+  const roll = () => 30 * rewardTile++;
 
   return (
     <DetailPageLayout
@@ -290,7 +293,7 @@ export default function QuestDetail() {
                 icon={Sparkles}
                 hue={80}
                 label="Experience"
-                value={<ExpValue exp={expReward.amount ?? 0} />}
+                value={<ExpValue exp={expReward.amount ?? 0} rollDelayMs={roll()} />}
               />
             )}
             {mesoReward && (
@@ -298,7 +301,12 @@ export default function QuestDetail() {
                 icon={Coins}
                 hue={60}
                 label="Mesos"
-                value={(mesoReward.amount ?? 0).toLocaleString()}
+                value={
+                  <RollingNumber
+                    text={(mesoReward.amount ?? 0).toLocaleString()}
+                    delayMs={roll()}
+                  />
+                }
               />
             )}
             {spReward && (
@@ -306,7 +314,9 @@ export default function QuestDetail() {
                 icon={Zap}
                 hue={260}
                 label="Skill points"
-                value={(spReward.amount ?? 0).toLocaleString()}
+                value={
+                  <RollingNumber text={(spReward.amount ?? 0).toLocaleString()} delayMs={roll()} />
+                }
               />
             )}
             {fameReward && (
@@ -314,7 +324,12 @@ export default function QuestDetail() {
                 icon={Star}
                 hue={330}
                 label="Fame"
-                value={(fameReward.amount ?? 0).toLocaleString()}
+                value={
+                  <RollingNumber
+                    text={(fameReward.amount ?? 0).toLocaleString()}
+                    delayMs={roll()}
+                  />
+                }
               />
             )}
           </li>

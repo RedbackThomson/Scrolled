@@ -106,9 +106,23 @@ export default function MobDetail() {
   const statTiles = (
     <>
       <StatTile label="Level" value={m.level ?? '—'} color="var(--stat-level)" />
-      <StatTile label="HP" value={m.hp?.toLocaleString() ?? '—'} color="var(--stat-hp)" />
-      <StatTile label="MP" value={m.mp?.toLocaleString() ?? '—'} color="var(--stat-mp)" />
-      <StatTile label="EXP" value={<ExpValue exp={m.exp} />} color="var(--stat-exp)" />
+      <StatTile
+        label="HP"
+        value={m.hp?.toLocaleString() ?? '—'}
+        color="var(--stat-hp)"
+        rollDelayMs={30}
+      />
+      <StatTile
+        label="MP"
+        value={m.mp?.toLocaleString() ?? '—'}
+        color="var(--stat-mp)"
+        rollDelayMs={60}
+      />
+      <StatTile
+        label="EXP"
+        value={<ExpValue exp={m.exp} rollDelayMs={90} />}
+        color="var(--stat-exp)"
+      />
     </>
   );
   return (

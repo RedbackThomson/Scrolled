@@ -20,7 +20,7 @@ export const DialogOverlay = forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-[var(--surface-scrim)] duration-[260ms]',
+      'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-[var(--surface-scrim)] [animation-duration:260ms]',
       className,
     )}
     {...props}
@@ -39,7 +39,7 @@ export const DialogContent = forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        'border-border bg-card text-card-foreground shadow-pop data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90 data-[state=open]:slide-in-from-bottom-4 data-[state=open]:ease-spring fixed left-1/2 top-1/2 z-50 flex w-full max-w-[500px] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden border-2 data-[state=open]:delay-[90ms] data-[state=closed]:duration-200 data-[state=open]:duration-[520ms] data-[state=open]:[animation-fill-mode:backwards] sm:rounded-2xl',
+        'border-border bg-card text-card-foreground shadow-pop data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90 data-[state=open]:slide-in-from-bottom-4 data-[state=open]:ease-spring fixed left-1/2 top-1/2 z-50 flex w-full max-w-[500px] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden border-2 data-[state=closed]:duration-200 data-[state=open]:[animation-delay:90ms] data-[state=open]:[animation-duration:520ms] data-[state=open]:[animation-fill-mode:backwards] sm:rounded-2xl',
         className,
       )}
       {...props}

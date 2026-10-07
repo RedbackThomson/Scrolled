@@ -9,6 +9,8 @@ export interface StatTileProps {
   color?: string;
   /** soft = tinted tile (grids, mobile strip); pill = colored label + value row (sidebars) */
   variant?: 'soft' | 'pill';
+  /** Delays the number's roll; stagger tiles in a group by 30ms each. */
+  rollDelayMs?: number;
 }
 
 export function StatTile({
@@ -16,10 +18,11 @@ export function StatTile({
   value,
   color = 'var(--text-2)',
   variant = 'soft',
+  rollDelayMs,
 }: StatTileProps) {
   const shown =
     (typeof value === 'string' || typeof value === 'number') && isRollable(String(value)) ? (
-      <RollingNumber text={String(value)} />
+      <RollingNumber text={String(value)} delayMs={rollDelayMs} />
     ) : (
       value
     );

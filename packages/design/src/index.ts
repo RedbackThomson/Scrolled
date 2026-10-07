@@ -44,7 +44,7 @@ export {
 export { EntityRow, type EntityRowProps } from './components/entity/EntityRow';
 export { SlotTile, type SlotTileProps } from './components/entity/SlotTile';
 export { StatRange, type StatRangeProps } from './components/entity/StatRange';
-export { RollingNumber } from './components/entity/RollingNumber';
+export { RollingNumber, type RollingNumberProps } from './components/entity/RollingNumber';
 export { StatTile, type StatTileProps } from './components/entity/StatTile';
 
 export { CloudBackdrop, type CloudBackdropProps } from './components/surfaces/CloudBackdrop';

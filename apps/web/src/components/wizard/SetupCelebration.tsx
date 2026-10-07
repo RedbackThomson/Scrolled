@@ -13,7 +13,7 @@ export function SetupCelebration() {
       >
         <Check className="h-3.5 w-3.5" strokeWidth={3} />
       </span>
-      <ConfettiBurst trigger={1} count={12} radius={70} shapes="diamonds" durationMs={900} />
+      <ConfettiBurst trigger={1} variant="celebrate" />
     </div>
   );
 }

@@ -61,7 +61,8 @@ export function SlidingNavPill({ containerRef, watch }: SlidingNavPillProps) {
       aria-hidden
       className={cn(
         'bg-card shadow-float pointer-events-none absolute rounded-full',
-        placed && 'ease-spring transition-[top,left,width,height,opacity] duration-[520ms]',
+        placed &&
+          'ease-spring transition-[top,left,width,height,opacity] [transition-duration:520ms]',
         !visible && 'opacity-0',
       )}
       style={box}

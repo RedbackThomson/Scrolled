@@ -125,25 +125,6 @@
     transform: translateY(var(--to));
   }
 }
-@keyframes sc-stretch {
-  0%,
-  100% {
-    width: var(--knob, 22px);
-  }
-  45% {
-    width: calc(var(--knob, 22px) * 1.38);
-  }
-}
-/* Twin of sc-stretch: alternating names restarts the animation on every toggle. */
-@keyframes sc-stretch-b {
-  0%,
-  100% {
-    width: var(--knob, 22px);
-  }
-  45% {
-    width: calc(var(--knob, 22px) * 1.38);
-  }
-}
 @keyframes sc-knob-a {
   0%,
   100% {
@@ -278,7 +259,7 @@
 .sc-roll-digit {
   display: flex;
   flex-direction: column;
-  animation: sc-roll var(--roll-ms, 900ms) var(--ease-spring) var(--roll-delay, 0ms) both;
+  animation: sc-roll var(--roll-ms, 320ms) var(--ease-out) var(--roll-delay, 0ms) both;
 }
 .sc-bob {
   animation: sc-bob 1.8s ease-in-out 600ms infinite;

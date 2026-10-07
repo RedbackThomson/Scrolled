@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { usePrefersMotion } from '../../lib/motion';
+import type { CSSProperties } from 'react';
 import { splitDigits } from './rollingDigits';
 
 const SR_ONLY: CSSProperties = {
@@ -12,54 +11,50 @@ const SR_ONLY: CSSProperties = {
 };
 
 const DIGITS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+// Digit row height, in em so the strip matches whatever font size it sits in.
+const ROW = 1.1;
 
-/** Odometer-style number: digit columns roll up from 0 the first time it scrolls into view. */
-export function RollingNumber({ text }: { text: string }) {
-  const motion = usePrefersMotion();
-  const ref = useRef<HTMLSpanElement>(null);
-  const [rolled, setRolled] = useState(!motion);
+export interface RollingNumberProps {
+  text: string;
+  /** Extra start delay, e.g. 30ms per tile when several roll together. */
+  delayMs?: number;
+}
 
-  useEffect(() => {
-    const el = ref.current;
-    if (rolled || !el) return;
-    if (!motion || typeof IntersectionObserver === 'undefined') {
-      setRolled(true);
-      return;
-    }
-    const observer = new IntersectionObserver((entries) => {
-      if (entries.some((e) => e.isIntersecting)) {
-        setRolled(true);
-        observer.disconnect();
-      }
-    });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [motion, rolled]);
-
-  const chars = splitDigits(text);
+/**
+ * Odometer number: each digit is a 0–9 strip that rolls to its value once, on
+ * mount. Kept brief so the value is readable almost at once. Remount (key by
+ * entity) to roll again; refetches don't replay it.
+ */
+export function RollingNumber({ text, delayMs = 0 }: RollingNumberProps) {
   let seen = 0;
   return (
-    <span ref={ref} style={{ position: 'relative', display: 'inline-flex' }}>
+    <span style={{ position: 'relative', display: 'inline-flex' }}>
       <span style={SR_ONLY}>{text}</span>
       <span
         aria-hidden="true"
         style={{ display: 'inline-flex', fontVariantNumeric: 'tabular-nums' }}
       >
-        {chars.map((c, i) => {
+        {splitDigits(text).map((c, i) => {
           if (c.kind === 'static') return <span key={i}>{c.char}</span>;
           const order = seen++;
+          const to = `${-c.digit * ROW}em`;
           return (
-            <span key={i} style={{ display: 'inline-block', height: '1.1em', overflow: 'hidden' }}>
+            <span
+              key={i}
+              style={{ display: 'inline-block', height: `${ROW}em`, overflow: 'hidden' }}
+            >
               <span
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  transform: `translateY(${rolled ? -c.digit * 1.1 : 0}em)`,
-                  transition: `transform 600ms var(--ease-spring) ${order * 60}ms`,
-                }}
+                className="sc-roll-digit"
+                style={
+                  {
+                    '--to': to,
+                    '--roll-delay': `${delayMs + order * 15}ms`,
+                    transform: `translateY(${to})`,
+                  } as CSSProperties
+                }
               >
                 {DIGITS.map((d) => (
-                  <span key={d} style={{ height: '1.1em', lineHeight: '1.1em' }}>
+                  <span key={d} style={{ height: `${ROW}em`, lineHeight: `${ROW}em` }}>
                     {d}
                   </span>
                 ))}

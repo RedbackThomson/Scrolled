@@ -36,7 +36,7 @@ export function Switch({ checked, onChange, label, description, ariaLabel }: Swi
         cursor: 'pointer',
         background: checked ? 'var(--accent)' : 'var(--border-1)',
         boxShadow: 'inset 0 2px 0 rgba(0,0,0,.12)',
-        transition: 'background var(--dur-fast)',
+        transition: 'background 250ms',
       }}
     >
       <span
