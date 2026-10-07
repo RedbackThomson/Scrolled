@@ -57,17 +57,16 @@ const NODE_HEIGHT = 40;
 const PADDING = 32;
 
 /**
- * Lay out a quest chain with dagre using a left-to-right rank direction.
- * That matches how players read prereq flows ("first quest → next quest"),
- * and stops the layout from getting tall when one chain has 30 quests in a
- * line. Cyclic edges are kept in the graph (dagre is fine with that — it
+ * Lay out a quest chain with dagre using a top-to-bottom rank direction.
+ * Prerequisites then read downward like a quest log, and long single-file
+ * chains scroll vertically rather than sideways. Cyclic edges are kept in the graph (dagre is fine with that — it
  * runs an acyclicer pass internally to find a feedback set), and we tag
  * which edges sit in a cycle so the renderer can dash them.
  *
  * External edges (cross-parent prereqs surfaced by the chain pass) are
  * added as ghost nodes anchored to the chain's quests by direction:
- * `'in'` edges become a ghost ancestor on the left of their internal
- * target, `'out'` edges a ghost descendant on the right. Dagre lays them
+ * `'in'` edges become a ghost ancestor above their internal
+ * target, `'out'` edges a ghost descendant below. Dagre lays them
  * out alongside the real nodes so they fit naturally in the layout — they
  * just render with a ghosted style.
  */
@@ -79,9 +78,9 @@ export function useDagreLayout(
   return useMemo(() => {
     const g = new dagre.graphlib.Graph();
     g.setGraph({
-      rankdir: 'LR',
+      rankdir: 'TB',
       nodesep: 24,
-      ranksep: 64,
+      ranksep: 48,
       marginx: PADDING,
       marginy: PADDING,
     });
@@ -163,9 +162,9 @@ export function useDagreLayout(
         const n = g.node(String(e.fromQuestId));
         if (n) {
           points.push(
-            { x: n.x, y: n.y - NODE_HEIGHT / 2 },
-            { x: n.x + NODE_WIDTH, y: n.y - NODE_HEIGHT },
-            { x: n.x + NODE_WIDTH / 2, y: n.y - NODE_HEIGHT / 2 },
+            { x: n.x + NODE_WIDTH / 2, y: n.y - NODE_HEIGHT / 4 },
+            { x: n.x + NODE_WIDTH / 2 + 36, y: n.y },
+            { x: n.x + NODE_WIDTH / 2, y: n.y + NODE_HEIGHT / 4 },
           );
         }
       }
@@ -183,8 +182,7 @@ export function useDagreLayout(
     for (const x of externalEdges) {
       const fromKey =
         x.direction === 'in' ? ghostKey(x.externalQuestId) : String(x.internalQuestId);
-      const toKey =
-        x.direction === 'in' ? String(x.internalQuestId) : ghostKey(x.externalQuestId);
+      const toKey = x.direction === 'in' ? String(x.internalQuestId) : ghostKey(x.externalQuestId);
       const gEdge = g.edge(fromKey, toKey);
       const points = gEdge?.points ?? [];
       outEdges.push({

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Minus, Plus, RotateCcw } from 'lucide-react';
 import type {
   QuestChainEdgeRecord,
@@ -7,7 +7,10 @@ import type {
 } from '@/db';
 import { useShowEntityIds } from '@/stores/showEntityIds';
 import { clamp } from '@scrolled/game-db/lib/math';
+import { edgeKey, shortestPathTo, type ChainPath } from './chainPath';
 import { QuestChainGraphNode } from './QuestChainGraphNode';
+import { QuestChainLegend } from './QuestChainLegend';
+import { QuestChainSidePanel } from './QuestChainSidePanel';
 import { useDagreLayout, type DagreEdge } from './useDagreLayout';
 
 interface Props {
@@ -33,6 +36,13 @@ export function QuestChainGraphCanvas({ members, edges, externalEdges }: Props) 
   const layout = useDagreLayout(members, edges, externalEdges);
   const scrollRef = useRef<HTMLDivElement>(null);
   const showIds = useShowEntityIds((s) => s.enabled);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const selected = layout.nodes.find((n) => n.questId === selectedId) ?? null;
+  const path = useMemo<ChainPath | null>(() => {
+    if (selectedId === null) return null;
+    const starts = layout.nodes.filter((n) => n.isRoot).map((n) => n.questId);
+    return shortestPathTo(selectedId, starts, layout.edges);
+  }, [selectedId, layout]);
 
   const [zoom, setZoom] = useState(1);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
@@ -57,7 +67,9 @@ export function QuestChainGraphCanvas({ members, edges, externalEdges }: Props) 
     const [a, b] = [...pointers.current.values()];
     const distance = Math.hypot(a.x - b.x, a.y - b.y);
     if (pinchStart.current.distance === 0) return;
-    setZoom(clamp(pinchStart.current.zoom * (distance / pinchStart.current.distance), MIN_ZOOM, MAX_ZOOM));
+    setZoom(
+      clamp(pinchStart.current.zoom * (distance / pinchStart.current.distance), MIN_ZOOM, MAX_ZOOM),
+    );
   }, []);
   const onPointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     pointers.current.delete(e.pointerId);
@@ -65,75 +77,93 @@ export function QuestChainGraphCanvas({ members, edges, externalEdges }: Props) 
   }, []);
 
   return (
-    <div className="relative flex h-full w-full flex-col">
-      <div className="bg-card shadow-float absolute right-3 top-3 z-10 flex items-center gap-0.5 rounded-full p-1">
-        <button
-          type="button"
-          onClick={() => setZoom((z) => clamp(z / 1.25, MIN_ZOOM, MAX_ZOOM))}
-          className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-primary/40 inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2"
-          aria-label="Zoom out"
-        >
-          <Minus className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          onClick={() => setZoom(1)}
-          className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-primary/40 inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2"
-          aria-label="Reset zoom"
-          title={`Zoom ${Math.round(zoom * 100)}% — click to reset`}
-        >
-          <RotateCcw className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={() => setZoom((z) => clamp(z * 1.25, MIN_ZOOM, MAX_ZOOM))}
-          className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-primary/40 inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2"
-          aria-label="Zoom in"
-        >
-          <Plus className="h-4 w-4" />
-        </button>
-      </div>
-      <div
-        ref={scrollRef}
-        className="relative flex-1 overflow-auto"
-        style={{ touchAction: 'pan-x pan-y', background: DOTTED_CANVAS }}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-      >
-        <div className="grid min-h-full min-w-full place-content-center p-4">
-          <div
-            style={{ width: layout.width * zoom, height: layout.height * zoom }}
-            className="relative"
+    <div className="flex h-full w-full max-md:flex-col">
+      <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
+        <QuestChainLegend />
+        <div className="bg-card shadow-float absolute right-3 top-3 z-10 flex items-center gap-0.5 rounded-full p-1">
+          <button
+            type="button"
+            onClick={() => setZoom((z) => clamp(z / 1.25, MIN_ZOOM, MAX_ZOOM))}
+            className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-primary/40 inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2"
+            aria-label="Zoom out"
           >
+            <Minus className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoom(1)}
+            className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-primary/40 inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2"
+            aria-label="Reset zoom"
+            title={`Zoom ${Math.round(zoom * 100)}% — click to reset`}
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoom((z) => clamp(z * 1.25, MIN_ZOOM, MAX_ZOOM))}
+            className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-primary/40 inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2"
+            aria-label="Zoom in"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+        </div>
+        <div
+          ref={scrollRef}
+          className="relative flex-1 overflow-auto"
+          style={{ touchAction: 'pan-x pan-y', background: DOTTED_CANVAS }}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+        >
+          <div className="grid min-h-full min-w-full place-content-center p-4">
             <div
-              style={{
-                width: layout.width,
-                height: layout.height,
-                transform: `scale(${zoom})`,
-                transformOrigin: 'top left',
-                position: 'relative',
-              }}
+              style={{ width: layout.width * zoom, height: layout.height * zoom }}
+              className="relative"
             >
-              <EdgeLayer edges={layout.edges} width={layout.width} height={layout.height} />
-              {layout.nodes.map((n) => (
-                <QuestChainGraphNode key={n.questId} node={n} showId={showIds} />
-              ))}
+              <div
+                style={{
+                  width: layout.width,
+                  height: layout.height,
+                  transform: `scale(${zoom})`,
+                  transformOrigin: 'top left',
+                  position: 'relative',
+                }}
+              >
+                <EdgeLayer
+                  edges={layout.edges}
+                  path={path}
+                  width={layout.width}
+                  height={layout.height}
+                />
+                {layout.nodes.map((n) => (
+                  <QuestChainGraphNode
+                    key={n.questId}
+                    node={n}
+                    showId={showIds}
+                    selected={n.questId === selectedId}
+                    onPath={path?.questIds.has(n.questId) ?? false}
+                    onSelect={(id) => setSelectedId((cur) => (cur === id ? null : id))}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </div>
+      <QuestChainSidePanel node={selected} />
     </div>
   );
 }
 
 function EdgeLayer({
   edges,
+  path,
   width,
   height,
 }: {
   edges: readonly DagreEdge[];
+  path: ChainPath | null;
   width: number;
   height: number;
 }) {
@@ -169,9 +199,34 @@ function EdgeLayer({
         >
           <path d="M 0 0 L 10 5 L 0 10 z" className="fill-amber-500" />
         </marker>
+        <marker
+          id="qcg-arrow-path"
+          viewBox="0 0 10 10"
+          refX="8"
+          refY="5"
+          markerWidth="9"
+          markerHeight="9"
+          orient="auto-start-reverse"
+          markerUnits="userSpaceOnUse"
+        >
+          <path d="M 0 0 L 10 5 L 0 10 z" style={{ fill: 'var(--accent)' }} />
+        </marker>
       </defs>
-      {edges.map((e, i) => {
+      {sortPathLast(edges, path).map((e, i) => {
         if (e.points.length < 2) return null;
+        if (path?.edgeKeys.has(edgeKey(e.fromQuestId, e.toQuestId))) {
+          return (
+            <path
+              key={`${e.fromQuestId}-${e.toQuestId}-${i}`}
+              d={smoothPath(e.points)}
+              fill="none"
+              style={{ stroke: 'var(--accent)' }}
+              strokeWidth={3}
+              strokeLinecap="round"
+              markerEnd="url(#qcg-arrow-path)"
+            />
+          );
+        }
         const d = smoothPath(e.points);
         // Four styles, in priority order: cycle edges (amber dashed),
         // external edges (very faint, sparse dash), optional edges
@@ -200,6 +255,13 @@ function EdgeLayer({
       })}
     </svg>
   );
+}
+
+/** Path edges go last so they draw over the edges they cross. */
+function sortPathLast(edges: readonly DagreEdge[], path: ChainPath | null): readonly DagreEdge[] {
+  if (!path) return edges;
+  const onPath = (e: DagreEdge) => path.edgeKeys.has(edgeKey(e.fromQuestId, e.toQuestId));
+  return [...edges.filter((e) => !onPath(e)), ...edges.filter(onPath)];
 }
 
 /** Rounds dagre's polyline corners into quadratic curves through each segment midpoint. */

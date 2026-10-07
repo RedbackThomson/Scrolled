@@ -1,25 +1,26 @@
 import { AlertTriangle, ExternalLink, ScrollText } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { cn, ENTITY_HUES } from '@scrolled/design';
 import type { DagreNode } from './useDagreLayout';
 
 interface Props {
   node: DagreNode;
   showId: boolean;
+  selected: boolean;
+  onPath: boolean;
+  onSelect: (questId: number) => void;
 }
 
 /**
- * One quest card in the chain graph. Positioned absolutely by the canvas;
- * we only handle the visual + the click-through. The link uses `noPreview`
- * implicitly by being a plain `<Link>` — the hover card would compete with
- * the user's pan gesture inside the viewer.
+ * One quest card in the chain graph. Positioned absolutely by the canvas.
+ * Clicking selects it for the side panel rather than navigating, and there's
+ * no hover card, which would compete with panning.
  *
  * External (ghost) nodes represent a quest in another chain that's
  * connected by a cross-chain prereq edge. They render with a heavier
  * dashed border and reduced opacity so the focal chain still reads as
  * the primary layer.
  */
-export function QuestChainGraphNode({ node, showId }: Props) {
+export function QuestChainGraphNode({ node, showId, selected, onPath, onSelect }: Props) {
   const tooltip = node.isExternal
     ? 'External quest — belongs to another chain'
     : node.isCritical
@@ -28,8 +29,10 @@ export function QuestChainGraphNode({ node, showId }: Props) {
   const Icon = node.isExternal ? ExternalLink : node.inCycle ? AlertTriangle : ScrollText;
   const hue = node.inCycle ? 70 : ENTITY_HUES.quest;
   return (
-    <Link
-      to={`/quests/${node.questId}`}
+    <button
+      type="button"
+      onClick={() => onSelect(node.questId)}
+      aria-pressed={selected}
       style={{
         position: 'absolute',
         left: node.x - node.width / 2,
@@ -44,6 +47,8 @@ export function QuestChainGraphNode({ node, showId }: Props) {
         node.inCycle && 'border-amber-500 ring-[3px] ring-amber-500/25',
         !node.isCritical && !node.isExternal && 'border-dashed opacity-70 shadow-none',
         node.isExternal && 'border-foreground/30 bg-muted border-dotted opacity-[.55] shadow-none',
+        onPath && 'border-primary opacity-100',
+        selected && 'border-primary ring-primary/30 opacity-100 ring-4',
       )}
       title={tooltip}
     >
@@ -59,17 +64,15 @@ export function QuestChainGraphNode({ node, showId }: Props) {
       </span>
       <span
         className={cn(
-          'min-w-0 flex-1 truncate font-semibold',
+          'min-w-0 flex-1 truncate text-left font-semibold',
           (!node.isCritical || node.isExternal) && 'italic',
         )}
       >
         {node.name}
       </span>
       {showId && (
-        <span className="text-muted-foreground shrink-0 font-mono text-[10px]">
-          {node.questId}
-        </span>
+        <span className="text-muted-foreground shrink-0 font-mono text-[10px]">{node.questId}</span>
       )}
-    </Link>
+    </button>
   );
 }
