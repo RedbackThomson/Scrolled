@@ -26,6 +26,7 @@
     "@scrolled/dataset-client": "workspace:*",
     "@scrolled/dataset-core": "workspace:*",
     "@scrolled/dataset-repository": "workspace:*",
+    "@scrolled/design": "workspace:*",
     "@scrolled/extractor": "workspace:*",
     "@scrolled/game-db": "workspace:*",
     "@scrolled/identity-cloud": "workspace:*",

@@ -49,7 +49,7 @@ const noCloudSyncInCore = {
 };
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**'] },
+  { ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**', '**/storybook-static/**'] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
@@ -235,6 +235,27 @@ export default tseslint.config(
               group: ['@scrolled/*'],
               message:
                 '@scrolled/ui is a leaf design-system package — it must not import other @scrolled/* packages. See docs/navigator_implementation.md §7.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // @scrolled/design is the redesign's component library: a leaf among
+  // @scrolled/* for the same reason as @scrolled/ui, so both apps can adopt it.
+  {
+    files: ['packages/design/**/*.{ts,tsx}'],
+    plugins: { '@typescript-eslint': tseslint.plugin },
+    rules: {
+      '@typescript-eslint/no-restricted-imports': [
+        BOUNDARY_SEVERITY,
+        {
+          patterns: [
+            {
+              group: ['@scrolled/*'],
+              message:
+                '@scrolled/design is a leaf component-library package — it must not import other @scrolled/* packages. See docs/data_boundaries.md.',
             },
           ],
         },

@@ -1,0 +1,66 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Foundations/Shape and motion" />
+
+# Shape & motion
+
+<div style={{ display: 'flex', gap: 20 }}>
+  <div
+    style={{
+      width: 150,
+      height: 90,
+      borderRadius: 16,
+      background: 'var(--surface-card)',
+      border: 'var(--border-rim)',
+      boxShadow: 'var(--shadow-rim)',
+      display: 'grid',
+      placeItems: 'center',
+    }}
+  >
+    Rim
+  </div>
+  <div
+    style={{
+      width: 150,
+      height: 90,
+      borderRadius: 16,
+      background: 'var(--surface-card)',
+      boxShadow: 'var(--shadow-float)',
+      display: 'grid',
+      placeItems: 'center',
+    }}
+  >
+    Float
+  </div>
+  <div
+    style={{
+      width: 150,
+      height: 90,
+      borderRadius: 18,
+      background: 'var(--surface-card)',
+      border: 'var(--border-rim)',
+      boxShadow: 'var(--shadow-pop)',
+      display: 'grid',
+      placeItems: 'center',
+    }}
+  >
+    Pop
+  </div>
+  <div
+    style={{
+      width: 90,
+      height: 90,
+      borderRadius: 22,
+      background: 'var(--tint-equip)',
+      boxShadow: 'var(--shadow-slot)',
+      display: 'grid',
+      placeItems: 'center',
+    }}
+  >
+    Slot
+  </div>
+</div>
+
+Radii: 7 · 9 · 12 · 16 · 18 · 22 · pill. Slot tiles ≈ 28% of size.
+
+One spring curve: `var(--ease-spring)` = cubic-bezier(.34,1.56,.64,1). Hover lifts 2–4px, press sinks 1px, popovers scale in from 55%, modals from 90% + 16px, card grids stagger 55ms. Keyframes: sc-rise, sc-pop, sc-modal, sc-tip, sc-toast, sc-squish, sc-bob, sc-blink, sc-hop, sc-shimmer, sc-drift, sc-wave. Toolbar **Motion → off** sets `data-motion="off"`, matching the Interface motion setting and prefers-reduced-motion.

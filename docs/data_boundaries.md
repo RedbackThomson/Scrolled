@@ -1,7 +1,7 @@
 # Data & Package Boundaries
 
 The source of truth for **which package owns which domain** and **who may import
-whom**. Companion to `technical_requirements.md` (the *how* of the stack) and the
+whom**. Companion to `technical_requirements.md` (the _how_ of the stack) and the
 architectural rules in `CLAUDE.md` (which point here). When this document
 disagrees with the code, the code is the bug.
 
@@ -20,7 +20,7 @@ Every dependency in this repo serves one of two paths:
   `game-db` (queries, types, domain decoders, server profiles) → the web app.
 
 The web app sits at the top of both. It depends on the **read** contract for
-everything it renders, and on the **write** contract *only* in the narrow layer
+everything it renders, and on the **write** contract _only_ in the narrow layer
 that drives in-browser extraction (the wizard, the parser/db workers, the
 extraction hooks). UI/display code never reaches into the write path.
 
@@ -64,8 +64,11 @@ extraction hooks). UI/display code never reaches into the write path.
                                 upserts + a private Broadcast doorbell for
                                 subscribe); hosted builds only — dynamic-imported,
                                 DCE'd from self-hosted bundles
+@scrolled/design         leaf — redesign component library: React components on
+                                CSS-variable tokens, self-hosted fonts, Storybook.
+                                No @scrolled/* imports, so web and navigator share it
 apps/web  → deps: game-db (display), extractor (in-browser extraction),
-                  dataset-client/-core/-repository, config, wz, mcp-protocol,
+                  dataset-client/-core/-repository, config, wz, mcp-protocol, design,
                   identity-core (display), identity-cloud (bootstrap only),
                   sync-core (display + user-DB apply), sync-supabase (bootstrap only)
 ```
@@ -75,30 +78,30 @@ app is the only integrator.
 
 ## Ownership & allowed imports
 
-| Concern | Owner | May import |
-| --- | --- | --- |
-| WZ bytes → tree, crypto, image decode | `wz`, `extractor/parser` | wz |
-| tree → typed records | `extractor/extractors` | game-db (record types, domain) |
-| extraction orchestration / CLI / packing | `extractor/builder` | wz, game-db, dataset-core |
-| db schema / migrations / queries / types | `game-db/db` | dataset-core, game-db/lib |
-| domain decoders (labels, elements, jobs…) | `game-db/domain` | (leaf) |
-| data & schema versioning | `game-db` | — |
-| server profiles (incl. equip-stat calculator) | `game-db` | dataset-core |
-| `.scrolled-dataset` artifact (hosted distribution) | `dataset-core` | zod, fflate |
-| shared tar/gzip codec | `dataset-core` | fflate |
-| `.scrolled-backup` artifact (user db backup) | `game-db` | dataset-core (codec) |
-| backup/dataset compatibility (version gating) | `game-db` | dataset-core |
-| hosted dataset resolve / download / install | `dataset-repository`, `dataset-client` | dataset-core |
-| **display / read of extracted data** | `apps/web` | **game-db, dataset-\*** |
-| **driving in-browser extraction** | `apps/web` (`workers/`, `hooks/extraction/`, `parser/`, `components/wizard/`) | **extractor** |
-| user DB (collections, pinned searches, prefs) | `apps/web/db/user` | game-db/db (sqlite), sync-core (record identity + wire types) |
-| identity contract (session, provider interface, hooks) | `identity-core` | (leaf) |
-| concrete cloud identity (Supabase) | `identity-cloud` | identity-core, supabase-js |
-| **choosing the identity provider** | `apps/web` (`identity/` only) | **identity-core, identity-cloud (dynamic)** |
-| sync protocol, engine, merge resolver, status hooks | `sync-core` | (leaf) |
-| concrete Supabase sync transport | `sync-supabase` | sync-core, supabase-js |
-| **choosing the sync provider** | `apps/web` (`sync/` only) | **sync-core, sync-supabase (dynamic)** |
-| local sync metadata (outbox, cursor) | `apps/web/db/user` | game-db/db (sqlite), sync-core |
+| Concern                                                | Owner                                                                         | May import                                                    |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| WZ bytes → tree, crypto, image decode                  | `wz`, `extractor/parser`                                                      | wz                                                            |
+| tree → typed records                                   | `extractor/extractors`                                                        | game-db (record types, domain)                                |
+| extraction orchestration / CLI / packing               | `extractor/builder`                                                           | wz, game-db, dataset-core                                     |
+| db schema / migrations / queries / types               | `game-db/db`                                                                  | dataset-core, game-db/lib                                     |
+| domain decoders (labels, elements, jobs…)              | `game-db/domain`                                                              | (leaf)                                                        |
+| data & schema versioning                               | `game-db`                                                                     | —                                                             |
+| server profiles (incl. equip-stat calculator)          | `game-db`                                                                     | dataset-core                                                  |
+| `.scrolled-dataset` artifact (hosted distribution)     | `dataset-core`                                                                | zod, fflate                                                   |
+| shared tar/gzip codec                                  | `dataset-core`                                                                | fflate                                                        |
+| `.scrolled-backup` artifact (user db backup)           | `game-db`                                                                     | dataset-core (codec)                                          |
+| backup/dataset compatibility (version gating)          | `game-db`                                                                     | dataset-core                                                  |
+| hosted dataset resolve / download / install            | `dataset-repository`, `dataset-client`                                        | dataset-core                                                  |
+| **display / read of extracted data**                   | `apps/web`                                                                    | **game-db, dataset-\***                                       |
+| **driving in-browser extraction**                      | `apps/web` (`workers/`, `hooks/extraction/`, `parser/`, `components/wizard/`) | **extractor**                                                 |
+| user DB (collections, pinned searches, prefs)          | `apps/web/db/user`                                                            | game-db/db (sqlite), sync-core (record identity + wire types) |
+| identity contract (session, provider interface, hooks) | `identity-core`                                                               | (leaf)                                                        |
+| concrete cloud identity (Supabase)                     | `identity-cloud`                                                              | identity-core, supabase-js                                    |
+| **choosing the identity provider**                     | `apps/web` (`identity/` only)                                                 | **identity-core, identity-cloud (dynamic)**                   |
+| sync protocol, engine, merge resolver, status hooks    | `sync-core`                                                                   | (leaf)                                                        |
+| concrete Supabase sync transport                       | `sync-supabase`                                                               | sync-core, supabase-js                                        |
+| **choosing the sync provider**                         | `apps/web` (`sync/` only)                                                     | **sync-core, sync-supabase (dynamic)**                        |
+| local sync metadata (outbox, cursor)                   | `apps/web/db/user`                                                            | game-db/db (sqlite), sync-core                                |
 
 ## The hard rule, lint-enforced
 
@@ -127,8 +130,8 @@ blocks, not left to discipline:
 The web app **renders** game data; it does not **define what game data means**.
 Any mapping from a raw extracted code/field to a human term — element letters
 (`F` → Fire), status-ailment codes (`C` → Curse), stat short-codes (`pad` →
-Weapon Attack), job ids, portal types, skill elements — is *translation of game
-data* and belongs in `@scrolled/game-db/domain`, defined once and imported by
+Weapon Attack), job ids, portal types, skill elements — is _translation of game
+data_ and belongs in `@scrolled/game-db/domain`, defined once and imported by
 whoever displays it. The web layer may hold **presentation** (sentence
 templates, grouping, ordering, link wiring, CSS), but not the vocabulary itself.
 
@@ -144,7 +147,7 @@ How, by example — consumable `spec` decoding (`apps/web/src/lib/consumableEffe
   home: elements reuse `mobElements.ts`, ailments live in `statusAilments.ts`,
   combat-stat names in `combatStats.ts`. Don't pile unrelated enums into one
   file — group them by the game concept they describe.
-- The consumable-specific *structure* (which `spec` field is a buff vs. a cure,
+- The consumable-specific _structure_ (which `spec` field is a buff vs. a cure,
   how `defenseAtt`/`defenseState` decode) is in `domain/consumableSpec.ts`,
   which **imports** those vocabularies rather than restating them.
 - The web builder turns the decoded data into grouped sentences and entity
@@ -202,10 +205,10 @@ Two tar+gzip-of-sqlite containers exist for two **different deployment modes**.
 They are similar but have separate schemas, separate `format`/`formatVersion`
 strings, and separate owners. Do not merge them.
 
-- **`.scrolled-backup`** — *generic mode.* The user exports their own game +
+- **`.scrolled-backup`** — _generic mode._ The user exports their own game +
   user databases to back up and restore. Owned by `game-db` (`packBackup` /
   `readBackup`). A storage concern.
-- **`.scrolled-dataset`** — *hosted mode.* Published game data the user
+- **`.scrolled-dataset`** — _hosted mode._ Published game data the user
   downloads, described by `dataset-core`'s `datasetManifestSchema`
   (serverProfileId, calculatorId, dataRevision, schemaVersion). Owned by
   `dataset-core` (`packDataset` / `readDataset`). A distribution concern.
@@ -217,7 +220,7 @@ factor the shared piece into a small reused type — never one combined artifact
 ## Known compromise
 
 The equip-stat **calculator** lives in `game-db` (the whole server-profile domain
-does) but is *invoked from the web app's display layer* at render time. That is
+does) but is _invoked from the web app's display layer_ at render time. That is
 acceptable because the web app already depends on `game-db` as its read contract.
 It is a candidate for a future rewrite (precompute ranges at extraction), but it
 does not justify splitting the server-profile domain across packages today.
@@ -228,4 +231,4 @@ Two independent versions guard the database; know which a change needs. Mechanic
 live in `DEVELOPMENT.md` → "Schema and data versioning". Both constants live in
 `game-db`. Splitting code between packages or renaming an artifact format is not,
 by itself, a data-revision change — bump `CURRENT_DATA_REVISION` only when
-extraction *output* changes.
+extraction _output_ changes.

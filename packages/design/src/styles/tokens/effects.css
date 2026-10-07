@@ -1,0 +1,24 @@
+:root {
+  --border-rim: 2px solid var(--border-1);
+  --shadow-rim: inset 0 2px 0 var(--highlight), 0 3px 0 var(--border-1);
+  --shadow-float: 0 4px 14px var(--shadow-color);
+  --shadow-pop:
+    inset 0 2px 0 var(--highlight), 0 4px 0 var(--border-1), 0 20px 44px rgba(10, 20, 50, 0.28);
+  --shadow-tooltip: 0 0 0 1px var(--tooltip-line), 0 16px 36px rgba(10, 20, 50, 0.35);
+  --shadow-slot: inset 0 1px 0 var(--highlight), inset 0 -2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-btn:
+    inset 0 -3px 0 var(--accent-lo), inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    0 2px 6px var(--accent-glow);
+  --shadow-btn-secondary: inset 0 -2px 0 var(--border-1);
+  --shadow-input: inset 0 2px 0 var(--inset);
+  --focus-ring: 0 0 0 4px var(--accent-glow);
+  --gradient-accent: linear-gradient(180deg, var(--accent-hi), var(--accent));
+  --gradient-gold: linear-gradient(180deg, var(--gold-hi), var(--gold));
+  --gradient-brand: linear-gradient(160deg, var(--brand-1), var(--brand-2));
+  --gradient-page: linear-gradient(180deg, var(--surface-page-top), var(--surface-page) 420px);
+  --stripes-placeholder: repeating-linear-gradient(
+    135deg,
+    var(--surface-sunken) 0 10px,
+    var(--surface-card) 10px 20px
+  );
+}

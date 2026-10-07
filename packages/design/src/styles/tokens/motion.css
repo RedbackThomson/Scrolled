@@ -1,0 +1,151 @@
+:root {
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --ease-hop: cubic-bezier(0.4, 0, 0.6, 1);
+  --dur-fast: 200ms;
+  --dur-base: 300ms;
+  --dur-pop: 520ms;
+  --dur-modal: 520ms;
+  --stagger: 55ms;
+  --cloud-speed-min: 70s;
+  --cloud-speed-max: 150s;
+}
+@keyframes sc-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes sc-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes sc-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes sc-modal {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes sc-tip {
+  from {
+    opacity: 0;
+    transform: scale(0.55) translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes sc-toast {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes sc-squish {
+  0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(0.88, 0.82);
+  }
+  60% {
+    transform: scale(1.08, 1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes sc-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4%);
+  }
+}
+@keyframes sc-blink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.1);
+  }
+}
+@keyframes sc-hop {
+  0%,
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+  10% {
+    transform: scale(1.08, 0.9);
+  }
+  45% {
+    transform: translateY(-22px) scale(0.96, 1.05);
+  }
+  80% {
+    transform: scale(1.06, 0.94);
+  }
+}
+@keyframes sc-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+@keyframes sc-drift {
+  from {
+    transform: translateX(-420px);
+  }
+  to {
+    transform: translateX(calc(100vw + 120px));
+  }
+}
+@keyframes sc-wave {
+  0%,
+  100% {
+    transform: rotate(-35deg);
+  }
+  50% {
+    transform: rotate(-65deg);
+  }
+}
+@keyframes sc-toastbar {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}

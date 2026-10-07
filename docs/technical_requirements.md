@@ -29,14 +29,14 @@ Companion document to `mapleroyals_wiki_clone_requirements.md`. This document co
 
 ### 2.2 UI
 
-| Concern              | Choice                                      | Why                                                                                                                |
-| -------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Framework            | React 18+                                   | Largest ecosystem for wiki/data UI patterns.                                                                       |
-| Routing              | React Router v6 (`createBrowserRouter`)     | Familiar, well-documented. TanStack Router considered but deferred unless type-safety pressure justifies the swap. |
-| Styling              | Tailwind CSS v3, `class` dark-mode strategy | Utility-first; pairs with shadcn/ui.                                                                               |
-| Component primitives | shadcn/ui (Radix-based)                     | Components copied into the repo — no runtime version lock-in, full control over markup.                            |
-| Icons                | Lucide                                      | Matches shadcn's defaults.                                                                                         |
-| Design tokens        | CSS variables in `:root` / `.dark`          | A future game-nostalgic theme is a token swap, not a rewrite.                                                      |
+| Concern              | Choice                                         | Why                                                                                                                        |
+| -------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Framework            | React 18+                                      | Largest ecosystem for wiki/data UI patterns.                                                                               |
+| Routing              | React Router v6 (`createBrowserRouter`)        | Familiar, well-documented. TanStack Router considered but deferred unless type-safety pressure justifies the swap.         |
+| Styling              | Tailwind CSS v3, `class` dark-mode strategy    | Utility-first; pairs with shadcn/ui.                                                                                       |
+| Component primitives | shadcn/ui (Radix-based)                        | Components copied into the repo — no runtime version lock-in, full control over markup.                                    |
+| Icons                | Lucide                                         | Matches shadcn's defaults.                                                                                                 |
+| Design tokens        | CSS variables in `:root` / `.dark`             | A future game-nostalgic theme is a token swap, not a rewrite.                                                              |
 | Settings scroll-spy  | [`domet`](https://www.npmjs.com/package/domet) | Headless hook for in-page section nav; supports a custom scroll container (`<main>`), hysteresis, and programmatic scroll. |
 
 ### 2.3 State and data
@@ -85,7 +85,13 @@ Schema and join-table inventory follow §8.4 of the MVP doc.
 
 - **`@dnd-kit`** (`core`, `sortable`, `utilities`) for the home-page edit mode that lets users reorder dashboard sections. Picked over `react-beautiful-dnd` (unmaintained) and HTML5 native DnD (poor touch + a11y). Keyboard-accessible and touch-friendly out of the box. Restricted to `components/home/`; any other reorder UI in the app should re-evaluate before pulling it in.
 
-### 2.9 Other
+### 2.9 Component library
+
+- **`@scrolled/design`** (`packages/design`) holds the redesign's components, ported from the design hand-off as React + TypeScript with inline styles over CSS custom properties (`src/styles/tokens/`). It sits beside `@scrolled/ui` while screens migrate; both apps load its `tokens.css`, which defines variables, keyframes and fonts only, so it changes nothing until a screen opts in. `base.css` carries the element styles and the `data-motion` / reduced-motion overrides and is adopted with the new shell.
+- **Storybook 8** (`pnpm storybook`) documents every component, with toolbar controls for theme, accent, motion and backdrop. Stories use Lucide icons and invented names only; no sprites or game names.
+- **Fonts** are self-hosted through `@fontsource` (Figtree, Fredoka, JetBrains Mono; latin + latin-ext subsets) so the app never fetches fonts at runtime.
+
+### 2.10 Other
 
 - Asset decoding pipeline: `URL.createObjectURL` for sprites, LRU memoization for decoded thumbnails, IndexedDB cache for repeat sessions, explicit "clear cache" control.
 - **Pageview analytics — narrow carve-out from local-first.** The canonical hosted deployment loads an external pageview-analytics beacon (currently Cloudflare Web Analytics). Every other deployment, including local dev and forks, ships with no analytics. Constraints:
@@ -112,7 +118,7 @@ Schema and join-table inventory follow §8.4 of the MVP doc.
 
 - **Themes**: light and dark, via Tailwind's `class` strategy, defaulting to system preference. Persisted per user.
 - **Palette**: neutral slate/zinc tokens. No proprietary game branding.
-- **Typography**: system font stack + Inter for UI text; JetBrains Mono for IDs and inline code.
+- **Typography**: system font stack + Inter for UI text; JetBrains Mono for IDs and inline code. The redesign (`@scrolled/design`) moves to Figtree for UI text and Fredoka for display headings.
 - **Density**: medium-default with an optional compact mode for power users (toggle in settings).
 - **Iconography**: Lucide throughout.
 
@@ -176,7 +182,7 @@ This is the portability seam: a future Tauri or local-server backend replaces `p
 External processes (AI agents, scripts, a CLI) reach the app through a self-contained MCP subsystem under `apps/web/src/mcp/`. The subsystem owns three things and **nothing else in the app imports from it except a single mount line each in `main.tsx`, the Settings index, and the command palette**:
 
 - **Tool registry** — every exposed capability is a Zod-validated, name-stable `ToolDefinition`. Tools are thin adapters over `DbApi` / `UserDbApi`; orchestration that today lives inside a hook gets extracted into `mcp/services/` so the hook and the tool call one shared async function.
-- **Transport-abstracted bridge** — a `BridgeTransport` interface plus a WebSocket implementation. The browser is the WS *client*; an external Node host (`packages/mcp-server`, `packages/mcp-cli`) runs the WS server. Browsers cannot accept inbound connections, so the direction is fixed.
+- **Transport-abstracted bridge** — a `BridgeTransport` interface plus a WebSocket implementation. The browser is the WS _client_; an external Node host (`packages/mcp-server`, `packages/mcp-cli`) runs the WS server. Browsers cannot accept inbound connections, so the direction is fixed.
 - **Settings + palette wiring** — opt-in `mcp.bridge.enabled` / `mcp.bridge.url` prefs stored in `ui_prefs`. Off by default; flipping the toggle starts / stops the bridge live without a reload.
 
 Wire format and version constants live in `packages/mcp-protocol/`, depended on by `apps/web` and every external consumer, so the three sides cannot drift. Envelope kinds: `tool`, `response`, `discoverRequest`, `discoverResponse`, `progress` — discriminated by `kind`, versioned by `v`. `ProgressEnvelope` is defined now and used by stub long-running tools so progress reporting can land later without breaking compatibility.

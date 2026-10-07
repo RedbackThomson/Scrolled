@@ -35,8 +35,8 @@ const preset: Partial<Config> = {
           foreground: 'hsl(var(--muted-foreground))',
         },
         accent: {
-          DEFAULT: 'hsl(var(--accent))',
-          foreground: 'hsl(var(--accent-foreground))',
+          DEFAULT: 'hsl(var(--accent-surface))',
+          foreground: 'hsl(var(--accent-surface-foreground))',
         },
         card: {
           DEFAULT: 'hsl(var(--card))',

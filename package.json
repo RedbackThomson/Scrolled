@@ -20,6 +20,8 @@
     "preview": "pnpm --filter @scrolled/web preview",
     "dev:navigator": "pnpm --filter @scrolled/navigator dev",
     "build:navigator": "pnpm --filter @scrolled/navigator build",
+    "storybook": "pnpm --filter @scrolled/design storybook",
+    "build:storybook": "pnpm --filter @scrolled/design build-storybook",
     "dataset:build": "pnpm --filter @scrolled/extractor dataset:build",
     "nav-graph:export": "pnpm --filter @scrolled/nav-graph export",
     "typecheck": "pnpm -r typecheck",

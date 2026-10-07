@@ -6,6 +6,7 @@ node_modules/
 dist/
 dist-fixed/
 dist-identity/
+storybook-static/
 build/
 *.tsbuildinfo
 

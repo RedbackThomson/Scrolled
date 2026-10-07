@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@dagrejs/dagre": "^3.0.0",
+    "@scrolled/design": "workspace:*",
     "@scrolled/nav-graph": "workspace:*",
     "@scrolled/ui": "workspace:*",
     "@xyflow/react": "^12.3.5",

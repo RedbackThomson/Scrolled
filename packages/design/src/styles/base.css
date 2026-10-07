@@ -1,0 +1,40 @@
+html,
+body {
+  margin: 0;
+}
+body {
+  font: var(--type-body);
+  color: var(--text-1);
+  background: var(--gradient-page);
+  background-color: var(--surface-page);
+  -webkit-font-smoothing: antialiased;
+  text-wrap: pretty;
+}
+a {
+  color: var(--accent-text);
+  text-decoration: none;
+  font-weight: 600;
+}
+a:hover {
+  color: var(--accent);
+}
+code,
+kbd,
+pre {
+  font-family: var(--font-mono);
+}
+::selection {
+  background: var(--accent-glow);
+}
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='on']) * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+[data-motion='off'] * {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}

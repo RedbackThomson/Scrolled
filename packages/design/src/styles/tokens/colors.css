@@ -1,0 +1,169 @@
+/* Scrolled color tokens. Light is default; dark via .dark or [data-theme="dark"] on <html>.
+   The accent picker sets [data-accent] and only swaps --accent-h (hue). */
+:root {
+  --accent-h: 148;
+  /* Neutrals: sky-washed */
+  --sky-25: #f5faff;
+  --sky-50: #f3f8fd;
+  --sky-100: #eef5fc;
+  --sky-150: #e6f1fb;
+  --sky-200: #d2e2f1;
+  --navy-400: #5a6a8a;
+  --navy-900: #1c2a48;
+  --twilight-950: #121a30;
+  --twilight-900: #161f3a;
+  --twilight-850: #1b2546;
+  --twilight-800: #1e2849;
+  --twilight-750: #26325a;
+  --twilight-700: #323f6b;
+  --twilight-300: #a2afd0;
+  --twilight-50: #eef2ff;
+
+  /* Surfaces */
+  --surface-page: var(--sky-150);
+  --surface-page-top: var(--sky-25);
+  --surface-sidebar: var(--sky-50);
+  --surface-card: #ffffff;
+  --surface-sunken: var(--sky-100);
+  --surface-row-hover: #f0f6fd;
+  --surface-selected: #dbeaf8;
+  --surface-scrim: rgba(70, 110, 170, 0.22);
+  --surface-tooltip: #1f2b4f;
+  --surface-tooltip-tile: oklch(0.36 0.06 255);
+  --cloud: rgba(255, 255, 255, 0.75);
+
+  /* Text & lines */
+  --text-1: var(--navy-900);
+  --text-2: var(--navy-400);
+  --text-on-tooltip: #f1f5ff;
+  --border-1: var(--sky-200);
+  --tooltip-line: rgba(255, 255, 255, 0.16);
+  --highlight: rgba(255, 255, 255, 0.95);
+  --inset: rgba(30, 60, 110, 0.05);
+  --shadow-color: rgba(40, 90, 160, 0.13);
+
+  /* Accent (buttons, links, focus only) */
+  --accent: oklch(0.64 0.17 var(--accent-h));
+  --accent-hi: oklch(0.74 0.16 var(--accent-h));
+  --accent-lo: oklch(0.5 0.14 var(--accent-h));
+  --accent-fg: #ffffff;
+  --accent-text: oklch(0.52 0.15 var(--accent-h));
+  --accent-glow: oklch(0.64 0.17 var(--accent-h) / 0.3);
+
+  /* Gold (boss, mesos, badges) */
+  --gold: oklch(0.82 0.15 80);
+  --gold-hi: oklch(0.9 0.12 90);
+  --gold-fg: #5c3d00;
+  --gold-edge: oklch(0.7 0.14 75);
+  --gold-glow: oklch(0.82 0.15 80 / 0.4);
+
+  /* Brand sky (logo tile, window bars, progress) */
+  --brand-1: oklch(0.78 0.11 230);
+  --brand-2: oklch(0.64 0.13 245);
+
+  /* Status */
+  --ok: oklch(0.68 0.17 148);
+  --ok-halo: oklch(0.68 0.17 148 / 0.2);
+  --warn: oklch(0.75 0.15 70);
+  --danger: oklch(0.62 0.2 25);
+  --danger-hi: oklch(0.7 0.18 22);
+  --danger-lo: oklch(0.48 0.17 22);
+
+  /* Item category slot tints */
+  --tint-etc: oklch(0.95 0.045 75);
+  --tint-use: oklch(0.95 0.035 15);
+  --tint-equip: oklch(0.95 0.035 235);
+  --tint-cash: oklch(0.95 0.04 300);
+  --tint-mob: oklch(0.92 0.05 20);
+  --tint-mob-hi: oklch(0.98 0.02 40);
+
+  /* Entity hues (used as oklch(L C var(--hue-x))) */
+  --hue-item: 70;
+  --hue-equip: 235;
+  --hue-mob: 20;
+  --hue-npc: 150;
+  --hue-map: 185;
+  --hue-quest: 295;
+  --hue-skill: 260;
+  --hue-collection: 235;
+
+  /* Stats */
+  --stat-hp: oklch(0.64 0.19 22);
+  --stat-mp: oklch(0.6 0.16 255);
+  --stat-exp: oklch(0.72 0.15 75);
+  --stat-level: oklch(0.6 0.16 148);
+  /* Elements */
+  --el-ice: oklch(0.75 0.11 220);
+  --el-lightning: oklch(0.85 0.15 95);
+  --el-fire: oklch(0.68 0.19 35);
+  --el-poison: oklch(0.7 0.15 140);
+  --el-holy: oklch(0.92 0.08 90);
+  --el-dark: oklch(0.5 0.13 295);
+  --el-physical: oklch(0.7 0.02 250);
+  /* Map viewer layers */
+  --layer-spawn: oklch(0.66 0.16 150);
+  --layer-portal: oklch(0.66 0.16 235);
+  --layer-teleport: oklch(0.66 0.16 295);
+  --layer-npc: oklch(0.66 0.16 75);
+  --layer-mob: oklch(0.66 0.16 15);
+}
+.dark,
+[data-theme='dark'] {
+  --surface-page: var(--twilight-950);
+  --surface-page-top: var(--twilight-850);
+  --surface-sidebar: var(--twilight-900);
+  --surface-card: var(--twilight-800);
+  --surface-sunken: var(--twilight-750);
+  --surface-row-hover: #25305a;
+  --surface-selected: #2b3866;
+  --surface-scrim: rgba(5, 10, 25, 0.55);
+  --surface-tooltip: #0d1328;
+  --surface-tooltip-tile: oklch(0.3 0.06 255);
+  --cloud: rgba(120, 150, 230, 0.07);
+  --text-1: var(--twilight-50);
+  --text-2: var(--twilight-300);
+  --border-1: var(--twilight-700);
+  --tooltip-line: rgba(255, 255, 255, 0.14);
+  --highlight: rgba(255, 255, 255, 0.06);
+  --inset: rgba(0, 0, 0, 0.2);
+  --shadow-color: rgba(0, 0, 0, 0.35);
+  --accent: oklch(0.72 0.16 var(--accent-h));
+  --accent-hi: oklch(0.8 0.15 var(--accent-h));
+  --accent-lo: oklch(0.52 0.13 var(--accent-h));
+  --accent-fg: oklch(0.2 0.05 var(--accent-h));
+  --accent-text: oklch(0.8 0.14 var(--accent-h));
+  --accent-glow: oklch(0.72 0.16 var(--accent-h) / 0.25);
+  --gold: oklch(0.82 0.14 82);
+  --gold-hi: oklch(0.88 0.12 90);
+  --gold-fg: #3a2600;
+  --gold-edge: oklch(0.62 0.12 75);
+  --gold-glow: oklch(0.82 0.14 82 / 0.25);
+  --brand-1: oklch(0.52 0.11 255);
+  --brand-2: oklch(0.42 0.11 265);
+  --ok: oklch(0.75 0.16 148);
+  --ok-halo: oklch(0.75 0.16 148 / 0.2);
+  --tint-etc: oklch(0.34 0.06 70);
+  --tint-use: oklch(0.34 0.06 15);
+  --tint-equip: oklch(0.34 0.06 240);
+  --tint-cash: oklch(0.34 0.06 300);
+  --tint-mob: oklch(0.33 0.07 20);
+  --tint-mob-hi: oklch(0.42 0.07 35);
+}
+[data-accent='green'] {
+  --accent-h: 148;
+}
+[data-accent='blue'] {
+  --accent-h: 255;
+}
+[data-accent='violet'] {
+  --accent-h: 295;
+}
+[data-accent='rose'] {
+  --accent-h: 10;
+}
+[data-accent='amber'] {
+  --accent-h: 60;
+}
+[data-accent='teal'] {
+  --accent-h: 185;
+}

@@ -31,9 +31,9 @@
   --xy-handle-background-color: hsl(var(--muted-foreground));
   --xy-handle-border-color: hsl(var(--background));
   --xy-controls-button-background-color: hsl(var(--card));
-  --xy-controls-button-background-color-hover: hsl(var(--accent));
+  --xy-controls-button-background-color-hover: hsl(var(--accent-surface));
   --xy-controls-button-color: hsl(var(--foreground));
-  --xy-controls-button-color-hover: hsl(var(--accent-foreground));
+  --xy-controls-button-color-hover: hsl(var(--accent-surface-foreground));
   --xy-controls-button-border-color: hsl(var(--border));
   --xy-minimap-background-color: hsl(var(--card));
   --xy-minimap-mask-background-color: hsl(var(--background) / 0.6);

@@ -39,6 +39,7 @@ Don't switch these without updating `docs/technical_requirements.md` first.
 - `@sqlite.org/sqlite-wasm` with OPFS (IndexedDB fallback)
 - MiniSearch for search, `idb-keyval` for small KV, Zod for validation
 - Vitest for tests
+- Storybook 8 for the `@scrolled/design` component library (`packages/design`)
 
 ## Design language
 

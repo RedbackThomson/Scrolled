@@ -21,8 +21,8 @@
   --muted: var(--tint) 40% 96%;
   --muted-foreground: var(--tint) 16% 47%;
 
-  --accent: var(--tint) 40% 96%;
-  --accent-foreground: var(--tint) 47% 11%;
+  --accent-surface: var(--tint) 40% 96%;
+  --accent-surface-foreground: var(--tint) 47% 11%;
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 210 40% 98%;
@@ -58,8 +58,8 @@
   --muted: var(--tint) 33% 17%;
   --muted-foreground: var(--tint) 20% 65%;
 
-  --accent: var(--tint) 33% 17%;
-  --accent-foreground: var(--tint) 40% 98%;
+  --accent-surface: var(--tint) 33% 17%;
+  --accent-surface-foreground: var(--tint) 40% 98%;
 
   --destructive: 0 63% 31%;
   --destructive-foreground: 210 40% 98%;
