@@ -103,8 +103,17 @@ export default function MobDetail() {
   if (!mobQ.data) return <DetailPageNotFound entity="Mob" id={id} />;
 
   const m = mobQ.data;
+  const statTiles = (
+    <>
+      <StatTile label="Level" value={m.level ?? '—'} color="var(--stat-level)" />
+      <StatTile label="HP" value={m.hp?.toLocaleString() ?? '—'} color="var(--stat-hp)" />
+      <StatTile label="MP" value={m.mp?.toLocaleString() ?? '—'} color="var(--stat-mp)" />
+      <StatTile label="EXP" value={<ExpValue exp={m.exp} />} color="var(--stat-exp)" />
+    </>
+  );
   return (
     <DetailPageLayout
+      stats={statTiles}
       header={
         <DetailHeader
           entity="mob"
@@ -127,14 +136,10 @@ export default function MobDetail() {
               {m.isBoss && <InfoRow label="Boss" value="Yes" />}
             </InfoSection>
           )}
-          <section>
+          {/* On mobile the same tiles sit in the strip under the header. */}
+          <section className="max-md:hidden">
             <h2 className="font-display mb-2 text-[15px] font-semibold">Stats</h2>
-            <div className="grid grid-cols-2 gap-1.5">
-              <StatTile label="Level" value={m.level ?? '—'} color="var(--stat-level)" />
-              <StatTile label="HP" value={m.hp?.toLocaleString() ?? '—'} color="var(--stat-hp)" />
-              <StatTile label="MP" value={m.mp?.toLocaleString() ?? '—'} color="var(--stat-mp)" />
-              <StatTile label="EXP" value={<ExpValue exp={m.exp} />} color="var(--stat-exp)" />
-            </div>
+            <div className="grid grid-cols-2 gap-1.5">{statTiles}</div>
           </section>
           <MobElementsSection element={m.elementAttack} />
           <MobCalculatedSection mob={m} />

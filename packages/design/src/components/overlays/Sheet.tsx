@@ -75,7 +75,7 @@ export const SheetContent = forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          'bg-card text-card-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:ease-spring fixed z-50 flex flex-col shadow-[0_12px_40px_rgba(10,20,50,.25)] outline-none data-[state=closed]:duration-200 data-[state=open]:duration-500',
+          'bg-card text-card-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:ease-out fixed z-50 flex flex-col shadow-[0_12px_40px_rgba(10,20,50,.25)] outline-none data-[state=closed]:duration-200 data-[state=open]:duration-300',
           sideClasses[side],
           className,
         )}

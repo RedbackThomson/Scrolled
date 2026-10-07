@@ -11,7 +11,6 @@
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { usePopover } from '@/hooks/usePopover';
-import { createPortal } from 'react-dom';
 import { Check, Loader2, Plus, Search } from 'lucide-react';
 import { Button, ConfettiBurst, Input } from '@scrolled/design';
 import { useMotionPrefs } from '@/hooks/useMotionPrefs';
@@ -26,6 +25,7 @@ import {
 } from '@/hooks/useCollections';
 import type { CollectionEntityType, MembershipBadge } from '@/db/user';
 import { cn } from '@scrolled/design';
+import { PopoverPanel } from '@/components/common/PopoverPanel';
 
 interface CollectionPickerProps {
   entityType: CollectionEntityType;
@@ -126,85 +126,83 @@ export function CollectionPicker({ entityType, entityId, children }: CollectionP
         {children({ open, toggle, memberCount: placementsByCollection.size, saves })}
         <ConfettiBurst trigger={saves} />
       </span>
-      {open &&
-        coords &&
-        createPortal(
-          <div
-            ref={popoverRef}
-            role="dialog"
-            aria-label="Add to collection"
-            style={{ position: 'fixed', top: coords.top, left: coords.left }}
-            className="border-border bg-card text-card-foreground shadow-pop z-50 w-72 max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl border-2"
-            onMouseDown={(e) => e.stopPropagation()}
-          >
-            <div className="border-muted border-b-2 p-2">
-              <div className="relative">
-                <Search className="text-muted-foreground pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2" />
-                <Input
-                  autoFocus
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search or create…"
-                  className="bg-muted focus-visible:ring-primary/30 h-8 w-full rounded-full pl-8 pr-2 text-base focus-visible:outline-none focus-visible:ring-4 sm:text-xs"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !hasExactMatch && query.trim()) {
-                      e.preventDefault();
-                      onCreateAndAdd();
-                    }
-                  }}
-                />
-              </div>
+      {open && (
+        <PopoverPanel
+          label="Add to collection"
+          onClose={close}
+          panelRef={popoverRef}
+          coords={coords}
+          widthClassName="w-72"
+          className="overflow-hidden"
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <div className="border-muted border-b-2 p-2">
+            <div className="relative">
+              <Search className="text-muted-foreground pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2" />
+              <Input
+                autoFocus
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search or create…"
+                className="bg-muted focus-visible:ring-primary/30 h-8 w-full rounded-full pl-8 pr-2 text-base focus-visible:outline-none focus-visible:ring-4 sm:text-xs"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !hasExactMatch && query.trim()) {
+                    e.preventDefault();
+                    onCreateAndAdd();
+                  }
+                }}
+              />
             </div>
-            <ul
-              className="max-h-72 space-y-0.5 overflow-y-auto p-1.5"
-              aria-busy={collectionsQ.isPending || membershipQ.isPending}
-            >
-              {collectionsQ.isPending ? (
-                <li className="text-muted-foreground flex items-center gap-2 px-3 py-2 text-xs">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  Loading…
-                </li>
-              ) : filtered.length === 0 ? (
-                <li className="text-muted-foreground px-3 py-2 text-xs">
-                  {query.trim() ? 'No matches' : 'No collections yet.'}
-                </li>
-              ) : (
-                filtered.map((c) => (
-                  <PickerRow
-                    key={c.id}
-                    collectionId={c.id}
-                    collectionName={c.name}
-                    collectionMemberCount={c.memberCount}
-                    placements={placementsByCollection.get(c.id) ?? []}
-                    entityType={entityType}
-                    entityId={entityId}
-                    onToggle={() => onToggleMembership(c.id)}
-                  />
-                ))
-              )}
-            </ul>
-            {!hasExactMatch && query.trim() && (
-              <div className="border-muted bg-muted border-t-2 p-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  className="w-full justify-start"
-                  onClick={onCreateAndAdd}
-                  disabled={createM.isPending}
-                >
-                  {createM.isPending ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Plus className="h-3.5 w-3.5" />
-                  )}
-                  Create "{query.trim()}"
-                </Button>
-              </div>
+          </div>
+          <ul
+            className="max-h-72 space-y-0.5 overflow-y-auto p-1.5"
+            aria-busy={collectionsQ.isPending || membershipQ.isPending}
+          >
+            {collectionsQ.isPending ? (
+              <li className="text-muted-foreground flex items-center gap-2 px-3 py-2 text-xs">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Loading…
+              </li>
+            ) : filtered.length === 0 ? (
+              <li className="text-muted-foreground px-3 py-2 text-xs">
+                {query.trim() ? 'No matches' : 'No collections yet.'}
+              </li>
+            ) : (
+              filtered.map((c) => (
+                <PickerRow
+                  key={c.id}
+                  collectionId={c.id}
+                  collectionName={c.name}
+                  collectionMemberCount={c.memberCount}
+                  placements={placementsByCollection.get(c.id) ?? []}
+                  entityType={entityType}
+                  entityId={entityId}
+                  onToggle={() => onToggleMembership(c.id)}
+                />
+              ))
             )}
-          </div>,
-          document.body,
-        )}
+          </ul>
+          {!hasExactMatch && query.trim() && (
+            <div className="border-muted bg-muted border-t-2 p-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                className="w-full justify-start"
+                onClick={onCreateAndAdd}
+                disabled={createM.isPending}
+              >
+                {createM.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Plus className="h-3.5 w-3.5" />
+                )}
+                Create "{query.trim()}"
+              </Button>
+            </div>
+          )}
+        </PopoverPanel>
+      )}
     </>
   );
 }

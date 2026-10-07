@@ -10,7 +10,6 @@
 // `collections` row in the DB and drops the local override. "Reset"
 // drops the override without writing, falling back to the DB default.
 
-import { createPortal } from 'react-dom';
 import { ArrowDown, ArrowUp, Settings2 } from 'lucide-react';
 import { usePopover } from '@/hooks/usePopover';
 import { cn } from '@scrolled/design';
@@ -22,6 +21,7 @@ import type {
   CollectionSortDir,
   CollectionSortKey,
 } from '@/db/user';
+import { PopoverPanel } from '@/components/common/PopoverPanel';
 
 interface CollectionDisplayOptionsMenuProps {
   collection: CollectionRecord;
@@ -91,7 +91,7 @@ export function CollectionDisplayOptionsMenu({ collection }: CollectionDisplayOp
         type="button"
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          'border-border bg-card ease-spring relative inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border-2 shadow-[var(--shadow-btn-secondary)] transition-transform duration-300 hover:-translate-y-0.5',
+          'border-border bg-card ease-spring relative inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border-2 max-md:h-11 max-md:w-11 shadow-[var(--shadow-btn-secondary)] transition-transform duration-300 hover:-translate-y-0.5',
           hasOverride && 'border-primary/50',
           open && 'border-primary ring-primary/30 ring-4',
         )}
@@ -108,104 +108,103 @@ export function CollectionDisplayOptionsMenu({ collection }: CollectionDisplayOp
           />
         )}
       </button>
-      {open &&
-        coords &&
-        createPortal(
-          <div
-            ref={popoverRef}
-            role="dialog"
-            aria-label="Display options"
-            style={{ position: 'fixed', top: coords.top, left: coords.left }}
-            className="border-border bg-card text-card-foreground shadow-pop animate-tip z-50 w-72 origin-top-right rounded-xl border-2 p-3"
-          >
-            <Row label="Grouping">
+      {open && (
+        <PopoverPanel
+          label="Display options"
+          onClose={() => setOpen(false)}
+          panelRef={popoverRef}
+          coords={coords}
+          widthClassName="w-72"
+          align="right"
+          className="p-3"
+        >
+          <Row label="Grouping">
+            <select
+              value={display.grouping}
+              onChange={(e) => setGrouping(e.target.value as CollectionGrouping)}
+              className="border-border bg-card h-7 w-32 rounded-[10px] border-2 px-2 text-xs"
+              aria-label="Primary grouping"
+            >
+              {GROUPING_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </Row>
+          <Row label="Sub-grouping">
+            <select
+              value={display.subgrouping}
+              onChange={(e) => setSubgrouping(e.target.value as CollectionGrouping)}
+              disabled={display.grouping === 'none'}
+              className="border-border bg-card h-7 w-32 rounded-[10px] border-2 px-2 text-xs disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="Secondary grouping"
+            >
+              {GROUPING_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </Row>
+
+          <Row label="Ordering">
+            <div className="flex items-center gap-1.5">
               <select
-                value={display.grouping}
-                onChange={(e) => setGrouping(e.target.value as CollectionGrouping)}
-                className="border-border bg-card h-7 w-32 rounded-[10px] border-2 px-2 text-xs"
-                aria-label="Primary grouping"
+                value={display.sortKey}
+                onChange={(e) => setLocal({ sortKey: e.target.value as CollectionSortKey })}
+                className="border-border bg-card h-7 w-28 rounded-[10px] border-2 px-2 text-xs"
+                aria-label="Sort key"
               >
-                {GROUPING_OPTIONS.map((o) => (
+                {SORT_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
                   </option>
                 ))}
               </select>
-            </Row>
-            <Row label="Sub-grouping">
-              <select
-                value={display.subgrouping}
-                onChange={(e) => setSubgrouping(e.target.value as CollectionGrouping)}
-                disabled={display.grouping === 'none'}
-                className="border-border bg-card h-7 w-32 rounded-[10px] border-2 px-2 text-xs disabled:cursor-not-allowed disabled:opacity-50"
-                aria-label="Secondary grouping"
-              >
-                {GROUPING_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </Row>
-
-            <Row label="Ordering">
-              <div className="flex items-center gap-1.5">
-                <select
-                  value={display.sortKey}
-                  onChange={(e) => setLocal({ sortKey: e.target.value as CollectionSortKey })}
-                  className="border-border bg-card h-7 w-28 rounded-[10px] border-2 px-2 text-xs"
-                  aria-label="Sort key"
-                >
-                  {SORT_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-                <DirectionToggle
-                  dir={display.sortDir}
-                  onChange={(d) => setLocal({ sortDir: d })}
-                />
-              </div>
-            </Row>
-
-            {display.sortKey !== 'manual' && (
-              <p className="text-muted-foreground mt-1 text-[11px] leading-relaxed">
-                Items are sorted by this key. Drag-to-reorder items is paused.
-              </p>
-            )}
-
-            <div className="border-muted mt-3 flex items-center justify-between border-t-2 pt-3">
-              <button
-                type="button"
-                onClick={reset}
-                disabled={!hasOverride}
-                className={cn(
-                  'text-xs',
-                  hasOverride
-                    ? 'text-muted-foreground hover:text-foreground'
-                    : 'text-muted-foreground/50 cursor-not-allowed',
-                )}
-              >
-                Reset
-              </button>
-              <button
-                type="button"
-                onClick={onSetAsDefault}
-                disabled={!hasOverride || setDefaultM.isPending}
-                className={cn(
-                  'text-xs font-medium',
-                  hasOverride && !setDefaultM.isPending
-                    ? 'text-primary hover:underline'
-                    : 'text-primary/50 cursor-not-allowed',
-                )}
-              >
-                Set as default
-              </button>
+              <DirectionToggle
+                dir={display.sortDir}
+                onChange={(d) => setLocal({ sortDir: d })}
+              />
             </div>
-          </div>,
-          document.body,
-        )}
+          </Row>
+
+          {display.sortKey !== 'manual' && (
+            <p className="text-muted-foreground mt-1 text-[11px] leading-relaxed">
+              Items are sorted by this key. Drag-to-reorder items is paused.
+            </p>
+          )}
+
+          <div className="border-muted mt-3 flex items-center justify-between border-t-2 pt-3">
+            <button
+              type="button"
+              onClick={reset}
+              disabled={!hasOverride}
+              className={cn(
+                'text-xs',
+                hasOverride
+                  ? 'text-muted-foreground hover:text-foreground'
+                  : 'text-muted-foreground/50 cursor-not-allowed',
+              )}
+            >
+              Reset
+            </button>
+            <button
+              type="button"
+              onClick={onSetAsDefault}
+              disabled={!hasOverride || setDefaultM.isPending}
+              className={cn(
+                'text-xs font-medium',
+                hasOverride && !setDefaultM.isPending
+                  ? 'text-primary hover:underline'
+                  : 'text-primary/50 cursor-not-allowed',
+              )}
+            >
+              Set as default
+            </button>
+          </div>
+        </PopoverPanel>
+      )}
     </>
   );
 }

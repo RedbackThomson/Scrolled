@@ -4,6 +4,7 @@ import { EntityIcon } from '@/components/entity-display/EntityIcon';
 import { NpcLink } from '@/components/entity-links';
 import type { NpcRecord } from '@/db';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
+import { MobileCardBody } from '@/components/data-table/MobileCardBody';
 
 export const columns: ColumnDef<NpcRecord>[] = [
   {
@@ -54,12 +55,10 @@ export const defaultSort = { id: 'name', dir: 'asc' } as const satisfies {
 
 export function mobileCard(row: NpcRecord) {
   return (
-    <div className="flex items-center gap-3">
-      <EntityAvatar entity="npc" id={row.id} size={52} alt={row.name} />
-      <div className="min-w-0 flex-1">
-        <div className="truncate font-medium">{row.name}</div>
-        <div className="text-muted-foreground truncate font-mono text-xs">{row.id}</div>
-      </div>
-    </div>
+    <MobileCardBody
+      media={<EntityAvatar entity="npc" id={row.id} size={52} alt={row.name} />}
+      name={row.name}
+      subtitle={<span className="font-mono">{row.id}</span>}
+    />
   );
 }

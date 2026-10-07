@@ -7,7 +7,6 @@
 // `pinned_searches` table — this surface is read-only.
 
 import { useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Bookmark, ChevronDown, Loader2, X } from 'lucide-react';
 import { Button } from '@scrolled/design';
@@ -16,6 +15,7 @@ import { useDeletePinnedSearch, usePinnedSearches } from '@/hooks/usePinnedSearc
 import { listingRouteForEntity } from '@/lib/entityRoutes';
 import type { CollectionEntityType } from '@/db/user';
 import { cn } from '@scrolled/design';
+import { PopoverPanel } from '@/components/common/PopoverPanel';
 
 interface Props {
   entity: CollectionEntityType;
@@ -69,7 +69,11 @@ export function PinnedSearchesMenu({ entity }: Props) {
         type="button"
         variant="secondary"
         size="sm"
+        className="max-md:h-11"
         onClick={() => setOpen((o) => !o)}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-label="Saved searches for this page"
         title="Saved searches for this page"
       >
         <Bookmark className="h-3.5 w-3.5" />
@@ -79,52 +83,49 @@ export function PinnedSearchesMenu({ entity }: Props) {
         )}
         <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', open && 'rotate-180')} />
       </Button>
-      {open &&
-        coords &&
-        createPortal(
-          <div
-            ref={popoverRef}
-            role="dialog"
-            aria-label="Saved searches"
-            style={{ position: 'fixed', top: coords.top, left: coords.left }}
-            className="border-border bg-card text-card-foreground shadow-pop animate-tip z-50 w-80 max-w-[calc(100vw-1rem)] origin-top-left rounded-xl border-2"
-            onMouseDown={(e) => e.stopPropagation()}
-          >
-            <div className="border-border border-b p-2">
-              <p className="text-muted-foreground text-[11px] uppercase tracking-wide">
-                Saved for this page
-              </p>
-            </div>
-            <ul className="max-h-64 overflow-y-auto py-1" aria-busy={allQ.isPending}>
-              {allQ.isPending ? (
-                <li className="text-muted-foreground flex items-center gap-2 px-3 py-2 text-xs">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  Loading…
-                </li>
-              ) : scoped.length === 0 ? (
-                <li className="text-muted-foreground px-3 py-3 text-center text-xs">
-                  No saved searches yet.
-                </li>
-              ) : (
-                scoped.map((p) => (
-                  <SavedRow
-                    key={p.id}
-                    label={p.name}
-                    onLoad={() => onLoad(p.id)}
-                    onDelete={() => void onDelete(p.id, p.name)}
-                    deleting={deleteM.isPending}
-                  />
-                ))
-              )}
-            </ul>
-            {status && (
-              <div className="border-border text-muted-foreground border-t px-3 py-2 text-[11px]">
-                {status}
-              </div>
+      {open && (
+        <PopoverPanel
+          label="Saved searches"
+          onClose={() => setOpen(false)}
+          panelRef={popoverRef}
+          coords={coords}
+          widthClassName="w-80"
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <div className="border-border border-b p-2">
+            <p className="text-muted-foreground text-[11px] uppercase tracking-wide">
+              Saved for this page
+            </p>
+          </div>
+          <ul className="max-h-64 overflow-y-auto py-1" aria-busy={allQ.isPending}>
+            {allQ.isPending ? (
+              <li className="text-muted-foreground flex items-center gap-2 px-3 py-2 text-xs">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Loading…
+              </li>
+            ) : scoped.length === 0 ? (
+              <li className="text-muted-foreground px-3 py-3 text-center text-xs">
+                No saved searches yet.
+              </li>
+            ) : (
+              scoped.map((p) => (
+                <SavedRow
+                  key={p.id}
+                  label={p.name}
+                  onLoad={() => onLoad(p.id)}
+                  onDelete={() => void onDelete(p.id, p.name)}
+                  deleting={deleteM.isPending}
+                />
+              ))
             )}
-          </div>,
-          document.body,
-        )}
+          </ul>
+          {status && (
+            <div className="border-border text-muted-foreground border-t px-3 py-2 text-[11px]">
+              {status}
+            </div>
+          )}
+        </PopoverPanel>
+      )}
     </>
   );
 }

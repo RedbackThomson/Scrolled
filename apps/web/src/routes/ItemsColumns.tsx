@@ -19,6 +19,7 @@ import { ItemLink } from '@/components/entity-links';
 import { formatDurationSeconds } from '@/lib/duration';
 import type { ItemListRow } from '@/db';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
+import { MobileCardBody } from '@/components/data-table/MobileCardBody';
 
 const num = (v: number | null) => (v == null ? '—' : String(v));
 const signedNum = (v: number | null) => (v == null ? '—' : v >= 0 ? `+${v}` : `−${Math.abs(v)}`);
@@ -211,21 +212,16 @@ export const defaultSort = { id: 'name', dir: 'asc' } as const satisfies {
 };
 
 export function mobileCard(row: ItemListRow) {
-  const meta: string[] = [];
-  if (row.subcategory) meta.push(row.subcategory);
-  else if (row.category) meta.push(row.category);
-  if (row.requiredLevel !== null) meta.push(`Lvl ${row.requiredLevel}`);
   return (
-    <div className="flex items-center gap-3">
-      <EntityAvatar entity="item" id={row.id} size={52} alt={row.name} />
-      <div className="min-w-0 flex-1">
-        <div className="truncate font-medium">{row.name}</div>
-        {meta.length > 0 && (
-          <div className="text-muted-foreground truncate text-xs capitalize">
-            {meta.join(' · ')}
-          </div>
-        )}
-      </div>
-    </div>
+    <MobileCardBody
+      media={<EntityAvatar entity="item" id={row.id} size={52} alt={row.name} />}
+      name={row.name}
+      subtitle={
+        (row.subcategory ?? row.category) && (
+          <span className="capitalize">{row.subcategory ?? row.category}</span>
+        )
+      }
+      stats={row.requiredLevel !== null ? [`Lvl ${row.requiredLevel}`] : []}
+    />
   );
 }

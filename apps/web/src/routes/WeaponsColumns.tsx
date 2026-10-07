@@ -17,6 +17,8 @@ import { ABILITY_STAT_FIELDS } from '@scrolled/game-db/domain/abilityStats';
 import { labelForEquipType } from '@scrolled/game-db/domain/equipTypes';
 import { isAnyClass, parseEquipReqJob } from '@scrolled/game-db/domain/equipJobs';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
+import { Chip } from '@scrolled/design';
+import { MobileCardBody } from '@/components/data-table/MobileCardBody';
 
 const num = (v: number | null) => (v === null ? '—' : v.toLocaleString());
 
@@ -195,30 +197,26 @@ export function defaultVisibleForType(type: string | null): readonly string[] {
 }
 
 export function mobileCard(row: EquipRecord) {
-  const meta: string[] = [];
-  if (row.equipType) meta.push(labelForEquipType(row.equipType));
-  if (row.requiredLevel !== null) meta.push(`Lvl ${row.requiredLevel}`);
+  const stats: string[] = [];
+  if (row.requiredLevel !== null) stats.push(`Lvl ${row.requiredLevel}`);
   // Magic weapons advertise M.Atk; everything else uses Atk. Cash weapons
   // have neither — the badge is what identifies them.
   const isMagic = row.equipType !== null && MAGIC_WEAPON_TYPES.has(row.equipType);
   const atk = isMagic ? row.magicAttack : row.attack;
-  if (atk !== null) meta.push(`${isMagic ? 'M.Atk' : 'Atk'} ${atk.toLocaleString()}`);
+  if (atk !== null) stats.push(`${isMagic ? 'M.Atk' : 'Atk'} ${atk.toLocaleString()}`);
   return (
-    <div className="flex items-center gap-3">
-      <EntityAvatar entity="equip" id={row.id} size={52} alt={row.name} />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5">
-          <span className="truncate font-medium">{row.name}</span>
-          {row.cash && (
-            <span className="inline-flex shrink-0 items-center rounded bg-pink-500/15 px-1.5 py-0.5 text-[10px] font-medium text-pink-700 dark:text-pink-300">
-              Cash
-            </span>
-          )}
-        </div>
-        {meta.length > 0 && (
-          <div className="text-muted-foreground truncate text-xs">{meta.join(' · ')}</div>
-        )}
-      </div>
-    </div>
+    <MobileCardBody
+      media={<EntityAvatar entity="equip" id={row.id} size={52} alt={row.name} />}
+      name={row.name}
+      badge={
+        row.cash ? (
+          <Chip tone="hue" hue={330}>
+            Cash
+          </Chip>
+        ) : undefined
+      }
+      subtitle={row.equipType ? labelForEquipType(row.equipType) : undefined}
+      stats={stats}
+    />
   );
 }

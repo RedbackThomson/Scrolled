@@ -18,6 +18,8 @@ import { ABILITY_STAT_FIELDS } from '@scrolled/game-db/domain/abilityStats';
 import { labelForEquipSlot } from '@scrolled/game-db/domain/equipTypes';
 import { isAnyClass, parseEquipReqJob } from '@scrolled/game-db/domain/equipJobs';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
+import { Chip } from '@scrolled/design';
+import { MobileCardBody } from '@/components/data-table/MobileCardBody';
 
 const num = (v: number | null) => (v === null ? '—' : v.toLocaleString());
 
@@ -164,25 +166,19 @@ export const defaultSort = { id: 'name', dir: 'asc' } as const satisfies {
 };
 
 export function mobileCard(row: EquipRecord) {
-  const meta: string[] = [];
-  if (row.slot) meta.push(labelForEquipSlot(row.slot));
-  if (row.requiredLevel !== null) meta.push(`Lvl ${row.requiredLevel}`);
   return (
-    <div className="flex items-center gap-3">
-      <EntityAvatar entity="equip" id={row.id} size={52} alt={row.name} />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5">
-          <span className="truncate font-medium">{row.name}</span>
-          {row.cash && (
-            <span className="inline-flex shrink-0 items-center rounded bg-pink-500/15 px-1.5 py-0.5 text-[10px] font-medium text-pink-700 dark:text-pink-300">
-              Cash
-            </span>
-          )}
-        </div>
-        {meta.length > 0 && (
-          <div className="text-muted-foreground truncate text-xs">{meta.join(' · ')}</div>
-        )}
-      </div>
-    </div>
+    <MobileCardBody
+      media={<EntityAvatar entity="equip" id={row.id} size={52} alt={row.name} />}
+      name={row.name}
+      badge={
+        row.cash ? (
+          <Chip tone="hue" hue={330}>
+            Cash
+          </Chip>
+        ) : undefined
+      }
+      subtitle={row.slot ? labelForEquipSlot(row.slot) : undefined}
+      stats={row.requiredLevel !== null ? [`Lvl ${row.requiredLevel}`] : []}
+    />
   );
 }

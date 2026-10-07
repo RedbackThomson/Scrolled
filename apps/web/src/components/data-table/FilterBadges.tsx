@@ -8,7 +8,6 @@
 // pinned_searches store as the toolbar's Saved Searches dropdown).
 
 import { useState } from 'react';
-import { createPortal } from 'react-dom';
 import { Filter, X } from 'lucide-react';
 import { Button } from '@scrolled/design';
 import { usePopover } from '@/hooks/usePopover';
@@ -20,6 +19,7 @@ import { FilterMenu, ValueEditorBody } from './FilterMenu';
 import { SaveSearchPrompt } from './SaveSearchPrompt';
 import type { FilterableCol } from './Filterable';
 import { collectFilterable } from './Filterable';
+import { PopoverPanel } from '@/components/common/PopoverPanel';
 
 interface FilterBadgesProps<TData> {
   columns: ColumnDef<TData>[];
@@ -73,10 +73,22 @@ export function FilterBadges<TData>({
           <SaveSearchPrompt entity={entity} onDone={() => setSavingOpen(false)} />
         ) : (
           <>
-            <Button type="button" variant="ghost" size="sm" onClick={onClearAll}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="max-md:h-11"
+              onClick={onClearAll}
+            >
               Clear
             </Button>
-            <Button type="button" variant="secondary" size="sm" onClick={() => setSavingOpen(true)}>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="max-md:h-11"
+              onClick={() => setSavingOpen(true)}
+            >
               Save
             </Button>
           </>
@@ -111,7 +123,7 @@ function Badge({ col, filter, onChange }: BadgeProps) {
   return (
     <>
       <span
-        className="bg-card inline-flex h-7 items-center gap-1 rounded-full border-2 pr-1 text-[12.5px]"
+        className="bg-card inline-flex h-7 items-center gap-1 rounded-full border-2 pr-1 text-[12.5px] max-md:h-11 max-md:pr-1.5"
         style={{ borderColor: `oklch(0.7 0.12 ${chipHue(col.id)} / .6)` }}
       >
         <button
@@ -134,29 +146,27 @@ function Badge({ col, filter, onChange }: BadgeProps) {
           className={cn(
             'bg-muted text-muted-foreground hover:text-foreground',
             'inline-flex h-[18px] w-[18px] items-center justify-center rounded-full',
+            'max-md:relative max-md:h-8 max-md:w-8 max-md:after:absolute max-md:after:-inset-1.5',
           )}
         >
           <X className="h-[11px] w-[11px]" />
         </button>
       </span>
-      {open &&
-        coords &&
-        createPortal(
-          <div
-            ref={popoverRef}
-            role="dialog"
-            aria-label={`Edit ${col.label} filter`}
-            style={{ position: 'fixed', top: coords.top, left: coords.left }}
-            className="border-border bg-card text-card-foreground shadow-pop animate-tip z-50 w-72 max-w-[calc(100vw-1rem)] origin-top-left rounded-xl border-2"
-          >
-            <div className="flex items-center gap-1 border-b px-2 py-1.5">
-              <Icon className="text-muted-foreground h-3.5 w-3.5" />
-              <span className="text-sm font-medium">{col.label}</span>
-            </div>
-            <ValueEditorBody col={col} filter={filter} onChange={onChange} onClose={close} />
-          </div>,
-          document.body,
-        )}
+      {open && (
+        <PopoverPanel
+          label={`Edit ${col.label} filter`}
+          onClose={close}
+          panelRef={popoverRef}
+          coords={coords}
+          widthClassName="w-72"
+        >
+          <div className="flex items-center gap-1 border-b px-2 py-1.5">
+            <Icon className="text-muted-foreground h-3.5 w-3.5" />
+            <span className="text-sm font-medium">{col.label}</span>
+          </div>
+          <ValueEditorBody col={col} filter={filter} onChange={onChange} onClose={close} />
+        </PopoverPanel>
+      )}
     </>
   );
 }

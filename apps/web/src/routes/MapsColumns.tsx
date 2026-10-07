@@ -3,6 +3,7 @@ import { Activity, Hash, Map as MapIcon, MapPin, RotateCcw } from 'lucide-react'
 import { EntityIcon } from '@/components/entity-display/EntityIcon';
 import { MapLink } from '@/components/entity-links';
 import type { MapRecord } from '@/db';
+import { MobileCardBody } from '@/components/data-table/MobileCardBody';
 
 export const columns: ColumnDef<MapRecord>[] = [
   {
@@ -90,20 +91,18 @@ export const defaultSort = { id: 'name', dir: 'asc' } as const satisfies {
 
 export function mobileCard(row: MapRecord) {
   return (
-    <div className="flex items-center gap-3">
-      <EntityIcon
-        entity="map-mini"
-        id={row.id}
-        placeholder={MapIcon}
-        fit={{ maxWidth: 56, maxHeight: 40 }}
-        alt={row.name ?? `Map ${row.id}`}
-      />
-      <div className="min-w-0 flex-1">
-        <div className="truncate font-medium">{row.name ?? `Map ${row.id}`}</div>
-        {row.streetName && (
-          <div className="text-muted-foreground truncate text-xs">{row.streetName}</div>
-        )}
-      </div>
-    </div>
+    <MobileCardBody
+      media={
+        <EntityIcon
+          entity="map-mini"
+          id={row.id}
+          placeholder={MapIcon}
+          fit={{ maxWidth: 56, maxHeight: 40 }}
+          alt={row.name ?? `Map ${row.id}`}
+        />
+      }
+      name={row.name ?? `Map ${row.id}`}
+      subtitle={row.streetName ?? undefined}
+    />
   );
 }

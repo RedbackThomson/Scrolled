@@ -13,6 +13,7 @@ import { QuestLink } from '@/components/entity-links';
 import type { QuestRecord } from '@/db';
 import { formatDurationSeconds } from '@/lib/duration';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
+import { MobileCardBody } from '@/components/data-table/MobileCardBody';
 
 const numberFormatter = new Intl.NumberFormat();
 
@@ -120,18 +121,12 @@ export const defaultSort = { id: 'name', dir: 'asc' } as const satisfies {
 };
 
 export function mobileCard(row: QuestRecord) {
-  const meta: string[] = [];
-  if (row.parent) meta.push(row.parent);
-  if (row.requiredLevel !== null) meta.push(`Lvl ${row.requiredLevel}`);
   return (
-    <div className="flex items-center gap-3">
-      <EntityAvatar entity="quest" id={row.id} size={52} />
-      <div className="min-w-0 flex-1">
-        <div className="truncate font-medium">{row.name}</div>
-        {meta.length > 0 && (
-          <div className="text-muted-foreground truncate text-xs">{meta.join(' · ')}</div>
-        )}
-      </div>
-    </div>
+    <MobileCardBody
+      media={<EntityAvatar entity="quest" id={row.id} size={52} />}
+      name={row.name}
+      subtitle={row.parent ?? undefined}
+      stats={row.requiredLevel !== null ? [`Lvl ${row.requiredLevel}`] : []}
+    />
   );
 }

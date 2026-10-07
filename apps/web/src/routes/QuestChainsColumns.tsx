@@ -3,6 +3,7 @@ import { AlertTriangle, Folder, GitBranch, GitMerge, Hash, Layers, Network } fro
 import { QuestChainLink, QuestLink } from '@/components/entity-links';
 import type { QuestChainListRow } from '@/db';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
+import { MobileCardBody } from '@/components/data-table/MobileCardBody';
 
 export const columns: ColumnDef<QuestChainListRow>[] = [
   {
@@ -117,19 +118,17 @@ export const defaultSort = { id: 'size', dir: 'desc' } as const satisfies {
 };
 
 export function mobileCard(row: QuestChainListRow) {
-  const meta: string[] = [];
-  meta.push(`${row.size} quests`);
-  if (row.maxDepth > 0) meta.push(`${row.maxDepth} stages`);
-  if (row.rootCount > 1) meta.push(`${row.rootCount} starts`);
-  if (row.hasCycles) meta.push('loop');
-  if (row.parent) meta.push(row.parent);
+  const stats: string[] = [];
+  stats.push(`${row.size} quests`);
+  if (row.maxDepth > 0) stats.push(`${row.maxDepth} stages`);
+  if (row.rootCount > 1) stats.push(`${row.rootCount} starts`);
+  if (row.hasCycles) stats.push('loop');
   return (
-    <div className="flex items-center gap-3">
-      <EntityAvatar entity="questChain" id={row.id} size={52} />
-      <div className="min-w-0 flex-1">
-        <div className="truncate font-medium">{row.name}</div>
-        <div className="text-muted-foreground truncate text-xs">{meta.join(' · ')}</div>
-      </div>
-    </div>
+    <MobileCardBody
+      media={<EntityAvatar entity="questChain" id={row.id} size={52} />}
+      name={row.name}
+      subtitle={row.parent ?? undefined}
+      stats={stats}
+    />
   );
 }

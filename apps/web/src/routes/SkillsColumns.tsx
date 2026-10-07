@@ -6,6 +6,7 @@ import type { SkillRecord } from '@/db';
 import { decodeRequiredWeapon, decodeSkillElement } from '@scrolled/game-db/domain/skillElements';
 import { useJobsMap } from '@/hooks/useJobs';
 import { useShowEntityIds } from '@/stores/showEntityIds';
+import { MobileCardBody } from '@/components/data-table/MobileCardBody';
 
 export const columns: ColumnDef<SkillRecord>[] = [
   {
@@ -125,37 +126,29 @@ function SkillMobileCard({ row }: { row: SkillRecord }) {
   const jobs = useJobsMap();
   const showIds = useShowEntityIds((s) => s.enabled);
   const jobName = jobs.get(row.jobId);
-  const meta: string[] = [];
-  if (row.maxLevel !== null) meta.push(`Max ${row.maxLevel}`);
+  const stats: string[] = [];
+  if (row.maxLevel !== null) stats.push(`Max ${row.maxLevel}`);
   const element = decodeSkillElement(row.element);
-  if (element) meta.push(element);
+  if (element) stats.push(element);
   const weapon = decodeRequiredWeapon(row.requiredWeapon);
-  if (weapon) meta.push(weapon);
-  if (jobName) {
-    meta.push(showIds ? `${jobName} (${row.jobId})` : jobName);
-  } else {
-    meta.push(`Job ${row.jobId}`);
-  }
-  const label = row.name ?? `Skill ${row.id}`;
+  if (weapon) stats.push(weapon);
+  const job = jobName ? (showIds ? `${jobName} (${row.jobId})` : jobName) : `Job ${row.jobId}`;
   return (
-    <div className="flex items-center gap-3">
-      <EntityIcon
-        entity="skill"
-        id={row.id}
-        size={40}
-        placeholder={Sparkles}
-        alt={row.name ?? undefined}
-      />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5">
-          <span
-            className={row.name ? 'truncate font-medium' : 'text-muted-foreground truncate italic'}
-          >
-            {label}
-          </span>
-        </div>
-        <div className="text-muted-foreground truncate text-xs">{meta.join(' · ')}</div>
-      </div>
-    </div>
+    <MobileCardBody
+      media={
+        <EntityIcon
+          entity="skill"
+          id={row.id}
+          size={40}
+          placeholder={Sparkles}
+          alt={row.name ?? undefined}
+        />
+      }
+      name={
+        row.name ?? <span className="text-muted-foreground font-medium italic">Skill {row.id}</span>
+      }
+      subtitle={job}
+      stats={stats}
+    />
   );
 }

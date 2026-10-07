@@ -1,13 +1,13 @@
-import { useEffect, useRef } from 'react';
 import { Filter, X } from 'lucide-react';
 import { cn } from '@scrolled/design';
 import { ALL_EQUIP_CLASSES, type EquipClass } from '@scrolled/game-db/domain/equipJobs';
 import { useCharacterPreferences, type Gender } from '@/stores/characterPreferences';
+import { PopoverPanel } from '@/components/common/PopoverPanel';
+import { usePopover } from '@/hooks/usePopover';
 
 /**
  * Section-header filter control for quest rewards. Visually a sibling of
- * {@link ListSortControl}: a `<details>` whose summary is a compact button
- * and whose body is a small panel of chips. Picks are committed to the
+ * {@link ListSortControl}: a compact button that opens a small panel of chips. Picks are committed to the
  * persistent {@link useCharacterPreferences} store so the same selection
  * survives the next quest visit.
  */
@@ -21,38 +21,20 @@ export function RewardFilterControl() {
           .filter(Boolean)
           .join(' · ');
 
-  // `<details>` doesn't dismiss on outside click on its own. We watch for
-  // mousedowns and Escape and flip the native `open` property when the
-  // user clicks anywhere that isn't the popover itself.
-  const detailsRef = useRef<HTMLDetailsElement>(null);
-  useEffect(() => {
-    const onDown = (e: MouseEvent) => {
-      const el = detailsRef.current;
-      if (!el || !el.open) return;
-      if (el.contains(e.target as Node)) return;
-      el.open = false;
-    };
-    const onKey = (e: KeyboardEvent) => {
-      const el = detailsRef.current;
-      if (!el || !el.open) return;
-      if (e.key === 'Escape') el.open = false;
-    };
-    document.addEventListener('mousedown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, []);
+  const { open, setOpen, close, coords, triggerRef, popoverRef } = usePopover();
 
   return (
-    <details ref={detailsRef} className="relative">
-      <summary
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="dialog"
+        aria-expanded={open}
         className={cn(
-          'border-input bg-background hover:bg-accent inline-flex h-7 cursor-pointer list-none items-center gap-1.5 rounded-md border px-2 text-xs font-medium normal-case tracking-normal',
+          'border-input bg-background hover:bg-accent inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md border px-2 text-xs font-medium normal-case tracking-normal max-md:h-11 max-md:px-3',
           activeCount > 0 && 'border-primary/40 text-primary',
         )}
-        style={{ listStyle: 'none' }}
         aria-label={label}
         title={label}
       >
@@ -63,51 +45,63 @@ export function RewardFilterControl() {
             {activeCount}
           </span>
         )}
-      </summary>
-      <div className="border-border bg-card text-card-foreground animate-tip absolute right-0 z-20 mt-1 w-64 max-w-[calc(100vw-1rem)] origin-top-right rounded-md border p-2 shadow-md">
-        <div className="text-muted-foreground mb-1 flex items-center justify-between px-1">
-          <span className="text-xs uppercase tracking-wide">Class</span>
-          {job !== null && <ClearButton onClick={() => setJob(null)} label="Clear class" />}
-        </div>
-        <div className="mb-3 flex flex-wrap gap-1">
-          {ALL_EQUIP_CLASSES.map((cls) => (
-            <Chip
-              key={cls}
-              active={job === cls}
-              onClick={() => setJob(job === cls ? null : cls)}
-              label={cls}
-            />
-          ))}
-        </div>
-        <div className="text-muted-foreground mb-1 flex items-center justify-between px-1">
-          <span className="text-xs uppercase tracking-wide">Gender</span>
-          {gender !== null && <ClearButton onClick={() => setGender(null)} label="Clear gender" />}
-        </div>
-        <div className="mb-2 flex flex-wrap gap-1">
-          <Chip
-            active={gender === 'male'}
-            onClick={() => setGender(gender === 'male' ? null : 'male')}
-            label="Male"
-          />
-          <Chip
-            active={gender === 'female'}
-            onClick={() => setGender(gender === 'female' ? null : 'female')}
-            label="Female"
-          />
-        </div>
-        {activeCount > 0 && (
-          <div className="border-border mt-2 flex justify-end border-t pt-2">
-            <button
-              type="button"
-              onClick={clear}
-              className="text-muted-foreground hover:text-foreground text-xs underline-offset-2 hover:underline"
-            >
-              Clear all
-            </button>
+      </button>
+      {open && (
+        <PopoverPanel
+          label="Filter rewards"
+          onClose={close}
+          panelRef={popoverRef}
+          coords={coords}
+          widthClassName="w-64"
+          align="right"
+          className="p-2 max-md:px-4"
+        >
+          <div className="text-muted-foreground mb-1 flex items-center justify-between px-1">
+            <span className="text-xs uppercase tracking-wide">Class</span>
+            {job !== null && <ClearButton onClick={() => setJob(null)} label="Clear class" />}
           </div>
-        )}
-      </div>
-    </details>
+          <div className="mb-3 flex flex-wrap gap-1">
+            {ALL_EQUIP_CLASSES.map((cls) => (
+              <Chip
+                key={cls}
+                active={job === cls}
+                onClick={() => setJob(job === cls ? null : cls)}
+                label={cls}
+              />
+            ))}
+          </div>
+          <div className="text-muted-foreground mb-1 flex items-center justify-between px-1">
+            <span className="text-xs uppercase tracking-wide">Gender</span>
+            {gender !== null && (
+              <ClearButton onClick={() => setGender(null)} label="Clear gender" />
+            )}
+          </div>
+          <div className="mb-2 flex flex-wrap gap-1">
+            <Chip
+              active={gender === 'male'}
+              onClick={() => setGender(gender === 'male' ? null : 'male')}
+              label="Male"
+            />
+            <Chip
+              active={gender === 'female'}
+              onClick={() => setGender(gender === 'female' ? null : 'female')}
+              label="Female"
+            />
+          </div>
+          {activeCount > 0 && (
+            <div className="border-border mt-2 flex justify-end border-t pt-2">
+              <button
+                type="button"
+                onClick={clear}
+                className="text-muted-foreground hover:text-foreground text-xs underline-offset-2 hover:underline"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
+        </PopoverPanel>
+      )}
+    </>
   );
 }
 
@@ -124,7 +118,7 @@ function Chip({ active, label, onClick }: ChipProps) {
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        'inline-flex items-center rounded-full border px-2 py-0.5 text-xs',
+        'inline-flex items-center rounded-full border px-2 py-0.5 text-xs max-md:min-h-11 max-md:px-3.5',
         active
           ? 'border-primary bg-primary/10 text-primary'
           : 'border-input bg-background hover:bg-accent',
@@ -142,7 +136,7 @@ function ClearButton({ onClick, label }: { onClick: () => void; label: string })
       onClick={onClick}
       aria-label={label}
       title={label}
-      className="text-muted-foreground hover:text-foreground inline-flex h-4 w-4 items-center justify-center rounded"
+      className="text-muted-foreground hover:text-foreground inline-flex h-4 w-4 items-center justify-center rounded max-md:h-11 max-md:w-11"
     >
       <X className="h-3 w-3" />
     </button>

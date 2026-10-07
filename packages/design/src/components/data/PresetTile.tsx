@@ -9,7 +9,7 @@ export interface PresetTileProps {
   hue?: number;
   active?: boolean;
   onClick?: () => void;
-  /** Pill form for mobile / tight rows */
+  /** Pill form for mobile / tight rows; sized to a 44px touch target */
   compact?: boolean;
 }
 
@@ -35,7 +35,8 @@ export function PresetTile({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        width: '100%',
+        width: compact ? 'auto' : '100%',
+        minHeight: compact ? 44 : undefined,
         textAlign: 'left',
         font: 'inherit',
         color: 'inherit',

@@ -10,6 +10,8 @@ import {
   ELEMENT_STATUS_CLASSES,
 } from '@/components/entity-display/mobElementsDisplay';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
+import { Chip } from '@scrolled/design';
+import { MobileCardBody } from '@/components/data-table/MobileCardBody';
 
 /** Statuses that get their own column in the listing. Maps each to the
  *  public column id used in URL state and filter keys. */
@@ -166,26 +168,21 @@ export const defaultSort = { id: 'level', dir: 'asc' } as const satisfies {
 };
 
 export function mobileCard(row: MobRecord) {
-  const meta: string[] = [];
-  if (row.level !== null) meta.push(`Lvl ${row.level}`);
-  if (row.hp !== null) meta.push(`${row.hp.toLocaleString()} HP`);
+  const stats: string[] = [];
+  if (row.level !== null) stats.push(`Lvl ${row.level}`);
+  if (row.hp !== null) stats.push(`${row.hp.toLocaleString()} HP`);
   return (
-    <div className="flex items-center gap-3">
-      <EntityAvatar entity="mob" id={row.id} size={52} alt={row.name} />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5">
-          <span className="truncate font-medium">{row.name}</span>
-          {row.isBoss && (
-            <span className="inline-flex shrink-0 items-center gap-0.5 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
-              <Crown className="h-3 w-3" />
-              Boss
-            </span>
-          )}
-        </div>
-        {meta.length > 0 && (
-          <div className="text-muted-foreground truncate text-xs">{meta.join(' · ')}</div>
-        )}
-      </div>
-    </div>
+    <MobileCardBody
+      media={<EntityAvatar entity="mob" id={row.id} size={52} alt={row.name} />}
+      name={row.name}
+      badge={
+        row.isBoss ? (
+          <Chip tone="gold" icon={Crown}>
+            Boss
+          </Chip>
+        ) : undefined
+      }
+      stats={stats}
+    />
   );
 }

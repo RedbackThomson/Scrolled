@@ -1,8 +1,11 @@
 import { SearchX } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { cn, EmptyState, Skeleton } from '@scrolled/design';
 import { appConfig } from '@/config';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import { DetailTabs, type DetailTab } from './DetailTabs';
+import { partitionDetailChildren } from './partitionDetailChildren';
 
 export function DetailPageLoading({ entity, id }: { entity: string; id: number | string }) {
   return (
@@ -45,17 +48,31 @@ export function DetailPageNotFound({ entity, id }: { entity: string; id: number 
 interface DetailPageLayoutProps {
   header: ReactNode;
   aside?: ReactNode;
+  /** Headline stat tiles shown as a strip under the header on mobile. */
+  stats?: ReactNode;
   /** Defaults to the design's 1010px content width; pass a wider class for maps and quests. */
   maxWidth?: string;
   children: ReactNode;
 }
 
+const ASIDE_CARD =
+  'border-border bg-card text-card-foreground shadow-rim min-w-0 space-y-4 rounded-lg border-2 p-4 text-sm';
+
 export function DetailPageLayout({
   header,
   aside,
+  stats,
   maxWidth = 'max-w-[1010px]',
   children,
 }: DetailPageLayoutProps) {
+  const isMobile = useIsMobile();
+  if (isMobile) {
+    return (
+      <MobileDetailLayout header={header} aside={aside} stats={stats}>
+        {children}
+      </MobileDetailLayout>
+    );
+  }
   return (
     <div className={cn(maxWidth, 'space-y-3')}>
       <div
@@ -68,13 +85,56 @@ export function DetailPageLayout({
           {header}
           {children}
         </article>
-        {aside !== undefined && (
-          <aside className="border-border bg-card text-card-foreground shadow-rim min-w-0 space-y-4 self-start rounded-lg border-2 p-4 text-sm">
-            {aside}
-          </aside>
-        )}
+        {aside !== undefined && <aside className={cn(ASIDE_CARD, 'self-start')}>{aside}</aside>}
       </div>
     </div>
+  );
+}
+
+const INFO_TAB = 'info';
+
+function MobileDetailLayout({
+  header,
+  aside,
+  stats,
+  children,
+}: Omit<DetailPageLayoutProps, 'maxWidth'>) {
+  const { intro, sections } = partitionDetailChildren(children);
+  const [active, setActive] = useState<string | null>(null);
+  const tabs: DetailTab[] = [
+    ...sections.map((s) => ({ key: s.key, label: s.label, count: s.count, panel: s.node })),
+    ...(aside !== undefined
+      ? [{ key: INFO_TAB, label: 'Info', panel: <aside className={ASIDE_CARD}>{aside}</aside> }]
+      : []),
+  ];
+  // A single panel needs no tab bar; fall back to the stacked layout.
+  const tabbed = sections.length > 0 && tabs.length > 1;
+
+  return (
+    <article className="min-w-0 space-y-3.5 p-1">
+      {header}
+      {stats && (
+        // Quarter-width tiles can't fit the tile's 19px values (HP runs to seven digits).
+        <div className="grid grid-cols-4 gap-1.5 [&>*>span:last-child]:!text-[15px] [&>*>span:last-child]:[overflow-wrap:anywhere] [&>*]:min-w-0 [&>*]:!px-2">
+          {stats}
+        </div>
+      )}
+      {tabbed ? (
+        <>
+          {intro}
+          <DetailTabs
+            tabs={tabs}
+            active={active && tabs.some((t) => t.key === active) ? active : tabs[0].key}
+            onChange={setActive}
+          />
+        </>
+      ) : (
+        <>
+          {children}
+          {aside !== undefined && <aside className={ASIDE_CARD}>{aside}</aside>}
+        </>
+      )}
+    </article>
   );
 }
 

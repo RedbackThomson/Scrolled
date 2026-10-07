@@ -304,7 +304,7 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
                   <NavLink
                     to={section.to}
                     end
-                    className="flex min-h-9 flex-1 items-center gap-2.5 rounded-full pl-3.5 text-sm"
+                    className="flex min-h-9 flex-1 items-center gap-2.5 rounded-full pl-3.5 text-sm max-md:min-h-11"
                   >
                     <section.icon className="h-4 w-4" />
                     {section.label}
@@ -316,7 +316,7 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
                       aria-expanded={isExpanded}
                       aria-controls={childListId}
                       aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${section.label}`}
-                      className="hover:bg-muted mr-1.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
+                      className="hover:bg-muted mr-1.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full max-md:mr-0 max-md:h-11 max-md:w-11"
                     >
                       <ChevronRight
                         className={cn(
@@ -636,7 +636,7 @@ function NavItem({
           cn(
             PILL,
             'flex items-center text-sm',
-            collapsed ? 'mx-auto h-9 w-9 justify-center' : 'min-h-9 gap-2.5 px-3.5',
+            collapsed ? 'mx-auto h-9 w-9 justify-center' : 'min-h-9 gap-2.5 px-3.5 max-md:min-h-11',
             isActive ? PILL_ACTIVE : PILL_IDLE,
           )
         }
@@ -677,7 +677,7 @@ function ExternalNavItem({
           PILL,
           PILL_IDLE,
           'flex items-center text-sm',
-          collapsed ? 'mx-auto h-9 w-9 justify-center' : 'min-h-9 gap-2.5 px-3.5',
+          collapsed ? 'mx-auto h-9 w-9 justify-center' : 'min-h-9 gap-2.5 px-3.5 max-md:min-h-11',
         )}
       >
         <Icon className="h-4 w-4 shrink-0" />
@@ -717,7 +717,7 @@ function SubNavItem({
         to={to}
         className={cn(
           PILL,
-          'flex min-h-[30px] items-center gap-2 px-2.5 text-[13px]',
+          'flex min-h-[30px] items-center gap-2 px-2.5 text-[13px] max-md:min-h-11',
           active ? PILL_ACTIVE : PILL_IDLE,
         )}
       >

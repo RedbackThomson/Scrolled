@@ -5,12 +5,12 @@
 
 import { useEffect, useState } from 'react';
 import { usePopover } from '@/hooks/usePopover';
-import { createPortal } from 'react-dom';
 import { BookmarkPlus, ChevronDown, Loader2, Plus, Search } from 'lucide-react';
 import { Button, Input } from '@scrolled/design';
 import { useBulkAddMembers, useCollectionsList, useCreateCollection } from '@/hooks/useCollections';
 import type { CollectionEntityType, EntityRef } from '@/db/user';
 import { cn } from '@scrolled/design';
+import { PopoverPanel } from '@/components/common/PopoverPanel';
 
 interface CollectionsBulkAddMenuProps {
   entityType: CollectionEntityType;
@@ -97,16 +97,25 @@ export function CollectionsBulkAddMenu({
         type="button"
         variant="secondary"
         size="sm"
+        className="max-md:h-11"
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="dialog"
         aria-expanded={open}
+        aria-label="Add to collection"
         disabled={count === 0}
       >
         <BookmarkPlus className="h-3.5 w-3.5" />
         <span className="hidden sm:inline">Add to collection</span>
         <ChevronDown className="h-3.5 w-3.5" />
       </Button>
-      <Button type="button" variant="ghost" size="sm" onClick={onClear} disabled={count === 0}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="max-md:h-11"
+        onClick={onClear}
+        disabled={count === 0}
+      >
         Clear
       </Button>
       {status && (
@@ -114,87 +123,85 @@ export function CollectionsBulkAddMenu({
           {status}
         </span>
       )}
-      {open &&
-        coords &&
-        createPortal(
-          <div
-            ref={popoverRef}
-            role="dialog"
-            aria-label="Add to collection"
-            style={{ position: 'fixed', top: coords.top, left: coords.left }}
-            className="border-border bg-card text-card-foreground shadow-pop animate-tip z-50 w-64 max-w-[calc(100vw-1rem)] origin-top-left overflow-hidden rounded-xl border-2"
-          >
-            <div className="border-muted border-b-2 p-2">
-              <div className="relative">
-                <Search className="text-muted-foreground pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2" />
-                <Input
-                  autoFocus
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search or create…"
-                  className="bg-muted focus-visible:ring-primary/30 h-8 w-full rounded-full pl-8 pr-2 text-base focus-visible:outline-none focus-visible:ring-4 sm:text-xs"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !hasExactMatch && query.trim()) {
-                      e.preventDefault();
-                      createAndAdd();
-                    }
-                  }}
-                />
-              </div>
+      {open && (
+        <PopoverPanel
+          label="Add to collection"
+          onClose={() => setOpen(false)}
+          panelRef={popoverRef}
+          coords={coords}
+          widthClassName="w-64"
+          className="overflow-hidden"
+        >
+          <div className="border-muted border-b-2 p-2">
+            <div className="relative">
+              <Search className="text-muted-foreground pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2" />
+              <Input
+                autoFocus
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search or create…"
+                className="bg-muted focus-visible:ring-primary/30 h-8 w-full rounded-full pl-8 pr-2 text-base focus-visible:outline-none focus-visible:ring-4 sm:text-xs"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !hasExactMatch && query.trim()) {
+                    e.preventDefault();
+                    createAndAdd();
+                  }
+                }}
+              />
             </div>
-            <ul className="max-h-64 space-y-0.5 overflow-y-auto p-1.5">
-              {collectionsQ.isPending ? (
-                <li className="text-muted-foreground flex items-center gap-2 px-3 py-2 text-xs">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  Loading…
+          </div>
+          <ul className="max-h-64 space-y-0.5 overflow-y-auto p-1.5">
+            {collectionsQ.isPending ? (
+              <li className="text-muted-foreground flex items-center gap-2 px-3 py-2 text-xs">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Loading…
+              </li>
+            ) : filtered.length === 0 ? (
+              <li className="text-muted-foreground px-3 py-2 text-xs">
+                {query.trim() ? 'No matches' : 'No collections yet.'}
+              </li>
+            ) : (
+              filtered.map((c) => (
+                <li key={c.id}>
+                  <button
+                    type="button"
+                    onClick={() => addToCollection(c.id, c.name)}
+                    className={cn(
+                      'hover:bg-muted flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13px] font-semibold',
+                      bulkM.isPending && 'opacity-60',
+                    )}
+                    disabled={bulkM.isPending}
+                  >
+                    <span className="min-w-0 flex-1 truncate">{c.name}</span>
+                    <span className="text-muted-foreground shrink-0 font-mono text-[10px]">
+                      {c.memberCount}
+                    </span>
+                  </button>
                 </li>
-              ) : filtered.length === 0 ? (
-                <li className="text-muted-foreground px-3 py-2 text-xs">
-                  {query.trim() ? 'No matches' : 'No collections yet.'}
-                </li>
-              ) : (
-                filtered.map((c) => (
-                  <li key={c.id}>
-                    <button
-                      type="button"
-                      onClick={() => addToCollection(c.id, c.name)}
-                      className={cn(
-                        'hover:bg-muted flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13px] font-semibold',
-                        bulkM.isPending && 'opacity-60',
-                      )}
-                      disabled={bulkM.isPending}
-                    >
-                      <span className="min-w-0 flex-1 truncate">{c.name}</span>
-                      <span className="text-muted-foreground shrink-0 font-mono text-[10px]">
-                        {c.memberCount}
-                      </span>
-                    </button>
-                  </li>
-                ))
-              )}
-            </ul>
-            {!hasExactMatch && query.trim() && (
-              <div className="border-muted bg-muted border-t-2 p-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  className="w-full justify-start"
-                  onClick={createAndAdd}
-                  disabled={createM.isPending || bulkM.isPending}
-                >
-                  {createM.isPending || bulkM.isPending ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Plus className="h-3.5 w-3.5" />
-                  )}
-                  Create "{query.trim()}"
-                </Button>
-              </div>
+              ))
             )}
-          </div>,
-          document.body,
-        )}
+          </ul>
+          {!hasExactMatch && query.trim() && (
+            <div className="border-muted bg-muted border-t-2 p-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                className="w-full justify-start"
+                onClick={createAndAdd}
+                disabled={createM.isPending || bulkM.isPending}
+              >
+                {createM.isPending || bulkM.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Plus className="h-3.5 w-3.5" />
+                )}
+                Create "{query.trim()}"
+              </Button>
+            </div>
+          )}
+        </PopoverPanel>
+      )}
     </span>
   );
 }

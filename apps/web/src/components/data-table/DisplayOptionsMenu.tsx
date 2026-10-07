@@ -6,13 +6,13 @@
 // The popover body is portaled to <body> so it escapes the table
 // wrapper's overflow clip — same pattern as the other toolbar popovers.
 
-import { createPortal } from 'react-dom';
 import type { Table } from '@tanstack/react-table';
 import { ArrowDown, ArrowUp, Settings2 } from 'lucide-react';
 import { usePopover } from '@/hooks/usePopover';
 import { cn } from '@scrolled/design';
 import type { TableUrlState, TableUrlStatePatch, TableSortDir } from './useTableUrlState';
 import { toolbarIconButton } from './toolbarStyles';
+import { PopoverPanel } from '@/components/common/PopoverPanel';
 
 interface DisplayOptionsMenuProps<TData> {
   table: Table<TData>;
@@ -58,89 +58,88 @@ export function DisplayOptionsMenu<TData>({
       >
         <Settings2 className="h-4 w-4" />
       </button>
-      {open &&
-        coords &&
-        createPortal(
-          <div
-            ref={popoverRef}
-            role="dialog"
-            aria-label="Display options"
-            style={{ position: 'fixed', top: coords.top, left: coords.left }}
-            className="border-border bg-card text-card-foreground shadow-pop animate-tip z-50 w-72 origin-top-right rounded-xl border-2 p-3"
-          >
-            {/* Grouping stubs — not URL-wired yet; the plan calls these out
-             *  as placeholders that will gain real options in a follow-up. */}
-            <Row label="Grouping">
-              <select
-                disabled
-                className="border-border bg-card text-muted-foreground h-7 w-32 rounded-[10px] border-2 px-2 text-xs"
-              >
-                <option>No grouping</option>
-              </select>
-            </Row>
-            <Row label="Sub-grouping">
-              <select
-                disabled
-                className="border-border bg-card text-muted-foreground h-7 w-32 rounded-[10px] border-2 px-2 text-xs"
-              >
-                <option>No grouping</option>
-              </select>
-            </Row>
+      {open && (
+        <PopoverPanel
+          label="Display options"
+          onClose={() => setOpen(false)}
+          panelRef={popoverRef}
+          coords={coords}
+          widthClassName="w-72"
+          align="right"
+          className="p-3"
+        >
+          {/* Grouping stubs — not URL-wired yet; the plan calls these out
+           *  as placeholders that will gain real options in a follow-up. */}
+          <Row label="Grouping">
+            <select
+              disabled
+              className="border-border bg-card text-muted-foreground h-7 w-32 rounded-[10px] border-2 px-2 text-xs"
+            >
+              <option>No grouping</option>
+            </select>
+          </Row>
+          <Row label="Sub-grouping">
+            <select
+              disabled
+              className="border-border bg-card text-muted-foreground h-7 w-32 rounded-[10px] border-2 px-2 text-xs"
+            >
+              <option>No grouping</option>
+            </select>
+          </Row>
 
-            <Row label="Ordering">
-              <div className="flex items-center gap-1.5">
-                <select
-                  value={state.sort}
-                  onChange={(e) => setOrdering(e.target.value, state.dir)}
-                  className="border-border bg-card h-7 w-32 rounded-[10px] border-2 px-2 text-xs"
-                  aria-label="Sort column"
-                >
-                  {sortableColumns.map((col) => (
-                    <option key={col.id} value={col.id}>
-                      {headerLabel(col.id, col.columnDef.header)}
-                    </option>
-                  ))}
-                </select>
-                <DirectionToggle
-                  dir={state.dir}
-                  onChange={(d) => setOrdering(state.sort, d)}
-                />
-              </div>
-            </Row>
+          <Row label="Ordering">
+            <div className="flex items-center gap-1.5">
+              <select
+                value={state.sort}
+                onChange={(e) => setOrdering(e.target.value, state.dir)}
+                className="border-border bg-card h-7 w-32 rounded-[10px] border-2 px-2 text-xs"
+                aria-label="Sort column"
+              >
+                {sortableColumns.map((col) => (
+                  <option key={col.id} value={col.id}>
+                    {headerLabel(col.id, col.columnDef.header)}
+                  </option>
+                ))}
+              </select>
+              <DirectionToggle
+                dir={state.dir}
+                onChange={(d) => setOrdering(state.sort, d)}
+              />
+            </div>
+          </Row>
 
-            {hideableColumns.length > 0 && (
-              <div className="mt-3 border-t pt-3">
-                <div className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
-                  Display properties
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {hideableColumns.map((col) => {
-                    const Icon = col.columnDef.meta?.icon;
-                    const visible = col.getIsVisible();
-                    return (
-                      <button
-                        key={col.id}
-                        type="button"
-                        onClick={() => col.toggleVisibility(!visible)}
-                        className={cn(
-                          'inline-flex h-7 items-center gap-1 rounded-full border-2 px-2.5 text-xs font-semibold transition-colors',
-                          visible
-                            ? 'border-primary/50 bg-primary/10 text-foreground'
-                            : 'border-border bg-card text-muted-foreground hover:bg-muted',
-                        )}
-                        aria-pressed={visible}
-                      >
-                        {Icon && <Icon className="h-3 w-3" />}
-                        <span>{headerLabel(col.id, col.columnDef.header)}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+          {hideableColumns.length > 0 && (
+            <div className="mt-3 border-t pt-3">
+              <div className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
+                Display properties
               </div>
-            )}
-          </div>,
-          document.body,
-        )}
+              <div className="flex flex-wrap gap-1.5">
+                {hideableColumns.map((col) => {
+                  const Icon = col.columnDef.meta?.icon;
+                  const visible = col.getIsVisible();
+                  return (
+                    <button
+                      key={col.id}
+                      type="button"
+                      onClick={() => col.toggleVisibility(!visible)}
+                      className={cn(
+                        'inline-flex h-7 items-center gap-1 rounded-full border-2 px-2.5 text-xs font-semibold transition-colors',
+                        visible
+                          ? 'border-primary/50 bg-primary/10 text-foreground'
+                          : 'border-border bg-card text-muted-foreground hover:bg-muted',
+                      )}
+                      aria-pressed={visible}
+                    >
+                      {Icon && <Icon className="h-3 w-3" />}
+                      <span>{headerLabel(col.id, col.columnDef.header)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </PopoverPanel>
+      )}
     </>
   );
 }

@@ -19,7 +19,6 @@
 //   - 'plus':   the small "+" affordance inside the filter-badges row.
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
-import { createPortal } from 'react-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useHotkey } from '@tanstack/react-hotkeys';
 import { ArrowLeft, Check, Filter, ListFilter, Plus } from 'lucide-react';
@@ -37,6 +36,7 @@ import type { ColumnFilter } from '@/db';
 import { cn } from '@scrolled/design';
 import { collectFilterable, type FilterableCol } from './Filterable';
 import { toolbarIconButton } from './toolbarStyles';
+import { PopoverPanel } from '@/components/common/PopoverPanel';
 
 type Variant = 'button' | 'plus';
 
@@ -111,7 +111,7 @@ export function FilterMenu<TData>({
           ref={triggerRef}
           type="button"
           onClick={() => setOpen((o) => !o)}
-          className="border-border text-muted-foreground hover:border-primary hover:text-foreground inline-flex h-7 w-7 items-center justify-center rounded-full border-2 border-dashed"
+          className="border-border text-muted-foreground hover:border-primary hover:text-foreground inline-flex h-7 w-7 items-center justify-center rounded-full border-2 border-dashed max-md:h-11 max-md:w-11"
           aria-haspopup="dialog"
           aria-expanded={open}
           aria-label="Add filter"
@@ -120,41 +120,38 @@ export function FilterMenu<TData>({
           <Plus className="h-3.5 w-3.5" />
         </button>
       )}
-      {open &&
-        coords &&
-        createPortal(
-          <div
-            ref={popoverRef}
-            role="dialog"
-            aria-label="Filter"
-            style={{ position: 'fixed', top: coords.top, left: coords.left }}
-            className="border-border bg-card text-card-foreground shadow-pop animate-tip z-50 w-80 origin-top-left max-w-[calc(100vw-1rem)] rounded-xl border-2"
-          >
-            {stage.kind === 'columns' ? (
-              <ColumnStage
-                filterable={filterable}
-                filters={filters}
-                onChange={onChange}
-                query={query}
-                onQueryChange={setQuery}
-                onPickColumn={(id) => {
-                  setStage({ kind: 'value', columnId: id });
-                  setQuery('');
-                }}
-                onClose={close}
-              />
-            ) : (
-              <ValueStage
-                col={filterable.find((c) => c.id === stage.columnId)}
-                filter={filters[stage.columnId]}
-                onChange={onChange}
-                onBack={() => setStage({ kind: 'columns' })}
-                onClose={close}
-              />
-            )}
-          </div>,
-          document.body,
-        )}
+      {open && (
+        <PopoverPanel
+          label="Filter"
+          onClose={close}
+          panelRef={popoverRef}
+          coords={coords}
+          widthClassName="w-80"
+        >
+          {stage.kind === 'columns' ? (
+            <ColumnStage
+              filterable={filterable}
+              filters={filters}
+              onChange={onChange}
+              query={query}
+              onQueryChange={setQuery}
+              onPickColumn={(id) => {
+                setStage({ kind: 'value', columnId: id });
+                setQuery('');
+              }}
+              onClose={close}
+            />
+          ) : (
+            <ValueStage
+              col={filterable.find((c) => c.id === stage.columnId)}
+              filter={filters[stage.columnId]}
+              onChange={onChange}
+              onBack={() => setStage({ kind: 'columns' })}
+              onClose={close}
+            />
+          )}
+        </PopoverPanel>
+      )}
     </>
   );
 }
@@ -566,7 +563,7 @@ function StringEditor({
         placeholder={`${col.label}…`}
         className="border-border bg-card focus-visible:border-primary focus-visible:ring-primary/30 h-8 w-full rounded-[10px] border-2 px-2 text-base shadow-[var(--shadow-input)] focus-visible:outline-none focus-visible:ring-4 sm:text-sm"
       />
-      <div className="flex items-center justify-end gap-1.5">
+      <div className="flex items-center justify-end gap-1.5 max-md:flex-col-reverse max-md:items-stretch max-md:[&>button]:h-12">
         <Button type="button" variant="secondary" size="sm" onClick={() => onApply(null)}>
           Clear
         </Button>
@@ -645,7 +642,7 @@ function NumberEditor({
           className="border-border bg-card focus-visible:border-primary focus-visible:ring-primary/30 h-8 w-full rounded-[10px] border-2 px-2 text-base shadow-[var(--shadow-input)] focus-visible:outline-none focus-visible:ring-4 sm:text-sm"
         />
       </div>
-      <div className="flex items-center justify-end gap-1.5">
+      <div className="flex items-center justify-end gap-1.5 max-md:flex-col-reverse max-md:items-stretch max-md:[&>button]:h-12">
         <Button type="button" variant="secondary" size="sm" onClick={() => onApply(null)}>
           Clear
         </Button>

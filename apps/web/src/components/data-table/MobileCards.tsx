@@ -90,7 +90,7 @@ export function MobileCards<TData>({
         return (
           <li key={rowId} className={cn('relative flex items-stretch', isSelected && 'bg-muted')}>
             {selectable && (
-              <label className="z-10 flex shrink-0 items-center pl-3">
+              <label className="z-10 flex min-w-11 shrink-0 cursor-pointer items-center justify-center pl-1">
                 <Input
                   type="checkbox"
                   checked={isSelected}

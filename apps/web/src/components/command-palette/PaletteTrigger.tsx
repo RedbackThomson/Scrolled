@@ -22,7 +22,7 @@ export function PaletteTrigger() {
       onClick={() => setOpen(true)}
       aria-label="Open command palette"
       aria-keyshortcuts="Meta+K Control+K"
-      className="bg-card text-muted-foreground shadow-float focus-visible:ring-primary/30 flex h-10 w-full items-center gap-2.5 rounded-full pl-4 pr-2 text-left focus-visible:outline-none focus-visible:ring-4"
+      className="bg-card text-muted-foreground shadow-float focus-visible:ring-primary/30 flex h-10 w-full items-center gap-2.5 rounded-full pl-4 pr-2 text-left focus-visible:outline-none focus-visible:ring-4 max-md:h-11"
     >
       <Search className="pointer-events-none h-4 w-4 shrink-0" />
       <span className="flex-1 truncate">Search or jump to…</span>
