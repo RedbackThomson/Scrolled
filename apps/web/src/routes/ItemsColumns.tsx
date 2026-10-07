@@ -20,6 +20,7 @@ import type { ItemListRow } from '@/db';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 import { ListCardBody } from '@/components/data-table/ListCardBody';
 import type { ListCardStat } from '@/components/data-table/listCardLayout';
+import type { FacetDef } from '@/components/data-table/presets';
 
 const num = (v: number | null) => (v == null ? '—' : String(v));
 const signedNum = (v: number | null) => (v == null ? '—' : v >= 0 ? `+${v}` : `−${Math.abs(v)}`);
@@ -231,3 +232,10 @@ export function mobileCard(row: ItemListRow) {
     />
   );
 }
+
+export const facets: readonly FacetDef[] = [
+  { columnId: 'category', label: 'Category', hue: 235 },
+  { columnId: 'subcategory', label: 'Subcategory', hue: 185 },
+  { columnId: 'requiredLevel', label: 'Req Lvl', hue: 148, aroundMyLevel: true },
+  { columnId: 'price', label: 'Price', hue: 75 },
+];

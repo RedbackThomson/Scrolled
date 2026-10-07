@@ -5,7 +5,14 @@ import { CollectionsBulkAddMenu } from '@/components/collections';
 import { PinnedSearchesMenu } from '@/components/pinned-searches';
 import { TablePageLayout } from '@/components/layout/TablePageLayout';
 import { getDbClient } from '@/db';
-import { columns, defaultSort, defaultVisible, mobileCard, pinnedColumns } from './MapsColumns';
+import {
+  columns,
+  defaultSort,
+  defaultVisible,
+  mobileCard,
+  pinnedColumns,
+  facets,
+} from './MapsColumns';
 
 const DEFAULT_PAGE_SIZE = 50;
 
@@ -41,6 +48,9 @@ export default function Maps() {
   return (
     <TablePageLayout title="Maps" entityPlural="maps" isEmpty={isEmpty}>
       <DataTable
+        source="map"
+        facets={facets}
+        entityPlural="maps"
         data={mapsQ.data?.rows ?? []}
         total={mapsQ.data?.total ?? 0}
         columns={columns}

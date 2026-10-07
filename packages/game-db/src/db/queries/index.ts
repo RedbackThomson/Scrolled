@@ -10,6 +10,9 @@ import type { Sqlite } from '../sqlite';
 import type {
   CategoryCount,
   ChairRecord,
+  ColumnFilter,
+  ColumnHistogram,
+  FacetSource,
   ConsumableSpecRecord,
   DatasetFileRef,
   DatasetRecord,
@@ -68,6 +71,7 @@ import * as items from './items';
 import * as chairs from './chairs';
 import * as consumableSpecs from './consumableSpecs';
 import * as equips from './equips';
+import * as facets from './facets';
 import * as mobs from './mobs';
 import * as npcs from './npcs';
 import * as maps from './maps';
@@ -218,6 +222,22 @@ export class DbApi implements GameDatabase {
 
   async listEquipTypes(): Promise<string[]> {
     return equips.listEquipTypes(this.sql);
+  }
+
+  async countMatchingMany(
+    source: FacetSource,
+    filterSets: readonly Record<string, ColumnFilter>[],
+  ): Promise<number[]> {
+    return facets.countMatchingMany(this.sql, source, filterSets);
+  }
+
+  async columnHistogram(
+    source: FacetSource,
+    columnId: string,
+    bins: number,
+    filters: Record<string, ColumnFilter>,
+  ): Promise<ColumnHistogram | null> {
+    return facets.columnHistogram(this.sql, source, columnId, bins, filters);
   }
 
   async listEquipSlotCounts(limit?: number): Promise<CategoryCount[]> {
@@ -415,9 +435,7 @@ export class DbApi implements GameDatabase {
     return quests.getQuestRequirements(this.sql, questId);
   }
 
-  async getQuestRequirementsMany(
-    questIds: readonly number[],
-  ): Promise<QuestRequirementWithName[]> {
+  async getQuestRequirementsMany(questIds: readonly number[]): Promise<QuestRequirementWithName[]> {
     return quests.getQuestRequirementsMany(this.sql, questIds);
   }
 

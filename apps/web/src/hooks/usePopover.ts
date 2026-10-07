@@ -3,6 +3,13 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 export interface PopoverCoords {
   top: number;
   left: number;
+  /** Horizontal centre of the anchor, for pointing a notch at it. */
+  anchorX: number;
+}
+
+export interface UsePopoverOptions {
+  /** Space between the anchor and the popover. */
+  gap?: number;
 }
 
 /**
@@ -14,8 +21,11 @@ export interface PopoverCoords {
 export function usePopover<
   T extends HTMLElement = HTMLButtonElement,
   P extends HTMLElement = HTMLDivElement,
->() {
+>({ gap = 4 }: UsePopoverOptions = {}) {
   const triggerRef = useRef<T>(null);
+  // Set by `openAt` when one popover serves several triggers.
+  const anchorRef = useRef<HTMLElement | null>(null);
+  const [anchorKey, setAnchorKey] = useState(0);
   const popoverRef = useRef<P>(null);
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState<PopoverCoords | null>(null);
@@ -27,7 +37,7 @@ export function usePopover<
   useLayoutEffect(() => {
     if (!open) return;
     const place = () => {
-      const t = triggerRef.current;
+      const t = anchorRef.current ?? triggerRef.current;
       if (!t) return;
       const r = t.getBoundingClientRect();
       const popoverWidth = popoverRef.current?.offsetWidth ?? 0;
@@ -35,10 +45,9 @@ export function usePopover<
       // edge; once the popover is in the DOM and we know its width, clamp the
       // left coordinate so the right edge sits inside the viewport.
       const MARGIN = 8;
-      const maxLeft =
-        popoverWidth > 0 ? window.innerWidth - popoverWidth - MARGIN : Infinity;
+      const maxLeft = popoverWidth > 0 ? window.innerWidth - popoverWidth - MARGIN : Infinity;
       const left = Math.max(MARGIN, Math.min(r.left, maxLeft));
-      setCoords({ top: r.bottom + 4, left });
+      setCoords({ top: r.bottom + gap, left, anchorX: r.left + r.width / 2 });
     };
     place();
     // Re-place after the popover mounts so the clamp can use its real width.
@@ -50,7 +59,7 @@ export function usePopover<
       window.removeEventListener('resize', place);
       window.removeEventListener('scroll', place, true);
     };
-  }, [open]);
+  }, [open, gap, anchorKey]);
 
   // Outside click + Escape close.
   useEffect(() => {
@@ -59,6 +68,7 @@ export function usePopover<
       const target = e.target as Node | null;
       if (!target) return;
       if (triggerRef.current?.contains(target)) return;
+      if (anchorRef.current?.contains(target)) return;
       if (popoverRef.current?.contains(target)) return;
       setOpen(false);
     };
@@ -74,6 +84,11 @@ export function usePopover<
   }, [open]);
 
   const close = useCallback(() => setOpen(false), []);
+  const openAt = useCallback((anchor: HTMLElement) => {
+    anchorRef.current = anchor;
+    setAnchorKey((k) => k + 1);
+    setOpen(true);
+  }, []);
 
-  return { open, setOpen, close, coords, triggerRef, popoverRef };
+  return { open, setOpen, close, openAt, coords, triggerRef, popoverRef };
 }

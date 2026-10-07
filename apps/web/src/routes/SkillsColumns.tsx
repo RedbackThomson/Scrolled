@@ -8,6 +8,7 @@ import { useJobsMap } from '@/hooks/useJobs';
 import { useShowEntityIds } from '@/stores/showEntityIds';
 import { ListCardBody } from '@/components/data-table/ListCardBody';
 import type { ListCardStat } from '@/components/data-table/listCardLayout';
+import type { FacetDef } from '@/components/data-table/presets';
 
 export const columns: ColumnDef<SkillRecord>[] = [
   {
@@ -146,3 +147,9 @@ function SkillMobileCard({ row }: { row: SkillRecord }) {
     />
   );
 }
+
+export const facets: readonly FacetDef[] = [
+  { columnId: 'jobId', label: 'Job', hue: 300 },
+  { columnId: 'maxLevel', label: 'Max level', hue: 185 },
+  { columnId: 'element', label: 'Element', hue: 35 },
+];

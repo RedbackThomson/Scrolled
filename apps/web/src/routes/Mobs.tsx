@@ -6,7 +6,14 @@ import { PinnedSearchesMenu } from '@/components/pinned-searches';
 import { TablePageLayout } from '@/components/layout/TablePageLayout';
 import { getDbClient } from '@/db';
 import { ELEMENT_ORDER } from '@scrolled/game-db/domain/mobElements';
-import { columns, defaultSort, defaultVisible, mobileCard, pinnedColumns } from './MobsColumns';
+import {
+  columns,
+  defaultSort,
+  defaultVisible,
+  mobileCard,
+  pinnedColumns,
+  facets,
+} from './MobsColumns';
 
 const ELEMENT_ENUM_OPTIONS: readonly string[] = ELEMENT_ORDER;
 
@@ -50,6 +57,9 @@ export default function Mobs() {
   return (
     <TablePageLayout title="Mobs" entityPlural="mobs" isEmpty={isEmpty}>
       <DataTable
+        source="mob"
+        facets={facets}
+        entityPlural="mobs"
         data={mobsQ.data?.rows ?? []}
         total={mobsQ.data?.total ?? 0}
         columns={columns}

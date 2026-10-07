@@ -2,11 +2,29 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { NuqsTestingAdapter, type UrlUpdateEvent } from 'nuqs/adapters/testing';
 import type { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from './DataTable';
 import { useColumnFilters } from './useColumnFilters';
 import { useTableUrlState } from './useTableUrlState';
+import type { FacetDef } from './presets';
+import type * as DbModule from '@/db';
+
+vi.mock('@/db', async (importOriginal) => ({
+  ...(await importOriginal<typeof DbModule>()),
+  getDbClient: () => ({
+    countMatchingMany: async (_source: string, sets: unknown[]) => sets.map(() => 3),
+    columnHistogram: async () => ({
+      min: 10,
+      max: 30,
+      binWidth: 2,
+      bins: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+    }),
+  }),
+}));
+
+const FACETS: FacetDef[] = [{ columnId: 'level', label: 'Level', hue: 148 }];
 
 interface Row {
   id: number;
@@ -79,6 +97,9 @@ function Harness({ data, total }: HarnessProps) {
       onColumnFilterChange={setFilter}
       onClearFilters={clearAll}
       entity="mob"
+      source="mob"
+      facets={FACETS}
+      entityPlural="things"
     />
   );
 }
@@ -88,12 +109,15 @@ function renderHarness(args: {
   total: number;
   onUrlUpdate?: (e: UrlUpdateEvent) => void;
 }) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <MemoryRouter>
-      <NuqsTestingAdapter onUrlUpdate={args.onUrlUpdate} hasMemory>
-        <Harness data={args.data} total={args.total} />
-      </NuqsTestingAdapter>
-    </MemoryRouter>,
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>
+        <NuqsTestingAdapter onUrlUpdate={args.onUrlUpdate} hasMemory>
+          <Harness data={args.data} total={args.total} />
+        </NuqsTestingAdapter>
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 
@@ -145,49 +169,71 @@ describe('DataTable', () => {
     });
   });
 
-  it('applying a string filter via the Filter menu writes f_<col> to the URL', async () => {
+  it('typing in the filter field writes a name filter to the URL', async () => {
     const user = userEvent.setup();
     const onUrlUpdate = vi.fn<(e: UrlUpdateEvent) => void>();
     renderHarness({ data: ROWS, total: 3, onUrlUpdate });
 
-    await user.click(screen.getByRole('button', { name: 'Filter (F)' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Filter' });
-
-    // Pick the Name column from the cmdk list, then type a value and Apply.
-    await user.click(within(dialog).getByText('Name'));
-    await user.type(within(dialog).getByPlaceholderText(/^Name…/), 'Alp');
-    await user.click(within(dialog).getByRole('button', { name: 'Apply' }));
-
+    await user.type(screen.getByRole('textbox', { name: 'Filter by name' }), 'Alp');
     await waitFor(() => {
       const params = onUrlUpdate.mock.calls.at(-1)?.[0].searchParams;
       expect(params?.get('f_name')).toBe('Alp');
     });
 
-    // Active filter surfaces a badge row with a Clear button.
     await user.click(screen.getByRole('button', { name: 'Clear' }));
     await waitFor(() => {
       const params = onUrlUpdate.mock.calls.at(-1)?.[0].searchParams;
       expect(params?.get('f_name')).toBeNull();
     });
+    expect(screen.getByRole('textbox', { name: 'Filter by name' })).toHaveValue('');
   });
 
-  it('applying a number range via the Filter menu writes f_<col>_min and f_<col>_max', async () => {
+  it('/ focuses the filter field', async () => {
+    const user = userEvent.setup();
+    renderHarness({ data: ROWS, total: 3 });
+    await user.keyboard('/');
+    const field = screen.getByRole('textbox', { name: 'Filter by name' });
+    expect(field).toHaveFocus();
+    expect(field).toHaveValue('');
+  });
+
+  it('a facet pill opens its range panel and Apply writes f_<col>_min and f_<col>_max', async () => {
     const user = userEvent.setup();
     const onUrlUpdate = vi.fn<(e: UrlUpdateEvent) => void>();
     renderHarness({ data: ROWS, total: 3, onUrlUpdate });
 
-    await user.click(screen.getByRole('button', { name: 'Filter (F)' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Filter' });
+    await user.click(screen.getByRole('button', { name: 'Level' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Level filter' });
 
-    await user.click(within(dialog).getByText('Level'));
-    await user.type(within(dialog).getByLabelText('Minimum'), '10');
-    await user.type(within(dialog).getByLabelText('Maximum'), '50');
+    const min = await within(dialog).findByRole('textbox', { name: 'Level min' });
+    await user.clear(min);
+    await user.type(min, '14{Enter}');
+    const max = within(dialog).getByRole('textbox', { name: 'Level max' });
+    await user.clear(max);
+    await user.type(max, '22{Enter}');
     await user.click(within(dialog).getByRole('button', { name: 'Apply' }));
 
     await waitFor(() => {
       const params = onUrlUpdate.mock.calls.at(-1)?.[0].searchParams;
-      expect(params?.get('f_level_min')).toBe('10');
-      expect(params?.get('f_level_max')).toBe('50');
+      expect(params?.get('f_level_min')).toBe('14');
+      expect(params?.get('f_level_max')).toBe('22');
+    });
+    expect(screen.getByRole('button', { name: /Level\s*14 – 22/ })).toBeInTheDocument();
+  });
+
+  it('More lists the remaining columns and steps into one', async () => {
+    const user = userEvent.setup();
+    const onUrlUpdate = vi.fn<(e: UrlUpdateEvent) => void>();
+    renderHarness({ data: ROWS, total: 3, onUrlUpdate });
+
+    await user.click(screen.getByRole('button', { name: 'More' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Filter' });
+    await user.click(within(dialog).getByText('Name'));
+    await user.type(within(dialog).getByRole('searchbox', { name: 'Name contains' }), 'Gam{Enter}');
+
+    await waitFor(() => {
+      const params = onUrlUpdate.mock.calls.at(-1)?.[0].searchParams;
+      expect(params?.get('f_name')).toBe('Gam');
     });
   });
 

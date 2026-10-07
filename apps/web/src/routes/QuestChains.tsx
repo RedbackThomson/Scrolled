@@ -11,6 +11,7 @@ import {
   defaultVisible,
   mobileCard,
   pinnedColumns,
+  facets,
 } from './QuestChainsColumns';
 
 const DEFAULT_PAGE_SIZE = 50;
@@ -58,6 +59,9 @@ export default function QuestChains() {
   return (
     <TablePageLayout title="Quest Chains" entityPlural="quest chains" isEmpty={isEmpty}>
       <DataTable
+        source="questChain"
+        facets={facets}
+        entityPlural="quest chains"
         data={chainsQ.data?.rows ?? []}
         total={chainsQ.data?.total ?? 0}
         columns={columns}

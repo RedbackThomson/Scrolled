@@ -6,7 +6,14 @@ import { PinnedSearchesMenu } from '@/components/pinned-searches';
 import { TablePageLayout } from '@/components/layout/TablePageLayout';
 import { getDbClient, type JobRecord } from '@/db';
 import { useShowEntityIds } from '@/stores/showEntityIds';
-import { columns, defaultSort, defaultVisible, mobileCard, pinnedColumns } from './SkillsColumns';
+import {
+  columns,
+  defaultSort,
+  defaultVisible,
+  mobileCard,
+  pinnedColumns,
+  facets,
+} from './SkillsColumns';
 
 const DEFAULT_PAGE_SIZE = 50;
 
@@ -30,7 +37,8 @@ export default function Skills() {
   // Sort by id so the enum dropdown reads in branch order
   // (0 Beginner, 100 Warrior, 110 Fighter, …, 500 Pirate, 522 Corsair).
   const jobIdValues = useMemo<readonly string[]>(
-    () => (jobsQ.data ?? []).map((j: JobRecord) => String(j.id)).sort((a, b) => Number(a) - Number(b)),
+    () =>
+      (jobsQ.data ?? []).map((j: JobRecord) => String(j.id)).sort((a, b) => Number(a) - Number(b)),
     [jobsQ.data],
   );
   const jobNameById = useMemo(() => {
@@ -76,6 +84,9 @@ export default function Skills() {
   return (
     <TablePageLayout title="Skills" entityPlural="skills" isEmpty={isEmpty}>
       <DataTable
+        source="skill"
+        facets={facets}
+        entityPlural="skills"
         data={skillsQ.data?.rows ?? []}
         total={skillsQ.data?.total ?? 0}
         columns={columns}

@@ -11,19 +11,16 @@ import {
   type SortingState,
   type VisibilityState,
 } from '@tanstack/react-table';
-import { LayoutGrid, Search, SearchX, Table2, X } from 'lucide-react';
-import { Checkbox, EmptyState, Input, Pagination, Segmented, Skeleton } from '@scrolled/design';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@scrolled/design';
+import { LayoutGrid, SearchX, Table2 } from 'lucide-react';
+import { Checkbox, EmptyState, Pagination, Segmented, Skeleton } from '@scrolled/design';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@scrolled/design';
 import { DisplayOptionsMenu } from './DisplayOptionsMenu';
-import { FilterMenu } from './FilterMenu';
-import { FilterBadges } from './FilterBadges';
+import { ListFilterBar } from './ListFilterBar';
+import { ListMetaRow } from './ListMetaRow';
+import { collectFilterable } from './Filterable';
+import { isFilterActive } from './filterSummary';
+import type { FacetDef } from './presets';
+import { useMatchCounts } from './useFacetQueries';
 import { CardGrid } from './CardGrid';
 import { MobileCards } from './MobileCards';
 import type {
@@ -33,11 +30,13 @@ import type {
   TableView,
 } from './useTableUrlState';
 import { useTableStatePersistence } from './useTableStatePersistence';
-import type { ColumnFilter } from '@/db';
+import type { ColumnFilter, FacetSource } from '@/db';
 import type { CollectionEntityType } from '@/db/user';
 import { useIsMobile } from '@/hooks/useIsMobile';
 
 const DEFAULT_PAGE_SIZES = [25, 50, 100] as const;
+const NO_FACETS: readonly FacetDef[] = [];
+const UNFILTERED = [{}];
 
 export interface DataTableProps<TData> {
   data: readonly TData[];
@@ -74,17 +73,18 @@ export interface DataTableProps<TData> {
   /** Identifies the page's entity for Save (writes to pinned_searches).
    *  Required when the filter UI's Save button needs to function. */
   entity?: CollectionEntityType;
-  /** Bound to the table's search input. Omit to hide the input. */
-  searchValue?: string;
-  onSearchChange?: (next: string) => void;
-  searchPlaceholder?: string;
+  /** The list's rows for facet counts and histograms. */
+  source: FacetSource;
+  /** Columns pinned to the facet bar, in order. */
+  facets?: readonly FacetDef[];
+  /** Lowercase plural for the result count, e.g. "weapons". */
+  entityPlural: string;
   /** Extra controls rendered on the left side of the toolbar, immediately
    *  after the search input. Use for selection-contextual controls (e.g.
    *  bulk add). */
   toolbarExtra?: ReactNode;
-  /** Extra controls rendered on the right side of the toolbar, before
-   *  the Columns visibility button. Use for page-level global controls
-   *  (e.g. saved searches). */
+  /** Extra controls at the right of the result-count row, before the view
+   *  toggle. Use for page-level global controls (e.g. saved searches). */
   toolbarRightExtra?: ReactNode;
   /** Render a sticky checkbox column for bulk selection. Selection is
    *  scoped to the current page — paging / sorting / resizing clears it
@@ -126,9 +126,9 @@ export function DataTable<TData>({
   enumOptions,
   enumLabels,
   entity,
-  searchValue,
-  onSearchChange,
-  searchPlaceholder = 'Search',
+  source,
+  facets = NO_FACETS,
+  entityPlural,
   toolbarExtra,
   toolbarRightExtra,
   selectable = false,
@@ -140,6 +140,13 @@ export function DataTable<TData>({
   const showCards = isMobile && !!mobileCard;
   const showCardGrid = !isMobile && !!mobileCard && state.view === 'cards';
   useTableStatePersistence(entity);
+
+  const filterable = useMemo(
+    () => collectFilterable(columns, enumOptions, enumLabels),
+    [columns, enumOptions, enumLabels],
+  );
+  const filtersActive = Object.values(columnFilters ?? {}).some(isFilterActive);
+  const unfilteredQ = useMatchCounts(source, UNFILTERED);
 
   const pinned = useMemo(() => new Set(pinnedColumns ?? []), [pinnedColumns]);
   const defaultVisibleKey = useMemo(() => [...defaultVisible].sort().join(','), [defaultVisible]);
@@ -273,77 +280,39 @@ export function DataTable<TData>({
       {/* Selection-active row sits above the search/controls when present so
        *  bulk-add affordances don't push the main toolbar to wrap. */}
       {toolbarExtra && <div className="flex flex-wrap items-center gap-2">{toolbarExtra}</div>}
-      <div className="flex flex-wrap items-center gap-2">
-        {onSearchChange && (
-          // `flex-1 min-w-0` lets the search share the row with the right-hand
-          // controls on narrow viewports (shrinking to whatever space remains
-          // after them) while `sm:max-w-xs` keeps it from sprawling on desktop.
-          <div className="relative min-w-0 flex-1 sm:max-w-xs">
-            <Search className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
-            <Input
-              type="search"
-              value={searchValue ?? ''}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder={searchPlaceholder}
-              // Right padding makes room for the clear button so a long
-              // query doesn't slide under it. `type="search"` ships its
-              // own native clear in some browsers, but it's inconsistent
-              // and uses the OS chrome rather than our token palette —
-              // override it with `appearance-none` is overkill; the
-              // explicit button below is what the user sees.
-              className="border-border bg-card focus-visible:border-primary focus-visible:ring-primary/30 h-9 w-full rounded-md border-2 pl-9 pr-8 text-base shadow-[var(--shadow-input)] focus-visible:outline-none focus-visible:ring-4 sm:text-sm"
-            />
-            {(searchValue ?? '').length > 0 && (
-              <button
-                type="button"
-                onClick={() => onSearchChange('')}
-                aria-label="Clear search"
-                title="Clear search"
-                className="text-muted-foreground hover:bg-muted hover:text-foreground absolute right-1.5 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md transition-[color,background-color,transform] duration-300 ease-spring hover:rotate-90"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
-        )}
-        {toolbarRightExtra}
-        <div className="ml-auto flex items-center gap-1.5">
-          {mobileCard && (
-            <span className="hidden md:inline-flex">
-              <Segmented
-                size="sm"
-                value={state.view}
-                onChange={(v) => setState({ view: v as TableView })}
-                options={[
-                  { value: 'table', icon: Table2, title: 'Table view' },
-                  { value: 'cards', icon: LayoutGrid, title: 'Card view' },
-                ]}
-              />
-            </span>
-          )}
-          {onColumnFilterChange && (
-            <FilterMenu
-              columns={columns}
-              filters={columnFilters ?? {}}
-              onChange={onColumnFilterChange}
-              enumOptions={enumOptions}
-              enumLabels={enumLabels}
-            />
-          )}
-          <DisplayOptionsMenu table={table} state={state} setState={setState} />
-        </div>
-      </div>
-      {onColumnFilterChange && entity && onClearFilters && (
-        <FilterBadges
-          columns={columns}
+      {onColumnFilterChange && (
+        <ListFilterBar
+          filterable={filterable}
+          facets={facets}
+          source={source}
           filters={columnFilters ?? {}}
           onChange={onColumnFilterChange}
-          onClearAll={onClearFilters}
-          enumOptions={enumOptions}
-          enumLabels={enumLabels}
-          entity={entity}
         />
       )}
+      <ListMetaRow
+        total={total}
+        unfilteredTotal={unfilteredQ.data?.[0]}
+        entityPlural={entityPlural}
+        filtered={filtersActive}
+        onClear={() => onClearFilters?.()}
+        entity={entity}
+      >
+        {toolbarRightExtra}
+        {mobileCard && (
+          <span className="hidden md:inline-flex">
+            <Segmented
+              size="sm"
+              value={state.view}
+              onChange={(v) => setState({ view: v as TableView })}
+              options={[
+                { value: 'table', icon: Table2, title: 'Table view' },
+                { value: 'cards', icon: LayoutGrid, title: 'Card view' },
+              ]}
+            />
+          </span>
+        )}
+        <DisplayOptionsMenu table={table} state={state} setState={setState} />
+      </ListMetaRow>
 
       {showCards ? (
         <MobileCards
@@ -378,89 +347,89 @@ export function DataTable<TData>({
           toggleRow={toggleRow}
         />
       ) : (
-      <Table>
-        <TableHeader>
-          {table.getHeaderGroups().map((group) => (
-            <TableRow key={group.id} className="hover:bg-transparent">
-              {selectable && (
-                <TableHead className="w-9 pr-0">
-                  <Checkbox
-                    size="sm"
-                    checked={allOnPageSelected}
-                    indeterminate={someOnPageSelected && !allOnPageSelected}
-                    onChange={toggleAllOnPage}
-                    aria-label={allOnPageSelected ? 'Deselect all on page' : 'Select all on page'}
-                  />
-                </TableHead>
-              )}
-              {group.headers.map((header) => {
-                if (header.isPlaceholder) return <TableHead key={header.id} />;
-                return (
-                  <TableHead key={header.id}>
-                    {flexRender(header.column.columnDef.header, header.getContext())}
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((group) => (
+              <TableRow key={group.id} className="hover:bg-transparent">
+                {selectable && (
+                  <TableHead className="w-9 pr-0">
+                    <Checkbox
+                      size="sm"
+                      checked={allOnPageSelected}
+                      indeterminate={someOnPageSelected && !allOnPageSelected}
+                      onChange={toggleAllOnPage}
+                      aria-label={allOnPageSelected ? 'Deselect all on page' : 'Select all on page'}
+                    />
                   </TableHead>
+                )}
+                {group.headers.map((header) => {
+                  if (header.isPlaceholder) return <TableHead key={header.id} />;
+                  return (
+                    <TableHead key={header.id}>
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                    </TableHead>
+                  );
+                })}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody className={fetching ? 'opacity-60 transition-opacity' : 'transition-opacity'}>
+            {loading && data.length === 0 ? (
+              <TableRow className="hover:bg-transparent">
+                <TableCell colSpan={columnCount} className="p-3" role="status">
+                  <span className="sr-only">Loading…</span>
+                  <Skeleton rows={6} />
+                </TableCell>
+              </TableRow>
+            ) : data.length === 0 ? (
+              <TableRow className="hover:bg-transparent">
+                <TableCell colSpan={columnCount}>
+                  <EmptyState icon={SearchX} title="No results" body={emptyMessage} />
+                </TableCell>
+              </TableRow>
+            ) : (
+              table.getRowModel().rows.map((row) => {
+                const href = rowLinkTo(row.original);
+                const rowId = row.id;
+                const isSelected = selectable && (selectedIds?.has(rowId) ?? false);
+                return (
+                  <TableRow
+                    key={row.id}
+                    className={isSelected ? 'bg-accent/40 relative' : 'relative'}
+                  >
+                    {selectable && (
+                      <TableCell className="w-9 pr-0">
+                        <span className="relative z-10 inline-flex">
+                          <Checkbox
+                            size="sm"
+                            checked={isSelected}
+                            onChange={() => toggleRow(rowId)}
+                            onClick={(e) => e.stopPropagation()}
+                            aria-label={isSelected ? 'Deselect row' : 'Select row'}
+                          />
+                        </span>
+                      </TableCell>
+                    )}
+                    {row.getVisibleCells().map((cell, idx) => (
+                      <TableCell key={cell.id}>
+                        {idx === 0 && (
+                          <Link
+                            to={href}
+                            className="focus-visible:ring-ring absolute inset-0 rounded focus-visible:outline-none focus-visible:ring-2"
+                            aria-label={`Open ${href}`}
+                          />
+                        )}
+                        <span className="relative">
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </span>
+                      </TableCell>
+                    ))}
+                  </TableRow>
                 );
-              })}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody className={fetching ? 'opacity-60 transition-opacity' : 'transition-opacity'}>
-          {loading && data.length === 0 ? (
-            <TableRow className="hover:bg-transparent">
-              <TableCell colSpan={columnCount} className="p-3" role="status">
-                <span className="sr-only">Loading…</span>
-                <Skeleton rows={6} />
-              </TableCell>
-            </TableRow>
-          ) : data.length === 0 ? (
-            <TableRow className="hover:bg-transparent">
-              <TableCell colSpan={columnCount}>
-                <EmptyState icon={SearchX} title="No results" body={emptyMessage} />
-              </TableCell>
-            </TableRow>
-          ) : (
-            table.getRowModel().rows.map((row) => {
-              const href = rowLinkTo(row.original);
-              const rowId = row.id;
-              const isSelected = selectable && (selectedIds?.has(rowId) ?? false);
-              return (
-                <TableRow
-                  key={row.id}
-                  className={isSelected ? 'bg-accent/40 relative' : 'relative'}
-                >
-                  {selectable && (
-                    <TableCell className="w-9 pr-0">
-                      <span className="relative z-10 inline-flex">
-                        <Checkbox
-                          size="sm"
-                          checked={isSelected}
-                          onChange={() => toggleRow(rowId)}
-                          onClick={(e) => e.stopPropagation()}
-                          aria-label={isSelected ? 'Deselect row' : 'Select row'}
-                        />
-                      </span>
-                    </TableCell>
-                  )}
-                  {row.getVisibleCells().map((cell, idx) => (
-                    <TableCell key={cell.id}>
-                      {idx === 0 && (
-                        <Link
-                          to={href}
-                          className="focus-visible:ring-ring absolute inset-0 rounded focus-visible:outline-none focus-visible:ring-2"
-                          aria-label={`Open ${href}`}
-                        />
-                      )}
-                      <span className="relative">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </span>
-                    </TableCell>
-                  ))}
-                </TableRow>
-              );
-            })
-          )}
-        </TableBody>
-      </Table>
+              })
+            )}
+          </TableBody>
+        </Table>
       )}
 
       <Pagination

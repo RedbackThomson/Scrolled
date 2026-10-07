@@ -19,6 +19,7 @@ import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 import { Chip } from '@scrolled/design';
 import { ListCardBody } from '@/components/data-table/ListCardBody';
 import { equipCardStats, equipCardTags } from './equipCardParts';
+import type { FacetDef } from '@/components/data-table/presets';
 
 const num = (v: number | null) => (v === null ? '—' : v.toLocaleString());
 
@@ -230,3 +231,17 @@ export function mobileCard(row: EquipRecord) {
     />
   );
 }
+
+export const facets: readonly FacetDef[] = [
+  { columnId: 'equipType', label: 'Type', hue: 235 },
+  { columnId: 'requiredJob', label: 'Class', hue: 300 },
+  {
+    columnId: 'requiredLevel',
+    label: 'Req Lvl',
+    hue: 148,
+    aroundMyLevel: true,
+    quickRanges: [{ label: 'Starter (0–10)', value: [0, 10] }],
+  },
+  { columnId: 'attack', label: 'Atk', hue: 185 },
+  { columnId: 'upgradeSlots', label: 'Slots', hue: 260 },
+];

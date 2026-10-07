@@ -13,6 +13,7 @@ import {
   defaultVisibleForType,
   mobileCard,
   pinnedColumns,
+  facets,
 } from './WeaponsColumns';
 
 const DEFAULT_PAGE_SIZE = 50;
@@ -79,6 +80,9 @@ export default function Weapons() {
       isEmpty={isEmpty}
     >
       <DataTable
+        source="weapon"
+        facets={facets}
+        entityPlural="weapons"
         data={weaponsQ.data?.rows ?? []}
         total={weaponsQ.data?.total ?? 0}
         columns={columns}

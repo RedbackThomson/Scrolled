@@ -1,13 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import {
-  Coins,
-  Folder,
-  Gauge,
-  Hash,
-  RotateCw,
-  Sparkles,
-  Star,
-} from 'lucide-react';
+import { Coins, Folder, Gauge, Hash, RotateCw, Sparkles, Star } from 'lucide-react';
 import { QuestLink } from '@/components/entity-links';
 import type { QuestRecord } from '@/db';
 import { formatDurationSeconds } from '@/lib/duration';
@@ -15,6 +7,7 @@ import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 import { ListCardBody } from '@/components/data-table/ListCardBody';
 import type { ListCardStat } from '@/components/data-table/listCardLayout';
 import { ExpValue } from '@/components/entity-display/ExpValue';
+import type { FacetDef } from '@/components/data-table/presets';
 
 const numberFormatter = new Intl.NumberFormat();
 
@@ -136,3 +129,10 @@ export function mobileCard(row: QuestRecord) {
     />
   );
 }
+
+export const facets: readonly FacetDef[] = [
+  { columnId: 'parent', label: 'Area', hue: 235 },
+  { columnId: 'requiredLevel', label: 'Level', hue: 148, aroundMyLevel: true },
+  { columnId: 'repeatable', label: 'Repeatable', hue: 185 },
+  { columnId: 'rewardExp', label: 'Reward EXP', hue: 260 },
+];

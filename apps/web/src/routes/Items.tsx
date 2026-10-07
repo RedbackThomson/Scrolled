@@ -6,7 +6,14 @@ import { CollectionsBulkAddMenu } from '@/components/collections';
 import { PinnedSearchesMenu } from '@/components/pinned-searches';
 import { TablePageLayout } from '@/components/layout/TablePageLayout';
 import { getDbClient } from '@/db';
-import { columns, defaultSort, defaultVisible, mobileCard, pinnedColumns } from './ItemsColumns';
+import {
+  columns,
+  defaultSort,
+  defaultVisible,
+  mobileCard,
+  pinnedColumns,
+  facets,
+} from './ItemsColumns';
 import { presets } from './ItemsPresets';
 
 const DEFAULT_PAGE_SIZE = 50;
@@ -78,6 +85,9 @@ export default function Items() {
         }}
       />
       <DataTable
+        source="item"
+        facets={facets}
+        entityPlural="items"
         data={itemsQ.data?.rows ?? []}
         total={itemsQ.data?.total ?? 0}
         columns={columns}

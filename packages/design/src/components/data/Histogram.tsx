@@ -9,7 +9,8 @@ export interface HistogramProps {
   height?: number;
 }
 
-/** A column's value distribution, drawn above a range slider. */
+/** A column's value distribution, drawn above a range slider. Heights use a
+ *  square-root scale so one crowded bin doesn't flatten the rest. */
 export function Histogram({ bins, min, max, range, height = 54 }: HistogramProps) {
   const peak = Math.max(1, ...bins);
   const width = (max - min) / Math.max(1, bins.length);
@@ -26,7 +27,7 @@ export function Histogram({ bins, min, max, range, height = 54 }: HistogramProps
             key={i}
             style={{
               flex: 1,
-              height: n > 0 ? Math.max(4, Math.round((n / peak) * height)) : 2,
+              height: n > 0 ? Math.max(4, Math.round(Math.sqrt(n / peak) * height)) : 2,
               borderRadius: '4px 4px 2px 2px',
               background: inside ? 'var(--accent)' : 'var(--surface-sunken)',
               transition: 'background var(--dur-fast), height var(--dur-base) var(--ease-spring)',

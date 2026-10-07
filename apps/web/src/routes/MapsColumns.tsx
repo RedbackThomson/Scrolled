@@ -4,6 +4,7 @@ import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 import { MapLink } from '@/components/entity-links';
 import type { MapRecord } from '@/db';
 import { ListCardBody } from '@/components/data-table/ListCardBody';
+import type { FacetDef } from '@/components/data-table/presets';
 
 export const columns: ColumnDef<MapRecord>[] = [
   {
@@ -99,3 +100,8 @@ export function mobileCard(row: MapRecord) {
     />
   );
 }
+
+export const facets: readonly FacetDef[] = [
+  { columnId: 'streetName', label: 'Street', hue: 185 },
+  { columnId: 'mobRate', label: 'Mob rate', hue: 260 },
+];

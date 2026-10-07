@@ -41,6 +41,8 @@ export default function Npcs() {
   return (
     <TablePageLayout title="NPCs" entityPlural="NPCs" isEmpty={isEmpty}>
       <DataTable
+        source="npc"
+        entityPlural="NPCs"
         data={npcsQ.data?.rows ?? []}
         total={npcsQ.data?.total ?? 0}
         columns={columns}

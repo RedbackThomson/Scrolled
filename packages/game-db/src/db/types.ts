@@ -1061,6 +1061,18 @@ export interface GameDatabase {
   listEquipSlots(): Promise<string[]>;
   /** Distinct non-null `equip_type` values, for the Weapons sidebar nav. */
   listEquipTypes(): Promise<string[]>;
+  /** Rows of a list page matching each filter set, in order. */
+  countMatchingMany(
+    source: FacetSource,
+    filterSets: readonly Record<string, ColumnFilter>[],
+  ): Promise<number[]>;
+  /** A number column's distribution under `filters`; null for non-numeric or empty columns. */
+  columnHistogram(
+    source: FacetSource,
+    columnId: string,
+    bins: number,
+    filters: Record<string, ColumnFilter>,
+  ): Promise<ColumnHistogram | null>;
   /** Top equip slots (e.g. Overall, Cap) by member count. */
   listEquipSlotCounts(limit?: number): Promise<CategoryCount[]>;
   getEquipIcon(id: number): Promise<Uint8Array | null>;
@@ -1308,6 +1320,26 @@ export interface EntitySummary {
 /** Aggregate row used by the home-page "browse by …" widgets. `key` is the
  *  filter value (a category, slug, or street_name) and `count` is the row
  *  total for that key. */
+/** A list page's row source for facet counts; weapons and equips split one table. */
+export type FacetSource =
+  | 'item'
+  | 'equip'
+  | 'weapon'
+  | 'mob'
+  | 'npc'
+  | 'map'
+  | 'quest'
+  | 'questChain'
+  | 'skill';
+
+/** Row counts of a number column in equal-width bins starting at `min`. */
+export interface ColumnHistogram {
+  min: number;
+  max: number;
+  binWidth: number;
+  bins: number[];
+}
+
 export interface CategoryCount {
   key: string;
   count: number;

@@ -7,6 +7,7 @@ import {
 } from 'react';
 import { Plus, Search } from 'lucide-react';
 import { Icon } from '../core/Icon';
+import { Kbd } from '../core/Kbd';
 import { FacetPill } from './FacetPill';
 import { FilterChip } from './FilterChip';
 
@@ -39,6 +40,8 @@ export interface FacetBarProps {
   /** Facet id whose popover is showing, or "more" */
   openId?: string | null;
   placeholder?: string;
+  /** Keycap shown in the empty field, e.g. "/" */
+  shortcut?: string;
   inputRef?: Ref<HTMLInputElement>;
   inputProps?: Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange' | 'placeholder'>;
   /** Rendered under the bar, e.g. the suggestion popover */
@@ -58,6 +61,7 @@ export function FacetBar({
   onOpenMore,
   openId,
   placeholder = FACET_BAR_PLACEHOLDER,
+  shortcut,
   inputRef,
   inputProps,
   children,
@@ -126,6 +130,11 @@ export function FacetBar({
             font: '500 14px var(--font-body)',
           }}
         />
+        {shortcut && query === '' && (
+          <span className="hidden md:inline-flex">
+            <Kbd>{shortcut}</Kbd>
+          </span>
+        )}
         {facets.map((f) => (
           <FacetPill
             key={f.id}

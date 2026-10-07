@@ -5,7 +5,14 @@ import { CollectionsBulkAddMenu } from '@/components/collections';
 import { PinnedSearchesMenu } from '@/components/pinned-searches';
 import { TablePageLayout } from '@/components/layout/TablePageLayout';
 import { getDbClient } from '@/db';
-import { columns, defaultSort, defaultVisible, mobileCard, pinnedColumns } from './QuestsColumns';
+import {
+  columns,
+  defaultSort,
+  defaultVisible,
+  mobileCard,
+  pinnedColumns,
+  facets,
+} from './QuestsColumns';
 
 const DEFAULT_PAGE_SIZE = 50;
 
@@ -52,6 +59,9 @@ export default function Quests() {
   return (
     <TablePageLayout title="Quests" entityPlural="quests" isEmpty={isEmpty}>
       <DataTable
+        source="quest"
+        facets={facets}
+        entityPlural="quests"
         data={questsQ.data?.rows ?? []}
         total={questsQ.data?.total ?? 0}
         columns={columns}

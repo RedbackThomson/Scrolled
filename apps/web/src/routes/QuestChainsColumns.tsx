@@ -5,6 +5,7 @@ import type { QuestChainListRow } from '@/db';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 import { ListCardBody } from '@/components/data-table/ListCardBody';
 import type { ListCardStat } from '@/components/data-table/listCardLayout';
+import type { FacetDef } from '@/components/data-table/presets';
 
 export const columns: ColumnDef<QuestChainListRow>[] = [
   {
@@ -133,3 +134,10 @@ export function mobileCard(row: QuestChainListRow) {
     />
   );
 }
+
+export const facets: readonly FacetDef[] = [
+  { columnId: 'parent', label: 'Area', hue: 235 },
+  { columnId: 'size', label: 'Quests', hue: 185 },
+  { columnId: 'maxDepth', label: 'Stage', hue: 260 },
+  { columnId: 'hasCycles', label: 'Loop', hue: 20 },
+];

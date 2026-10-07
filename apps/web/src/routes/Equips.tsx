@@ -8,7 +8,14 @@ import { TablePageLayout } from '@/components/layout/TablePageLayout';
 import { getDbClient } from '@/db';
 import { labelForEquipSlot } from '@scrolled/game-db/domain/equipTypes';
 import { ALL_EQUIP_CLASSES } from '@scrolled/game-db/domain/equipJobs';
-import { columns, defaultSort, defaultVisible, mobileCard, pinnedColumns } from './EquipsColumns';
+import {
+  columns,
+  defaultSort,
+  defaultVisible,
+  mobileCard,
+  pinnedColumns,
+  facets,
+} from './EquipsColumns';
 
 const DEFAULT_PAGE_SIZE = 50;
 
@@ -72,6 +79,9 @@ export default function Equips() {
       isEmpty={isEmpty}
     >
       <DataTable
+        source="equip"
+        facets={facets}
+        entityPlural="equips"
         data={equipsQ.data?.rows ?? []}
         total={equipsQ.data?.total ?? 0}
         columns={columns}

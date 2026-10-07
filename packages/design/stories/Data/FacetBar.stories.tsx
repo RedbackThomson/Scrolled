@@ -99,6 +99,7 @@ function Demo({
           setValues(({ [id]: _, ...rest }) => rest);
           setChips((c) => c.filter((x) => x.id !== id));
         }}
+        shortcut="/"
         inputProps={{
           onFocus: () => setFocused(true),
           onBlur: () => setFocused(false),

@@ -12,6 +12,7 @@ import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 import { Chip } from '@scrolled/design';
 import { ListCardBody } from '@/components/data-table/ListCardBody';
 import type { ListCardStat } from '@/components/data-table/listCardLayout';
+import type { FacetDef } from '@/components/data-table/presets';
 
 /** Statuses that get their own column in the listing. Maps each to the
  *  public column id used in URL state and filter keys. */
@@ -182,3 +183,10 @@ export function mobileCard(row: MobRecord) {
     />
   );
 }
+
+export const facets: readonly FacetDef[] = [
+  { columnId: 'level', label: 'Level', hue: 148, aroundMyLevel: true },
+  { columnId: 'boss', label: 'Boss', hue: 185 },
+  { columnId: 'weakAgainst', label: 'Weak against', hue: 35 },
+  { columnId: 'exp', label: 'EXP', hue: 260 },
+];
