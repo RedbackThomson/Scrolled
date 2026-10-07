@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Copy, Map as MapIcon, MapPin, ScrollText, Users } from 'lucide-react';
+import { Copy, Map as MapIcon, MapPin, ScrollText } from 'lucide-react';
 import { DetailListSection } from '@/components/layout/DetailListSection';
+import { DetailHeader } from '@/components/layout/DetailHeader';
 import {
   DetailPageLayout,
   DetailPageLoading,
@@ -12,7 +13,6 @@ import {
   InfoSection,
   SourceSection,
 } from '@/components/layout/DetailPageLayout';
-import { EntityIcon } from '@/components/entity-display/EntityIcon';
 import { EntityRow } from '@/components/entity-display/EntityRow';
 import { ListSortControl } from '@/components/common/ListSortControl';
 import { CollectionBadgeStrip } from '@/components/collections';
@@ -78,17 +78,7 @@ export default function NpcDetail() {
   const n = npcQ.data;
   return (
     <DetailPageLayout
-      header={
-        <header className="flex items-center gap-3">
-          <EntityIcon entity="npc" id={n.id} size={96} placeholder={Users} alt={n.name} />
-          <div className="min-w-0 flex-1">
-            <h1 className="break-words text-xl font-semibold tracking-tight md:text-3xl">
-              {n.name}
-            </h1>
-            {showIds && <p className="text-muted-foreground font-mono text-xs">{n.id}</p>}
-          </div>
-        </header>
-      }
+      header={<DetailHeader entity="npc" id={n.id} title={n.name} />}
       aside={
         <>
           {showIds && (
@@ -104,7 +94,13 @@ export default function NpcDetail() {
 
       <DetailSection title="Description">
         {n.description ? (
-          <p className="whitespace-pre-line text-sm leading-relaxed">{n.description}</p>
+          <div className="border-border bg-card shadow-rim relative rounded-xl border-2 px-4 py-3">
+            <span
+              aria-hidden
+              className="border-border bg-card absolute -top-[9px] left-6 h-3.5 w-3.5 rotate-45 border-l-2 border-t-2"
+            />
+            <p className="whitespace-pre-line text-sm leading-relaxed">{n.description}</p>
+          </div>
         ) : (
           <p className="text-muted-foreground text-sm italic">No description available.</p>
         )}

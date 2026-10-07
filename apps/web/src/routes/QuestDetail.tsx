@@ -20,6 +20,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { DetailListSection } from '@/components/layout/DetailListSection';
+import { DetailHeader } from '@/components/layout/DetailHeader';
 import {
   DetailPageLayout,
   DetailPageLoading,
@@ -155,16 +156,13 @@ export default function QuestDetail() {
     <DetailPageLayout
       maxWidth="max-w-5xl"
       header={
-        <header className="flex items-center gap-3">
-          <ScrollText className="text-muted-foreground h-12 w-12 shrink-0" />
-          <div className="min-w-0 flex-1">
-            <h1 className="break-words text-xl font-semibold tracking-tight md:text-3xl">
-              {q.name}
-            </h1>
-            {q.parent && <p className="text-muted-foreground text-sm">{q.parent}</p>}
-            {showIds && <p className="text-muted-foreground font-mono text-xs">{q.id}</p>}
-          </div>
-        </header>
+        <DetailHeader
+          entity="quest"
+          id={q.id}
+          title={q.name}
+          size={96}
+          subtitle={q.parent && <span>{q.parent}</span>}
+        />
       }
       aside={
         <>
@@ -192,10 +190,13 @@ export default function QuestDetail() {
       <CollectionBadgeStrip entityType="quest" entityId={q.id} />
 
       {chainQ.data && (
-        <p className="text-muted-foreground flex items-center gap-2 text-sm">
+        <p className="bg-muted text-muted-foreground flex items-center gap-2 rounded-md px-3.5 py-2.5 text-sm">
           <GitBranch className="h-4 w-4 shrink-0" />
           Part of{' '}
-          <QuestChainLink id={chainQ.data.id} className="text-foreground hover:underline">
+          <QuestChainLink
+            id={chainQ.data.id}
+            className="text-foreground font-semibold hover:underline"
+          >
             {chainQ.data.name}
           </QuestChainLink>
           <span>({chainQ.data.size} quests)</span>
@@ -208,30 +209,57 @@ export default function QuestDetail() {
         </DetailSection>
       )}
 
-      {(q.startNpcId !== null || endNpcIdForDisplay !== null) && (
-        <DetailListSection icon={Users} title="NPCs">
-          {q.startNpcId !== null && (
-            <NpcRow
-              label="Start"
-              id={q.startNpcId}
-              name={startNpcQ.data?.name ?? null}
-              linkable={features.hasNpcs}
+      <div className="grid items-start gap-3.5 md:grid-cols-2">
+        {(q.startNpcId !== null || endNpcIdForDisplay !== null) && (
+          <DetailListSection icon={Users} title="NPCs">
+            {q.startNpcId !== null && (
+              <NpcRow
+                label="Start"
+                id={q.startNpcId}
+                name={startNpcQ.data?.name ?? null}
+                linkable={features.hasNpcs}
+              />
+            )}
+            {endNpcIdForDisplay && (
+              <NpcRow
+                label="End"
+                id={endNpcIdForDisplay}
+                name={
+                  endNpcIdForDisplay === q.startNpcId
+                    ? (startNpcQ.data?.name ?? null)
+                    : (endNpcQ.data?.name ?? null)
+                }
+                linkable={features.hasNpcs}
+              />
+            )}
+          </DetailListSection>
+        )}
+        <DetailListSection
+          icon={Target}
+          title="Requirements"
+          count={
+            itemReqs.length + mobReqs.length > 0 ? itemReqs.length + mobReqs.length : undefined
+          }
+          isEmpty={itemReqs.length + mobReqs.length === 0}
+        >
+          {itemReqs.map((r) => (
+            <RequirementRow
+              key={`item-${r.targetId}`}
+              r={r}
+              entity="item"
+              linkable={features.hasItems}
             />
-          )}
-          {endNpcIdForDisplay && (
-            <NpcRow
-              label="End"
-              id={endNpcIdForDisplay}
-              name={
-                endNpcIdForDisplay === q.startNpcId
-                  ? (startNpcQ.data?.name ?? null)
-                  : (endNpcQ.data?.name ?? null)
-              }
-              linkable={features.hasNpcs}
+          ))}
+          {mobReqs.map((r) => (
+            <RequirementRow
+              key={`mob-${r.targetId}`}
+              r={r}
+              entity="mob"
+              linkable={features.hasMobs}
             />
-          )}
+          ))}
         </DetailListSection>
-      )}
+      </div>
 
       {questPreReqs.length > 0 && (
         <DetailListSection
@@ -253,30 +281,6 @@ export default function QuestDetail() {
           )}
         </DetailListSection>
       )}
-
-      <DetailListSection
-        icon={Target}
-        title="Requirements"
-        count={itemReqs.length + mobReqs.length > 0 ? itemReqs.length + mobReqs.length : undefined}
-        isEmpty={itemReqs.length + mobReqs.length === 0}
-      >
-        {itemReqs.map((r) => (
-          <RequirementRow
-            key={`item-${r.targetId}`}
-            r={r}
-            entity="item"
-            linkable={features.hasItems}
-          />
-        ))}
-        {mobReqs.map((r) => (
-          <RequirementRow
-            key={`mob-${r.targetId}`}
-            r={r}
-            entity="mob"
-            linkable={features.hasMobs}
-          />
-        ))}
-      </DetailListSection>
 
       <DetailListSection
         icon={Award}

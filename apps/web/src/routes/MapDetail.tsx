@@ -13,6 +13,7 @@ import {
   Users,
 } from 'lucide-react';
 import { DetailListSection } from '@/components/layout/DetailListSection';
+import { DetailHeader } from '@/components/layout/DetailHeader';
 import {
   DetailPageLayout,
   DetailPageLoading,
@@ -25,7 +26,7 @@ import {
 import { EntityIcon } from '@/components/entity-display/EntityIcon';
 import { EntityRow } from '@/components/entity-display/EntityRow';
 import { ListSortControl } from '@/components/common/ListSortControl';
-import { Badge } from '@scrolled/ui';
+import { Chip } from '@scrolled/design';
 import { MapLink } from '@/components/entity-links';
 import { CollectionBadgeStrip } from '@/components/collections';
 import type { MapViewerHighlight } from '@/components/MapViewer';
@@ -336,22 +337,12 @@ export default function MapDetail() {
       <DetailPageLayout
         maxWidth="max-w-5xl"
         header={
-          <header className="flex items-center gap-3">
-            <EntityIcon
-              entity="map-mark"
-              id={m.id}
-              size={48}
-              placeholder={MapIcon}
-              alt={m.name ?? `Map ${m.id}`}
-            />
-            <div className="min-w-0 flex-1">
-              <h1 className="break-words text-xl font-semibold tracking-tight md:text-3xl">
-                {m.name ?? `Map ${m.id}`}
-              </h1>
-              {m.streetName && <p className="text-muted-foreground text-sm">{m.streetName}</p>}
-              {showIds && <p className="text-muted-foreground font-mono text-xs">{m.id}</p>}
-            </div>
-          </header>
+          <DetailHeader
+            entity="map"
+            id={m.id}
+            title={m.name ?? `Map ${m.id}`}
+            subtitle={m.streetName && <span>{m.streetName}</span>}
+          />
         }
         aside={
           <>
@@ -419,100 +410,102 @@ export default function MapDetail() {
           </DetailSection>
         )}
 
-        {features.hasNpcs && (
-          <DetailListSection
-            icon={Users}
-            title="NPCs"
-            count={npcsQ.data?.length}
-            isEmpty={npcsQ.data?.length === 0}
-            action={
-              npcsQ.data && npcsQ.data.length > 0 ? (
-                <ListSortControl
-                  fields={npcsSort.fieldOptions}
-                  value={npcsSort.sort}
-                  onChange={npcsSort.setSort}
+        <div className="grid items-start gap-3.5 md:grid-cols-2">
+          {features.hasNpcs && (
+            <DetailListSection
+              icon={Users}
+              title="NPCs"
+              count={npcsQ.data?.length}
+              isEmpty={npcsQ.data?.length === 0}
+              action={
+                npcsQ.data && npcsQ.data.length > 0 ? (
+                  <ListSortControl
+                    fields={npcsSort.fieldOptions}
+                    value={npcsSort.sort}
+                    onChange={npcsSort.setSort}
+                  />
+                ) : null
+              }
+            >
+              {npcsSort.sorted.map((n) => (
+                <EntityRow
+                  key={`${n.npcId}-${n.x}-${n.y}`}
+                  entity="npc"
+                  id={n.npcId}
+                  name={n.name}
+                  meta={
+                    n.x !== null || n.y !== null ? (
+                      <span className="font-mono">
+                        ({n.x ?? '?'}, {n.y ?? '?'})
+                      </span>
+                    ) : undefined
+                  }
+                  trailing={
+                    m.minimapPath && (
+                      <button
+                        type="button"
+                        onClick={() => openViewer({ kind: 'npc', key: String(n.npcId) })}
+                        aria-label={`Show ${n.name ?? `NPC ${n.npcId}`} on map`}
+                        title="Show on map"
+                        className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition focus-visible:opacity-100 group-hover:opacity-100 max-md:opacity-100"
+                      >
+                        <MapPin className="h-4 w-4" />
+                      </button>
+                    )
+                  }
                 />
-              ) : null
-            }
-          >
-            {npcsSort.sorted.map((n) => (
-              <EntityRow
-                key={`${n.npcId}-${n.x}-${n.y}`}
-                entity="npc"
-                id={n.npcId}
-                name={n.name}
-                meta={
-                  n.x !== null || n.y !== null ? (
-                    <span className="font-mono">
-                      ({n.x ?? '?'}, {n.y ?? '?'})
-                    </span>
-                  ) : undefined
-                }
-                trailing={
-                  m.minimapPath && (
-                    <button
-                      type="button"
-                      onClick={() => openViewer({ kind: 'npc', key: String(n.npcId) })}
-                      aria-label={`Show ${n.name ?? `NPC ${n.npcId}`} on map`}
-                      title="Show on map"
-                      className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition focus-visible:opacity-100 group-hover:opacity-100 max-md:opacity-100"
-                    >
-                      <MapPin className="h-4 w-4" />
-                    </button>
-                  )
-                }
-              />
-            ))}
-          </DetailListSection>
-        )}
+              ))}
+            </DetailListSection>
+          )}
 
-        {features.hasMobs && (
-          <DetailListSection
-            icon={Skull}
-            title="Mobs"
-            count={mobsQ.data?.length}
-            isEmpty={mobsQ.data?.length === 0}
-            action={
-              mobsQ.data && mobsQ.data.length > 0 ? (
-                <ListSortControl
-                  fields={mobsSort.fieldOptions}
-                  value={mobsSort.sort}
-                  onChange={mobsSort.setSort}
+          {features.hasMobs && (
+            <DetailListSection
+              icon={Skull}
+              title="Mobs"
+              count={mobsQ.data?.length}
+              isEmpty={mobsQ.data?.length === 0}
+              action={
+                mobsQ.data && mobsQ.data.length > 0 ? (
+                  <ListSortControl
+                    fields={mobsSort.fieldOptions}
+                    value={mobsSort.sort}
+                    onChange={mobsSort.setSort}
+                  />
+                ) : null
+              }
+            >
+              {mobsSort.sorted.map((mob) => (
+                <EntityRow
+                  key={mob.mobId}
+                  entity="mob"
+                  id={mob.mobId}
+                  name={mob.name}
+                  meta={
+                    (mob.level !== null || (mob.count !== null && mob.count > 1)) && (
+                      <span className="flex items-center gap-3">
+                        {mob.level !== null && <span>Lvl {mob.level}</span>}
+                        {mob.count !== null && mob.count > 1 && <span>×{mob.count}</span>}
+                      </span>
+                    )
+                  }
+                  trailing={
+                    m.minimapPath && (
+                      <button
+                        type="button"
+                        onClick={() => openViewer({ kind: 'mob', key: String(mob.mobId) })}
+                        aria-label={`Show ${mob.name ?? `Mob ${mob.mobId}`} on map`}
+                        title="Show on map"
+                        className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition focus-visible:opacity-100 group-hover:opacity-100 max-md:opacity-100"
+                      >
+                        <MapPin className="h-4 w-4" />
+                      </button>
+                    )
+                  }
                 />
-              ) : null
-            }
-          >
-            {mobsSort.sorted.map((mob) => (
-              <EntityRow
-                key={mob.mobId}
-                entity="mob"
-                id={mob.mobId}
-                name={mob.name}
-                meta={
-                  (mob.level !== null || (mob.count !== null && mob.count > 1)) && (
-                    <span className="flex items-center gap-3">
-                      {mob.level !== null && <span>Lvl {mob.level}</span>}
-                      {mob.count !== null && mob.count > 1 && <span>×{mob.count}</span>}
-                    </span>
-                  )
-                }
-                trailing={
-                  m.minimapPath && (
-                    <button
-                      type="button"
-                      onClick={() => openViewer({ kind: 'mob', key: String(mob.mobId) })}
-                      aria-label={`Show ${mob.name ?? `Mob ${mob.mobId}`} on map`}
-                      title="Show on map"
-                      className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition focus-visible:opacity-100 group-hover:opacity-100 max-md:opacity-100"
-                    >
-                      <MapPin className="h-4 w-4" />
-                    </button>
-                  )
-                }
-              />
-            ))}
-          </DetailListSection>
-        )}
+              ))}
+            </DetailListSection>
+          )}
+        </div>
 
         <DetailListSection
           icon={DoorOpen}
@@ -573,7 +566,7 @@ export default function MapDetail() {
                 meta={
                   layer === 'internalTeleport' || coords ? (
                     <span className="flex items-center gap-2">
-                      {layer === 'internalTeleport' && <Badge tone="slate">Internal teleport</Badge>}
+                      {layer === 'internalTeleport' && <Chip>Internal teleport</Chip>}
                       {coords}
                     </span>
                   ) : undefined

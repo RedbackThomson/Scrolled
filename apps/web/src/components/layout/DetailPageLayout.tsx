@@ -15,7 +15,7 @@ export function DetailPageLoading({ entity, id }: { entity: string; id: number |
 export function DetailPageNotFound({ entity, id }: { entity: string; id: number | string }) {
   return (
     <div className="max-w-3xl">
-      <h1 className="mt-3 text-xl font-semibold tracking-tight md:mt-4 md:text-3xl">
+      <h1 className="font-display mt-3 text-2xl font-semibold md:mt-4 md:text-4xl">
         {entity} not found
       </h1>
       <p className="text-muted-foreground text-sm md:mt-2">
@@ -41,7 +41,7 @@ export function DetailPageNotFound({ entity, id }: { entity: string; id: number 
 interface DetailPageLayoutProps {
   header: ReactNode;
   aside?: ReactNode;
-  /** Defaults to `max-w-4xl`; pass `max-w-5xl` for wider pages (maps, quests). */
+  /** Defaults to the design's 1010px content width; pass a wider class for maps and quests. */
   maxWidth?: string;
   children: ReactNode;
 }
@@ -49,18 +49,23 @@ interface DetailPageLayoutProps {
 export function DetailPageLayout({
   header,
   aside,
-  maxWidth = 'max-w-4xl',
+  maxWidth = 'max-w-[1010px]',
   children,
 }: DetailPageLayoutProps) {
   return (
     <div className={cn(maxWidth, 'space-y-3')}>
-      <div className={cn('grid gap-3 md:gap-6', aside !== undefined && 'sm:grid-cols-[1fr_18rem]')}>
-        <article className="min-w-0 space-y-3 p-1 md:p-0">
+      <div
+        className={cn(
+          'grid items-start gap-3 md:gap-6',
+          aside !== undefined && 'sm:grid-cols-[minmax(0,1fr)_288px]',
+        )}
+      >
+        <article className="min-w-0 space-y-3.5 p-1 md:p-0">
           {header}
           {children}
         </article>
         {aside !== undefined && (
-          <aside className="border-border bg-card text-card-foreground min-w-0 space-y-4 self-start rounded-md border p-4 text-sm">
+          <aside className="border-border bg-card text-card-foreground shadow-rim min-w-0 space-y-4 self-start rounded-lg border-2 p-4 text-sm">
             {aside}
           </aside>
         )}
@@ -70,17 +75,14 @@ export function DetailPageLayout({
 }
 
 /**
- * A main-content section with a subtle uppercase header, for the intro content
- * that sits above the list sections — descriptions, previews, minimaps, etc.
- * Matches the header weight of `DetailListSection` without the icon or count,
- * so intro blocks read as a quieter sibling of the list sections below them.
+ * A main-content section for the intro content that sits above the list
+ * sections — descriptions, previews, minimaps, etc. Same heading as
+ * `DetailListSection`, without the icon or count.
  */
 export function DetailSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section>
-      <h2 className="text-muted-foreground mb-2 text-xs font-semibold uppercase tracking-wide">
-        {title}
-      </h2>
+      <h2 className="font-display mb-2 text-[17px] font-semibold">{title}</h2>
       {children}
     </section>
   );
@@ -89,8 +91,8 @@ export function DetailSection({ title, children }: { title: string; children: Re
 export function InfoSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section>
-      <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">{title}</h2>
-      <dl className="divide-border divide-y">{children}</dl>
+      <h2 className="font-display mb-1.5 text-[15px] font-semibold">{title}</h2>
+      <dl className="divide-muted divide-y-[1.5px]">{children}</dl>
     </section>
   );
 }
@@ -103,9 +105,9 @@ interface InfoRowProps {
 
 export function InfoRow({ label, value, mono = false }: InfoRowProps) {
   return (
-    <div className="flex items-baseline justify-between gap-3 py-1.5">
-      <dt className="text-muted-foreground text-xs uppercase tracking-wide">{label}</dt>
-      <dd className={mono ? 'font-mono text-sm' : 'text-sm'}>{value}</dd>
+    <div className="flex items-baseline justify-between gap-2.5 px-0.5 py-1.5">
+      <dt className="text-muted-foreground text-[12.5px] font-semibold">{label}</dt>
+      <dd className={cn('text-right font-semibold', mono && 'font-mono text-[12.5px]')}>{value}</dd>
     </div>
   );
 }
@@ -113,8 +115,7 @@ export function InfoRow({ label, value, mono = false }: InfoRowProps) {
 export function SourceSection({ path }: { path: string }) {
   return (
     <section>
-      <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide">Source</h2>
-      <p className="text-muted-foreground text-[10px] uppercase tracking-wide">WZ path</p>
+      <h2 className="font-display mb-1.5 text-[15px] font-semibold">Source</h2>
       <code className="text-muted-foreground break-all font-mono text-xs">{path}</code>
     </section>
   );

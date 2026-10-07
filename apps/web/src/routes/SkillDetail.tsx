@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Copy, GitBranch, ScrollText, Sparkles } from 'lucide-react';
 import { DetailListSection } from '@/components/layout/DetailListSection';
+import { DetailHeader } from '@/components/layout/DetailHeader';
 import {
   DetailPageLayout,
   DetailPageLoading,
@@ -12,7 +13,6 @@ import {
   InfoSection,
   SourceSection,
 } from '@/components/layout/DetailPageLayout';
-import { EntityIcon } from '@/components/entity-display/EntityIcon';
 import { EntityRow } from '@/components/entity-display/EntityRow';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
@@ -134,29 +134,13 @@ export default function SkillDetail() {
   return (
     <DetailPageLayout
       header={
-        <header className="flex items-center gap-3">
-          <EntityIcon
-            entity="skill"
-            id={s.id}
-            size={48}
-            placeholder={Sparkles}
-            alt={s.name ?? undefined}
-          />
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1
-                className={
-                  s.name
-                    ? 'break-words text-xl font-semibold tracking-tight md:text-3xl'
-                    : 'text-muted-foreground break-words text-xl font-semibold italic tracking-tight md:text-3xl'
-                }
-              >
-                {displayName}
-              </h1>
-            </div>
-            {showIds && <p className="text-muted-foreground font-mono text-xs">{s.id}</p>}
-          </div>
-        </header>
+        <DetailHeader
+          entity="skill"
+          id={s.id}
+          title={displayName}
+          alt={s.name ?? undefined}
+          placeholderTitle={!s.name}
+        />
       }
       aside={
         <>

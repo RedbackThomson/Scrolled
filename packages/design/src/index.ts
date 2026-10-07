@@ -1,4 +1,5 @@
 export { cn } from './lib/cn';
+export { ENTITY_HUES, type EntityHueKey } from './lib/entityHues';
 export { useHoverPress, SPRING, type SlotTint } from './lib/interaction';
 export { syncThemeColorMeta } from './lib/themeColorMeta';
 export {
@@ -29,7 +30,11 @@ export {
 export { Switch, type SwitchProps } from './components/forms/Switch';
 export { TextField, type TextFieldProps } from './components/forms/TextField';
 
-export { ElementChip, type ElementChipProps } from './components/entity/ElementChip';
+export {
+  ElementChip,
+  type ElementChipProps,
+  type ElementKey,
+} from './components/entity/ElementChip';
 export {
   EntityCard,
   type EntityCardProps,

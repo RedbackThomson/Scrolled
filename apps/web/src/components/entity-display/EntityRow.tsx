@@ -50,7 +50,7 @@ export function EntityRow({
     <>
       <EntityAvatar entity={entity} id={id} alt={typeof name === 'string' ? name : undefined} />
       <div className="min-w-0 flex-1">
-        <div className="truncate">
+        <div className="truncate font-medium">
           {name ? (
             displayName
           ) : (
@@ -62,7 +62,7 @@ export function EntityRow({
          *  stack meta + id under the name. Hidden from md up — the desktop
          *  right block below renders them inline instead. */}
         {showRightBlock && (
-          <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-2 text-xs md:hidden">
+          <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-2 text-[11.5px] md:hidden">
             {meta != null && <span>{meta}</span>}
             {idVisible && <span className="font-mono">{id}</span>}
           </div>
@@ -74,9 +74,8 @@ export function EntityRow({
   return (
     <li
       className={cn(
-        // Slightly taller hit area on touch so rows meet the iOS 44 px guideline.
-        'group flex min-h-[44px] items-center gap-3 px-3 py-2 text-sm md:min-h-0 md:py-1.5',
-        linkable && 'hover:bg-accent',
+        'group ease-spring flex min-h-[46px] items-center gap-3 px-3 py-[5px] text-[13.5px] transition-[background-color,padding] duration-300 max-md:min-h-[44px]',
+        linkable && 'hover:bg-muted hover:pl-4',
         className,
       )}
     >
@@ -89,7 +88,7 @@ export function EntityRow({
       )}
       {trailing && <div className="flex shrink-0 items-center gap-2">{trailing}</div>}
       {showRightBlock && (
-        <div className="text-muted-foreground ml-auto hidden shrink-0 items-center gap-3 text-xs md:flex">
+        <div className="text-muted-foreground ml-auto hidden shrink-0 items-center gap-3 text-[11.5px] md:flex">
           {meta != null && <span>{meta}</span>}
           {idVisible && <span className="font-mono">{id}</span>}
         </div>

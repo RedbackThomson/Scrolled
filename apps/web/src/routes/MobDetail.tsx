@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Copy, Crown, Map as MapIcon, MapPin, Package, ScrollText, Skull, Wand2 } from 'lucide-react';
+import { Copy, Crown, Map as MapIcon, MapPin, Package, ScrollText, Wand2 } from 'lucide-react';
+import { DetailHeader } from '@/components/layout/DetailHeader';
+import { Chip, StatTile } from '@scrolled/design';
 import { DetailListSection } from '@/components/layout/DetailListSection';
 import {
   DetailPageLayout,
@@ -12,7 +14,6 @@ import {
   SourceSection,
 } from '@/components/layout/DetailPageLayout';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
-import { EntityIcon } from '@/components/entity-display/EntityIcon';
 import { EntityRow } from '@/components/entity-display/EntityRow';
 import { ExpValue } from '@/components/entity-display/ExpValue';
 import { ListSortControl } from '@/components/common/ListSortControl';
@@ -105,22 +106,18 @@ export default function MobDetail() {
   return (
     <DetailPageLayout
       header={
-        <header className="flex items-center gap-3">
-          <EntityIcon entity="mob" id={m.id} size={96} placeholder={Skull} alt={m.name} />
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="break-words text-xl font-semibold tracking-tight md:text-3xl">
-                {m.name}
-              </h1>
-              {m.isBoss && (
-                <span className="inline-flex items-center gap-0.5 rounded bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">
-                  <Crown className="h-3 w-3" /> Boss
-                </span>
-              )}
-            </div>
-            {showIds && <p className="text-muted-foreground font-mono text-xs">{m.id}</p>}
-          </div>
-        </header>
+        <DetailHeader
+          entity="mob"
+          id={m.id}
+          title={m.name}
+          badges={
+            m.isBoss && (
+              <Chip tone="gold" icon={Crown}>
+                Boss
+              </Chip>
+            )
+          }
+        />
       }
       aside={
         <>
@@ -130,12 +127,15 @@ export default function MobDetail() {
               {m.isBoss && <InfoRow label="Boss" value="Yes" />}
             </InfoSection>
           )}
-          <InfoSection title="Stats">
-            <InfoRow label="Level" value={m.level !== null ? String(m.level) : '—'} />
-            <InfoRow label="HP" value={m.hp !== null ? m.hp.toLocaleString() : '—'} />
-            <InfoRow label="MP" value={m.mp !== null ? m.mp.toLocaleString() : '—'} />
-            <InfoRow label="EXP" value={<ExpValue exp={m.exp} />} />
-          </InfoSection>
+          <section>
+            <h2 className="font-display mb-2 text-[15px] font-semibold">Stats</h2>
+            <div className="grid grid-cols-2 gap-1.5">
+              <StatTile label="Level" value={m.level ?? '—'} color="var(--stat-level)" />
+              <StatTile label="HP" value={m.hp?.toLocaleString() ?? '—'} color="var(--stat-hp)" />
+              <StatTile label="MP" value={m.mp?.toLocaleString() ?? '—'} color="var(--stat-mp)" />
+              <StatTile label="EXP" value={<ExpValue exp={m.exp} />} color="var(--stat-exp)" />
+            </div>
+          </section>
           <MobElementsSection element={m.elementAttack} />
           <MobCalculatedSection mob={m} />
           <SourceSection path={m.sourcePath} />
@@ -162,7 +162,7 @@ export default function MobDetail() {
       >
         {dropSort.sorted.map((d) =>
           d.entity === null ? (
-            <li key={d.itemId} className="flex items-center gap-3 px-3 py-1.5 text-sm">
+            <li key={d.itemId} className="flex min-h-[46px] items-center gap-3 px-3 py-[5px] text-[13.5px]">
               <EntityAvatar entity="item" id={d.itemId} alt={d.itemName ?? undefined} />
               <span className="text-muted-foreground min-w-0 flex-1 truncate italic">
                 {d.itemName ?? `Item #${d.itemId}`}

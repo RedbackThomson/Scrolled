@@ -6,6 +6,8 @@ export interface StatRangeProps {
   max: number;
   scaleMax?: number;
   color?: string;
+  /** Appended after the range, e.g. " or 12" for a rarer upper roll */
+  maxNote?: string;
 }
 
 export function StatRange({
@@ -15,6 +17,7 @@ export function StatRange({
   max,
   scaleMax,
   color = 'var(--stat-hp)',
+  maxNote,
 }: StatRangeProps) {
   const S = scaleMax || max * 1.6 || 1;
   return (
@@ -73,6 +76,7 @@ export function StatRange({
       </span>
       <span style={{ font: 'var(--type-meta)', color: 'var(--text-2)', minWidth: 44 }}>
         {min} ~ {max}
+        {maxNote}
       </span>
     </div>
   );

@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Copy, Gift, Skull } from 'lucide-react';
 import { DetailListSection } from '@/components/layout/DetailListSection';
+import { DetailHeader } from '@/components/layout/DetailHeader';
 import {
   DetailPageLayout,
   DetailPageLoading,
@@ -13,8 +14,7 @@ import {
   SourceSection,
 } from '@/components/layout/DetailPageLayout';
 import { EntityRow } from '@/components/entity-display/EntityRow';
-import { ItemIcon } from '@/components/entity-display/ItemIcon';
-import { Badge } from '@scrolled/ui';
+import { Chip } from '@scrolled/design';
 import { MetadataFlagBadges } from '@/components/entity-display/MetadataFlagBadges';
 import { EQUIP_FLAG_ORDER } from '@/components/entity-display/metadataFlags';
 import { ListSortControl } from '@/components/common/ListSortControl';
@@ -30,7 +30,11 @@ import { formatEquipJobs, parseEquipReqJob } from '@scrolled/game-db/domain/equi
 import { useListSort } from '@/hooks/useListSort';
 import { useServerProfile } from '@/hooks/useServerProfile';
 import { useShowEntityIds } from '@/stores/showEntityIds';
-import { StatRangeRow, StatRow } from '@/components/entity-display/EquipStatDisplay';
+import {
+  RequirementTiles,
+  StatRangeRow,
+  StatRow,
+} from '@/components/entity-display/EquipStatDisplay';
 
 export default function EquipDetail() {
   const params = useParams<{ id: string }>();
@@ -129,20 +133,26 @@ export default function EquipDetail() {
   return (
     <DetailPageLayout
       header={
-        <header className="flex items-center gap-3">
-          <ItemIcon entity="equip" id={e.id} size={48} alt={e.name} />
-          <div className="min-w-0 flex-1">
-            <h1 className="break-words text-xl font-semibold tracking-tight md:text-3xl">
-              {e.name}
-            </h1>
-            <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-1.5 text-xs">
-              {showIds && <span className="font-mono">{e.id}</span>}
-              {e.cash && <Badge tone="pink">Cash Shop (cosmetic)</Badge>}
-              {e.equipType && <Badge tone="slate">{labelForEquipType(e.equipType)}</Badge>}
+        <DetailHeader
+          entity="equip"
+          id={e.id}
+          title={e.name}
+          badges={
+            <>
+              {e.equipType && (
+                <Chip tone="hue" hue={240}>
+                  {labelForEquipType(e.equipType)}
+                </Chip>
+              )}
+              {e.cash && (
+                <Chip tone="hue" hue={350}>
+                  Cash Shop (cosmetic)
+                </Chip>
+              )}
               <MetadataFlagBadges flags={e} order={EQUIP_FLAG_ORDER} />
-            </div>
-          </div>
-        </header>
+            </>
+          }
+        />
       }
       aside={
         <>
@@ -153,15 +163,20 @@ export default function EquipDetail() {
             <InfoRow label="Source" value={e.cash ? 'Cash shop' : 'In-game'} />
           </InfoSection>
           {hasAnyRequirement && (
-            <InfoSection title="Requirements">
-              <StatRow label="Level" value={e.requiredLevel} />
-              {ABILITY_STAT_FIELDS.map((s) => (
-                <StatRow key={s.label} label={s.label} value={e[s.required]} />
-              ))}
+            <section>
+              <h2 className="font-display mb-2 text-[15px] font-semibold">Requirements</h2>
+              <RequirementTiles
+                items={[
+                  { label: 'Lv', value: e.requiredLevel },
+                  ...ABILITY_STAT_FIELDS.map((s) => ({ label: s.label, value: e[s.required] })),
+                ]}
+              />
               {e.requiredJob !== null && (
-                <InfoRow label="Class" value={formatEquipJobs(parseEquipReqJob(e.requiredJob))} />
+                <dl className="mt-1.5">
+                  <InfoRow label="Class" value={formatEquipJobs(parseEquipReqJob(e.requiredJob))} />
+                </dl>
               )}
-            </InfoSection>
+            </section>
           )}
           {hasAnyStat && (
             <InfoSection title="Stats">

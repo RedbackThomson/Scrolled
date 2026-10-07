@@ -1,4 +1,4 @@
-import type { BadgeTone } from '@scrolled/ui';
+import type { ChipProps } from '@scrolled/design';
 
 /**
  * Boolean metadata flags an item or equip can carry on its WZ `info` block.
@@ -22,25 +22,25 @@ export type MetadataFlagKey =
 
 interface MetadataFlagDef {
   label: string;
-  tone: BadgeTone;
+  chip: Pick<ChipProps, 'tone' | 'hue'>;
 }
 
 // Single source of truth for flag copy + color. Labels are title-cased and
 // trademark-free per docs/writing_conventions.md — note `tradeAvailable` is
 // described generically rather than naming the in-game tradeability-reset item.
 export const METADATA_FLAGS: Record<MetadataFlagKey, MetadataFlagDef> = {
-  cash: { label: 'Cash Item', tone: 'pink' },
-  tradeBlock: { label: 'Permanently Untradeable', tone: 'red' },
-  equipTradeBlock: { label: 'Untradeable After Equip', tone: 'amber' },
-  accountSharable: { label: 'Tradable Within Account', tone: 'blue' },
-  only: { label: 'Unique Item', tone: 'violet' },
-  quest: { label: 'Quest Item', tone: 'emerald' },
-  timeLimited: { label: 'Item Expires', tone: 'amber' },
-  expireOnLogout: { label: 'Removed on Logout', tone: 'amber' },
-  pickupBlock: { label: 'Cannot Possess Duplicates', tone: 'slate' },
-  notSale: { label: 'Cannot Sell to NPC', tone: 'slate' },
-  dropBlock: { label: 'Cannot Drop', tone: 'slate' },
-  tradeAvailable: { label: 'Tradeability Can Be Reset', tone: 'blue' },
+  cash: { label: 'Cash Item', chip: { tone: 'hue', hue: 350 } },
+  tradeBlock: { label: 'Permanently Untradeable', chip: { tone: 'danger' } },
+  equipTradeBlock: { label: 'Untradeable After Equip', chip: { tone: 'hue', hue: 75 } },
+  accountSharable: { label: 'Tradable Within Account', chip: { tone: 'hue', hue: 245 } },
+  only: { label: 'Unique Item', chip: { tone: 'hue', hue: 295 } },
+  quest: { label: 'Quest Item', chip: { tone: 'hue', hue: 150 } },
+  timeLimited: { label: 'Item Expires', chip: { tone: 'hue', hue: 75 } },
+  expireOnLogout: { label: 'Removed on Logout', chip: { tone: 'hue', hue: 75 } },
+  pickupBlock: { label: 'Cannot Possess Duplicates', chip: { tone: 'neutral' } },
+  notSale: { label: 'Cannot Sell to NPC', chip: { tone: 'neutral' } },
+  dropBlock: { label: 'Cannot Drop', chip: { tone: 'neutral' } },
+  tradeAvailable: { label: 'Tradeability Can Be Reset', chip: { tone: 'hue', hue: 245 } },
 };
 
 // Per-entity display order. Equips render `cash` as a bespoke

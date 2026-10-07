@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Copy, Gift, ScrollText, Skull } from 'lucide-react';
 import { DetailListSection } from '@/components/layout/DetailListSection';
+import { DetailHeader } from '@/components/layout/DetailHeader';
 import {
   DetailPageLayout,
   DetailPageLoading,
@@ -16,8 +17,7 @@ import { ChairAnimatedPreview } from '@/components/entity-display/ChairAnimatedP
 import { ConsumableEffects } from '@/components/entity-display/ConsumableEffects';
 import { buildConsumableEffects } from '@/lib/consumableEffects';
 import { EntityRow } from '@/components/entity-display/EntityRow';
-import { ItemIcon } from '@/components/entity-display/ItemIcon';
-import { Badge } from '@scrolled/ui';
+import { Chip } from '@scrolled/design';
 import { MetadataFlagBadges } from '@/components/entity-display/MetadataFlagBadges';
 import { ITEM_FLAG_ORDER } from '@/components/entity-display/metadataFlags';
 import { ListSortControl } from '@/components/common/ListSortControl';
@@ -113,19 +113,17 @@ export default function ItemDetail() {
   return (
     <DetailPageLayout
       header={
-        <header className="flex items-center gap-3">
-          <ItemIcon entity="item" id={item.id} size={48} alt={item.name} />
-          <div className="min-w-0 flex-1">
-            <h1 className="break-words text-xl font-semibold tracking-tight md:text-3xl">
-              {item.name}
-            </h1>
-            <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-1.5 text-xs">
-              {showIds && <span className="font-mono">{item.id}</span>}
-              {item.subcategory && <Badge tone="slate">{item.subcategory}</Badge>}
+        <DetailHeader
+          entity="item"
+          id={item.id}
+          title={item.name}
+          badges={
+            <>
+              {item.subcategory && <Chip>{item.subcategory}</Chip>}
               <MetadataFlagBadges flags={item} order={ITEM_FLAG_ORDER} />
-            </div>
-          </div>
-        </header>
+            </>
+          }
+        />
       }
       aside={
         <>

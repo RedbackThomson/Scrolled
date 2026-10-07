@@ -1,116 +1,90 @@
-import { GitBranch, Map as MapIcon, ScrollText, Skull, Sparkles, Users } from 'lucide-react';
+import {
+  GitBranch,
+  Map as MapIcon,
+  ScrollText,
+  Skull,
+  Sparkles,
+  Users,
+  type LucideIcon,
+} from 'lucide-react';
 import { EntityIcon } from '@/components/entity-display/EntityIcon';
 import { ItemIcon } from '@/components/entity-display/ItemIcon';
 import type { EntityKind } from '@scrolled/game-db/db/types';
-import { cn } from '@scrolled/design';
+import { inventoryCategoryOf } from '@scrolled/game-db/domain/itemCategory';
+import { ENTITY_HUES, SlotTile, type SlotTint } from '@scrolled/design';
 
 interface Props {
   entity: EntityKind;
   id: number;
-  /** Square dimension in px. Default 28 (relation-list size). */
+  /** Square slot dimension in px; the sprite fills ~84% of it. Default 36 (relation-list size). */
   size?: number;
-  className?: string;
+  /** Radial highlight behind the sprite, for page headers. */
+  spotlight?: boolean;
+  rimmed?: boolean;
   alt?: string;
 }
 
+const ITEM_TINT: Record<string, SlotTint> = {
+  equip: 'equip',
+  use: 'use',
+  etc: 'etc',
+  cash: 'cash',
+};
+
 /**
- * Single source of truth for entity-type → icon. Items, equips, mobs, and
- * NPCs render from DB-persisted sprites; maps and quests have no stored
- * sprite so they fall back to a neutral lucide glyph in a matching box.
+ * Single source of truth for entity-type → slot tile. Items and equips sit on
+ * their inventory tint, mobs on the mob tint, and everything else on its entity
+ * hue. Maps and quests have no stored sprite, so they show a glyph instead.
  */
-export function EntityAvatar({ entity, id, size = 28, className, alt }: Props) {
+export function EntityAvatar({ entity, id, size = 36, spotlight, rimmed, alt }: Props) {
+  const tile = { size, spotlight, rimmed };
+  const sprite = Math.round(size * 0.84);
+  const sprited = (icon: 'mob' | 'npc' | 'map-mark' | 'skill', placeholder: LucideIcon) => (
+    <EntityIcon
+      entity={icon}
+      id={id}
+      size={sprite}
+      placeholder={placeholder}
+      alt={alt}
+      className="bg-transparent"
+    />
+  );
+
   switch (entity) {
     case 'item':
-      return (
-        <ItemIcon
-          entity="item"
-          id={id}
-          size={size}
-          alt={alt}
-          className={cn('shrink-0', className)}
-        />
-      );
     case 'equip':
       return (
-        <ItemIcon
-          entity="equip"
-          id={id}
-          size={size}
-          alt={alt}
-          className={cn('shrink-0', className)}
-        />
+        <SlotTile {...tile} tint={ITEM_TINT[inventoryCategoryOf(id) ?? ''] ?? 'neutral'}>
+          <ItemIcon entity={entity} id={id} size={sprite} alt={alt} className="bg-transparent" />
+        </SlotTile>
       );
     case 'mob':
       return (
-        <EntityIcon
-          entity="mob"
-          id={id}
-          size={size}
-          placeholder={Skull}
-          alt={alt}
-          className={cn('shrink-0', className)}
-        />
+        <SlotTile {...tile} tint="mob">
+          {sprited('mob', Skull)}
+        </SlotTile>
       );
     case 'npc':
       return (
-        <EntityIcon
-          entity="npc"
-          id={id}
-          size={size}
-          placeholder={Users}
-          alt={alt}
-          className={cn('shrink-0', className)}
-        />
+        <SlotTile {...tile} hue={ENTITY_HUES.npc}>
+          {sprited('npc', Users)}
+        </SlotTile>
       );
     case 'map':
       return (
-        <EntityIcon
-          entity="map-mark"
-          id={id}
-          size={size}
-          placeholder={MapIcon}
-          alt={alt}
-          className={cn('shrink-0', className)}
-        />
+        <SlotTile {...tile} hue={ENTITY_HUES.map}>
+          {sprited('map-mark', MapIcon)}
+        </SlotTile>
       );
-    case 'quest':
-      return <GlyphBox size={size} className={className} Glyph={ScrollText} />;
-    case 'questChain':
-      return <GlyphBox size={size} className={className} Glyph={GitBranch} />;
     case 'skill':
       return (
-        <EntityIcon
-          entity="skill"
-          id={id}
-          size={size}
-          placeholder={Sparkles}
-          alt={alt}
-          className={cn('shrink-0', className)}
-        />
+        <SlotTile {...tile} hue={ENTITY_HUES.skill}>
+          {sprited('skill', Sparkles)}
+        </SlotTile>
       );
+    case 'quest':
+      return <SlotTile {...tile} hue={ENTITY_HUES.quest} icon={ScrollText} />;
+    case 'questChain':
+      return <SlotTile {...tile} hue={ENTITY_HUES.quest} icon={GitBranch} />;
   }
-}
-
-function GlyphBox({
-  size,
-  className,
-  Glyph,
-}: {
-  size: number;
-  className?: string;
-  Glyph: typeof MapIcon;
-}) {
-  const dim = `${size}px`;
-  return (
-    <span
-      className={cn(
-        'bg-muted text-muted-foreground inline-flex shrink-0 items-center justify-center rounded',
-        className,
-      )}
-      style={{ width: dim, height: dim }}
-      aria-hidden
-    >
-      <Glyph style={{ width: size * 0.55, height: size * 0.55 }} />
-    </span>
-  );
 }

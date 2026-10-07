@@ -13,8 +13,9 @@ import {
   ScrollText,
   Target,
 } from 'lucide-react';
-import { cn } from '@scrolled/design';
+import { Button, cn } from '@scrolled/design';
 import { DetailListSection } from '@/components/layout/DetailListSection';
+import { DetailHeader } from '@/components/layout/DetailHeader';
 import {
   DetailPageLayout,
   DetailPageLoading,
@@ -151,50 +152,44 @@ export default function QuestChainDetail() {
     <DetailPageLayout
       maxWidth="max-w-5xl"
       header={
-        <header className="flex items-center gap-3">
-          <GitBranch className="text-muted-foreground h-12 w-12 shrink-0" />
-          <div className="min-w-0 flex-1">
-            <h1 className="break-words text-xl font-semibold tracking-tight md:text-3xl">
-              {chain.name}
-            </h1>
-            <p className="text-muted-foreground text-sm">
+        <DetailHeader
+          entity="questChain"
+          id={chain.id}
+          title={chain.name}
+          size={96}
+          subtitle={
+            <span>
               {chain.size} quests · {chain.maxDepth} stages
               {chain.rootCount > 1 ? ` · ${chain.rootCount} starts` : ''}
               {chain.hasCycles ? ' · contains loop' : ''}
               {chain.parent ? ` · ${chain.parent}` : ''}
-            </p>
-            {showIds && <p className="text-muted-foreground font-mono text-xs">{chain.id}</p>}
-          </div>
-          <div className="flex shrink-0 items-center gap-2 self-start">
-            {optionalCount > 0 && (
-              <button
-                type="button"
-                onClick={() => setCriticalOnly((v) => !v)}
-                className={cn(
-                  'border-border hover:bg-accent inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm',
-                  criticalOnly && 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950/30',
-                )}
-                title={
-                  criticalOnly
-                    ? `Showing the critical path only (${criticalCount} of ${chain.size} quests). Click to show everything.`
-                    : `Hide ${optionalCount} optional quest${optionalCount === 1 ? '' : 's'} and show only the critical path.`
-                }
-                aria-pressed={criticalOnly}
-              >
-                {criticalOnly ? <Eye className="h-4 w-4" /> : <Target className="h-4 w-4" />}
-                {criticalOnly ? 'Show all' : 'Critical path'}
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setGraphOpen(true)}
-              className="border-border hover:bg-accent inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm"
-            >
-              <Network className="h-4 w-4" />
-              View graph
-            </button>
-          </div>
-        </header>
+            </span>
+          }
+          actions={
+            <>
+              {optionalCount > 0 && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon={criticalOnly ? Eye : Target}
+                  onClick={() => setCriticalOnly((v) => !v)}
+                  className={cn(criticalOnly && 'border-primary')}
+                  title={
+                    criticalOnly
+                      ? `Showing the critical path only (${criticalCount} of ${chain.size} quests). Click to show everything.`
+                      : `Hide ${optionalCount} optional quest${optionalCount === 1 ? '' : 's'} and show only the critical path.`
+                  }
+                  aria-pressed={criticalOnly}
+                >
+                  {criticalOnly ? 'Show all' : 'Critical path'}
+                </Button>
+              )}
+              <Button variant="secondary" size="sm" icon={Network} onClick={() => setGraphOpen(true)}>
+                View graph
+              </Button>
+            </>
+          }
+        />
       }
       aside={
         <>

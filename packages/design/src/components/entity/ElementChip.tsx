@@ -1,7 +1,11 @@
+import type { ReactNode } from 'react';
+
+export type ElementKey = 'ice' | 'lightning' | 'fire' | 'poison' | 'holy' | 'dark' | 'physical';
+
 export interface ElementChipProps {
-  element: 'ice' | 'lightning' | 'fire' | 'poison' | 'holy' | 'dark' | 'physical';
+  element: ElementKey;
   /** e.g. "Weak", "Strong", "Immune"; omit when neutral */
-  status?: string;
+  status?: ReactNode;
 }
 
 export function ElementChip({ element, status }: ElementChipProps) {
@@ -21,6 +25,7 @@ export function ElementChip({ element, status }: ElementChipProps) {
       <span
         style={{
           width: 14,
+          flex: 'none',
           height: 14,
           borderRadius: '50%',
           background: `var(--el-${element.toLowerCase()})`,

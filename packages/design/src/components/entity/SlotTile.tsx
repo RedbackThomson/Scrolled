@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { Icon } from '../core/Icon';
 import type { SlotTint } from '../../lib/interaction';
@@ -25,6 +26,8 @@ export interface SlotTileProps {
   spotlight?: boolean;
   rimmed?: boolean;
   alt?: string;
+  /** Custom content (e.g. a lazily loaded sprite); takes precedence over `src` and `icon` */
+  children?: ReactNode;
 }
 
 export function SlotTile({
@@ -36,6 +39,7 @@ export function SlotTile({
   spotlight,
   rimmed,
   alt = '',
+  children,
 }: SlotTileProps) {
   const r = Math.round(size * 0.28);
   const bg =
@@ -60,15 +64,16 @@ export function SlotTile({
         color: hue != null ? `oklch(0.56 0.14 ${hue})` : 'var(--text-2)',
       }}
     >
-      {src ? (
-        <img
-          src={src}
-          alt={alt}
-          style={{ width: size * 0.84, height: size * 0.84, objectFit: 'contain' }}
-        />
-      ) : icon ? (
-        <Icon icon={icon} size={Math.round(size * 0.46)} />
-      ) : null}
+      {children ??
+        (src ? (
+          <img
+            src={src}
+            alt={alt}
+            style={{ width: size * 0.84, height: size * 0.84, objectFit: 'contain' }}
+          />
+        ) : icon ? (
+          <Icon icon={icon} size={Math.round(size * 0.46)} />
+        ) : null)}
     </div>
   );
 }
