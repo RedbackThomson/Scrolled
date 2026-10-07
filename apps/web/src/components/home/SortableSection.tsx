@@ -37,26 +37,26 @@ export function SortableSection({
     <div
       ref={setNodeRef}
       style={style}
-      className="border-border bg-card relative rounded-lg border p-3"
+      className="border-border bg-card shadow-rim relative rounded-lg border-2 border-dashed p-3"
     >
       <div className="mb-2 flex items-center gap-2">
         <button
           type="button"
           {...attributes}
           {...listeners}
-          className="text-muted-foreground hover:text-foreground -ml-1 flex h-7 w-7 cursor-grab items-center justify-center rounded-md transition-colors active:cursor-grabbing"
+          className="bg-muted text-muted-foreground hover:text-foreground flex h-7 w-7 cursor-grab items-center justify-center rounded-[9px] transition-colors active:cursor-grabbing"
           aria-label={`Drag to reorder ${HOME_SECTION_LABEL[id]}`}
           title="Drag to reorder"
         >
           <GripVertical className="h-4 w-4" />
         </button>
-        <span className="text-foreground flex-1 text-xs font-semibold uppercase tracking-wide">
+        <span className="font-display text-foreground flex-1 text-[15px] font-semibold">
           {HOME_SECTION_LABEL[id]}
         </span>
         <button
           type="button"
           onClick={onHide}
-          className="text-muted-foreground hover:text-foreground hover:bg-muted/60 inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors"
+          className="text-muted-foreground hover:text-foreground hover:bg-muted inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors"
           title="Hide this section"
         >
           <EyeOff className="h-3.5 w-3.5" />

@@ -5,7 +5,7 @@
 // so they aren't duplicated here. Renders nothing on the generic build.
 
 import { Package, RefreshCw } from 'lucide-react';
-import { Badge } from '@scrolled/ui';
+import { Chip } from '@scrolled/design';
 import { useDatasetUpdate } from '@/hooks/dataset/useDatasetUpdate';
 
 export function DatasetVersionTag({ collapsed }: { collapsed: boolean }) {
@@ -19,7 +19,7 @@ export function DatasetVersionTag({ collapsed }: { collapsed: boolean }) {
 
     if (collapsed) {
       return (
-        <div className="flex justify-center px-2 pb-2">
+        <div className="flex justify-center py-2">
           <button
             type="button"
             onClick={apply}
@@ -34,13 +34,13 @@ export function DatasetVersionTag({ collapsed }: { collapsed: boolean }) {
       );
     }
     return (
-      <div className="px-3 pb-2">
+      <div className="px-3.5 py-1.5">
         <button
           type="button"
           onClick={apply}
           disabled={applying}
           title={title}
-          className="inline-flex w-full items-center gap-1.5 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 transition-colors hover:bg-amber-500/25 disabled:opacity-70 dark:text-amber-300"
+          className="inline-flex w-full items-center gap-1.5 rounded-full bg-[oklch(0.72_0.12_75/.2)] px-2.5 py-0.5 text-[11.5px] font-bold text-[color:oklch(var(--chip-fg-l)_0.14_75)] transition-opacity hover:opacity-80 disabled:opacity-70"
         >
           <RefreshCw className="h-3 w-3 shrink-0" aria-hidden />
           <span className="truncate">{label}</span>
@@ -53,17 +53,16 @@ export function DatasetVersionTag({ collapsed }: { collapsed: boolean }) {
   const title = `Installed dataset version ${installedVersion}`;
   if (collapsed) {
     return (
-      <div className="flex justify-center px-2 pb-2" title={title}>
+      <div className="flex justify-center py-2" title={title}>
         <Package className="text-sidebar-muted h-4 w-4" aria-label={title} />
       </div>
     );
   }
   return (
-    <div className="px-3 pb-2" title={title}>
-      <Badge tone="slate" className="gap-1.5">
-        <Package className="h-3 w-3 shrink-0" aria-hidden />
+    <div className="px-3.5 py-1.5" title={title}>
+      <Chip icon={Package}>
         <span className="truncate">Data Version {installedVersion}</span>
-      </Badge>
+      </Chip>
     </div>
   );
 }

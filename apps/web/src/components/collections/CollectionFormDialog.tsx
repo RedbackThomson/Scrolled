@@ -8,6 +8,7 @@ import { useCreateCollection, useUpdateCollection } from '@/hooks/useCollections
 import type { CollectionRecord } from '@/db/user';
 import { cn } from '@scrolled/design';
 import { Modal } from './Modal';
+import { FIELD, FIELD_LABEL } from './fieldStyles';
 import { COLLECTION_ICONS, DEFAULT_COLLECTION_ICON, resolveCollectionIcon } from './iconRegistry';
 import {
   COLLECTION_COLORS,
@@ -124,29 +125,29 @@ export function CollectionFormDialog({
         <div className="flex items-center gap-3">
           <div
             className={cn(
-              'flex h-10 w-10 shrink-0 items-center justify-center rounded-md',
+              'shadow-slot flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px]',
               selectedColor.iconBg,
               selectedColor.iconColor,
             )}
             aria-hidden
           >
-            <selectedIcon.Icon className="h-5 w-5" />
+            <selectedIcon.Icon className="h-6 w-6" />
           </div>
           <label className="block min-w-0 flex-1 space-y-1 text-sm">
-            <span className="text-muted-foreground text-xs uppercase tracking-wide">Name</span>
+            <span className={FIELD_LABEL}>Name</span>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Boss drops to farm"
-              className="border-input bg-background focus-visible:ring-ring h-9 w-full rounded-md border px-3 text-base focus-visible:outline-none focus-visible:ring-2 sm:text-sm"
+              className={cn(FIELD, 'h-[38px]')}
               autoFocus
             />
           </label>
         </div>
         <label className="block space-y-1 text-sm">
-          <span className="text-muted-foreground flex items-center justify-between text-xs uppercase tracking-wide">
+          <span className={cn(FIELD_LABEL, 'flex items-center justify-between')}>
             <span>Description</span>
-            <span className="text-[10px] normal-case">Optional</span>
+            <span className="font-sans text-[11.5px] font-medium">Optional</span>
           </span>
           <Textarea
             value={description}
@@ -159,13 +160,13 @@ export function CollectionFormDialog({
                 submit();
               }
             }}
-            className="border-input bg-background focus-visible:ring-ring w-full resize-y rounded-md border px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 sm:text-sm"
+            className={cn(FIELD, 'resize-y py-2')}
           />
         </label>
 
         <fieldset className="space-y-1.5">
-          <legend className="text-muted-foreground text-xs uppercase tracking-wide">Icon</legend>
-          <div className="grid grid-cols-6 gap-1 sm:grid-cols-8">
+          <legend className={FIELD_LABEL}>Icon</legend>
+          <div className="grid grid-cols-6 gap-1.5 sm:grid-cols-8">
             {COLLECTION_ICONS.map((opt) => {
               const active = opt.name === iconName;
               return (
@@ -177,10 +178,10 @@ export function CollectionFormDialog({
                   aria-pressed={active}
                   title={opt.label}
                   className={cn(
-                    'border-border flex h-8 w-8 items-center justify-center rounded-md border text-sm transition-colors',
+                    'flex h-[38px] w-[38px] items-center justify-center rounded-[10px] text-sm transition-colors',
                     active
-                      ? 'border-foreground/40 bg-accent text-foreground'
-                      : 'hover:bg-accent text-muted-foreground hover:text-foreground',
+                      ? cn(selectedColor.iconBg, selectedColor.iconColor, 'ring-2 ring-current')
+                      : 'bg-muted text-muted-foreground hover:text-foreground',
                   )}
                 >
                   <opt.Icon className="h-4 w-4" />
@@ -191,8 +192,8 @@ export function CollectionFormDialog({
         </fieldset>
 
         <fieldset className="space-y-1.5">
-          <legend className="text-muted-foreground text-xs uppercase tracking-wide">Color</legend>
-          <div className="grid grid-cols-6 gap-1 sm:grid-cols-10">
+          <legend className={FIELD_LABEL}>Color</legend>
+          <div className="grid grid-cols-6 gap-2 sm:grid-cols-10">
             {COLLECTION_COLORS.map((opt) => {
               const active = opt.name === colorName;
               return (
@@ -204,14 +205,13 @@ export function CollectionFormDialog({
                   aria-pressed={active}
                   title={opt.label}
                   className={cn(
-                    'flex h-7 w-7 items-center justify-center rounded-full border-2 transition-all',
+                    'ease-spring flex h-[30px] w-[30px] items-center justify-center rounded-full transition-transform duration-300',
+                    opt.swatch,
                     active
-                      ? 'border-foreground/60 scale-110'
-                      : 'border-transparent hover:scale-105',
+                      ? 'ring-offset-card scale-110 ring-2 ring-current ring-offset-[3px]'
+                      : 'shadow-[inset_0_-3px_0_rgba(0,0,0,.15)] hover:scale-105',
                   )}
-                >
-                  <span className={cn('h-4 w-4 rounded-full', opt.swatch)} aria-hidden />
-                </button>
+                />
               );
             })}
           </div>

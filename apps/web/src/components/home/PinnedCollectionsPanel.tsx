@@ -45,11 +45,11 @@ export function PinnedCollectionsPanel() {
               <li key={c.id}>
                 <Link
                   to={`/collections/${c.id}`}
-                  className="border-border bg-card text-card-foreground hover:border-foreground/30 group flex h-full gap-3 rounded-md border p-4 transition-colors"
+                  className="border-border bg-card text-card-foreground shadow-rim ease-spring group flex h-full gap-3 rounded-lg border-2 p-3.5 transition-transform duration-300 hover:-translate-y-[3px]"
                 >
                   <span
                     className={cn(
-                      'inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md',
+                      'shadow-slot inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[11px]',
                       color.iconBg,
                       color.iconColor,
                     )}
@@ -57,7 +57,7 @@ export function PinnedCollectionsPanel() {
                     <Icon className="h-5 w-5" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold">{c.name}</div>
+                    <div className="font-display truncate text-base font-semibold">{c.name}</div>
                     <div className="text-muted-foreground mt-0.5 text-xs">
                       {progress.label}
                     </div>
@@ -74,7 +74,7 @@ export function PinnedCollectionsPanel() {
 
 function EmptyState() {
   return (
-    <div className="border-border bg-muted/30 text-muted-foreground flex items-center gap-3 rounded-md border border-dashed p-4 text-sm">
+    <div className="border-border text-muted-foreground flex items-center gap-3 rounded-lg border-2 border-dashed p-4 text-sm">
       <Pin className="h-4 w-4 shrink-0" />
       <p>
         Pin a collection from its detail page to keep it one click away from here.{' '}

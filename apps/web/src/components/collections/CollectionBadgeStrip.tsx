@@ -53,8 +53,8 @@ export function CollectionBadgeStrip({
             aria-expanded={open}
             aria-label="Add to a collection"
             className={cn(
-              'border-border hover:bg-accent hover:text-foreground inline-flex items-center gap-1 rounded-full border border-dashed px-2 py-0.5 text-[11px] transition-colors',
-              open && 'bg-accent text-foreground',
+              'border-border text-muted-foreground hover:border-primary/50 hover:text-foreground inline-flex items-center gap-1 rounded-full border-2 border-dashed px-2.5 py-0.5 text-xs font-bold transition-colors',
+              open && 'border-primary text-foreground',
             )}
           >
             <BookmarkPlus className="h-3 w-3" aria-hidden />
@@ -73,7 +73,7 @@ function BadgeChip({ membership }: { membership: MembershipBadge }) {
     <Link
       to={`/collections/${membership.collectionId}`}
       className={cn(
-        'border-border hover:bg-accent hover:text-foreground inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium transition-colors',
+        'border-border bg-card hover:text-foreground inline-flex items-center gap-1 rounded-full border-2 px-2.5 py-0.5 text-xs font-bold transition-colors',
         color.chip,
       )}
     >
@@ -90,7 +90,7 @@ function BadgeChip({ membership }: { membership: MembershipBadge }) {
     <HoverPopover
       content={
         <div className="max-w-xs space-y-1">
-          <div className="text-sm font-semibold">{membership.name}</div>
+          <div className="font-display text-[15px] font-semibold">{membership.name}</div>
           <p className="text-muted-foreground whitespace-pre-line text-xs leading-relaxed">
             {membership.description}
           </p>

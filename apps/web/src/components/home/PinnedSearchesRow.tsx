@@ -34,11 +34,11 @@ export function PinnedSearchesRow() {
             <li key={p.id} className="group relative inline-flex">
               <Link
                 to={href}
-                className="border-border bg-card text-card-foreground hover:border-foreground/30 inline-flex items-center gap-2 rounded-full border py-1.5 pl-3 pr-2 text-xs transition-colors"
+                className="bg-card text-card-foreground shadow-float ease-spring inline-flex items-center gap-2 rounded-full py-1.5 pl-3 pr-2 text-[12.5px] transition-transform duration-300 hover:-translate-y-0.5"
                 title={describeParams(p.params)}
               >
                 <Icon className="text-muted-foreground h-3.5 w-3.5" />
-                <span className="font-medium">{p.name}</span>
+                <span className="font-semibold">{p.name}</span>
                 {/* Reserve space for the delete button so the chip width
                     doesn't jump on hover. */}
                 <span aria-hidden className="h-3.5 w-3.5" />

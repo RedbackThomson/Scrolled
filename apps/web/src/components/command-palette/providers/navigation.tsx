@@ -12,6 +12,7 @@ import {
 import { useCommandPalette } from '@/stores/useCommandPalette';
 import { useFeatures } from '@/hooks/useFeatures';
 import { appConfig } from '@/config';
+import { getSettingsGroups } from '@/components/settings/settingsGroups';
 
 interface NavEntry {
   id: string;
@@ -73,18 +74,25 @@ export function NavigationProvider() {
       to: '/settings',
       icon: Cog,
     },
+    ...getSettingsGroups().map((g) => ({
+      id: `nav-settings-${g.id}`,
+      label: `Settings → ${g.label}`,
+      keywords: g.sections.flatMap((section) => [section.label.toLowerCase(), ...section.keywords]),
+      to: `/settings/${g.id}`,
+      icon: g.icon,
+    })),
     {
       id: 'nav-settings-appearance',
       label: 'Settings → Appearance',
       keywords: ['theme', 'dark', 'light', 'accent', 'ids'],
-      to: '/settings#appearance',
+      to: '/settings/look#appearance',
       icon: Cog,
     },
     {
       id: 'nav-settings-customization',
       label: 'Settings → Customization',
       keywords: ['tooltips', 'hover', 'fields', 'preview', 'customize'],
-      to: '/settings#customization',
+      to: '/settings/look#customization',
       icon: Cog,
     },
     {
@@ -95,7 +103,7 @@ export function NavigationProvider() {
       keywords: appConfig.features.enableUserImport
         ? ['backup', 'export', 'import', 'restore']
         : ['backup', 'export'],
-      to: '/settings#import-export',
+      to: '/settings/library#import-export',
       icon: Cog,
     },
     {
@@ -126,7 +134,7 @@ export function NavigationProvider() {
         id: 'nav-account',
         label: 'Account',
         keywords: ['profile', 'user', 'settings'],
-        to: '/settings#account',
+        to: '/settings/account#account',
         icon: User,
       },
       {

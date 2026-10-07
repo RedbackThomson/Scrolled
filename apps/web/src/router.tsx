@@ -121,6 +121,11 @@ export const router = createBrowserRouter(
               lazy: () =>
                 import('@/routes/settings/Developer').then((m) => ({ Component: m.default })),
             },
+            {
+              path: ':group',
+              lazy: () =>
+                import('@/routes/settings/SettingsGroup').then((m) => ({ Component: m.default })),
+            },
           ],
         },
         {

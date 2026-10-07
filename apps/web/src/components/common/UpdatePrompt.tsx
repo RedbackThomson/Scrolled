@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { Button } from '@scrolled/design';
 import { reloadForUpdate } from '@/lib/swReload';
@@ -16,9 +17,13 @@ export function UpdatePrompt() {
     <div
       role="status"
       aria-live="polite"
-      className="bg-background fixed bottom-4 right-4 z-50 flex max-w-sm items-center gap-3 rounded-md border p-3 shadow-lg"
+      data-surface="tooltip"
+      className="bg-card text-card-foreground fixed bottom-4 right-4 z-50 flex max-w-sm animate-[sc-toast_600ms_var(--ease-spring)_both] items-center gap-2.5 rounded-lg py-2.5 pl-2.5 pr-3 shadow-[0_14px_30px_rgba(10,20,50,.35)]"
     >
-      <p className="text-sm">A new version is available. Reload to update.</p>
+      <span className="bg-primary text-primary-foreground grid h-7 w-7 shrink-0 place-items-center rounded-full">
+        <RefreshCw className="h-[15px] w-[15px]" aria-hidden />
+      </span>
+      <p className="text-[13.5px] font-semibold">A new version is available. Reload to update.</p>
       <div className="ml-auto flex gap-2">
         <Button variant="ghost" size="sm" onClick={() => setNeedRefresh(false)}>
           Later

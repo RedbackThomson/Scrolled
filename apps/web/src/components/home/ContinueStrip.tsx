@@ -5,7 +5,8 @@
 import { Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useRecentEntities } from '@/lib/recents';
-import { iconForEntity, routeForEntity } from '@/lib/entityRoutes';
+import { routeForEntity } from '@/lib/entityRoutes';
+import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 import { HomeSection } from './HomeSection';
 
 const MAX = 6;
@@ -19,27 +20,24 @@ export function ContinueStrip() {
   return (
     <HomeSection title="Continue">
       <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-        {slice.map((r) => {
-          const Icon = iconForEntity(r.entity);
-          return (
-            <li key={`${r.entity}-${r.id}`}>
-              <Link
-                to={routeForEntity(r.entity, r.id)}
-                className="border-border bg-card text-card-foreground hover:border-foreground/30 group flex h-full items-center gap-2 rounded-md border p-3 transition-colors"
-                title={r.name}
-              >
-                <Icon className="text-muted-foreground group-hover:text-foreground h-4 w-4 shrink-0 transition-colors" />
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium">{r.name}</div>
-                  <div className="text-muted-foreground flex items-center gap-1 text-xs">
-                    <Clock className="h-3 w-3" />
-                    {timeAgo(r.viewedAt)}
-                  </div>
+        {slice.map((r) => (
+          <li key={`${r.entity}-${r.id}`}>
+            <Link
+              to={routeForEntity(r.entity, r.id)}
+              className="border-border bg-card text-card-foreground shadow-rim ease-spring flex h-full items-center gap-2.5 rounded-[14px] border-2 p-2.5 transition-transform duration-300 hover:-translate-y-[3px]"
+              title={r.name}
+            >
+              <EntityAvatar entity={r.entity} id={r.id} alt={r.name} />
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-[13px] font-semibold">{r.name}</div>
+                <div className="text-muted-foreground flex items-center gap-1 text-[11.5px]">
+                  <Clock className="h-3 w-3" />
+                  {timeAgo(r.viewedAt)}
                 </div>
-              </Link>
-            </li>
-          );
-        })}
+              </div>
+            </Link>
+          </li>
+        ))}
       </ul>
     </HomeSection>
   );

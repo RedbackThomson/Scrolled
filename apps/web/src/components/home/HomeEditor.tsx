@@ -87,7 +87,7 @@ export function HomeEditor({ layout, renderSection }: Props) {
 
       {hiddenEntries.length > 0 && (
         <section>
-          <h3 className="text-muted-foreground mb-2 text-xs font-semibold uppercase tracking-wide">
+          <h3 className="font-display text-muted-foreground mb-2 text-[15px] font-semibold">
             Hidden sections
           </h3>
           <ul className="flex flex-wrap gap-2">
@@ -96,7 +96,7 @@ export function HomeEditor({ layout, renderSection }: Props) {
                 <button
                   type="button"
                   onClick={() => void layout.setVisibility(entry.id, true)}
-                  className="border-border bg-card text-muted-foreground hover:border-foreground/30 hover:text-foreground inline-flex items-center gap-1.5 rounded-full border border-dashed px-3 py-1.5 text-xs transition-colors"
+                  className="border-border text-muted-foreground hover:border-primary hover:text-foreground inline-flex items-center gap-1.5 rounded-full border-2 border-dashed px-3 py-1.5 text-xs font-semibold transition-colors"
                 >
                   <Eye className="h-3 w-3" />
                   {HOME_SECTION_LABEL[entry.id]}

@@ -1,5 +1,5 @@
 import { Gamepad2 } from 'lucide-react';
-import { useSettingsSection } from '@/components/settings/SettingsScrollSpy';
+import { useSettingsSection } from '@/components/settings/useSettingsSection';
 import { BUILTIN_PROFILES } from '@scrolled/game-db/serverProfiles';
 import { useServerProfile, useSetServerProfile } from '@/hooks/useServerProfile';
 import { cn } from '@scrolled/design';
@@ -10,12 +10,12 @@ export function ServerProfileSection() {
   const setM = useSetServerProfile();
 
   return (
-    <section {...sectionProps} className="scroll-mt-20 space-y-3">
-      <div className="flex items-center gap-2">
+    <section {...sectionProps} className="scroll-mt-24 space-y-3">
+      <div className="text-muted-foreground flex items-center gap-2">
         <Gamepad2 className="h-4 w-4" />
-        <h2 className="text-lg font-semibold">Server</h2>
+        <h2 className="font-display text-foreground text-[17px] font-semibold">Server</h2>
       </div>
-      <div className="border-border bg-card text-card-foreground space-y-4 rounded-md border p-4">
+      <div className="border-border bg-card text-card-foreground shadow-rim space-y-4 rounded-xl border-2 p-5">
         <p className="text-muted-foreground text-xs">
           Tailor displayed calculations to your server. A profile sets the EXP rate and how dropped
           equipment stat ranges are estimated.

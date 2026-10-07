@@ -2,16 +2,17 @@ import { Link } from 'react-router-dom';
 import { useCurrentUser } from '@scrolled/identity-core/react';
 import { useSyncStatus } from '@scrolled/sync-core/react';
 import { appConfig } from '@/config';
-import { cn } from '@scrolled/design';
+import { Loader2 } from 'lucide-react';
+import { cn, StatusDot } from '@scrolled/design';
 import { presentSyncStatus } from './syncPresentation';
 
-// Sidebar colour per tone, matching the DB status block's palette.
-const TONE: Record<string, { icon: string; text: string }> = {
-  slate: { icon: 'text-sidebar-muted', text: 'text-sidebar-foreground' },
-  blue: { icon: 'text-sidebar-muted', text: 'text-sidebar-foreground' },
-  amber: { icon: 'text-amber-600 dark:text-amber-400', text: 'text-amber-700 dark:text-amber-300' },
-  red: { icon: 'text-red-600 dark:text-red-400', text: 'text-red-700 dark:text-red-300' },
-  emerald: { icon: 'text-green-600 dark:text-green-400', text: 'text-sidebar-foreground' },
+// Dot per tone, matching the database status row's palette.
+const DOT: Record<string, 'ok' | 'warn' | 'danger' | 'offline'> = {
+  slate: 'offline',
+  blue: 'offline',
+  amber: 'warn',
+  red: 'danger',
+  emerald: 'ok',
 };
 
 /**
@@ -28,28 +29,30 @@ export function SidebarSyncStatus({ collapsed }: { collapsed: boolean }) {
   if (!appConfig.features.sync || !user.isAuthenticated) return null;
   if (status.state === 'synced' || status.state === 'idle') return null;
 
-  const { label, detail, icon: Icon, tone, spin } = presentSyncStatus(status);
-  const colour = TONE[tone] ?? TONE.slate;
+  const { label, detail, tone, spin } = presentSyncStatus(status);
+  const shown = collapsed ? undefined : label;
 
-  const body = collapsed ? (
-    <Icon
-      className={cn('h-4 w-4 shrink-0', colour.icon, spin && 'animate-spin')}
-      aria-label={label}
-    />
-  ) : (
-    <div className="flex items-center gap-2 text-xs">
-      <Icon className={cn('h-3.5 w-3.5 shrink-0', colour.icon, spin && 'animate-spin')} aria-hidden />
-      <span className={cn('truncate', colour.text)}>{label}</span>
+  const body = (
+    <div className="flex items-center gap-2">
+      {spin ? (
+        <span className="inline-flex items-center gap-2 text-[12.5px] font-semibold">
+          <Loader2 className="text-muted-foreground h-3.5 w-3.5 shrink-0 animate-spin" aria-hidden />
+          {shown}
+        </span>
+      ) : (
+        <StatusDot status={DOT[tone] ?? 'offline'} label={shown} />
+      )}
+      {collapsed && <span className="sr-only">{label}</span>}
     </div>
   );
 
   return (
     <Link
-      to="/settings#account"
+      to="/settings/account#account"
       title={detail}
       className={cn(
-        'hover:bg-accent block rounded-md transition-colors',
-        collapsed ? 'flex justify-center px-2 py-2' : 'px-3 pb-2 pt-3',
+        'hover:bg-muted block rounded-[14px] transition-colors',
+        collapsed ? 'flex justify-center py-2' : 'px-3.5 py-1.5',
       )}
     >
       {body}

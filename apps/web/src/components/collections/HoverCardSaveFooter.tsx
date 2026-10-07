@@ -15,7 +15,9 @@ interface HoverCardSaveFooterProps {
 
 export function HoverCardSaveFooter({ entityType, entityId, className }: HoverCardSaveFooterProps) {
   return (
-    <div className={cn('border-border -mx-3 mt-1.5 border-t px-3 pt-1.5', className)}>
+    <div
+      className={cn('-mx-3 mt-1.5 border-t border-[var(--tooltip-line)] px-3 pt-1.5', className)}
+    >
       <CollectionPicker entityType={entityType} entityId={entityId}>
         {({ toggle, open, memberCount }) => (
           <button
@@ -24,8 +26,8 @@ export function HoverCardSaveFooter({ entityType, entityId, className }: HoverCa
             aria-haspopup="dialog"
             aria-expanded={open}
             className={cn(
-              'text-muted-foreground hover:text-foreground hover:bg-accent flex w-full items-center gap-1.5 rounded px-1.5 py-1 text-[11px] transition-colors',
-              open && 'bg-accent text-foreground',
+              'text-muted-foreground hover:text-foreground hover:bg-muted flex w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-xs transition-colors',
+              open && 'bg-muted text-foreground',
             )}
           >
             <BookmarkPlus className="h-3.5 w-3.5" aria-hidden />

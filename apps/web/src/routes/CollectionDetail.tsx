@@ -29,6 +29,7 @@ import {
 import { CollectionMembersBoard } from '@/components/collections/CollectionMembersBoard';
 import { CollectionDisplayOptionsMenu } from '@/components/collections/CollectionDisplayOptionsMenu';
 import { GroupFormDialog } from '@/components/collections';
+import { ConfirmDialog } from '@/components/collections/ConfirmDialog';
 import { usePaletteRegistration } from '@/components/command-palette/usePaletteContext';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import type { CommandItem } from '@/components/command-palette/types';
@@ -58,6 +59,7 @@ export default function CollectionDetail() {
 
   const [editOpen, setEditOpen] = useState(false);
   const [newGroupOpen, setNewGroupOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const deleteM = useDeleteCollection();
   const exportM = useExportCollectionJson();
   const pinM = useSetCollectionPinned();
@@ -157,12 +159,6 @@ export default function CollectionDetail() {
   const hasMembers = members.length > 0;
 
   const onDelete = async () => {
-    if (
-      !confirm(
-        `Delete the collection "${collection.name}"? This removes ${collection.memberCount} member(s).`,
-      )
-    )
-      return;
     await deleteM.mutateAsync(collection.id);
     navigate('/collections');
   };
@@ -175,22 +171,24 @@ export default function CollectionDetail() {
   return (
     <div className="max-w-5xl space-y-6">
       <header className="space-y-3">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex items-start gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-[18px]">
             <span
               className={cn(
-                'inline-flex h-12 w-12 items-center justify-center rounded-md',
+                'shadow-slot inline-flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-[20px] md:h-24 md:w-24',
                 resolveCollectionColor(collection.color).iconBg,
                 resolveCollectionColor(collection.color).iconColor,
               )}
             >
               {(() => {
                 const { Icon } = resolveCollectionIcon(collection.icon);
-                return <Icon className="h-6 w-6" />;
+                return <Icon className="h-9 w-9 md:h-11 md:w-11" />;
               })()}
             </span>
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight">{collection.name}</h1>
+            <div className="min-w-0 space-y-2">
+              <h1 className="font-display break-words text-2xl font-semibold leading-none md:text-4xl">
+                {collection.name}
+              </h1>
               <p className="text-muted-foreground text-sm">
                 {collection.memberCount.toLocaleString()}{' '}
                 {collection.memberCount === 1 ? 'member' : 'members'}
@@ -235,7 +233,7 @@ export default function CollectionDetail() {
             <Button
               variant="secondary"
               size="sm"
-              onClick={onDelete}
+              onClick={() => setDeleteOpen(true)}
               disabled={deleteM.isPending}
               className="text-destructive hover:text-destructive"
             >
@@ -250,6 +248,16 @@ export default function CollectionDetail() {
         )}
       </header>
 
+      <ConfirmDialog
+        open={deleteOpen}
+        title={`Delete the collection "${collection.name}"?`}
+        message={`This removes ${collection.memberCount} member(s).`}
+        confirmLabel="Delete"
+        pending={deleteM.isPending}
+        onConfirm={onDelete}
+        onClose={() => setDeleteOpen(false)}
+      />
+
       <CollectionFormDialog
         open={editOpen}
         onClose={() => setEditOpen(false)}
@@ -263,7 +271,7 @@ export default function CollectionDetail() {
       ) : (
         <>
           {!hasMembers && (
-            <div className="border-border bg-muted/40 rounded-md border p-4 text-sm">
+            <div className="border-border bg-card shadow-rim rounded-lg border-2 p-4 text-sm">
               <p className="text-muted-foreground">
                 No members yet. Open any item, mob, map, or quest page and click "Save" to add
                 one — or set up groups below to organize them as you go.
@@ -298,7 +306,7 @@ function NotFound() {
       >
         <ArrowLeft className="h-4 w-4" /> Back to collections
       </Link>
-      <h1 className="mt-4 text-3xl font-semibold tracking-tight">Collection not found</h1>
+      <h1 className="font-display mt-4 text-4xl font-semibold">Collection not found</h1>
       <p className="text-muted-foreground mt-2 text-sm">
         This collection may have been deleted. Pick one from the sidebar to continue.
       </p>

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
-import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Loader2, Upload } from 'lucide-react';
-import { Button } from '@scrolled/design';
+import { AlertTriangle, ArrowLeft, ArrowRight, Loader2, Upload } from 'lucide-react';
+import { Button, Scrolly } from '@scrolled/design';
 
 export type RestoreState =
   | { phase: 'pending' }
@@ -44,10 +44,10 @@ export function StepRestore({ file, state, onPickAgain, onSwitchBack, parentMode
     const restored = state.imported.map((k) => RESTORED_LABELS[k]).join(' and ') || 'your library';
     return (
       <section className="space-y-4">
-        <div className="flex items-center gap-3">
-          <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" />
+        <div className="flex items-center gap-4">
+          <Scrolly pose="cheer" size={64} />
           <div>
-            <h2 className="text-lg font-semibold">Backup restored</h2>
+            <h2 className="font-display text-xl font-semibold">Backup restored</h2>
             <p className="text-muted-foreground text-sm">
               Restored {restored} from {file.name} ({sizeMb} MB). Your wiki is ready.
             </p>
@@ -61,7 +61,7 @@ export function StepRestore({ file, state, onPickAgain, onSwitchBack, parentMode
         <div>
           <Link
             to="/"
-            className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 items-center gap-2 rounded-md px-4 text-sm font-medium"
+            className="text-primary-foreground ease-spring inline-flex h-9 items-center gap-2 rounded-md bg-[image:var(--gradient-accent)] px-4 text-[13px] font-bold shadow-[var(--shadow-btn)] transition-transform duration-300 hover:-translate-y-0.5"
           >
             Go Explore! <ArrowRight className="h-4 w-4" />
           </Link>
@@ -73,7 +73,7 @@ export function StepRestore({ file, state, onPickAgain, onSwitchBack, parentMode
   if (state.phase === 'error') {
     return (
       <section className="space-y-4">
-        <div className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border p-4">
+        <div className="border-destructive/40 bg-destructive/10 text-destructive rounded-xl border-2 p-4">
           <div className="mb-1 flex items-center gap-2 font-semibold">
             <AlertTriangle className="h-4 w-4" />
             Couldn't restore from this file
@@ -103,7 +103,7 @@ export function StepRestore({ file, state, onPickAgain, onSwitchBack, parentMode
       <div className="flex items-center gap-3">
         <Loader2 className="text-primary h-6 w-6 animate-spin" />
         <div>
-          <h2 className="text-lg font-semibold">Restoring your wiki</h2>
+          <h2 className="font-display text-xl font-semibold">Restoring your wiki</h2>
           <p className="text-muted-foreground text-sm">
             Loading {file.name} ({sizeMb} MB) into your local database. This usually takes a few
             seconds.

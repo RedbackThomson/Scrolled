@@ -41,7 +41,7 @@ export function MobCalculatedSection({ mob }: { mob: MobRecord }) {
         <CalcRow
           label="Req. Magic 1-Hit"
           help={MAGIC_HELP}
-          helpTo="/settings#customization"
+          helpTo="/settings/look#customization"
           value={magicValue}
         />
       )}

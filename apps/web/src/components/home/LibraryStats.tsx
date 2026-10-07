@@ -30,7 +30,7 @@ export function LibraryStats({ features }: { features: Features }) {
 
   return (
     <HomeSection title="Library">
-      <dl className="border-border bg-card text-card-foreground grid grid-cols-2 gap-px overflow-hidden rounded-md border sm:grid-cols-4">
+      <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <Stat icon={Database} label="Records" value={total.toLocaleString()} />
         <Stat icon={FileStack} label="Datasets" value={c.datasets.toLocaleString()} />
         <Stat
@@ -58,11 +58,11 @@ function Stat({
   value: string;
 }) {
   return (
-    <div className="bg-card flex items-center gap-3 p-3">
+    <div className="border-border bg-card shadow-rim flex items-center gap-3 rounded-lg border-2 p-3">
       <Icon className="text-muted-foreground h-4 w-4 shrink-0" />
       <div className="min-w-0">
-        <dt className="text-muted-foreground text-xs">{label}</dt>
-        <dd className="font-mono text-sm font-semibold">{value}</dd>
+        <dt className="text-muted-foreground text-[11.5px] font-semibold">{label}</dt>
+        <dd className="font-display text-lg font-semibold tabular-nums leading-tight">{value}</dd>
       </div>
     </div>
   );

@@ -107,10 +107,10 @@ export function CollectionPicker({ entityType, entityId, children }: CollectionP
             role="dialog"
             aria-label="Add to collection"
             style={{ position: 'fixed', top: coords.top, left: coords.left }}
-            className="border-border bg-card text-card-foreground z-50 w-72 max-w-[calc(100vw-1rem)] rounded-md border shadow-md"
+            className="border-border bg-card text-card-foreground shadow-pop z-50 w-72 max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl border-2"
             onMouseDown={(e) => e.stopPropagation()}
           >
-            <div className="border-border border-b p-2">
+            <div className="border-muted border-b-2 p-2">
               <div className="relative">
                 <Search className="text-muted-foreground pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2" />
                 <Input
@@ -118,7 +118,7 @@ export function CollectionPicker({ entityType, entityId, children }: CollectionP
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search or create…"
-                  className="border-input bg-background focus-visible:ring-ring h-8 w-full rounded-md border pl-8 pr-2 text-base focus-visible:outline-none focus-visible:ring-2 sm:text-xs"
+                  className="bg-muted focus-visible:ring-primary/30 h-8 w-full rounded-full pl-8 pr-2 text-base focus-visible:outline-none focus-visible:ring-4 sm:text-xs"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !hasExactMatch && query.trim()) {
                       e.preventDefault();
@@ -129,7 +129,7 @@ export function CollectionPicker({ entityType, entityId, children }: CollectionP
               </div>
             </div>
             <ul
-              className="max-h-72 overflow-y-auto py-1"
+              className="max-h-72 space-y-0.5 overflow-y-auto p-1.5"
               aria-busy={collectionsQ.isPending || membershipQ.isPending}
             >
               {collectionsQ.isPending ? (
@@ -157,7 +157,7 @@ export function CollectionPicker({ entityType, entityId, children }: CollectionP
               )}
             </ul>
             {!hasExactMatch && query.trim() && (
-              <div className="border-border border-t p-2">
+              <div className="border-muted bg-muted border-t-2 p-2">
                 <Button
                   type="button"
                   size="sm"
@@ -228,18 +228,19 @@ function PickerRow({
         type="button"
         onClick={onToggle}
         className={cn(
-          'hover:bg-accent flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs',
-          isMember && 'bg-accent/40',
+          'hover:bg-muted flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] font-semibold',
+          isMember && 'bg-muted',
         )}
       >
         <span
           className={cn(
-            'border-input flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-sm border',
-            isMember && 'bg-primary border-primary text-primary-foreground',
+            'border-border bg-card flex h-5 w-5 shrink-0 items-center justify-center rounded-[7px] border-2',
+            isMember &&
+              'text-primary-foreground border-transparent bg-[image:var(--gradient-accent)] shadow-[inset_0_-2px_0_var(--accent-lo)]',
           )}
           aria-hidden
         >
-          {isMember && <Check className="h-2.5 w-2.5" />}
+          {isMember && <Check className="h-3 w-3" />}
         </span>
         <span className={cn('min-w-0 flex-1 truncate', isMember && 'font-medium')}>
           {collectionName}
@@ -250,9 +251,7 @@ function PickerRow({
       </button>
       {isMember && (
         <div
-          className={cn(
-            'bg-accent/20 border-border space-y-1.5 border-b border-t px-3 py-2 pl-[1.65rem]',
-          )}
+          className="bg-muted space-y-1.5 rounded-md px-3 py-2 pl-[2.4rem]"
           // The panel sits inside the same <li> as the trigger, so clicks
           // here mustn't bubble up and re-toggle the checkbox.
           onClick={(e) => e.stopPropagation()}
@@ -381,7 +380,7 @@ function PlacementEditor({
           }}
           placeholder="Qty"
           aria-label={`Quantity for ${label}`}
-          className="border-input bg-background focus-visible:ring-ring h-6 w-16 rounded-md border px-1.5 text-base tabular-nums focus-visible:outline-none focus-visible:ring-2 sm:text-[11px]"
+          className="border-border bg-card focus-visible:border-primary focus-visible:ring-primary/30 h-7 w-16 rounded-[8px] border-2 px-1.5 text-base tabular-nums focus-visible:outline-none focus-visible:ring-4 sm:text-[11px]"
         />
         <Input
           type="text"
@@ -399,7 +398,7 @@ function PlacementEditor({
           }}
           placeholder="Note"
           aria-label={`Note for ${label}`}
-          className="border-input bg-background focus-visible:ring-ring h-6 min-w-0 flex-1 rounded-md border px-1.5 text-base focus-visible:outline-none focus-visible:ring-2 sm:text-[11px]"
+          className="border-border bg-card focus-visible:border-primary focus-visible:ring-primary/30 h-7 min-w-0 flex-1 rounded-[8px] border-2 px-1.5 text-base focus-visible:outline-none focus-visible:ring-4 sm:text-[11px]"
         />
       </div>
     </div>
@@ -421,13 +420,17 @@ function GroupChip({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] transition-colors',
+        'inline-flex items-center gap-1 rounded-full border-2 px-2 py-0.5 text-[11px] font-bold transition-colors',
         active
-          ? 'bg-primary border-primary text-primary-foreground'
-          : 'border-border text-muted-foreground hover:bg-accent hover:text-foreground border-dashed',
+          ? 'bg-primary/15 border-primary/50 text-foreground'
+          : 'border-border text-muted-foreground hover:text-foreground border-dashed',
       )}
     >
-      {active ? <Check className="h-2.5 w-2.5" aria-hidden /> : <Plus className="h-2.5 w-2.5" aria-hidden />}
+      {active ? (
+        <Check className="h-2.5 w-2.5" aria-hidden />
+      ) : (
+        <Plus className="h-2.5 w-2.5" aria-hidden />
+      )}
       <span className="max-w-[7rem] truncate">{label}</span>
     </button>
   );

@@ -38,6 +38,7 @@ import { SyncSignInNotice } from '@/components/sync/SyncSignInNotice';
 import { useInstalledDataset } from '@/hooks/dataset/useInstalledDataset';
 import { cn, Logo, StatusDot } from '@scrolled/design';
 import { appConfig } from '@/config';
+import { getSettingsGroups } from '@/components/settings/settingsGroups';
 
 interface SidebarChild {
   label: string;
@@ -356,6 +357,15 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
             />
           )}
           <NavItem to="/settings" icon={SettingsIcon} label="Settings" collapsed={collapsed} />
+          {!collapsed && location.pathname.startsWith('/settings') && (
+            <li>
+              <ul className="border-border my-0.5 ml-[26px] space-y-px border-l-2 pl-3">
+                {getSettingsGroups().map((g) => (
+                  <SubNavItem key={g.id} to={`/settings/${g.id}`} label={g.label} icon={g.icon} />
+                ))}
+              </ul>
+            </li>
+          )}
         </ul>
       </nav>
       <div className={cn('bg-card shadow-float py-1', collapsed ? 'rounded-full' : 'rounded-[18px]')}>

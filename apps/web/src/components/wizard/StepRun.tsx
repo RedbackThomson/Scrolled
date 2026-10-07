@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, CheckCircle2, Loader2, XCircle } from 'lucide-react';
+import { Scrolly } from '@scrolled/design';
 import { AccentPicker } from '@/components/common/AccentPicker';
 import { EXTRACTOR_CARD_KEYS, EXTRACTOR_CARD_META } from '@/components/common/extractorCatalog';
 import { ProgressBar } from '@/components/common/ProgressBar';
@@ -76,8 +77,8 @@ export function StepRun({ version, files, onComplete, mode }: Props) {
   if (extract.error && failedExtractors.length === 0) {
     return (
       <section className="space-y-4">
-        <div className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border p-4">
-          <h3 className="font-semibold">Extraction failed</h3>
+        <div className="border-destructive/40 bg-destructive/10 text-destructive rounded-xl border-2 p-4">
+          <h3 className="font-display font-semibold">Extraction failed</h3>
           <p className="mt-1 text-sm">{(extract.error as Error).message}</p>
         </div>
         <p className="text-muted-foreground text-sm">
@@ -97,10 +98,10 @@ export function StepRun({ version, files, onComplete, mode }: Props) {
     const total = loaded.reduce((n, k) => n + stats.counts[k], 0);
     return (
       <section className="space-y-5">
-        <div className="flex items-center gap-3">
-          <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" />
+        <div className="flex items-center gap-4">
+          <Scrolly pose="cheer" size={64} />
           <div>
-            <h2 className="text-lg font-semibold">
+            <h2 className="font-display text-xl font-semibold">
               {mode === 'update' ? 'Update complete' : 'Your wiki is ready'}
             </h2>
             <p className="text-muted-foreground text-sm">
@@ -117,13 +118,13 @@ export function StepRun({ version, files, onComplete, mode }: Props) {
               return (
                 <li
                   key={key}
-                  className="border-border bg-card text-card-foreground flex items-center gap-3 rounded-md border p-3"
+                  className="border-border bg-card text-card-foreground shadow-rim flex items-center gap-3 rounded-lg border-2 p-3"
                 >
-                  <span className="bg-primary/10 text-primary flex h-9 w-9 shrink-0 items-center justify-center rounded-md">
+                  <span className="bg-muted text-primary flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px]">
                     <Icon className="h-4 w-4" />
                   </span>
                   <span className="min-w-0">
-                    <span className="block font-mono text-lg font-semibold tabular-nums leading-none">
+                    <span className="font-display block text-xl font-semibold tabular-nums leading-none">
                       {stats.counts[key].toLocaleString()}
                     </span>
                     <span className="text-muted-foreground mt-1 block text-xs">{label}</span>
@@ -140,9 +141,9 @@ export function StepRun({ version, files, onComplete, mode }: Props) {
           </p>
         )}
 
-        <div className="border-border flex flex-wrap items-center justify-between gap-3 rounded-md border p-4">
+        <div className="border-border bg-card shadow-rim flex flex-wrap items-center justify-between gap-3 rounded-lg border-2 p-4">
           <div>
-            <div className="text-sm font-medium">Accent color</div>
+            <div className="text-sm font-bold">Accent color</div>
             <p className="text-muted-foreground mt-0.5 text-xs">
               Pick a highlight color. You can change it later in Settings.
             </p>
@@ -151,7 +152,7 @@ export function StepRun({ version, files, onComplete, mode }: Props) {
         </div>
 
         {failedExtractors.length > 0 && (
-          <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-4 text-amber-900 dark:text-amber-100">
+          <div className="rounded-xl border-2 border-amber-500/40 bg-amber-500/10 p-4 text-amber-900 dark:text-amber-100">
             <h3 className="text-sm font-semibold">
               Some categories failed ({failedExtractors.length})
             </h3>
@@ -180,7 +181,7 @@ export function StepRun({ version, files, onComplete, mode }: Props) {
       <div className="flex items-center gap-3">
         <Loader2 className="text-primary h-6 w-6 animate-spin" />
         <div>
-          <h2 className="text-lg font-semibold">
+          <h2 className="font-display text-xl font-semibold">
             {mode === 'update' ? 'Updating your wiki' : 'Building your wiki'}
           </h2>
           <p className="text-muted-foreground text-sm">
@@ -228,7 +229,7 @@ function ExtractorCard({ ek, status }: { ek: ExtractorKey; status: ExtractorStat
   return (
     <div
       className={cn(
-        'border-border bg-card text-card-foreground rounded-md border p-3',
+        'border-border bg-card text-card-foreground shadow-rim rounded-lg border-2 p-3',
         status.phase === 'failed' && 'border-destructive/40 bg-destructive/5',
       )}
     >

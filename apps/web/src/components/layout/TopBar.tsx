@@ -1,5 +1,4 @@
 import { Menu } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { AccountMenu } from '@/components/account/AccountMenu';
 import { PaletteTrigger } from '@/components/command-palette/PaletteTrigger';
@@ -8,10 +7,7 @@ import { useSidebarLayout } from '@/stores/sidebarState';
 import { appConfig } from '@/config';
 
 export function TopBar() {
-  const location = useLocation();
   const setMobileOpen = useSidebarLayout((s) => s.setMobileOpen);
-  const setSettingsNavOpen = useSidebarLayout((s) => s.setSettingsNavOpen);
-  const onSettingsRoute = location.pathname.startsWith('/settings');
 
   return (
     // The bar has no fill, so let clicks fall through the gaps between its
@@ -22,8 +18,8 @@ export function TopBar() {
           icon={Menu}
           variant="float"
           size={40}
-          label={onSettingsRoute ? 'Open settings menu' : 'Open navigation menu'}
-          onClick={() => (onSettingsRoute ? setSettingsNavOpen(true) : setMobileOpen(true))}
+          label="Open navigation menu"
+          onClick={() => setMobileOpen(true)}
         />
       </span>
       <div className="max-w-[520px] flex-1">

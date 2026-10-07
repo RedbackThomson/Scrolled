@@ -9,6 +9,7 @@
 import { lazy, Suspense, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Check, Pencil, Sparkles } from 'lucide-react';
+import { Button } from '@scrolled/design';
 import {
   BrowseTiles,
   ContinueStrip,
@@ -39,7 +40,7 @@ export default function Home() {
   if (!features.ready) {
     return (
       <div className="max-w-3xl">
-        <h1 className="text-3xl font-semibold tracking-tight">Scrolled</h1>
+        <h1 className="font-display text-4xl font-semibold leading-none">Scrolled</h1>
         <p className="text-muted-foreground mt-2 text-sm">Loading…</p>
       </div>
     );
@@ -55,27 +56,20 @@ export default function Home() {
     <div className="max-w-5xl space-y-8">
       <header className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-3xl font-semibold tracking-tight">Scrolled</h1>
+          <h1 className="font-display text-4xl font-semibold leading-none">Scrolled</h1>
           {hostedName && (
             <p className="text-muted-foreground mt-1 truncate text-sm">{hostedName}</p>
           )}
         </div>
-        <button
+        <Button
           type="button"
+          variant={editing ? 'primary' : 'secondary'}
+          icon={editing ? Check : Pencil}
           onClick={() => setEditing((v) => !v)}
-          className="border-border bg-card text-card-foreground hover:border-foreground/30 inline-flex h-9 items-center gap-2 rounded-md border px-3 text-sm font-medium transition-colors"
           title={editing ? 'Finish editing' : 'Edit dashboard'}
         >
-          {editing ? (
-            <>
-              <Check className="h-4 w-4" /> Done
-            </>
-          ) : (
-            <>
-              <Pencil className="h-4 w-4" /> Edit
-            </>
-          )}
-        </button>
+          {editing ? 'Done' : 'Edit'}
+        </Button>
       </header>
 
       {editing ? (
@@ -121,7 +115,7 @@ function sectionContent(id: HomeSectionId, features: Features): ReactNode {
 function HomeSectionPlaceholder({ label }: { label: string }) {
   return (
     <div
-      className="border-border bg-muted/30 h-48 animate-pulse rounded-lg border"
+      className="border-border bg-muted h-48 animate-pulse rounded-lg border-2"
       aria-busy
       aria-label={`Loading ${label}`}
     />
@@ -135,7 +129,7 @@ function Welcome() {
     return (
       <div className="max-w-3xl space-y-6">
         <header>
-          <h1 className="text-3xl font-semibold tracking-tight">Welcome</h1>
+          <h1 className="font-display text-4xl font-semibold leading-none">Welcome</h1>
           <p className="text-muted-foreground mt-2 text-sm">Preparing your library…</p>
         </header>
       </div>
@@ -145,7 +139,7 @@ function Welcome() {
   return (
     <div className="max-w-3xl space-y-6">
       <header>
-        <h1 className="text-3xl font-semibold tracking-tight">Welcome</h1>
+        <h1 className="font-display text-4xl font-semibold leading-none">Welcome</h1>
         <p className="text-muted-foreground mt-2 text-sm">
           A personal wiki that adapts to your version of the Mushroom Game. Load your game files to
           fill it in.
@@ -153,7 +147,7 @@ function Welcome() {
       </header>
       <Link
         to="/setup"
-        className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-10 items-center gap-2 rounded-md px-4 text-sm font-medium"
+        className="text-primary-foreground ease-spring inline-flex h-11 items-center gap-2 rounded-[14px] bg-[image:var(--gradient-accent)] px-5 text-[15px] font-bold shadow-[var(--shadow-btn)] transition-transform duration-300 hover:-translate-y-0.5"
       >
         <Sparkles className="h-4 w-4" />
         Get started

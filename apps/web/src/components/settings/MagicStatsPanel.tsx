@@ -42,7 +42,7 @@ function MagicStatsForm({
   };
 
   return (
-    <div className="border-border bg-card text-card-foreground space-y-4 rounded-md border p-4">
+    <div className="border-border bg-card text-card-foreground shadow-rim space-y-4 rounded-xl border-2 p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-sm font-medium">Magic damage</div>

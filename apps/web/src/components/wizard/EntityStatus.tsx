@@ -63,14 +63,12 @@ export function EntityStatus({ files, features, mode }: Props) {
   return (
     <section className="space-y-2">
       <div className="flex items-baseline justify-between gap-3">
-        <h3 className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-          What you'll be able to explore
-        </h3>
+        <h3 className="font-display text-[17px] font-semibold">What you'll be able to explore</h3>
         <p className="text-muted-foreground text-[11px]">
           Each category unlocks when its files are provided.
         </p>
       </div>
-      <ul className="border-border divide-border divide-y rounded-md border">
+      <ul className="border-border bg-card shadow-rim divide-muted divide-y-[1.5px] overflow-hidden rounded-lg border-2">
         {ALL_EXTRACTOR_KEYS.map((key) => (
           <EntityRow key={key} ek={key} byName={byName} features={features} mode={mode} />
         ))}
@@ -122,15 +120,15 @@ function EntityRow({
   return (
     <li
       className={cn(
-        'flex flex-col gap-1.5 px-3 py-2 sm:flex-row sm:items-center sm:justify-between',
+        'flex min-h-[46px] flex-col gap-1.5 px-3 py-2 sm:flex-row sm:items-center sm:justify-between',
         state === 'missing-deps' && 'bg-amber-500/5',
       )}
     >
       <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-        <span className="text-xs font-medium">{EXTRACTOR_CARD_META[ek].label}</span>
+        <span className="text-[13.5px] font-semibold">{EXTRACTOR_CARD_META[ek].label}</span>
         <span
           className={cn(
-            'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide',
+            'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold',
             meta.badgeClass,
           )}
         >
@@ -251,7 +249,7 @@ function FileChip({ name, state }: { name: string; state: ChipState }) {
     <span
       title={meta.title}
       className={cn(
-        'inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-mono text-[10px] font-medium',
+        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[10.5px] font-medium',
         meta.className,
       )}
     >

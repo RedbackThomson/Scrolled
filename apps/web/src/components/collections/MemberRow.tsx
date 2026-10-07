@@ -97,8 +97,8 @@ export function MemberRow({ member, name }: MemberRowProps) {
   return (
     <li
       className={cn(
-        'group flex flex-wrap items-center gap-3 px-3 py-1.5 text-sm',
-        !isTombstone && 'hover:bg-accent',
+        'ease-spring group flex min-h-[46px] flex-wrap items-center gap-3 px-3 py-[5px] text-[13.5px] transition-[background-color,padding] duration-300',
+        !isTombstone && 'hover:bg-muted hover:pl-4',
       )}
     >
       <button
@@ -107,8 +107,9 @@ export function MemberRow({ member, name }: MemberRowProps) {
         aria-label={member.done ? 'Mark as not done' : 'Mark as done'}
         title={member.done ? 'Done' : 'Mark as done'}
         className={cn(
-          'border-input flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border',
-          member.done && 'bg-primary border-primary text-primary-foreground',
+          'border-border bg-card flex h-5 w-5 shrink-0 items-center justify-center rounded-[7px] border-2',
+          member.done &&
+            'text-primary-foreground border-transparent bg-[image:var(--gradient-accent)] shadow-[inset_0_-2px_0_var(--accent-lo)]',
         )}
       >
         {member.done && <Check className="h-3 w-3" />}
@@ -151,7 +152,7 @@ export function MemberRow({ member, name }: MemberRowProps) {
             }}
             autoFocus
             placeholder="Add a note…"
-            className="border-input bg-background focus-visible:ring-ring h-7 min-w-0 flex-1 rounded-md border px-2 text-base focus-visible:outline-none focus-visible:ring-2 sm:text-xs"
+            className="border-border bg-card focus-visible:border-primary focus-visible:ring-primary/30 h-8 min-w-0 flex-1 rounded-[10px] border-2 px-2 text-base focus-visible:outline-none focus-visible:ring-4 sm:text-xs"
           />
         ) : (
           <button
@@ -161,17 +162,15 @@ export function MemberRow({ member, name }: MemberRowProps) {
               setEditingNote(true);
             }}
             className={cn(
-              'min-w-0 flex-1 truncate rounded px-1.5 py-0.5 text-left text-xs',
-              member.note
-                ? 'text-foreground hover:bg-accent'
-                : 'text-muted-foreground hover:bg-accent',
+              'min-w-0 flex-1 truncate rounded-[8px] px-1.5 py-0.5 text-left text-xs',
+              member.note ? 'text-foreground hover:bg-card' : 'text-muted-foreground hover:bg-card',
             )}
           >
             {member.note ? member.note : 'Add note…'}
           </button>
         )}
         <label className="inline-flex shrink-0 items-center gap-1">
-          <span className="text-muted-foreground text-[10px] uppercase tracking-wide">Qty</span>
+          <span className="text-muted-foreground text-[11.5px] font-semibold">Qty</span>
           <Input
             type="number"
             min={0}
@@ -189,7 +188,7 @@ export function MemberRow({ member, name }: MemberRowProps) {
             }}
             placeholder="—"
             aria-label="Target quantity"
-            className="border-input bg-background focus-visible:ring-ring h-7 w-16 rounded-md border px-2 text-base tabular-nums focus-visible:outline-none focus-visible:ring-2 sm:text-xs"
+            className="border-border bg-card focus-visible:border-primary focus-visible:ring-primary/30 h-8 w-16 rounded-[10px] border-2 px-2 text-base tabular-nums focus-visible:outline-none focus-visible:ring-4 sm:text-xs"
           />
         </label>
       </div>
@@ -200,7 +199,7 @@ export function MemberRow({ member, name }: MemberRowProps) {
         disabled={removeM.isPending}
         aria-label="Remove from collection"
         title="Remove from collection"
-        className="text-muted-foreground hover:text-destructive inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
+        className="text-muted-foreground hover:bg-card hover:text-destructive inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px]"
       >
         <X className="h-3.5 w-3.5" />
       </button>

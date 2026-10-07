@@ -48,7 +48,7 @@ export function SyncControls() {
   const syncing = status.state === 'syncing' || busy;
 
   return (
-    <div className="border-border space-y-4 border-t pt-4">
+    <div className="border-muted space-y-4 border-t-2 pt-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-2">
           <Icon
@@ -59,7 +59,7 @@ export function SyncControls() {
             )}
           />
           <div className="min-w-0">
-            <div className="text-sm font-medium">{presentation.label}</div>
+            <div className="text-sm font-bold">{presentation.label}</div>
             <p className="text-muted-foreground mt-0.5 text-xs">{presentation.detail}</p>
           </div>
         </div>

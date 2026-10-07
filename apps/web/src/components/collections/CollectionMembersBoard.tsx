@@ -557,8 +557,11 @@ function OuterSection({
   // 'type'
   return (
     <section className="space-y-3">
-      <h2 className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">
-        {TYPE_LABELS[outer.entityType]} ({outer.count})
+      <h2 className="font-display flex items-center gap-2 text-[17px] font-semibold">
+        {TYPE_LABELS[outer.entityType]}
+        <span className="bg-muted text-muted-foreground rounded-full px-2 py-px font-sans text-xs font-medium">
+          {outer.count}
+        </span>
       </h2>
       <div className="space-y-3">
         {outer.inner.map((inner) => (
@@ -586,7 +589,7 @@ function InnerSection({
   return (
     <div className="space-y-1">
       {inner.header && (
-        <div className="text-muted-foreground text-[10px] font-semibold uppercase tracking-wide">
+        <div className="font-display text-muted-foreground text-[13px] font-semibold">
           {inner.header.label} ({inner.header.count})
         </div>
       )}
@@ -595,7 +598,7 @@ function InnerSection({
         strategy={verticalListSortingStrategy}
         disabled={!itemDragEnabled}
       >
-        <div className="border-border bg-card text-card-foreground divide-border divide-y rounded-md border">
+        <div className="border-border bg-card text-card-foreground shadow-rim divide-muted divide-y-[1.5px] overflow-hidden rounded-lg border-2">
           {inner.members.map((m) => (
             <SortableMemberRow
               key={`${m.entityType}-${m.entityId}-${m.groupId ?? 'default'}`}

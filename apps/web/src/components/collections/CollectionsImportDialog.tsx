@@ -141,7 +141,9 @@ export function CollectionsImportDialog({
       ) : (
         <div className="space-y-3 text-sm">
           <label className="block space-y-1">
-            <span className="text-muted-foreground text-xs uppercase tracking-wide">File</span>
+            <span className="font-display text-muted-foreground text-[13px] font-semibold">
+              File
+            </span>
             <Input
               type="file"
               accept="application/json,.json"
@@ -151,7 +153,7 @@ export function CollectionsImportDialog({
           </label>
 
           {filename && !parseError && payload && (
-            <div className="border-border bg-muted/40 flex items-start gap-2 rounded-md border p-2 text-xs">
+            <div className="bg-muted flex items-start gap-2 rounded-md p-2.5 text-xs">
               <FileJson className="text-muted-foreground mt-0.5 h-3.5 w-3.5 shrink-0" />
               <div className="min-w-0 flex-1">
                 <div className="truncate font-medium">{filename}</div>
@@ -167,7 +169,7 @@ export function CollectionsImportDialog({
           )}
 
           {parseError && (
-            <div className="border-destructive/30 bg-destructive/5 text-destructive flex items-start gap-2 rounded-md border p-2 text-xs">
+            <div className="border-destructive/30 bg-destructive/5 text-destructive flex items-start gap-2 rounded-md border-2 p-2.5 text-xs">
               <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               <div className="min-w-0 flex-1">
                 <div className="font-medium">Couldn't read this file</div>
@@ -177,7 +179,7 @@ export function CollectionsImportDialog({
           )}
 
           <fieldset className="space-y-1.5">
-            <legend className="text-muted-foreground text-xs uppercase tracking-wide">
+            <legend className="font-display text-muted-foreground text-[13px] font-semibold">
               If a collection with the same name already exists
             </legend>
             <div className="space-y-1">
@@ -185,8 +187,8 @@ export function CollectionsImportDialog({
                 <label
                   key={opt.value}
                   className={cn(
-                    'border-border hover:bg-accent flex cursor-pointer items-start gap-2 rounded-md border p-2 text-xs',
-                    mode === opt.value && 'bg-accent border-foreground/20',
+                    'border-border bg-card hover:bg-muted flex cursor-pointer items-start gap-2 rounded-md border-2 p-2.5 text-xs',
+                    mode === opt.value && 'border-primary ring-primary/30 ring-4',
                   )}
                 >
                   <Input
@@ -234,8 +236,10 @@ function ReportPanel({ report }: { report: ImportReport }) {
         )}
       </dl>
       {report.importedNames.length > 0 && (
-        <div className="border-border bg-muted/40 rounded-md border p-2 text-xs">
-          <div className="text-muted-foreground mb-1 uppercase tracking-wide">Imported names</div>
+        <div className="bg-muted rounded-md p-2.5 text-xs">
+          <div className="font-display text-muted-foreground mb-1 text-[13px] font-semibold">
+            Imported names
+          </div>
           <ul className="list-disc space-y-0.5 pl-4">
             {report.importedNames.map((n) => (
               <li key={n}>{n}</li>

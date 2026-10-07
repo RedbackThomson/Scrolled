@@ -13,6 +13,7 @@ import { GripVertical, Trash2, Pencil } from 'lucide-react';
 import { useDeleteGroup } from '@/hooks/useCollections';
 import type { CollectionGroup } from '@/db/user';
 import { groupDndId } from './dndIds';
+import { ConfirmDialog } from './ConfirmDialog';
 import { GroupFormDialog } from './GroupFormDialog';
 import { cn } from '@scrolled/design';
 
@@ -53,15 +54,14 @@ export function GroupSection({ group, name, count, showHeader, draggable, childr
 
   const deleteM = useDeleteGroup();
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const isDefault = group == null;
 
   const onDelete = async () => {
     if (isDefault) return;
-    if (!confirm(`Delete group "${name}"? Its ${count} member(s) will move to the default group.`)) {
-      return;
-    }
     await deleteM.mutateAsync(group.id);
+    setDeleteOpen(false);
   };
 
   return (
@@ -91,12 +91,14 @@ export function GroupSection({ group, name, count, showHeader, draggable, childr
                 setEditOpen(true);
               }}
               className={cn(
-                'group inline-flex items-center gap-1.5 text-left text-sm font-semibold tracking-tight',
+                'font-display group inline-flex items-center gap-2 text-left text-[17px] font-semibold',
                 isDefault ? 'text-muted-foreground cursor-default' : 'hover:text-foreground',
               )}
             >
               <span className="truncate">{name}</span>
-              <span className="text-muted-foreground text-xs font-normal">({count})</span>
+              <span className="bg-muted text-muted-foreground rounded-full px-2 py-px font-sans text-xs font-medium">
+                {count}
+              </span>
               {!isDefault && (
                 <Pencil className="text-muted-foreground/70 group-hover:text-muted-foreground h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
               )}
@@ -105,9 +107,9 @@ export function GroupSection({ group, name, count, showHeader, draggable, childr
             {!isDefault && (
               <button
                 type="button"
-                onClick={onDelete}
+                onClick={() => setDeleteOpen(true)}
                 disabled={deleteM.isPending}
-                className="text-muted-foreground hover:text-destructive ml-auto inline-flex h-6 w-6 items-center justify-center rounded-md"
+                className="text-muted-foreground hover:bg-muted hover:text-destructive ml-auto inline-flex h-7 w-7 items-center justify-center rounded-[10px]"
                 aria-label={`Delete group ${name}`}
                 title="Delete group"
               >
@@ -125,6 +127,18 @@ export function GroupSection({ group, name, count, showHeader, draggable, childr
       )}
 
       {children}
+
+      {group && (
+        <ConfirmDialog
+          open={deleteOpen}
+          title={`Delete group "${name}"?`}
+          message={`Its ${count} member(s) will move to the default group.`}
+          confirmLabel="Delete"
+          pending={deleteM.isPending}
+          onConfirm={onDelete}
+          onClose={() => setDeleteOpen(false)}
+        />
+      )}
 
       {group && (
         <GroupFormDialog

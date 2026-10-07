@@ -389,7 +389,7 @@ function SetupWizard() {
         exitSlot={<ExitToApp />}
       >
         {ignoredNotice && (
-          <div className="border-border bg-muted/60 text-muted-foreground mb-4 flex items-start gap-2 rounded-md border p-3 text-xs">
+          <div className="bg-muted text-muted-foreground mb-4 flex items-start gap-2 rounded-xl p-3 text-xs">
             <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             <span>{ignoredNotice}</span>
           </div>
@@ -466,7 +466,7 @@ function SetupWizard() {
     body = (
       <>
         {ignoredNotice && (
-          <div className="border-border bg-muted/60 text-muted-foreground mb-4 flex items-start gap-2 rounded-md border p-3 text-xs">
+          <div className="bg-muted text-muted-foreground mb-4 flex items-start gap-2 rounded-xl p-3 text-xs">
             <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             <span>{ignoredNotice}</span>
           </div>
@@ -518,7 +518,7 @@ function SetupWizard() {
           <span />
           <Link
             to="/"
-            className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 items-center gap-2 rounded-md px-4 text-sm font-medium"
+            className="text-primary-foreground ease-spring inline-flex h-9 items-center gap-2 rounded-md bg-[image:var(--gradient-accent)] px-4 text-[13px] font-bold shadow-[var(--shadow-btn)] transition-transform duration-300 hover:-translate-y-0.5"
           >
             Go Explore! <ArrowRight className="h-4 w-4" />
           </Link>
@@ -537,7 +537,7 @@ function SetupWizard() {
         {step === STEPS[0].id && stepMode === 'update' ? (
           <Link
             to="/"
-            className="hover:bg-accent hover:text-accent-foreground inline-flex h-8 items-center gap-2 rounded-md px-3 text-sm font-medium transition-colors"
+            className="bg-card shadow-float hover:text-foreground inline-flex h-8 items-center gap-2 rounded-full px-3.5 text-sm font-semibold transition-colors"
           >
             <ArrowLeft className="h-4 w-4" /> Exit
           </Link>
@@ -599,7 +599,7 @@ function SetupWizard() {
       exitSlot={exitSlot}
     >
       {incompatibleLibrary && (
-        <div className="text-foreground mb-4 flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+        <div className="text-foreground mb-4 flex items-start gap-2 rounded-xl border-2 border-amber-500/40 bg-amber-500/10 p-3 text-sm">
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
           <div>
             <p className="font-medium">Your library needs to be rebuilt</p>
@@ -620,7 +620,7 @@ function ExitToApp() {
   return (
     <Link
       to="/"
-      className="text-muted-foreground hover:text-foreground hover:bg-accent inline-flex h-8 items-center gap-2 rounded-md px-3 text-sm font-medium transition-colors"
+      className="bg-card text-muted-foreground shadow-float hover:text-foreground inline-flex h-8 items-center gap-2 rounded-full px-3.5 text-sm font-semibold transition-colors"
     >
       <ArrowLeft className="h-4 w-4" /> Return to app
     </Link>
@@ -662,11 +662,11 @@ function RestoreDropZone({
           accept(e.dataTransfer.files[0]);
         }}
         className={cn(
-          'border-border bg-card flex flex-col items-center justify-center rounded-md border-2 border-dashed py-10 text-center transition-colors',
+          'border-border bg-card flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-10 text-center transition-colors',
           dragging && 'border-primary bg-primary/5',
         )}
       >
-        <p className="text-sm font-medium">Drop a backup here</p>
+        <p className="font-display text-base font-semibold">Drop a backup here</p>
         <p className="text-muted-foreground mt-1 text-xs">
           a <code className="font-mono">.scrolled-backup</code> file, or a legacy{' '}
           <code className="font-mono">.sqlite</code> / <code className="font-mono">.db</code> export

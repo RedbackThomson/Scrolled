@@ -32,12 +32,12 @@ export function MapsByRegion({ features }: { features: Features }) {
           <li key={r.key}>
             <Link
               to={`/maps?f_streetName=${encodeURIComponent(r.key)}`}
-              className="border-border bg-card text-card-foreground hover:border-foreground/30 group flex items-center gap-2 rounded-md border px-3 py-2 transition-colors"
+              className="bg-card text-card-foreground shadow-float ease-spring group flex items-center gap-2 rounded-full px-3.5 py-2 transition-transform duration-300 hover:-translate-y-0.5"
               title={`${r.count.toLocaleString()} maps in ${r.key}`}
             >
-              <MapPin className="text-muted-foreground group-hover:text-foreground h-3.5 w-3.5 shrink-0 transition-colors" />
-              <span className="min-w-0 flex-1 truncate text-xs font-medium">{r.key}</span>
-              <span className="text-muted-foreground font-mono text-xs">
+              <MapPin className="h-3.5 w-3.5 shrink-0 text-[oklch(0.56_0.14_185)]" />
+              <span className="min-w-0 flex-1 truncate text-[13px] font-semibold">{r.key}</span>
+              <span className="text-muted-foreground text-xs tabular-nums">
                 {r.count.toLocaleString()}
               </span>
             </Link>

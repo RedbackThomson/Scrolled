@@ -14,6 +14,10 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   description?: string;
+  /** Leading tile in the header, usually a 38px SlotTile. */
+  icon?: ReactNode;
+  /** Skip the header row; `title` still labels the dialog for screen readers. */
+  headerless?: boolean;
   children: ReactNode;
   /** Footer slot (typically action buttons). */
   footer?: ReactNode;
@@ -35,6 +39,8 @@ export function Modal({
   onClose,
   title,
   description,
+  icon,
+  headerless,
   children,
   footer,
   panelClassName,
@@ -82,32 +88,47 @@ export function Modal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-background/70 absolute inset-0 backdrop-blur-sm" aria-hidden />
+      <div
+        className="animate-in fade-in-0 absolute inset-0 bg-[var(--surface-scrim)] duration-[260ms]"
+        aria-hidden
+      />
       <div
         ref={panelRef}
         className={cn(
-          'border-border bg-card text-card-foreground relative flex flex-col rounded-lg border shadow-lg',
+          'border-border bg-card text-card-foreground shadow-pop animate-in fade-in-0 zoom-in-90 slide-in-from-bottom-4 ease-spring relative flex flex-col overflow-hidden rounded-2xl border-2 duration-500',
           panelClassName ?? 'w-full max-w-md',
         )}
       >
-        <div className="flex items-start justify-between gap-3 p-4">
-          <div className="min-w-0 space-y-1">
-            <h2 className="truncate text-base font-semibold">{title}</h2>
-            {description && <p className="text-muted-foreground text-xs">{description}</p>}
+        {!headerless && (
+          <div className="flex items-center gap-3 py-3.5 pl-[18px] pr-4">
+            {icon}
+            <div className="min-w-0 flex-1">
+              <h2 className="font-display truncate text-[19px] font-semibold leading-tight">
+                {title}
+              </h2>
+              {description && <p className="text-muted-foreground text-[12.5px]">{description}</p>}
+            </div>
+            <button
+              type="button"
+              data-modal-close
+              onClick={onClose}
+              aria-label="Close"
+              className="bg-muted text-muted-foreground hover:text-foreground ease-spring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] transition-transform duration-300 hover:rotate-90"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
-          <button
-            type="button"
-            data-modal-close
-            onClick={onClose}
-            aria-label="Close"
-            className="text-muted-foreground hover:bg-accent hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
-          >
-            <X className="h-4 w-4" />
-          </button>
+        )}
+        <div
+          className={cn(
+            !headerless && 'border-muted border-t-2',
+            bodyClassName ?? 'px-[18px] py-4',
+          )}
+        >
+          {children}
         </div>
-        <div className={cn('border-border border-t', bodyClassName ?? 'px-4 py-3')}>{children}</div>
         {footer && (
-          <div className="border-border bg-muted/30 flex items-center justify-end gap-2 rounded-b-lg border-t px-4 py-3">
+          <div className="border-muted bg-muted flex items-center justify-end gap-2 border-t-2 px-4 py-3">
             {footer}
           </div>
         )}

@@ -41,43 +41,49 @@ export function WizardLayout({
   );
 
   return (
-    <div className="bg-background flex min-h-full flex-col">
-      <header className="border-border border-b">
+    <div className="flex min-h-full flex-col">
+      <header>
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-6 py-6">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+              <h1 className="font-display text-2xl font-semibold">{title}</h1>
               {subtitle && <p className="text-muted-foreground mt-1 text-sm">{subtitle}</p>}
             </div>
             {exitSlot && <div className="shrink-0">{exitSlot}</div>}
           </div>
           {steps.length > 0 && (
-            <ol className="flex items-center gap-2 text-xs">
+            <ol className="flex flex-wrap items-center gap-2 text-[13px]">
               {steps.map((step, idx) => {
                 const state =
                   idx < currentIdx ? 'done' : idx === currentIdx ? 'current' : 'upcoming';
                 return (
                   <li key={step.id} className="flex items-center gap-2">
                     <span
+                      aria-current={state === 'current' ? 'step' : undefined}
                       className={cn(
-                        'flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium',
-                        state === 'done' && 'bg-primary text-primary-foreground',
-                        state === 'current' && 'bg-primary/15 text-primary ring-primary/40 ring-2',
-                        state === 'upcoming' && 'bg-muted text-muted-foreground',
+                        'flex h-8 items-center gap-2 rounded-full py-1 pl-1 pr-3.5 font-semibold',
+                        state === 'current'
+                          ? 'text-primary-foreground bg-[image:var(--gradient-accent)] shadow-[var(--shadow-btn)]'
+                          : 'bg-card shadow-float',
+                        state === 'upcoming' && 'text-muted-foreground',
                       )}
                     >
-                      {state === 'done' ? <Check className="h-3 w-3" /> : idx + 1}
-                    </span>
-                    <span
-                      className={cn(
-                        'font-medium',
-                        state === 'current' ? 'text-foreground' : 'text-muted-foreground',
-                      )}
-                    >
+                      <span
+                        className={cn(
+                          'flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold',
+                          state === 'current' && 'bg-white/25',
+                          state === 'done' && 'bg-primary text-primary-foreground',
+                          state === 'upcoming' && 'bg-muted',
+                        )}
+                      >
+                        {state === 'done' ? <Check className="h-3 w-3" /> : idx + 1}
+                      </span>
                       {step.label}
                     </span>
                     {idx < steps.length - 1 && (
-                      <span className="text-muted-foreground/50 mx-1">›</span>
+                      <span className="text-muted-foreground/50 mx-0.5" aria-hidden>
+                        ·
+                      </span>
                     )}
                   </li>
                 );
@@ -92,7 +98,7 @@ export function WizardLayout({
       </main>
 
       {footer && (
-        <footer className="border-border bg-background/80 sticky bottom-0 border-t backdrop-blur">
+        <footer className="border-border bg-card/85 shadow-float sticky bottom-0 border-t-2 backdrop-blur">
           <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-6 py-4">
             {footer}
           </div>

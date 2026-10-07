@@ -11,6 +11,7 @@ import { useMemo } from 'react';
 import { getDbClient, type CategoryCount, type EntityKind } from '@/db';
 import { labelForEquipSlot } from '@scrolled/game-db/domain/equipTypes';
 import { iconForEntity, listingRouteForEntity } from '@/lib/entityRoutes';
+import { ENTITY_HUES, SlotTile } from '@scrolled/design';
 import type { Features } from '@/hooks/useFeatures';
 import { HomeSection } from './HomeSection';
 
@@ -142,30 +143,36 @@ export function BrowseTiles({ features }: { features: Features }) {
           const Icon = iconForEntity(t.entity);
           return (
             <li key={t.entity}>
-              <div className="border-border bg-card text-card-foreground rounded-md border">
+              <div className="border-border bg-card text-card-foreground shadow-rim overflow-hidden rounded-lg border-2">
                 <Link
                   to={listingRouteForEntity(t.entity)}
-                  className="hover:bg-muted/40 group flex items-center gap-3 rounded-t-md p-4 transition-colors"
+                  className="hover:bg-muted group flex items-center gap-3 p-3.5 transition-colors"
                 >
-                  <Icon className="text-muted-foreground group-hover:text-foreground h-5 w-5 shrink-0 transition-colors" />
+                  <SlotTile
+                    icon={Icon}
+                    hue={ENTITY_HUES[t.entity as keyof typeof ENTITY_HUES]}
+                    size={40}
+                  />
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-semibold">{t.label}</div>
-                    <div className="text-muted-foreground font-mono text-xs">
+                    <div className="font-display text-base font-semibold leading-tight">
+                      {t.label}
+                    </div>
+                    <div className="text-muted-foreground text-xs tabular-nums">
                       {t.count.toLocaleString()}
                     </div>
                   </div>
                   <ArrowRight className="text-muted-foreground group-hover:text-foreground h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-100" />
                 </Link>
                 {t.rows && t.rows.length > 0 && t.hrefForKey && (
-                  <ul className="border-border divide-border divide-y border-t text-xs">
+                  <ul className="border-muted divide-muted divide-y-[1.5px] border-t-[1.5px] text-[13px]">
                     {t.rows.map((row) => (
                       <li key={row.key}>
                         <Link
                           to={t.hrefForKey!(row.key)}
-                          className="text-muted-foreground hover:bg-muted/40 hover:text-foreground flex items-center justify-between px-4 py-1.5 transition-colors"
+                          className="text-muted-foreground hover:bg-muted hover:text-foreground flex items-center justify-between px-3.5 py-1.5 transition-colors"
                         >
                           <span className="truncate">{t.displayKey(row.key)}</span>
-                          <span className="font-mono">{row.count.toLocaleString()}</span>
+                          <span className="tabular-nums">{row.count.toLocaleString()}</span>
                         </Link>
                       </li>
                     ))}

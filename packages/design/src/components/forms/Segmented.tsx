@@ -34,6 +34,8 @@ export function Segmented({ options, value, onChange, size = 'md' }: SegmentedPr
             key={o.value}
             type="button"
             title={o.title || o.label}
+            aria-label={o.label ? undefined : o.title}
+            aria-pressed={on}
             onClick={() => onChange?.(o.value)}
             style={{
               display: 'inline-flex',

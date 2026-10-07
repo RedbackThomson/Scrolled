@@ -1,7 +1,7 @@
 import { UserCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCurrentUser, useIdentity } from '@scrolled/identity-core/react';
-import { useSettingsSection } from '@/components/settings/SettingsScrollSpy';
+import { useSettingsSection } from '@/components/settings/useSettingsSection';
 import { Button } from '@scrolled/design';
 import { SyncControls } from '@/components/sync/SyncControls';
 import { appConfig } from '@/config';
@@ -25,12 +25,12 @@ function AccountSectionInner() {
   const sync = appConfig.features.sync;
 
   return (
-    <section {...sectionProps} className="scroll-mt-20 space-y-3">
-      <div className="flex items-center gap-2">
+    <section {...sectionProps} className="scroll-mt-24 space-y-3">
+      <div className="text-muted-foreground flex items-center gap-2">
         <UserCircle className="h-4 w-4" />
-        <h2 className="text-lg font-semibold">{sync ? 'Account & Sync' : 'Account'}</h2>
+        <h2 className="font-display text-foreground text-[17px] font-semibold">{sync ? 'Account & sync' : 'Account'}</h2>
       </div>
-      <div className="border-border bg-card text-card-foreground space-y-4 rounded-md border p-4">
+      <div className="border-border bg-card text-card-foreground shadow-rim space-y-4 rounded-xl border-2 p-5">
         {user.isAuthenticated ? (
           <>
             <div className="flex items-start justify-between gap-3">

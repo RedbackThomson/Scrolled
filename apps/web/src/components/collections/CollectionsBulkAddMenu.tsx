@@ -122,9 +122,9 @@ export function CollectionsBulkAddMenu({
             role="dialog"
             aria-label="Add to collection"
             style={{ position: 'fixed', top: coords.top, left: coords.left }}
-            className="border-border bg-card text-card-foreground z-50 w-64 max-w-[calc(100vw-1rem)] rounded-md border shadow-md"
+            className="border-border bg-card text-card-foreground shadow-pop z-50 w-64 max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl border-2"
           >
-            <div className="border-border border-b p-2">
+            <div className="border-muted border-b-2 p-2">
               <div className="relative">
                 <Search className="text-muted-foreground pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2" />
                 <Input
@@ -132,7 +132,7 @@ export function CollectionsBulkAddMenu({
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search or create…"
-                  className="border-input bg-background focus-visible:ring-ring h-8 w-full rounded-md border pl-8 pr-2 text-base focus-visible:outline-none focus-visible:ring-2 sm:text-xs"
+                  className="bg-muted focus-visible:ring-primary/30 h-8 w-full rounded-full pl-8 pr-2 text-base focus-visible:outline-none focus-visible:ring-4 sm:text-xs"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !hasExactMatch && query.trim()) {
                       e.preventDefault();
@@ -142,7 +142,7 @@ export function CollectionsBulkAddMenu({
                 />
               </div>
             </div>
-            <ul className="max-h-64 overflow-y-auto py-1">
+            <ul className="max-h-64 space-y-0.5 overflow-y-auto p-1.5">
               {collectionsQ.isPending ? (
                 <li className="text-muted-foreground flex items-center gap-2 px-3 py-2 text-xs">
                   <Loader2 className="h-3 w-3 animate-spin" />
@@ -159,7 +159,7 @@ export function CollectionsBulkAddMenu({
                       type="button"
                       onClick={() => addToCollection(c.id, c.name)}
                       className={cn(
-                        'hover:bg-accent flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs',
+                        'hover:bg-muted flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13px] font-semibold',
                         bulkM.isPending && 'opacity-60',
                       )}
                       disabled={bulkM.isPending}
@@ -174,7 +174,7 @@ export function CollectionsBulkAddMenu({
               )}
             </ul>
             {!hasExactMatch && query.trim() && (
-              <div className="border-border border-t p-2">
+              <div className="border-muted bg-muted border-t-2 p-2">
                 <Button
                   type="button"
                   size="sm"

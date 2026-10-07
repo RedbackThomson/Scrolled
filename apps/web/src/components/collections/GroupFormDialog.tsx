@@ -3,10 +3,11 @@
 
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { Button, Input, Textarea } from '@scrolled/design';
+import { Button, cn, Input, Textarea } from '@scrolled/design';
 import { useCreateGroup, useUpdateGroup } from '@/hooks/useCollections';
 import type { CollectionGroup } from '@/db/user';
 import { Modal } from './Modal';
+import { FIELD, FIELD_LABEL } from './fieldStyles';
 
 interface GroupFormDialogProps {
   open: boolean;
@@ -98,19 +99,19 @@ export function GroupFormDialog({
         }}
       >
         <label className="block space-y-1 text-sm">
-          <span className="text-muted-foreground text-xs uppercase tracking-wide">Name</span>
+          <span className={FIELD_LABEL}>Name</span>
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Daily bosses"
-            className="border-input bg-background focus-visible:ring-ring h-9 w-full rounded-md border px-3 text-base focus-visible:outline-none focus-visible:ring-2 sm:text-sm"
+            className={cn(FIELD, 'h-[38px]')}
             autoFocus
           />
         </label>
         <label className="block space-y-1 text-sm">
-          <span className="text-muted-foreground flex items-center justify-between text-xs uppercase tracking-wide">
+          <span className={cn(FIELD_LABEL, 'flex items-center justify-between')}>
             <span>Description</span>
-            <span className="text-[10px] normal-case">Optional</span>
+            <span className="font-sans text-[11.5px] font-medium">Optional</span>
           </span>
           <Textarea
             value={description}
@@ -123,7 +124,7 @@ export function GroupFormDialog({
                 submit();
               }
             }}
-            className="border-input bg-background focus-visible:ring-ring w-full resize-y rounded-md border px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 sm:text-sm"
+            className={cn(FIELD, 'resize-y py-2')}
           />
         </label>
         {error && <p className="text-destructive text-xs">{error}</p>}

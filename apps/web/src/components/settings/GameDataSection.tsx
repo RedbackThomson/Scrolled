@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Database, Loader2, Trash2, Upload } from 'lucide-react';
-import { useSettingsSection } from '@/components/settings/SettingsScrollSpy';
+import { useSettingsSection } from '@/components/settings/useSettingsSection';
 import { Button } from '@scrolled/design';
 import { getDbClient } from '@/db';
 import { RunCard } from '@/components/settings/RunCard';
@@ -37,13 +37,13 @@ export function GameDataSection() {
   }, [clearM]);
 
   return (
-    <section {...sectionProps} className="scroll-mt-20 space-y-3">
-      <div className="flex items-center gap-2">
+    <section {...sectionProps} className="scroll-mt-24 space-y-3">
+      <div className="text-muted-foreground flex items-center gap-2">
         <Database className="h-4 w-4" />
-        <h2 className="text-lg font-semibold">Game Data</h2>
+        <h2 className="font-display text-foreground text-[17px] font-semibold">Game data</h2>
       </div>
 
-      <div className="border-border bg-card text-card-foreground rounded-md border p-4">
+      <div className="border-border bg-card text-card-foreground shadow-rim rounded-xl border-2 p-5">
         <h3 className="text-sm font-semibold">Recent setup runs</h3>
         <p className="text-muted-foreground mt-1 text-xs">
           Each setup run records which files were loaded and what was indexed. Expand a row to see

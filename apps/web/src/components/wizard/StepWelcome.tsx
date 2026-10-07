@@ -16,7 +16,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { DataSourceKind } from '@/parser';
-import { cn } from '@scrolled/design';
+import { cn, ENTITY_HUES, Logo } from '@scrolled/design';
 
 const FEATURES: { Icon: LucideIcon; title: string; body: string }[] = [
   {
@@ -41,13 +41,13 @@ const FEATURES: { Icon: LucideIcon; title: string; body: string }[] = [
   },
 ];
 
-const ENTITIES: { Icon: LucideIcon; label: string }[] = [
-  { Icon: Package, label: 'Items' },
-  { Icon: Shield, label: 'Equips' },
-  { Icon: Skull, label: 'Mobs' },
-  { Icon: Users, label: 'NPCs' },
-  { Icon: MapIcon, label: 'Maps' },
-  { Icon: ScrollText, label: 'Quests' },
+const ENTITIES: { Icon: LucideIcon; label: string; hue: number }[] = [
+  { Icon: Package, label: 'Items', hue: ENTITY_HUES.item },
+  { Icon: Shield, label: 'Equips', hue: ENTITY_HUES.equip },
+  { Icon: Skull, label: 'Mobs', hue: ENTITY_HUES.mob },
+  { Icon: Users, label: 'NPCs', hue: ENTITY_HUES.npc },
+  { Icon: MapIcon, label: 'Maps', hue: ENTITY_HUES.map },
+  { Icon: ScrollText, label: 'Quests', hue: ENTITY_HUES.quest },
 ];
 
 interface Props {
@@ -67,14 +67,13 @@ export function StepWelcome({ onChoose, onRestore }: Props) {
   return (
     <section className="space-y-8">
       <div className="flex flex-col items-center gap-4 text-center">
-        <img
-          src={`${import.meta.env.BASE_URL}icon.svg`}
-          alt=""
-          aria-hidden
-          className="h-16 w-16 rounded-xl shadow-sm"
-        />
+        <span aria-hidden>
+          <Logo size={76} wordmark={false} shadow />
+        </span>
         <div className="space-y-2">
-          <h2 className="text-2xl font-semibold tracking-tight">Your private Mushroom Game wiki</h2>
+          <h2 className="font-display text-[26px] font-semibold leading-tight md:text-[32px]">
+            Your private Mushroom Game wiki
+          </h2>
           <p className="text-muted-foreground mx-auto max-w-xl text-sm leading-relaxed">
             Scrolled turns your local game files into a fast, searchable reference — every category
             below, fully cross-linked. It all runs in this browser tab; nothing is uploaded, and it
@@ -82,12 +81,17 @@ export function StepWelcome({ onChoose, onRestore }: Props) {
           </p>
         </div>
         <ul className="flex flex-wrap items-center justify-center gap-2">
-          {ENTITIES.map(({ Icon, label }) => (
+          {ENTITIES.map(({ Icon, label, hue }) => (
             <li
               key={label}
-              className="border-border bg-card text-card-foreground inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium"
+              className="bg-card text-card-foreground shadow-float inline-flex items-center gap-1.5 rounded-full py-1.5 pl-2.5 pr-3.5 text-[13px] font-semibold"
             >
-              <Icon className="text-primary h-3.5 w-3.5" />
+              <span
+                aria-hidden
+                className="h-2 w-2 rounded-full"
+                style={{ background: `oklch(0.66 0.14 ${hue})` }}
+              />
+              <Icon className="h-3.5 w-3.5" style={{ color: `oklch(0.56 0.14 ${hue})` }} />
               {label}
             </li>
           ))}
@@ -98,11 +102,13 @@ export function StepWelcome({ onChoose, onRestore }: Props) {
         {FEATURES.map(({ Icon, title, body }) => (
           <li
             key={title}
-            className="border-border bg-card text-card-foreground flex items-start gap-2.5 rounded-md border p-4"
+            className="border-border bg-card text-card-foreground shadow-rim flex items-start gap-3 rounded-lg border-2 p-4"
           >
-            <Icon className="text-primary mt-0.5 h-4 w-4 shrink-0" />
+            <span className="bg-muted text-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px]">
+              <Icon className="h-4 w-4" />
+            </span>
             <div>
-              <div className="text-sm font-medium">{title}</div>
+              <div className="font-display text-[15px] font-semibold">{title}</div>
               <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">{body}</p>
             </div>
           </li>
@@ -111,7 +117,7 @@ export function StepWelcome({ onChoose, onRestore }: Props) {
 
       <div className="space-y-3">
         <div className="text-center">
-          <h3 className="text-base font-semibold">Let's load your game</h3>
+          <h3 className="font-display text-xl font-semibold">Let's load your game</h3>
           <p className="text-muted-foreground mt-1 text-sm">
             Pick how your game files are stored. Not sure? Open your install folder and look.
           </p>
@@ -132,7 +138,7 @@ export function StepWelcome({ onChoose, onRestore }: Props) {
         </div>
       </div>
 
-      <div className="border-border flex flex-col items-center gap-1 border-t pt-5 text-center">
+      <div className="border-border flex flex-col items-center gap-1 border-t-2 border-dashed pt-5 text-center">
         <p className="text-muted-foreground text-xs">Set up this device before?</p>
         <button
           type="button"
@@ -162,15 +168,16 @@ function ChoiceCard({
       type="button"
       onClick={onClick}
       className={cn(
-        'border-border bg-card text-card-foreground group flex items-start gap-3 rounded-md border p-4 text-left transition-colors',
-        'hover:border-primary/60 hover:bg-primary/5 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2',
+        'border-border bg-card text-card-foreground shadow-rim ease-spring group flex items-start gap-3 rounded-xl border-2 p-4 text-left transition-[transform,border-color,box-shadow] duration-300',
+        'hover:border-primary hover:ring-primary/30 hover:-translate-y-0.5 hover:ring-4',
+        'focus-visible:border-primary focus-visible:ring-primary/30 focus-visible:outline-none focus-visible:ring-4',
       )}
     >
-      <span className="bg-primary/10 text-primary flex h-9 w-9 shrink-0 items-center justify-center rounded-md">
+      <span className="text-primary-foreground flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-md bg-[image:var(--gradient-accent)] shadow-[var(--shadow-btn)]">
         <Icon className="h-5 w-5" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-1 text-sm font-medium">
+        <span className="font-display flex items-center gap-1 text-base font-semibold">
           {title}
           <ChevronRight className="text-muted-foreground group-hover:text-primary h-4 w-4 transition-transform group-hover:translate-x-0.5" />
         </span>

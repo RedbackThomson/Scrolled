@@ -8,7 +8,8 @@ export interface BreadcrumbProps {
 
 export function Breadcrumb({ items }: BreadcrumbProps) {
   return (
-    <div
+    <nav
+      aria-label="Breadcrumb"
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -20,17 +21,24 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
       {items.map((it, i) => (
         <Fragment key={i}>
           {i > 0 && <Icon icon={ChevronRight} size={13} />}
-          <span
-            onClick={it.onClick}
-            style={{
-              color: i === items.length - 1 ? 'var(--text-1)' : 'var(--text-2)',
-              cursor: it.onClick ? 'pointer' : 'default',
-            }}
-          >
-            {it.label}
-          </span>
+          {it.onClick ? (
+            <button
+              type="button"
+              onClick={it.onClick}
+              style={{ font: 'inherit', color: 'var(--text-2)', cursor: 'pointer' }}
+            >
+              {it.label}
+            </button>
+          ) : (
+            <span
+              aria-current={i === items.length - 1 ? 'page' : undefined}
+              style={{ color: i === items.length - 1 ? 'var(--text-1)' : 'var(--text-2)' }}
+            >
+              {it.label}
+            </span>
+          )}
         </Fragment>
       ))}
-    </div>
+    </nav>
   );
 }

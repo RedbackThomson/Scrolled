@@ -45,9 +45,6 @@ interface SidebarLayoutStore {
   /** Mobile: the slide-in drawer is open. Not persisted. */
   mobileOpen: boolean;
   setMobileOpen: (v: boolean) => void;
-  /** Mobile: settings section nav drawer on /settings/* routes. */
-  settingsNavOpen: boolean;
-  setSettingsNavOpen: (v: boolean) => void;
 }
 
 const COLLAPSED_KEY = 'scrolled.sidebar.collapsed';
@@ -74,6 +71,4 @@ export const useSidebarLayout = create<SidebarLayoutStore>((set, get) => ({
   },
   mobileOpen: false,
   setMobileOpen: (v) => set({ mobileOpen: v }),
-  settingsNavOpen: false,
-  setSettingsNavOpen: (v) => set({ settingsNavOpen: v }),
 }));

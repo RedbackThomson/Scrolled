@@ -33,12 +33,12 @@ export function NewGroupButton({ isDragging, acceptDrops, onClick }: NewGroupBut
       type="button"
       onClick={onClick}
       className={cn(
-        'group flex w-full items-center justify-center gap-2 rounded-md border border-dashed px-3 py-3 text-sm transition-colors',
+        'group flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed px-3 py-3.5 text-sm font-semibold transition-colors',
         isOver
-          ? 'border-primary bg-primary/10 text-primary'
+          ? 'border-primary bg-primary/10 text-primary ring-primary/30 ring-4'
           : isDragging && acceptDrops
-            ? 'border-primary/60 text-primary/80 bg-primary/5'
-            : 'border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground hover:bg-accent/40',
+            ? 'border-primary/60 text-primary bg-primary/5'
+            : 'border-border text-muted-foreground hover:border-primary/50 hover:text-foreground hover:bg-card',
       )}
       title={
         acceptDrops

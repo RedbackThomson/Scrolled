@@ -91,8 +91,9 @@ export function CollectionDisplayOptionsMenu({ collection }: CollectionDisplayOp
         type="button"
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          'border-input bg-background hover:bg-accent relative inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border',
+          'border-border bg-card ease-spring relative inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border-2 shadow-[var(--shadow-btn-secondary)] transition-transform duration-300 hover:-translate-y-0.5',
           hasOverride && 'border-primary/50',
+          open && 'border-primary ring-primary/30 ring-4',
         )}
         aria-haspopup="dialog"
         aria-expanded={open}
@@ -115,13 +116,13 @@ export function CollectionDisplayOptionsMenu({ collection }: CollectionDisplayOp
             role="dialog"
             aria-label="Display options"
             style={{ position: 'fixed', top: coords.top, left: coords.left }}
-            className="border-border bg-card text-card-foreground z-50 w-72 rounded-md border p-3 shadow-md"
+            className="border-border bg-card text-card-foreground shadow-pop z-50 w-72 rounded-xl border-2 p-3"
           >
             <Row label="Grouping">
               <select
                 value={display.grouping}
                 onChange={(e) => setGrouping(e.target.value as CollectionGrouping)}
-                className="border-input bg-background h-7 w-32 rounded-md border px-2 text-xs"
+                className="border-border bg-card h-7 w-32 rounded-[10px] border-2 px-2 text-xs"
                 aria-label="Primary grouping"
               >
                 {GROUPING_OPTIONS.map((o) => (
@@ -136,7 +137,7 @@ export function CollectionDisplayOptionsMenu({ collection }: CollectionDisplayOp
                 value={display.subgrouping}
                 onChange={(e) => setSubgrouping(e.target.value as CollectionGrouping)}
                 disabled={display.grouping === 'none'}
-                className="border-input bg-background h-7 w-32 rounded-md border px-2 text-xs disabled:cursor-not-allowed disabled:opacity-50"
+                className="border-border bg-card h-7 w-32 rounded-[10px] border-2 px-2 text-xs disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Secondary grouping"
               >
                 {GROUPING_OPTIONS.map((o) => (
@@ -152,7 +153,7 @@ export function CollectionDisplayOptionsMenu({ collection }: CollectionDisplayOp
                 <select
                   value={display.sortKey}
                   onChange={(e) => setLocal({ sortKey: e.target.value as CollectionSortKey })}
-                  className="border-input bg-background h-7 w-28 rounded-md border px-2 text-xs"
+                  className="border-border bg-card h-7 w-28 rounded-[10px] border-2 px-2 text-xs"
                   aria-label="Sort key"
                 >
                   {SORT_OPTIONS.map((o) => (
@@ -174,7 +175,7 @@ export function CollectionDisplayOptionsMenu({ collection }: CollectionDisplayOp
               </p>
             )}
 
-            <div className="border-border mt-3 flex items-center justify-between border-t pt-3">
+            <div className="border-muted mt-3 flex items-center justify-between border-t-2 pt-3">
               <button
                 type="button"
                 onClick={reset}
@@ -226,15 +227,15 @@ function DirectionToggle({
   onChange: (next: CollectionSortDir) => void;
 }) {
   return (
-    <div className="border-input bg-background inline-flex h-7 items-center rounded-md border">
+    <div className="bg-muted inline-flex h-8 items-center gap-0.5 rounded-md p-[3px]">
       <button
         type="button"
         onClick={() => onChange('asc')}
         aria-label="Ascending"
         aria-pressed={dir === 'asc'}
         className={cn(
-          'inline-flex h-full w-7 items-center justify-center rounded-l-md',
-          dir === 'asc' ? 'bg-primary/15 text-foreground' : 'text-muted-foreground hover:bg-accent',
+          'inline-flex h-full w-7 items-center justify-center rounded-[9px]',
+          dir === 'asc' ? 'bg-card text-foreground shadow-float' : 'text-muted-foreground',
         )}
       >
         <ArrowUp className="h-3.5 w-3.5" />
@@ -245,8 +246,8 @@ function DirectionToggle({
         aria-label="Descending"
         aria-pressed={dir === 'desc'}
         className={cn(
-          'inline-flex h-full w-7 items-center justify-center rounded-r-md',
-          dir === 'desc' ? 'bg-primary/15 text-foreground' : 'text-muted-foreground hover:bg-accent',
+          'inline-flex h-full w-7 items-center justify-center rounded-[9px]',
+          dir === 'desc' ? 'bg-card text-foreground shadow-float' : 'text-muted-foreground',
         )}
       >
         <ArrowDown className="h-3.5 w-3.5" />

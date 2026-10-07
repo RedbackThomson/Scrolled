@@ -24,7 +24,7 @@ export default function Collections() {
     <div className="max-w-4xl space-y-6">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Collections</h1>
+          <h1 className="font-display text-4xl font-semibold leading-none">Collections</h1>
           <p className="text-muted-foreground mt-2 text-sm">
             Bookmarked lists for tracking anything across the app.
           </p>
@@ -53,7 +53,7 @@ export default function Collections() {
             Failed to load collections: {(collectionsQ.error as Error).message}
           </p>
         ) : collectionsQ.data!.length === 0 ? (
-          <div className="border-border bg-muted/40 rounded-md border p-6 text-center text-sm">
+          <div className="border-border bg-card shadow-rim rounded-lg border-2 p-6 text-center text-sm">
             <p className="text-muted-foreground">
               No collections yet. Click "New collection" to create one, "Import" to restore from a
               previous export, or save items directly from any entity page.
@@ -78,11 +78,11 @@ function CollectionTile({ collection }: { collection: CollectionRecord }) {
     <li>
       <Link
         to={`/collections/${collection.id}`}
-        className="border-border bg-card text-card-foreground hover:border-foreground/30 group flex items-start gap-3 rounded-md border p-4 transition-colors"
+        className="border-border bg-card text-card-foreground shadow-rim ease-spring focus-visible:ring-primary/30 group flex items-start gap-3 rounded-lg border-2 p-4 transition-transform duration-300 hover:-translate-y-1 hover:-rotate-[.4deg] focus-visible:outline-none focus-visible:ring-4"
       >
         <span
           className={cn(
-            'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md',
+            'shadow-slot inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px]',
             color.iconBg,
             color.iconColor,
           )}
@@ -91,7 +91,7 @@ function CollectionTile({ collection }: { collection: CollectionRecord }) {
           <Icon className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1 space-y-1">
-          <div className="truncate text-sm font-semibold">{collection.name}</div>
+          <div className="font-display truncate text-[17px] font-semibold">{collection.name}</div>
           <div className="text-muted-foreground font-mono text-xs">
             {collection.memberCount.toLocaleString()}{' '}
             {collection.memberCount === 1 ? 'item' : 'items'}

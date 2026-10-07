@@ -45,9 +45,7 @@ export function HomeSection({
     <section className={className}>
       {!editing && (
         <header className="mb-3 flex items-baseline justify-between gap-3">
-          <h2 className="text-foreground text-sm font-semibold uppercase tracking-wide">
-            {title}
-          </h2>
+          <h2 className="font-display text-foreground text-[17px] font-semibold">{title}</h2>
           {action}
         </header>
       )}

@@ -61,7 +61,7 @@ export function McpPaletteProvider() {
       label: viewLabel,
       icon: ListTree,
       keywords: ['mcp', 'tools', 'registry', 'list', 'agent'],
-      onSelect: () => navigate('/settings#mcp'),
+      onSelect: () => navigate('/settings/advanced#mcp'),
     });
   }
 

@@ -381,7 +381,7 @@ export function StepFiles({
     <section className="space-y-6">
       <div className="space-y-3">
         <div>
-          <h2 className="text-lg font-semibold">{copy.heading}</h2>
+          <h2 className="font-display text-xl font-semibold">{copy.heading}</h2>
           <p className="text-muted-foreground mt-1 text-sm">{copy.body}</p>
         </div>
 
@@ -393,7 +393,7 @@ export function StepFiles({
           onDragLeave={() => setDragging(false)}
           onDrop={onDrop}
           className={cn(
-            'border-border bg-card flex flex-col items-center justify-center rounded-md border-2 border-dashed py-10 text-center transition-colors',
+            'border-border bg-card flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-10 text-center transition-colors',
             dragging && 'border-primary bg-primary/5',
           )}
         >
@@ -402,7 +402,7 @@ export function StepFiles({
           ) : (
             <Upload className="text-muted-foreground mb-3 h-8 w-8" />
           )}
-          <p className="text-sm font-medium">{copy.dropTitle}</p>
+          <p className="font-display text-base font-semibold">{copy.dropTitle}</p>
           <p className="text-muted-foreground mt-1 text-xs">{copy.dropHint}</p>
           <div className="mt-3 flex gap-2">
             {source !== 'img' && (
@@ -452,22 +452,22 @@ export function StepFiles({
         </div>
 
         {notice && (
-          <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-100">
+          <div className="flex items-start gap-2 rounded-xl border-2 border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-100">
             <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             <span>{notice}</span>
           </div>
         )}
 
-        <details className="border-border bg-card group rounded-md border text-sm">
+        <details className="border-border bg-card shadow-rim group rounded-lg border-2 text-sm">
           <summary className="text-muted-foreground flex cursor-pointer items-center justify-between gap-2 px-4 py-2.5 text-xs">
-            <span className="font-medium uppercase tracking-wide">
+            <span className="font-display text-sm font-semibold">
               Dropped files · {files.length}
             </span>
             <span className="text-muted-foreground/70 text-[10px] uppercase tracking-wide">
               details
             </span>
           </summary>
-          <ul className="divide-border divide-y border-t">
+          <ul className="border-muted divide-muted divide-y-[1.5px] border-t-2">
             {files.map((f) => (
               <li key={f.name} className="space-y-2 px-4 py-3 text-sm">
                 <div className="flex items-center gap-3">
@@ -489,17 +489,17 @@ export function StepFiles({
                         </span>
                       )}
                       {HEAVY_FILES.has(f.name) && (
-                        <span className="inline-flex items-center gap-1 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
                           <FileWarning className="h-3 w-3" /> large file
                         </span>
                       )}
                       {existingNames.data?.includes(f.name) && !f.matchedExisting && (
-                        <span className="inline-flex items-center gap-1 rounded bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:text-blue-300">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:text-blue-300">
                           updating
                         </span>
                       )}
                       {f.matchedExisting && (
-                        <span className="inline-flex items-center gap-1 rounded bg-green-500/15 px-1.5 py-0.5 text-[10px] font-medium text-green-700 dark:text-green-300">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-green-500/15 px-1.5 py-0.5 text-[10px] font-medium text-green-700 dark:text-green-300">
                           <CheckCircle2 className="h-3 w-3" /> already loaded
                         </span>
                       )}
@@ -590,7 +590,7 @@ function GameVersionAdvancedPanel({
           : Info;
 
   return (
-    <details className="border-border bg-card group rounded-md border text-xs">
+    <details className="border-border bg-card shadow-rim group rounded-lg border-2 text-xs">
       <summary className="text-muted-foreground flex cursor-pointer items-center gap-2 px-3 py-2">
         <Icon
           className={cn(
@@ -602,7 +602,7 @@ function GameVersionAdvancedPanel({
         />
         <span className="flex-1">{summary}</span>
         {versionOverride && (
-          <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-700 dark:text-amber-300">
+          <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10.5px] font-bold text-amber-700 dark:text-amber-300">
             override: {versionOverride}
           </span>
         )}
@@ -623,7 +623,7 @@ function GameVersionAdvancedPanel({
               const v = e.target.value;
               onVersionOverrideChange(v === '' ? null : (v as WzMapleVersionName));
             }}
-            className="border-border bg-background rounded border px-2 py-1 text-xs"
+            className="border-border bg-card rounded-[10px] border-2 px-2 py-1 text-xs"
           >
             <option value="">Auto ({detected ?? 'GMS fallback'})</option>
             {VERSION_OPTIONS.map((o) => (
@@ -680,7 +680,7 @@ function ProfileAdvancedPanel({
           : Info;
 
   return (
-    <details className="border-border bg-card group rounded-md border text-xs">
+    <details className="border-border bg-card shadow-rim group rounded-lg border-2 text-xs">
       <summary className="text-muted-foreground flex cursor-pointer items-center gap-2 px-3 py-2">
         <Icon
           className={cn(
@@ -692,7 +692,7 @@ function ProfileAdvancedPanel({
         />
         <span className="flex-1">{summary}</span>
         {overrideName && (
-          <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-700 dark:text-amber-300">
+          <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10.5px] font-bold text-amber-700 dark:text-amber-300">
             override: {overrideName}
           </span>
         )}
@@ -713,7 +713,7 @@ function ProfileAdvancedPanel({
               const v = e.target.value;
               onOverrideChange(v === '' ? null : v);
             }}
-            className="border-border bg-background rounded border px-2 py-1 text-xs"
+            className="border-border bg-card rounded-[10px] border-2 px-2 py-1 text-xs"
           >
             <option value="">Auto ({detectedName ?? 'Classic fallback'})</option>
             {BUILTIN_PROFILES.map((p) => (

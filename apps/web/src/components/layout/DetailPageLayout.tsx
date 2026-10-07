@@ -1,39 +1,40 @@
-import { Loader2 } from 'lucide-react';
+import { Loader2, SearchX } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { cn } from '@scrolled/design';
+import { cn, EmptyState } from '@scrolled/design';
 import { appConfig } from '@/config';
 
 export function DetailPageLoading({ entity, id }: { entity: string; id: number | string }) {
   return (
-    <p className="text-muted-foreground text-sm">
-      <Loader2 className="inline h-4 w-4 animate-spin" /> Loading {entity.toLowerCase()} {id}…
+    <p className="text-muted-foreground flex items-center gap-2 py-6 text-[13px]">
+      <Loader2 className="text-primary h-4 w-4 animate-spin" /> Loading {entity.toLowerCase()} {id}…
     </p>
   );
 }
 
 export function DetailPageNotFound({ entity, id }: { entity: string; id: number | string }) {
   return (
-    <div className="max-w-3xl">
-      <h1 className="font-display mt-3 text-2xl font-semibold md:mt-4 md:text-4xl">
-        {entity} not found
-      </h1>
-      <p className="text-muted-foreground text-sm md:mt-2">
-        {appConfig.features.enableUserImport ? (
-          <>
-            {entity} <code className="font-mono">{id}</code> isn't in your library yet. It may not
-            have been loaded —{' '}
-            <Link to="/setup" className="text-primary hover:underline">
-              visit Setup
-            </Link>{' '}
-            to add more files.
-          </>
-        ) : (
-          <>
-            {entity} <code className="font-mono">{id}</code> isn't in this dataset.
-          </>
-        )}
-      </p>
+    <div className="pt-10">
+      <EmptyState
+        icon={SearchX}
+        title={`${entity} not found`}
+        body={
+          appConfig.features.enableUserImport ? (
+            <>
+              {entity} <code className="font-mono">{id}</code> isn't in your library yet. It may not
+              have been loaded —{' '}
+              <Link to="/setup" className="text-primary hover:underline">
+                visit Setup
+              </Link>{' '}
+              to add more files.
+            </>
+          ) : (
+            <>
+              {entity} <code className="font-mono">{id}</code> isn't in this dataset.
+            </>
+          )
+        }
+      />
     </div>
   );
 }

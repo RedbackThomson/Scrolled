@@ -3,9 +3,8 @@
 // as AppShell renders the app. Copy uses the dataset's display name from the
 // manifest (data, not source) and otherwise stays generic.
 
-import { AlertCircle, Loader2 } from 'lucide-react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
-import { Button } from '@scrolled/design';
+import { Button, Logo, Scrolly } from '@scrolled/design';
 import { useFixedDatasetInstall } from '@/hooks/dataset/useFixedDatasetInstall';
 import { isAppUpdateRequired } from '@/hooks/dataset/errors';
 import { reloadForUpdate } from '@/lib/swReload';
@@ -47,49 +46,44 @@ export function DatasetInstallScreen() {
 
   return (
     <div
-      className="bg-background text-foreground fixed inset-0 z-50 flex flex-col items-center justify-center px-6"
+      className="text-foreground fixed inset-0 z-50 flex flex-col items-center justify-center bg-[image:var(--gradient-page)] bg-[var(--surface-page)] px-6"
       aria-busy={status === 'running'}
       role="status"
     >
       <div className="flex w-full max-w-sm flex-col items-center gap-5 text-center">
-        <p className="text-2xl font-semibold tracking-tight">Scrolled</p>
+        <Logo size={44} />
 
         {status === 'error' ? (
           <>
-            <AlertCircle className="text-destructive h-7 w-7" aria-hidden />
+            <Scrolly pose="sleepy" size={84} />
             <div className="space-y-1">
-              <p className="text-sm font-medium">
+              <p className="font-display text-xl font-semibold">
                 {needsAppUpdate ? 'This site needs to update' : "Couldn't install the dataset"}
               </p>
-              <p className="text-muted-foreground text-xs">
+              <p className="text-muted-foreground text-[13px]">
                 {error?.message ?? 'Something went wrong while downloading.'}
               </p>
             </div>
             {needsAppUpdate ? (
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={() => reloadForUpdate(updateServiceWorker)}
-              >
+              <Button type="button" onClick={() => reloadForUpdate(updateServiceWorker)}>
                 Reload to update
               </Button>
             ) : (
-              <Button type="button" variant="secondary" size="sm" onClick={retry}>
+              <Button type="button" onClick={retry}>
                 Try again
               </Button>
             )}
           </>
         ) : (
           <>
-            <Loader2 className="text-primary h-7 w-7 animate-spin" aria-hidden />
+            <Scrolly pose="read" size={84} />
             <div className="w-full space-y-2">
-              <p className="text-sm">{label}</p>
+              <p className="text-[13px] font-semibold">{label}</p>
               {progress?.phase === 'downloading' && (
                 <>
-                  <div className="bg-muted h-1.5 w-full overflow-hidden rounded-full">
+                  <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
                     <div
-                      className="bg-primary h-full transition-[width] duration-200"
+                      className="h-full rounded-full bg-[image:var(--gradient-brand)] transition-[width] duration-200"
                       style={{ width: percent === null ? '40%' : `${percent}%` }}
                     />
                   </div>

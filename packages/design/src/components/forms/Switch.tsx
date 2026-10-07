@@ -4,14 +4,17 @@ export interface SwitchProps {
   /** When set, renders as a settings row with the switch on the right */
   label?: string;
   description?: string;
+  /** Accessible name when there's no visible `label` */
+  ariaLabel?: string;
 }
 
-export function Switch({ checked, onChange, label, description }: SwitchProps) {
+export function Switch({ checked, onChange, label, description, ariaLabel }: SwitchProps) {
   const track = (
     <button
       type="button"
       role="switch"
       aria-checked={!!checked}
+      aria-label={label ?? ariaLabel}
       onClick={() => onChange?.(!checked)}
       style={{
         width: 46,

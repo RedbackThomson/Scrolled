@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Shield } from 'lucide-react';
-import { useSettingsSection } from '@/components/settings/SettingsScrollSpy';
+import { useSettingsSection } from '@/components/settings/useSettingsSection';
 import { isAnalyticsAvailable, isAnalyticsOptedOut, setAnalyticsOptOut } from '@/analytics';
 import { cn } from '@scrolled/design';
 
@@ -17,12 +17,12 @@ function PrivacySectionInner() {
     setOptedOut(next);
   };
   return (
-    <section {...sectionProps} className="scroll-mt-20 space-y-3">
-      <div className="flex items-center gap-2">
+    <section {...sectionProps} className="scroll-mt-24 space-y-3">
+      <div className="text-muted-foreground flex items-center gap-2">
         <Shield className="h-4 w-4" />
-        <h2 className="text-lg font-semibold">Privacy</h2>
+        <h2 className="font-display text-foreground text-[17px] font-semibold">Privacy</h2>
       </div>
-      <div className="border-border bg-card text-card-foreground rounded-md border p-4">
+      <div className="border-border bg-card text-card-foreground shadow-rim rounded-xl border-2 p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-sm font-medium">Anonymous pageview analytics</div>

@@ -84,7 +84,7 @@ function SignedInMenu() {
             label="Account"
             onSelect={() => {
               setOpen(false);
-              navigate('/settings#account');
+              navigate('/settings/account#account');
             }}
           />
           <MenuItem

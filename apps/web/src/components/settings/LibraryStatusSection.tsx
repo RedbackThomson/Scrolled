@@ -1,10 +1,9 @@
 import { Activity, Database, Loader2, Package, RefreshCw } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { useSettingsSection } from '@/components/settings/SettingsScrollSpy';
-import { Badge } from '@scrolled/ui';
+import { useSettingsSection } from '@/components/settings/useSettingsSection';
 import { useDatasetUpdate } from '@/hooks/dataset/useDatasetUpdate';
 import { getDbClient } from '@/db';
-import { cn } from '@scrolled/design';
+import { Chip } from '@scrolled/design';
 import { useMemo } from 'react';
 
 export function LibraryStatusSection() {
@@ -17,13 +16,13 @@ export function LibraryStatusSection() {
   const dataset = useDatasetUpdate();
 
   return (
-    <section {...sectionProps} className="scroll-mt-20 space-y-3">
-      <div className="flex items-center gap-2">
+    <section {...sectionProps} className="scroll-mt-24 space-y-3">
+      <div className="text-muted-foreground flex items-center gap-2">
         <Activity className="h-4 w-4" />
-        <h2 className="text-lg font-semibold">Library Status</h2>
+        <h2 className="font-display text-foreground text-[17px] font-semibold">Library status</h2>
       </div>
 
-      <div className="border-border bg-card text-card-foreground rounded-md border p-4">
+      <div className="border-border bg-card text-card-foreground shadow-rim rounded-xl border-2 p-5">
         {statusQ.isLoading ? (
           <p className="text-muted-foreground text-sm">
             <Loader2 className="text-muted-foreground inline h-4 w-4 animate-spin" /> Connecting
@@ -37,16 +36,11 @@ export function LibraryStatusSection() {
               <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
                 <Database className="h-4 w-4 shrink-0" />
                 <span>Local library</span>
-                <span
-                  className={cn(
-                    'text-foreground/80 rounded px-2 py-0.5 text-xs font-medium',
-                    statusQ.data.backend === 'opfs' ? 'bg-green-500/15' : 'bg-amber-500/15',
-                  )}
-                >
+                <Chip tone={statusQ.data.backend === 'opfs' ? 'ok' : 'hue'} hue={70}>
                   {statusQ.data.backend === 'opfs'
                     ? 'OPFS (persistent)'
                     : 'memory (not persistent)'}
-                </span>
+                </Chip>
               </div>
               <span className="text-muted-foreground text-xs sm:ml-auto">
                 schema v{statusQ.data.schemaVersion} · data rev {statusQ.data.dataRevision}
@@ -80,7 +74,7 @@ export function LibraryStatusSection() {
             <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
               <Package className="h-4 w-4 shrink-0" />
               <span>{dataset.displayName ?? 'Hosted dataset'}</span>
-              <Badge tone="slate">version {dataset.installedVersion}</Badge>
+              <Chip>version {dataset.installedVersion}</Chip>
             </div>
             <div className="sm:ml-auto">
               {dataset.applying || dataset.mode === 'auto' ? (

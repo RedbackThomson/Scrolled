@@ -21,6 +21,8 @@ export function SwatchPicker({ options, value, onChange, size = 26 }: SwatchPick
             key={o.value}
             type="button"
             title={o.label || o.value}
+            aria-label={o.label || o.value}
+            aria-pressed={on}
             onClick={() => onChange?.(o.value)}
             style={{
               width: size,
