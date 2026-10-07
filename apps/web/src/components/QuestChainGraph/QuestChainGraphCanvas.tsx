@@ -18,6 +18,10 @@ interface Props {
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 3;
+const DOTTED_CANVAS = [
+  'radial-gradient(var(--border-1) 1.2px, transparent 1.3px) 0 0 / 22px 22px',
+  'var(--surface-sunken)',
+].join(', ');
 
 /**
  * Pan + zoom container for the chain graph. One-finger drag and native
@@ -62,11 +66,11 @@ export function QuestChainGraphCanvas({ members, edges, externalEdges }: Props) 
 
   return (
     <div className="relative flex h-full w-full flex-col">
-      <div className="border-border bg-muted/40 absolute right-3 top-3 z-10 flex items-center gap-1 rounded-md border px-1 py-1 shadow-sm">
+      <div className="bg-card shadow-float absolute right-3 top-3 z-10 flex items-center gap-0.5 rounded-full p-1">
         <button
           type="button"
           onClick={() => setZoom((z) => clamp(z / 1.25, MIN_ZOOM, MAX_ZOOM))}
-          className="hover:bg-accent inline-flex h-7 w-7 items-center justify-center rounded"
+          className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-primary/40 inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2"
           aria-label="Zoom out"
         >
           <Minus className="h-4 w-4" />
@@ -74,7 +78,7 @@ export function QuestChainGraphCanvas({ members, edges, externalEdges }: Props) 
         <button
           type="button"
           onClick={() => setZoom(1)}
-          className="hover:bg-accent inline-flex h-7 w-7 items-center justify-center rounded"
+          className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-primary/40 inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2"
           aria-label="Reset zoom"
           title={`Zoom ${Math.round(zoom * 100)}% — click to reset`}
         >
@@ -83,7 +87,7 @@ export function QuestChainGraphCanvas({ members, edges, externalEdges }: Props) 
         <button
           type="button"
           onClick={() => setZoom((z) => clamp(z * 1.25, MIN_ZOOM, MAX_ZOOM))}
-          className="hover:bg-accent inline-flex h-7 w-7 items-center justify-center rounded"
+          className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-primary/40 inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2"
           aria-label="Zoom in"
         >
           <Plus className="h-4 w-4" />
@@ -91,8 +95,8 @@ export function QuestChainGraphCanvas({ members, edges, externalEdges }: Props) 
       </div>
       <div
         ref={scrollRef}
-        className="bg-muted/30 relative flex-1 overflow-auto"
-        style={{ touchAction: 'pan-x pan-y' }}
+        className="relative flex-1 overflow-auto"
+        style={{ touchAction: 'pan-x pan-y', background: DOTTED_CANVAS }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -146,20 +150,20 @@ function EdgeLayer({
           viewBox="0 0 10 10"
           refX="8"
           refY="5"
-          markerWidth="6"
-          markerHeight="6"
+          markerWidth="8"
+          markerHeight="8"
           orient="auto-start-reverse"
           markerUnits="userSpaceOnUse"
         >
-          <path d="M 0 0 L 10 5 L 0 10 z" className="fill-muted-foreground" />
+          <path d="M 0 0 L 10 5 L 0 10 z" style={{ fill: 'var(--border-1)' }} />
         </marker>
         <marker
           id="qcg-arrow-cycle"
           viewBox="0 0 10 10"
           refX="8"
           refY="5"
-          markerWidth="6"
-          markerHeight="6"
+          markerWidth="8"
+          markerHeight="8"
           orient="auto-start-reverse"
           markerUnits="userSpaceOnUse"
         >
@@ -168,19 +172,17 @@ function EdgeLayer({
       </defs>
       {edges.map((e, i) => {
         if (e.points.length < 2) return null;
-        const d = e.points
-          .map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x} ${p.y}`)
-          .join(' ');
+        const d = smoothPath(e.points);
         // Four styles, in priority order: cycle edges (amber dashed),
         // external edges (very faint, sparse dash), optional edges
         // (medium faint), and the default critical solid line.
         const stroke = e.inCycle
           ? 'stroke-amber-500'
           : e.isExternal
-            ? 'stroke-muted-foreground/30'
+            ? 'opacity-[.55]'
             : e.isCritical
-              ? 'stroke-muted-foreground/60'
-              : 'stroke-muted-foreground/25';
+              ? undefined
+              : 'opacity-70';
         const dash = e.inCycle ? '4 3' : e.isExternal ? '1 4' : e.isCritical ? undefined : '2 4';
         return (
           <path
@@ -188,7 +190,9 @@ function EdgeLayer({
             d={d}
             fill="none"
             className={stroke}
-            strokeWidth={1.5}
+            style={e.inCycle ? undefined : { stroke: 'var(--border-1)' }}
+            strokeWidth={2.5}
+            strokeLinecap="round"
             strokeDasharray={dash}
             markerEnd={e.inCycle ? 'url(#qcg-arrow-cycle)' : 'url(#qcg-arrow)'}
           />
@@ -196,4 +200,20 @@ function EdgeLayer({
       })}
     </svg>
   );
+}
+
+/** Rounds dagre's polyline corners into quadratic curves through each segment midpoint. */
+function smoothPath(points: readonly { x: number; y: number }[]): string {
+  const [first, ...rest] = points;
+  if (rest.length < 2) {
+    return points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+  }
+  let d = `M ${first.x} ${first.y}`;
+  for (let i = 0; i < rest.length - 1; i++) {
+    const p = rest[i];
+    const next = rest[i + 1];
+    d += ` Q ${p.x} ${p.y} ${(p.x + next.x) / 2} ${(p.y + next.y) / 2}`;
+  }
+  const last = rest[rest.length - 1];
+  return `${d} L ${last.x} ${last.y}`;
 }

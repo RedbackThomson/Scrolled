@@ -13,7 +13,7 @@ export function GraphicViewerLayerControls({
   onChange,
 }: GraphicViewerLayerControlsProps) {
   return (
-    <div className="border-border bg-muted/30 flex shrink-0 flex-wrap items-center gap-2 border-t px-4 py-2">
+    <div className="flex flex-wrap gap-1.5">
       {layers.map(({ key, label, Icon, swatch, count }) => {
         const on = value[key];
         return (
@@ -23,13 +23,21 @@ export function GraphicViewerLayerControls({
             onClick={() => onChange({ ...value, [key]: !on })}
             aria-pressed={on}
             className={cn(
-              'border-border inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs',
-              on ? 'bg-card text-foreground' : 'text-muted-foreground bg-transparent opacity-60',
+              'bg-card text-foreground shadow-float ease-spring focus-visible:ring-primary/30 inline-flex items-center gap-1.5 rounded-full py-1 pl-1 pr-2.5 text-[12.5px] font-bold transition-[transform,opacity] duration-300 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-4',
+              !on && 'opacity-50',
             )}
           >
-            <Icon className={cn('h-3.5 w-3.5', swatch)} strokeWidth={2.5} />
-            <span>{label}</span>
-            <span className="text-muted-foreground font-mono text-[10px]">{count}</span>
+            <span
+              className={cn(
+                'grid h-5 w-5 place-items-center rounded-full',
+                on ? swatch : 'text-border',
+              )}
+              style={{ background: 'currentColor' }}
+            >
+              <Icon className="h-3 w-3 text-white" strokeWidth={2.5} aria-hidden />
+            </span>
+            {label}
+            <span className="text-muted-foreground font-semibold">{count}</span>
           </button>
         );
       })}

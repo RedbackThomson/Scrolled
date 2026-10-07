@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { MapPin, X } from 'lucide-react';
+import { MapPin, Search, X } from 'lucide-react';
 import type { WorldMapMarkerWithMaps } from '@/db';
 import { MapHoverCard } from '@/components/entity-links';
 import { HoverPopover } from '@scrolled/design';
@@ -84,35 +84,41 @@ export function WorldMapViewerSidebar({
   }, [markers, q, mapNameById]);
 
   return (
-    <aside className="border-border bg-card flex w-72 shrink-0 flex-col border-r">
-      <div className="border-border flex shrink-0 items-center gap-1.5 border-b px-2 py-1.5">
-        <Input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={drilling ? 'Search maps…' : 'Search maps or regions…'}
-          className="border-input bg-background focus-visible:ring-ring h-7 w-full rounded-md border px-2 text-base focus-visible:outline-none focus-visible:ring-1 sm:text-xs"
-        />
+    <aside className="border-border bg-card flex w-[280px] shrink-0 flex-col border-r-2">
+      <div className="flex shrink-0 items-center gap-1.5 p-3">
+        <label className="bg-muted text-muted-foreground focus-within:ring-primary/30 flex h-9 min-w-0 flex-1 items-center gap-2 rounded-full px-3 focus-within:ring-4">
+          <Search className="h-4 w-4 shrink-0" aria-hidden />
+          <Input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={drilling ? 'Search maps…' : 'Search maps or regions…'}
+            aria-label={drilling ? 'Search maps' : 'Search maps or regions'}
+            className="text-foreground placeholder:text-muted-foreground h-full w-full min-w-0 border-0 bg-transparent p-0 text-base font-semibold shadow-none focus-visible:outline-none focus-visible:ring-0 sm:text-[13px]"
+          />
+        </label>
         {selectedMarkerId && (
           <button
             type="button"
             onClick={() => onSelectMarker(null)}
             aria-label="Clear selection"
             title="Clear selection"
-            className="text-muted-foreground hover:bg-accent hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
+            className="bg-muted text-muted-foreground hover:text-foreground ease-spring inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-transform duration-300 hover:rotate-90"
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="h-4 w-4" aria-hidden />
           </button>
         )}
       </div>
 
       {drilling && selected ? (
         <div className="flex min-h-0 flex-1 flex-col">
-          <div className="border-border text-muted-foreground border-b px-3 py-1.5 text-xs">
-            <span className="text-foreground font-medium">{labelFor(selected)}</span> ·{' '}
-            {selected.mapIds.length} maps
+          <div className="text-muted-foreground flex items-baseline gap-1.5 px-4 pb-2 text-xs font-semibold">
+            <span className="font-display text-foreground truncate text-[15px]">
+              {labelFor(selected)}
+            </span>
+            · {selected.mapIds.length} maps
           </div>
-          <ul className="flex-1 overflow-y-auto text-sm">
+          <ul className="flex-1 space-y-px overflow-y-auto px-2 pb-2 text-sm">
             {drillMaps.length === 0 ? (
               <EmptyState label="No maps match" />
             ) : (
@@ -136,7 +142,7 @@ export function WorldMapViewerSidebar({
           </ul>
         </div>
       ) : (
-        <ul className="flex-1 overflow-y-auto text-sm">
+        <ul className="flex-1 space-y-px overflow-y-auto px-2 pb-2 text-sm">
           {places.length === 0 && mapMatches.length === 0 ? (
             <EmptyState label={q ? 'Nothing matches' : 'No markers'} />
           ) : (
@@ -157,7 +163,7 @@ export function WorldMapViewerSidebar({
                 />
               ))}
               {mapMatches.length > 0 && (
-                <li className="text-muted-foreground bg-muted/40 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide">
+                <li className="text-muted-foreground px-3 pb-1 pt-3 text-[11.5px] font-bold uppercase tracking-[.04em]">
                   Maps in regions
                 </li>
               )}
@@ -217,14 +223,18 @@ function Row({
         onFocus={onHoverEnter}
         onBlur={onHoverLeave}
         className={cn(
-          'flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs',
-          selected ? 'bg-accent text-foreground' : 'hover:bg-accent/50',
+          'ease-spring focus-visible:ring-primary/30 flex min-h-[46px] w-full items-center gap-2.5 rounded-xl px-3 text-left text-[13px] font-semibold transition-[padding,background-color] duration-300 focus-visible:outline-none focus-visible:ring-4',
+          selected ? 'bg-muted text-foreground ring-primary/40 ring-2 ring-inset' : 'hover:bg-muted hover:pl-4',
         )}
         aria-pressed={selected}
       >
-        {Icon && <Icon className="text-sky-500 h-3.5 w-3.5 shrink-0" />}
+        {Icon && <Icon className="text-primary h-4 w-4 shrink-0" aria-hidden />}
         {wrappedLabel}
-        {meta && <span className="text-muted-foreground shrink-0 text-[10px]">{meta}</span>}
+        {meta && (
+          <span className="bg-muted text-muted-foreground shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold">
+            {meta}
+          </span>
+        )}
       </button>
     </li>
   );
@@ -232,12 +242,12 @@ function Row({
 
 function CapNote({ shown, total }: { shown: number; total: number }) {
   return (
-    <li className="text-muted-foreground px-3 py-2 text-center text-[11px] italic">
+    <li className="text-muted-foreground px-3 py-3 text-center text-xs">
       Showing {shown} of {total.toLocaleString()} — refine your search.
     </li>
   );
 }
 
 function EmptyState({ label }: { label: string }) {
-  return <li className="text-muted-foreground px-3 py-4 text-center text-xs italic">{label}</li>;
+  return <li className="text-muted-foreground px-3 py-6 text-center text-[13px]">{label}</li>;
 }

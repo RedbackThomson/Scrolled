@@ -53,7 +53,7 @@ export interface DagreLayout {
 }
 
 const NODE_WIDTH = 180;
-const NODE_HEIGHT = 56;
+const NODE_HEIGHT = 40;
 const PADDING = 32;
 
 /**

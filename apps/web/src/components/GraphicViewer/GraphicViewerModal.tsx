@@ -27,6 +27,8 @@ interface GraphicViewerModalProps {
   onClose: () => void;
   title: string;
   description?: string;
+  /** Leading header tile, usually a 38px SlotTile. */
+  icon?: ReactNode;
   /** Data still loading — shows a spinner instead of the canvas. */
   isLoading?: boolean;
   loadingMessage?: string;
@@ -56,6 +58,7 @@ export function GraphicViewerModal({
   onClose,
   title,
   description,
+  icon,
   isLoading,
   loadingMessage = 'Loading…',
   image,
@@ -100,18 +103,19 @@ export function GraphicViewerModal({
       onClose={onClose}
       title={title}
       description={description}
+      icon={icon}
       panelClassName="w-[95vw] h-[90vh] max-w-[1600px] max-md:h-[100dvh] max-md:w-screen max-md:max-w-none max-md:rounded-none"
       bodyClassName="flex min-h-0 flex-1 flex-col"
     >
       {isLoading ? (
-        <div className="text-muted-foreground flex flex-1 items-center justify-center gap-2 text-sm">
-          <Loader2 className="h-4 w-4 animate-spin" /> {loadingMessage}
+        <div className="bg-muted text-muted-foreground flex flex-1 items-center justify-center gap-2 text-[13px]">
+          <Loader2 className="text-primary h-4 w-4 animate-spin" /> {loadingMessage}
         </div>
       ) : (
         <div className="relative flex min-h-0 min-w-0 flex-1">
           {!isMobile && sidebar && sidebar({ visible, enableLayer })}
           <div className="relative flex min-h-0 min-w-0 flex-1">
-            {toolbar && <div className="absolute left-3 top-3 z-20">{toolbar}</div>}
+            {toolbar && <div className="absolute left-4 top-4 z-20">{toolbar}</div>}
             <GraphicViewerCanvas
               image={image}
               ariaLabel={ariaLabel}
@@ -121,20 +125,25 @@ export function GraphicViewerModal({
             >
               {(view) => overlays({ view, visible, openSidebar: () => setBrowserOpen(true) })}
             </GraphicViewerCanvas>
+            {layers && layers.length > 0 && (
+              <div className="absolute bottom-4 left-4 right-20 z-10 md:right-16">
+                <GraphicViewerLayerControls layers={layers} value={visible} onChange={setVisible} />
+              </div>
+            )}
             {isMobile && sidebar && (
               <>
                 <button
                   type="button"
                   onClick={() => setBrowserOpen(true)}
                   aria-label={mobileSheetTitle}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-primary/60 absolute bottom-4 right-4 z-10 inline-flex h-12 w-12 items-center justify-center rounded-full shadow-lg focus-visible:outline-none focus-visible:ring-2"
+                  className="bg-primary text-primary-foreground shadow-float focus-visible:ring-primary/30 absolute bottom-4 right-4 z-10 inline-flex h-12 w-12 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-4"
                 >
-                  <List className="h-5 w-5" />
+                  <List className="h-5 w-5" aria-hidden />
                 </button>
                 <Sheet open={browserOpen} onOpenChange={setBrowserOpen}>
-                  <SheetContent side="bottom" className="bg-card flex h-[70dvh] flex-col rounded-t-lg p-0">
-                    <SheetHeader className="border-border border-b p-3">
-                      <SheetTitle className="text-sm">{mobileSheetTitle}</SheetTitle>
+                  <SheetContent side="bottom" className="bg-card flex h-[70dvh] flex-col p-0">
+                    <SheetHeader className="border-muted border-b-2 px-4 py-3">
+                      <SheetTitle className="font-display text-[17px]">{mobileSheetTitle}</SheetTitle>
                     </SheetHeader>
                     <div className="flex min-h-0 flex-1 flex-col">
                       {sidebar({ visible, enableLayer, closeMobile: () => setBrowserOpen(false) })}
@@ -145,9 +154,6 @@ export function GraphicViewerModal({
             )}
           </div>
         </div>
-      )}
-      {layers && layers.length > 0 && (
-        <GraphicViewerLayerControls layers={layers} value={visible} onChange={setVisible} />
       )}
     </Modal>
   );

@@ -12,6 +12,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { Maximize, Minus, Plus, type LucideIcon } from 'lucide-react';
 import { cn } from '@scrolled/design';
 
 export interface PanZoomView {
@@ -48,6 +49,8 @@ export interface PanZoomCanvasProps {
   className?: string;
   /** Accessible label for the canvas. */
   ariaLabel?: string;
+  /** Show zoom in / zoom out / fit buttons at the bottom right. */
+  zoomControls?: boolean;
   /**
    * Content rendered inside the scaled/translated container, in content-pixel
    * space. Mark backdrop layers with `data-pan-bg` so pointer events on them
@@ -73,6 +76,7 @@ export function PanZoomCanvas({
   scrollKey,
   className,
   ariaLabel,
+  zoomControls,
   children,
 }: PanZoomCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -168,6 +172,23 @@ export function PanZoomCanvas({
     },
     [clampPan],
   );
+
+  const zoomFromCentre = useCallback(
+    (factor: number) => {
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (rect) zoomAt(rect.left + rect.width / 2, rect.top + rect.height / 2, factor);
+    },
+    [zoomAt],
+  );
+
+  const fit = useCallback(() => {
+    const content = contentSizeRef.current;
+    const cont = containerSizeRef.current;
+    if (!content || !cont) return;
+    const base = baseScaleRef.current;
+    setZoom(1);
+    setPan({ x: (cont.w - content.w * base) / 2, y: (cont.h - content.h * base) / 2 });
+  }, []);
 
   // Wheel zoom needs a non-passive listener so we can suppress page scroll.
   useEffect(() => {
@@ -282,43 +303,75 @@ export function PanZoomCanvas({
   );
 
   return (
-    <div
-      ref={containerRef}
-      className={cn(
-        'bg-muted/30 relative flex-1 select-none overflow-hidden',
-        contentSize && (dragging ? 'cursor-grabbing' : 'cursor-grab'),
-        className,
-      )}
-      role={ariaLabel ? 'img' : undefined}
-      aria-label={ariaLabel}
-      // We drive every gesture ourselves; opt out of the browser's own
-      // pan/zoom so it doesn't fight the transform.
-      style={{ touchAction: 'none' }}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
-    >
-      {!view ? (
-        <div className="text-muted-foreground absolute inset-0 flex items-center justify-center p-6 text-sm">
-          {placeholder}
-        </div>
-      ) : (
-        <div
-          data-pan-bg
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: view.contentSize.w,
-            height: view.contentSize.h,
-            transform: `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${effectiveScale})`,
-            transformOrigin: 'top left',
-          }}
-        >
-          {children(view)}
+    // The zoom buttons sit outside the `role="img"` surface so assistive tech
+    // still reaches them.
+    <div className={cn('relative flex min-h-0 min-w-0 flex-1', className)}>
+      <div
+        ref={containerRef}
+        className={cn(
+          'bg-muted relative flex-1 select-none overflow-hidden',
+          contentSize && (dragging ? 'cursor-grabbing' : 'cursor-grab'),
+        )}
+        role={ariaLabel ? 'img' : undefined}
+        aria-label={ariaLabel}
+        // We drive every gesture ourselves; opt out of the browser's own
+        // pan/zoom so it doesn't fight the transform.
+        style={{ touchAction: 'none' }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+      >
+        {!view ? (
+          <div className="text-muted-foreground absolute inset-0 flex items-center justify-center p-6 text-sm">
+            {placeholder}
+          </div>
+        ) : (
+          <div
+            data-pan-bg
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: view.contentSize.w,
+              height: view.contentSize.h,
+              transform: `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${effectiveScale})`,
+              transformOrigin: 'top left',
+            }}
+          >
+            {children(view)}
+          </div>
+        )}
+      </div>
+      {zoomControls && view && (
+        <div className="bg-card shadow-float divide-muted absolute bottom-4 right-4 z-20 flex flex-col divide-y-[1.5px] overflow-hidden rounded-md max-md:hidden">
+          <ZoomButton icon={Plus} label="Zoom in" onClick={() => zoomFromCentre(1.4)} />
+          <ZoomButton icon={Minus} label="Zoom out" onClick={() => zoomFromCentre(1 / 1.4)} />
+          <ZoomButton icon={Maximize} label="Fit to view" onClick={fit} />
         </div>
       )}
     </div>
+  );
+}
+
+function ZoomButton({
+  icon: Icon,
+  label,
+  onClick,
+}: {
+  icon: LucideIcon;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+      className="text-muted-foreground hover:text-foreground hover:bg-accent focus-visible:bg-accent focus-visible:text-foreground grid h-8 w-[34px] place-items-center transition-colors focus-visible:outline-none"
+    >
+      <Icon className="h-4 w-4" aria-hidden />
+    </button>
   );
 }

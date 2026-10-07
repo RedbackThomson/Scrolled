@@ -82,6 +82,7 @@ export function GraphicViewerCanvas({
       maxBaseScale={maxBaseScale}
       scrollKey={scrollKey}
       ariaLabel={ariaLabel}
+      zoomControls
     >
       {(view: PanZoomView) => (
         <>

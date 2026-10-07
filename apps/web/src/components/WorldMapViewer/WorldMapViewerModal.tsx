@@ -1,16 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronUp, Link2, MapPin } from 'lucide-react';
-import {
-  GraphicViewerModal,
-  GraphicViewerIcon,
-  type LayerDescriptor,
-} from '@/components/GraphicViewer';
+import { ENTITY_HUES } from '@scrolled/design';
+import { GraphicViewerModal, type LayerDescriptor } from '@/components/GraphicViewer';
 import { MapHoverCard } from '@/components/entity-links';
 import { useEntitySummaryNames } from '@/hooks/useEntitySummaries';
 import { bytesToUrl } from '@/lib/blob';
 import { useWorldMapViewerData } from './useWorldMapViewerData';
 import { WorldMapLinks } from './WorldMapLinks';
 import { WorldMapViewerSidebar } from './WorldMapViewerSidebar';
+import { WorldMapPin } from './WorldMapPin';
+
+const FOCUS_HUE = 148;
+const REGION_HUE = 255;
 
 interface WorldMapViewerModalProps {
   open: boolean;
@@ -128,9 +129,9 @@ export function WorldMapViewerModal({
           <button
             type="button"
             onClick={() => onNavigateWorldMap(worldMap.parentId!)}
-            className="border-border bg-card/90 text-foreground hover:bg-card inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs shadow-sm backdrop-blur"
+            className="bg-card text-foreground shadow-float ease-spring focus-visible:ring-primary/30 inline-flex h-8 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold transition-transform duration-300 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-4"
           >
-            <ChevronUp className="h-3.5 w-3.5" /> Up one level
+            <ChevronUp className="h-4 w-4" aria-hidden /> Up one level
           </button>
         ) : undefined
       }
@@ -180,24 +181,27 @@ export function WorldMapViewerModal({
           const isActive = activeMarkerId !== null && m.id === activeMarkerId;
           const isFocus = m.id === focusMarkerId;
           return (
-            <GraphicViewerIcon
+            <WorldMapPin
               key={m.id}
               pixelX={worldMap.originX + m.wzX}
               pixelY={worldMap.originY + m.wzY}
               parentScale={view.scale}
-              Icon={MapPin}
-              colorClass={isFocus ? 'text-emerald-500' : 'text-sky-500'}
-              ariaLabel={label}
+              hue={isFocus ? FOCUS_HUE : single ? ENTITY_HUES.map : REGION_HUE}
+              region={!single}
+              label={label}
+              labelled={isActive || isFocus}
               tooltip={
                 firstId !== undefined ? (
-                  <div className="space-y-1.5">
+                  <div className="space-y-2">
                     <MapHoverCard id={firstId} />
-                    <div className="border-border text-muted-foreground border-t pt-1.5 text-[11px]">
+                    <div className="border-border text-muted-foreground border-t-2 pt-2 text-xs font-semibold">
                       {single ? 'Click to open' : `${m.mapIds.length} maps · click to browse`}
                     </div>
                   </div>
                 ) : (
-                  <div className="text-muted-foreground text-xs">{m.title ?? 'Marker'}</div>
+                  <div className="text-muted-foreground text-xs font-semibold">
+                    {m.title ?? 'Marker'}
+                  </div>
                 )
               }
               highlighted={isActive || (activeMarkerId === null && isFocus)}

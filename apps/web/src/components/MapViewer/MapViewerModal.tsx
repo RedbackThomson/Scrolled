@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import {
   DoorOpen,
   Globe2,
+  Map as MapIcon,
   Repeat,
   Skull,
   Sparkles,
@@ -10,6 +11,7 @@ import {
 } from 'lucide-react';
 import { GraphicViewerModal, GraphicViewerIcon, type LayerDescriptor } from '@/components/GraphicViewer';
 import { MapHoverCard, MobHoverCard, NpcHoverCard } from '@/components/entity-links';
+import { ENTITY_HUES, SlotTile } from '@scrolled/design';
 import type { WorldMapForMap } from '@/db';
 import {
   buildPortalGraph,
@@ -23,6 +25,7 @@ import { useHideMinorPortals } from '@/stores/hideMinorPortals';
 import { MapViewerSidebar } from './MapViewerSidebar';
 import { useMapViewerData } from './useMapViewerData';
 import type { MapViewerHighlight } from './types';
+import { MARKER_COLOR } from './portalDisplay';
 
 interface MapViewerModalProps {
   open: boolean;
@@ -40,10 +43,10 @@ interface MapViewerModalProps {
 }
 
 const PORTAL_LAYER_META = {
-  spawn: { Icon: Sparkles, color: 'text-emerald-500', label: 'Player spawn' },
-  portal: { Icon: DoorOpen, color: 'text-sky-500', label: 'Portal' },
-  internalTeleport: { Icon: Repeat, color: 'text-violet-500', label: 'Internal teleport' },
-  unknown: { Icon: DoorOpen, color: 'text-zinc-400', label: 'Portal' },
+  spawn: { Icon: Sparkles, color: MARKER_COLOR.spawn, label: 'Player spawn' },
+  portal: { Icon: DoorOpen, color: MARKER_COLOR.portal, label: 'Portal' },
+  internalTeleport: { Icon: Repeat, color: MARKER_COLOR.teleport, label: 'Internal teleport' },
+  unknown: { Icon: DoorOpen, color: MARKER_COLOR.unknown, label: 'Portal' },
 } as const satisfies Record<string, { Icon: LucideIcon; color: string; label: string }>;
 
 // Very generous bounds — only reject icons that project to wildly off-canvas
@@ -100,11 +103,29 @@ export function MapViewerModal({
       }
     }
     return [
-      { key: 'spawns', label: 'Spawns', Icon: Sparkles, swatch: 'text-emerald-500', count: spawns },
-      { key: 'portals', label: 'Portals', Icon: DoorOpen, swatch: 'text-sky-500', count: portalCount },
-      { key: 'teleports', label: 'Teleports', Icon: Repeat, swatch: 'text-violet-500', count: teleports },
-      { key: 'npcs', label: 'NPCs', Icon: Users, swatch: 'text-amber-500', count: npcs.length },
-      { key: 'mobs', label: 'Mobs', Icon: Skull, swatch: 'text-rose-500', count: mobSpawns.length },
+      { key: 'spawns', label: 'Spawns', Icon: Sparkles, swatch: MARKER_COLOR.spawn, count: spawns },
+      {
+        key: 'portals',
+        label: 'Portals',
+        Icon: DoorOpen,
+        swatch: MARKER_COLOR.portal,
+        count: portalCount,
+      },
+      {
+        key: 'teleports',
+        label: 'Teleports',
+        Icon: Repeat,
+        swatch: MARKER_COLOR.teleport,
+        count: teleports,
+      },
+      { key: 'npcs', label: 'NPCs', Icon: Users, swatch: MARKER_COLOR.npc, count: npcs.length },
+      {
+        key: 'mobs',
+        label: 'Mobs',
+        Icon: Skull,
+        swatch: MARKER_COLOR.mob,
+        count: mobSpawns.length,
+      },
     ];
   }, [map, portals, npcs.length, mobSpawns.length]);
 
@@ -130,6 +151,7 @@ export function MapViewerModal({
       onClose={onClose}
       title={title}
       description={map?.streetName ?? undefined}
+      icon={<SlotTile icon={MapIcon} hue={ENTITY_HUES.map} size={38} />}
       isLoading={isLoading || !map}
       loadingMessage="Loading map…"
       image={geometryReady ? map!.minimapData : null}
@@ -147,9 +169,9 @@ export function MapViewerModal({
                 key={p.worldMapId}
                 type="button"
                 onClick={() => onOpenWorldMap(p.worldMapId)}
-                className="border-border bg-card/90 text-foreground hover:bg-card inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs shadow-sm backdrop-blur"
+                className="border-border bg-card text-foreground shadow-rim ease-spring focus-visible:ring-primary/30 inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border-2 px-2.5 pb-[5px] pt-1 text-[13px] font-semibold transition-transform duration-300 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-4"
               >
-                <Globe2 className="h-3.5 w-3.5" /> {p.markerTitle ?? 'World map'}
+                <Globe2 className="h-3.5 w-3.5" aria-hidden /> {p.markerTitle ?? 'World map'}
               </button>
             ))}
           </div>
@@ -216,7 +238,7 @@ export function MapViewerModal({
                     pixelY={p.y}
                     parentScale={view.scale}
                     Icon={Skull}
-                    colorClass="text-rose-500"
+                    colorClass={MARKER_COLOR.mob}
                     ariaLabel={m.name ?? `Mob ${m.mobId}`}
                     tooltip={<MobHoverCard id={m.mobId} />}
                     highlighted={highlighted}
@@ -239,7 +261,7 @@ export function MapViewerModal({
                     pixelY={p.y}
                     parentScale={view.scale}
                     Icon={Users}
-                    colorClass="text-amber-500"
+                    colorClass={MARKER_COLOR.npc}
                     ariaLabel={n.name ?? `NPC ${n.npcId}`}
                     tooltip={<NpcHoverCard id={n.npcId} />}
                     highlighted={highlighted}

@@ -5,7 +5,7 @@ export interface LayerDescriptor {
   key: string;
   label: string;
   Icon: LucideIcon;
-  /** Tailwind text-color class for the swatch glyph. */
+  /** Tailwind text-color class; the layer chip fills its circle with it. */
   swatch: string;
   count: number;
 }

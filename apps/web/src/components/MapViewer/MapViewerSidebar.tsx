@@ -1,15 +1,17 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { DoorOpen, Skull, Users, X, type LucideIcon } from 'lucide-react';
+import { DoorOpen, Search, Skull, Users, X, type LucideIcon } from 'lucide-react';
 import type { MapMobSpawnWithName, MapNpcWithName, MapPortalRecord } from '@/db';
 import { useEntitySummaryNames } from '@/hooks/useEntitySummaries';
 import { MobHoverCard, NpcHoverCard } from '@/components/entity-links';
 import { HoverPopover } from '@scrolled/design';
 import { classifyPortal, type PortalGraph } from '@scrolled/game-db/domain/portal-types';
-import { cn, Input } from '@scrolled/design';
+import { cn } from '@scrolled/design';
+import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 import { useShowEntityIds } from '@/stores/showEntityIds';
 import type { LayerVisibility, MapViewerHighlight } from './types';
 import { PortalRow } from './PortalRow';
 import { NO_TARGET, PORTAL_LAYER_LABEL } from './portalDisplay';
+import { sidebarRowClass } from './rowStyles';
 
 type Tab = 'npcs' | 'mobs' | 'portals';
 
@@ -164,8 +166,8 @@ export function MapViewerSidebar({
   };
 
   return (
-    <aside className="border-border bg-card flex w-72 shrink-0 flex-col border-r">
-      <div className="border-border flex shrink-0 border-b" role="tablist">
+    <aside className="border-muted bg-card flex w-[290px] shrink-0 flex-col gap-3 border-r-2 p-3 max-md:w-full max-md:border-r-0">
+      <div className="bg-muted flex shrink-0 gap-0.5 rounded-md p-[3px]" role="tablist">
         {(['npcs', 'mobs', 'portals'] as const).map((t) => {
           const meta = TAB_META[t];
           const active = tab === t;
@@ -177,41 +179,45 @@ export function MapViewerSidebar({
               aria-selected={active}
               onClick={() => handleTab(t)}
               className={cn(
-                'flex flex-1 items-center justify-center gap-1.5 px-2 py-2 text-xs font-medium',
+                'focus-visible:ring-primary/50 flex flex-1 items-center justify-center gap-1.5 rounded-[9px] px-2 py-1.5 text-[13px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2',
                 active
-                  ? 'text-foreground border-primary border-b-2'
-                  : 'text-muted-foreground hover:text-foreground border-b-2 border-transparent',
+                  ? 'bg-card text-foreground shadow-float'
+                  : 'text-muted-foreground hover:text-foreground',
               )}
             >
-              <meta.Icon className="h-3.5 w-3.5" />
+              <meta.Icon className="h-3.5 w-3.5" aria-hidden />
               {meta.label}
             </button>
           );
         })}
       </div>
 
-      <div className="border-border flex shrink-0 items-center gap-1.5 border-b px-2 py-1.5">
-        <Input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search…"
-          className="border-input bg-background focus-visible:ring-ring h-7 w-full rounded-md border px-2 text-base focus-visible:outline-none focus-visible:ring-1 sm:text-xs"
-        />
+      <div className="flex shrink-0 items-center gap-1.5">
+        <label className="bg-muted text-muted-foreground focus-within:ring-primary/30 flex h-9 min-w-0 flex-1 items-center gap-2 rounded-full px-3 focus-within:ring-4">
+          <Search className="h-4 w-4 shrink-0" aria-hidden />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search…"
+            aria-label={`Search ${TAB_META[tab].label}`}
+            className="text-foreground placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none sm:text-[13px]"
+          />
+        </label>
         {selection && (
           <button
             type="button"
             onClick={() => onSelect(null)}
             aria-label="Clear selection"
             title="Clear selection"
-            className="text-muted-foreground hover:bg-accent hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
+            className="bg-muted text-muted-foreground hover:text-foreground focus-visible:ring-primary/50 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2"
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="h-4 w-4" aria-hidden />
           </button>
         )}
       </div>
 
-      <ul className="flex-1 overflow-y-auto text-sm">
+      <ul className="-mx-1 flex flex-1 flex-col gap-0.5 overflow-y-auto px-1">
         {tab === 'npcs' &&
           (filteredNpcs.length === 0 ? (
             <EmptyState label="No NPCs" />
@@ -219,6 +225,7 @@ export function MapViewerSidebar({
             filteredNpcs.map((r) => (
               <SidebarRow
                 key={r.id}
+                leading={<EntityAvatar entity="npc" id={r.id} size={28} />}
                 label={r.name}
                 count={r.count}
                 selected={selection?.kind === 'npc' && selection.key === String(r.id)}
@@ -238,6 +245,7 @@ export function MapViewerSidebar({
             filteredMobs.map((r) => (
               <SidebarRow
                 key={r.id}
+                leading={<EntityAvatar entity="mob" id={r.id} size={28} />}
                 label={r.name}
                 count={r.count}
                 selected={selection?.kind === 'mob' && selection.key === String(r.id)}
@@ -281,6 +289,7 @@ export function MapViewerSidebar({
 }
 
 function SidebarRow({
+  leading,
   label,
   count,
   selected,
@@ -291,6 +300,7 @@ function SidebarRow({
   mono,
   hoverCard,
 }: {
+  leading: ReactNode;
   label: ReactNode;
   count?: number;
   selected: boolean;
@@ -318,22 +328,22 @@ function SidebarRow({
         onMouseLeave={onHoverLeave}
         onFocus={onHoverEnter}
         onBlur={onHoverLeave}
-        className={cn(
-          'flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs',
-          selected ? 'bg-accent text-foreground' : 'hover:bg-accent/50',
-        )}
+        className={sidebarRowClass(selected)}
         aria-pressed={selected}
       >
+        {leading}
         {wrappedLabel}
         {count !== undefined && count > 1 && (
-          <span className="text-muted-foreground shrink-0 text-[10px]">×{count}</span>
+          <span className="text-muted-foreground shrink-0 text-[11.5px] font-medium">×{count}</span>
         )}
-        {meta && <span className="text-muted-foreground shrink-0 text-[10px]">{meta}</span>}
+        {meta && (
+          <span className="text-muted-foreground shrink-0 text-[11.5px] font-medium">{meta}</span>
+        )}
       </button>
     </li>
   );
 }
 
 function EmptyState({ label }: { label: string }) {
-  return <li className="text-muted-foreground px-3 py-4 text-center text-xs italic">{label}</li>;
+  return <li className="text-muted-foreground px-3 py-6 text-center text-[13px]">{label}</li>;
 }

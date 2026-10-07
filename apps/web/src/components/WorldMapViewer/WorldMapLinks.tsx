@@ -152,7 +152,8 @@ export function WorldMapLinks({
         createPortal(
           <div
             style={{ position: 'fixed', left: cursor.x + 12, top: cursor.y + 12, zIndex: 60 }}
-            className="border-border bg-card text-foreground pointer-events-none rounded-md border px-2 py-1 text-xs shadow-md"
+            data-surface="tooltip"
+            className="bg-card text-foreground shadow-pop font-display pointer-events-none rounded-full px-3 py-1 text-[13px] font-semibold"
           >
             {hovered.tooltip}
           </div>,

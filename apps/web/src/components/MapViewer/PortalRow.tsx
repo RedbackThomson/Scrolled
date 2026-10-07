@@ -1,11 +1,12 @@
 import type { ReactNode } from 'react';
-import { Repeat, Sparkles } from 'lucide-react';
+import { DoorOpen, Repeat, Sparkles, type LucideIcon } from 'lucide-react';
 import { MapHoverCard } from '@/components/entity-links';
-import { HoverPopover } from '@scrolled/design';
+import { HoverPopover, SlotTile } from '@scrolled/design';
 import type { PortalLayer } from '@scrolled/game-db/domain/portal-types';
 import type { MapPortalRecord } from '@/db';
 import { cn } from '@scrolled/design';
-import { NO_TARGET, PORTAL_LAYER_LABEL } from './portalDisplay';
+import { MARKER_HUE, NO_TARGET, PORTAL_LAYER_LABEL } from './portalDisplay';
+import { sidebarRowClass } from './rowStyles';
 
 interface PortalRowProps {
   portal: MapPortalRecord;
@@ -23,6 +24,13 @@ interface PortalRowProps {
   /** Display name for the portal's target map, or null if unknown/not applicable. */
   mapName: string | null;
 }
+
+const LAYER_TILE: Record<PortalLayer, { icon: LucideIcon; hue?: number }> = {
+  spawn: { icon: Sparkles, hue: MARKER_HUE.spawn },
+  portal: { icon: DoorOpen, hue: MARKER_HUE.portal },
+  internalTeleport: { icon: Repeat, hue: MARKER_HUE.teleport },
+  unknown: { icon: DoorOpen },
+};
 
 // Portal rows show the destination as their primary label rather than the WZ
 // portal name (`up0`, `west00`, …) which is meaningless to most users.
@@ -49,8 +57,7 @@ export function PortalRow({
   let labelClass = 'min-w-0 flex-1 truncate';
   if (layer === 'spawn') {
     labelContent = (
-      <span className="text-muted-foreground inline-flex items-center gap-1.5 italic">
-        <Sparkles className="h-3 w-3 shrink-0 text-emerald-500" />
+      <span className="text-muted-foreground inline-flex items-center gap-1.5">
         Player spawn
         {spawnCounter !== null && <span className="font-mono">{spawnCounter}</span>}
       </span>
@@ -60,13 +67,12 @@ export function PortalRow({
     // ("Same map -> foo"). For unresolved / scripted teleports we just
     // signal that no map change happens.
     labelContent = (
-      <span className="text-muted-foreground inline-flex items-center gap-1.5 italic">
-        <Repeat className="h-3 w-3 shrink-0 text-violet-500" />
+      <span className="text-muted-foreground inline-flex items-center gap-1.5">
         {linkedToName ? (
           <>
             Same map
             <span className="text-foreground/70">→</span>
-            <span className="text-foreground/90 font-mono not-italic">{linkedToName}</span>
+            <span className="text-foreground/90 font-mono">{linkedToName}</span>
           </>
         ) : (
           'Same map'
@@ -103,15 +109,13 @@ export function PortalRow({
         onMouseLeave={onHoverLeave}
         onFocus={onHoverEnter}
         onBlur={onHoverLeave}
-        className={cn(
-          'flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs',
-          selected ? 'bg-accent text-foreground' : 'hover:bg-accent/50',
-        )}
+        className={sidebarRowClass(selected)}
         aria-pressed={selected}
         title={portal.portalName}
       >
+        <SlotTile {...LAYER_TILE[layer]} size={28} />
         {wrappedLabel}
-        <span className="text-muted-foreground shrink-0 text-[10px]">
+        <span className="text-muted-foreground shrink-0 text-[11.5px] font-medium">
           {PORTAL_LAYER_LABEL[layer]}
         </span>
       </button>
