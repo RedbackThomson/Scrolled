@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 export interface PopoverCoords {
-  top: number;
+  /** Set when the popover opens below its anchor. */
+  top?: number;
+  /** Distance from the viewport bottom, set when it opens above; the panel then grows upward. */
+  bottom?: number;
   left: number;
   /** Horizontal centre of the anchor, for pointing a notch at it. */
   anchorX: number;
@@ -10,6 +13,8 @@ export interface PopoverCoords {
 export interface UsePopoverOptions {
   /** Space between the anchor and the popover. */
   gap?: number;
+  /** Open above the anchor, e.g. from a bar pinned to the bottom of the screen. */
+  placement?: 'below' | 'above';
 }
 
 /**
@@ -21,7 +26,7 @@ export interface UsePopoverOptions {
 export function usePopover<
   T extends HTMLElement = HTMLButtonElement,
   P extends HTMLElement = HTMLDivElement,
->({ gap = 4 }: UsePopoverOptions = {}) {
+>({ gap = 4, placement = 'below' }: UsePopoverOptions = {}) {
   const triggerRef = useRef<T>(null);
   // Set by `openAt` when one popover serves several triggers.
   const anchorRef = useRef<HTMLElement | null>(null);
@@ -47,7 +52,12 @@ export function usePopover<
       const MARGIN = 8;
       const maxLeft = popoverWidth > 0 ? window.innerWidth - popoverWidth - MARGIN : Infinity;
       const left = Math.max(MARGIN, Math.min(r.left, maxLeft));
-      setCoords({ top: r.bottom + gap, left, anchorX: r.left + r.width / 2 });
+      const anchorX = r.left + r.width / 2;
+      setCoords(
+        placement === 'above'
+          ? { bottom: window.innerHeight - r.top + gap, left, anchorX }
+          : { top: r.bottom + gap, left, anchorX },
+      );
     };
     place();
     // Re-place after the popover mounts so the clamp can use its real width.
@@ -59,7 +69,7 @@ export function usePopover<
       window.removeEventListener('resize', place);
       window.removeEventListener('scroll', place, true);
     };
-  }, [open, gap, anchorKey]);
+  }, [open, gap, placement, anchorKey]);
 
   // Outside click + Escape close.
   useEffect(() => {

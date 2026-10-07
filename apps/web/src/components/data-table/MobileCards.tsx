@@ -24,8 +24,8 @@ interface Props<TData> {
   loading?: boolean;
   fetching?: boolean;
   selectable: boolean;
-  selectedIds?: ReadonlySet<string>;
-  toggleRow: (id: string) => void;
+  isSelected: (id: string) => boolean;
+  toggleRow: (id: string, range?: boolean) => void;
 }
 
 /**
@@ -46,7 +46,7 @@ export function MobileCards<TData>({
   loading,
   fetching,
   selectable,
-  selectedIds,
+  isSelected,
   toggleRow,
 }: Props<TData>) {
   // Pre-compute the card-tagged columns the user has opted into beyond the
@@ -83,16 +83,16 @@ export function MobileCards<TData>({
       {data.map((row) => {
         const rowId = getRowId(row);
         const href = rowLinkTo(row);
-        const isSelected = selectable && (selectedIds?.has(rowId) ?? false);
+        const selected = isSelected(rowId);
         return (
-          <li key={rowId} className={cn('relative flex items-stretch', isSelected && 'bg-muted')}>
+          <li key={rowId} className={cn('relative flex items-stretch', selected && 'bg-muted')}>
             {selectable && (
               <label className="z-10 flex min-w-11 shrink-0 cursor-pointer items-center justify-center pl-1">
                 <Checkbox
-                  checked={isSelected}
+                  checked={selected}
                   onChange={() => toggleRow(rowId)}
                   onClick={(e) => e.stopPropagation()}
-                  aria-label={isSelected ? 'Deselect row' : 'Select row'}
+                  aria-label={selected ? 'Deselect row' : 'Select row'}
                 />
               </label>
             )}
@@ -103,7 +103,7 @@ export function MobileCards<TData>({
             >
               <div className="min-w-0 flex-1">
                 <ListCardLayoutContext.Provider
-                  value={{ variant: 'compact', selected: isSelected }}
+                  value={{ variant: 'compact', selected }}
                 >
                   {mobileCard(row)}
                 </ListCardLayoutContext.Provider>

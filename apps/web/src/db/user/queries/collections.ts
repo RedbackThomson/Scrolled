@@ -411,9 +411,9 @@ export function bulkAddMembers(
   refs: readonly BulkAddRef[],
   groupId: number | null = null,
 ): BulkAddResult {
-  if (refs.length === 0) return { added: 0, skipped: 0 };
-  let added = 0;
+  if (refs.length === 0) return { added: 0, skipped: 0, addedRefs: [] };
   let skipped = 0;
+  const addedRefs: EntityRef[] = [];
   const now = Date.now();
   db.transaction(() => {
     let nextPos = nextMemberPosition(db, collectionId, groupId);
@@ -446,10 +446,25 @@ export function bulkAddMembers(
       );
       recordUpsert(db, 'collection_member', identity.where, identity.params);
       nextPos++;
-      added++;
+      addedRefs.push({ entityType: ref.entityType, entityId: ref.entityId });
     }
   });
-  return { added, skipped };
+  return { added: addedRefs.length, skipped, addedRefs };
+}
+
+export function removePlacements(
+  db: Sqlite,
+  collectionId: number,
+  refs: readonly EntityRef[],
+  groupId: number | null,
+): void {
+  db.transaction(() => {
+    for (const ref of refs) {
+      const identity = memberIdentity(collectionId, groupId, ref.entityType, ref.entityId);
+      recordDelete(db, 'collection_member', identity.where, identity.params);
+      db.exec(`DELETE FROM collection_members WHERE ${identity.where}`, identity.params);
+    }
+  });
 }
 
 export function bulkRemoveMembers(

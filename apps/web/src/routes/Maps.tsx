@@ -1,7 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { DataTable, useColumnFilters, useTableUrlState } from '@/components/data-table';
-import { CollectionsBulkAddMenu } from '@/components/collections';
 import { TablePageLayout } from '@/components/layout/TablePageLayout';
 import { getDbClient } from '@/db';
 import {
@@ -23,7 +22,6 @@ export default function Maps() {
     defaultVisible,
   });
   const { filters, setFilter, clearAll, active: filtersActive } = useColumnFilters(columns);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const mapsQ = useQuery({
     queryKey: [
@@ -75,18 +73,6 @@ export default function Maps() {
           setState({ page: 1 });
         }}
         entity="map"
-        selectable
-        selectedIds={selectedIds}
-        onSelectionChange={setSelectedIds}
-        toolbarExtra={
-          selectedIds.size > 0 ? (
-            <CollectionsBulkAddMenu
-              entityType="map"
-              selectedIds={selectedIds}
-              onClear={() => setSelectedIds(new Set())}
-            />
-          ) : undefined
-        }
       />
     </TablePageLayout>
   );

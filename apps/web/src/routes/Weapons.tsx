@@ -1,7 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { DataTable, useColumnFilters, useTableUrlState } from '@/components/data-table';
-import { CollectionsBulkAddMenu } from '@/components/collections';
 import { TablePageLayout } from '@/components/layout/TablePageLayout';
 import { getDbClient } from '@/db';
 import { labelForEquipType } from '@scrolled/game-db/domain/equipTypes';
@@ -37,7 +36,6 @@ export default function Weapons() {
     defaultSize: DEFAULT_PAGE_SIZE,
     defaultVisible,
   });
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const typesQ = useQuery({
     queryKey: ['db', 'equip-types'],
@@ -112,18 +110,6 @@ export default function Weapons() {
           requiredJob: ALL_EQUIP_CLASSES,
         }}
         enumLabels={{ equipType: labelForEquipType }}
-        selectable
-        selectedIds={selectedIds}
-        onSelectionChange={setSelectedIds}
-        toolbarExtra={
-          selectedIds.size > 0 ? (
-            <CollectionsBulkAddMenu
-              entityType="equip"
-              selectedIds={selectedIds}
-              onClear={() => setSelectedIds(new Set())}
-            />
-          ) : undefined
-        }
       />
     </TablePageLayout>
   );

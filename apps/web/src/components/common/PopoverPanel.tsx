@@ -72,7 +72,7 @@ export function PopoverPanel({
       onMouseDown={onMouseDown}
       arrow={arrowLeft === undefined ? undefined : 'top'}
       arrowLeft={arrowLeft}
-      style={{ position: 'fixed', top: coords.top, left: coords.left }}
+      style={{ position: 'fixed', top: coords.top, bottom: coords.bottom, left: coords.left }}
       className={cn(
         'z-50 max-w-[calc(100vw-1rem)]',
         arrowLeft === undefined && (align === 'right' ? 'origin-top-right' : 'origin-top-left'),

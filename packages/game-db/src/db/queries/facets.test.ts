@@ -48,6 +48,13 @@ describe('facet queries', () => {
     expect(await db.countMatchingMany('equip', [{}])).toEqual([1]);
   });
 
+  it('lists the ids a filter set matches', async () => {
+    expect(await db.matchingIds('weapon', { requiredLevel: { kind: 'range', min: 30 } })).toEqual([
+      3, 4, 5,
+    ]);
+    expect(await db.matchingIds('equip', {})).toEqual([7]);
+  });
+
   it('bins a number column from its minimum, skipping nulls', async () => {
     const h = await db.columnHistogram('weapon', 'requiredLevel', 6, {});
     expect(h).toEqual({ min: 10, max: 69, binWidth: 10, bins: [2, 0, 2, 0, 0, 1] });

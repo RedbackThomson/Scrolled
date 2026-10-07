@@ -1066,6 +1066,8 @@ export interface GameDatabase {
     source: FacetSource,
     filterSets: readonly Record<string, ColumnFilter>[],
   ): Promise<number[]>;
+  /** Ids of every row on a list page matching `filters`. */
+  matchingIds(source: FacetSource, filters: Record<string, ColumnFilter>): Promise<number[]>;
   /** A number column's distribution under `filters`; null for non-numeric or empty columns. */
   columnHistogram(
     source: FacetSource,

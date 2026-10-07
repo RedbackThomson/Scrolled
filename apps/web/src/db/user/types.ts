@@ -196,6 +196,8 @@ export interface MembershipBadge {
 export interface BulkAddResult {
   added: number;
   skipped: number;
+  /** The refs actually inserted, so an undo removes exactly these. */
+  addedRefs: EntityRef[];
 }
 
 /** A user-saved listing filter (entity + URL params). Replayed by navigating
@@ -372,6 +374,12 @@ export interface UserDatabase {
     groupId?: number | null,
   ): Promise<BulkAddResult>;
   bulkRemoveMembers(collectionId: number, refs: readonly EntityRef[]): Promise<void>;
+  /** Remove these entities' placements in one group (null = ungrouped), leaving other groups alone. */
+  removePlacements(
+    collectionId: number,
+    refs: readonly EntityRef[],
+    groupId: number | null,
+  ): Promise<void>;
 
   /** Collections that contain the given (entityType, entityId). */
   listMembershipsFor(

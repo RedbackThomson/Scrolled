@@ -231,6 +231,13 @@ export class DbApi implements GameDatabase {
     return facets.countMatchingMany(this.sql, source, filterSets);
   }
 
+  async matchingIds(
+    source: FacetSource,
+    filters: Record<string, ColumnFilter>,
+  ): Promise<number[]> {
+    return facets.matchingIds(this.sql, source, filters);
+  }
+
   async columnHistogram(
     source: FacetSource,
     columnId: string,

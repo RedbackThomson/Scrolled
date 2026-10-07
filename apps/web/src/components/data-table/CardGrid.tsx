@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { SearchX } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Checkbox, cn, EmptyState, Skeleton } from '@scrolled/design';
+import { cn, EmptyState, Skeleton } from '@scrolled/design';
 import { popIn } from '@/lib/popIn';
 import { ListCardLayoutContext } from './listCardLayout';
 
@@ -20,8 +20,8 @@ interface Props<TData> {
   loading?: boolean;
   fetching?: boolean;
   selectable: boolean;
-  selectedIds?: ReadonlySet<string>;
-  toggleRow: (id: string) => void;
+  isSelected: (id: string) => boolean;
+  toggleRow: (id: string, range?: boolean) => void;
 }
 
 /** Desktop card view: the same rows as the table, as a 4-up grid of entity cards. */
@@ -37,7 +37,7 @@ export function CardGrid<TData>({
   loading,
   fetching,
   selectable,
-  selectedIds,
+  isSelected,
   toggleRow,
 }: Props<TData>) {
   const statCols = columns.filter(
@@ -71,7 +71,7 @@ export function CardGrid<TData>({
         const rowId = getRowId(row);
         const pop = popIn(i);
         const href = rowLinkTo(row);
-        const isSelected = selectable && (selectedIds?.has(rowId) ?? false);
+        const selected = isSelected(rowId);
         return (
           <li
             key={rowId}
@@ -84,7 +84,8 @@ export function CardGrid<TData>({
             <ListCardLayoutContext.Provider
               value={{
                 variant: 'tall',
-                selected: isSelected,
+                selected,
+                onToggleSelect: selectable ? (e) => toggleRow(rowId, e.shiftKey) : undefined,
                 extraStats: statCols.map((col) => ({
                   label: col.meta!.card!.label,
                   value: col.meta!.card!.render(row),
@@ -98,15 +99,6 @@ export function CardGrid<TData>({
               aria-label={`Open ${href}`}
               className="focus-visible:ring-primary/30 absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-4"
             />
-            {selectable && (
-              <label className="absolute right-2 top-2 z-10">
-                <Checkbox
-                  checked={isSelected}
-                  onChange={() => toggleRow(rowId)}
-                  aria-label={isSelected ? 'Deselect' : 'Select'}
-                />
-              </label>
-            )}
           </li>
         );
       })}

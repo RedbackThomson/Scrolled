@@ -2,7 +2,13 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Sqlite } from '@scrolled/game-db/db/sqlite';
 import { USER_MIGRATIONS } from '../migrations';
-import { bulkAddMembers, createCollection, listMembers } from './collections';
+import {
+  addMember,
+  bulkAddMembers,
+  createCollection,
+  listMembers,
+  removePlacements,
+} from './collections';
 import { createGroups, ensureGroup, listGroups } from './collectionGroups';
 
 function newDb(): Sqlite {
@@ -25,7 +31,7 @@ describe('bulkAddMembers metadata', () => {
       { entityType: 'item', entityId: 200, quantity: 16, note: 'gather', done: true },
       { entityType: 'quest', entityId: 300 },
     ]);
-    expect(result).toEqual({ added: 3, skipped: 0 });
+    expect(result).toMatchObject({ added: 3, skipped: 0 });
 
     const members = new Map(listMembers(db, collectionId).map((m) => [m.entityId, m]));
     expect(members.get(100)!.quantity).toBe(25);
@@ -42,7 +48,7 @@ describe('bulkAddMembers metadata', () => {
       { entityType: 'mob', entityId: 100, quantity: 999 },
       { entityType: 'mob', entityId: 101, quantity: 5 },
     ]);
-    expect(result).toEqual({ added: 1, skipped: 1 });
+    expect(result).toMatchObject({ added: 1, skipped: 1 });
 
     const members = new Map(listMembers(db, collectionId).map((m) => [m.entityId, m]));
     expect(members.get(100)!.quantity).toBe(25); // unchanged
@@ -79,11 +85,11 @@ describe('createGroups / ensureGroup', () => {
     expect(second.find((g) => g.name === 'Mobs')!.id).toBe(first[0]!.id);
 
     // Only three distinct groups exist, not four.
-    expect(listGroups(db, collectionId).map((g) => g.name).sort()).toEqual([
-      'Items',
-      'Mobs',
-      'Quests',
-    ]);
+    expect(
+      listGroups(db, collectionId)
+        .map((g) => g.name)
+        .sort(),
+    ).toEqual(['Items', 'Mobs', 'Quests']);
   });
 
   it('ensureGroup returns the same id on repeat calls', () => {
@@ -91,5 +97,32 @@ describe('createGroups / ensureGroup', () => {
     const b = ensureGroup(db, collectionId, 'Combined Total');
     expect(b.id).toBe(a.id);
     expect(listGroups(db, collectionId)).toHaveLength(1);
+  });
+});
+
+describe('undoing a bulk add', () => {
+  it('removes exactly the placements it inserted', async () => {
+    const db = newDb();
+    await db.open();
+    const collectionId = createCollection(db, { name: 'Leveling' }).id;
+    const group = ensureGroup(db, collectionId, 'Lvl 30–39');
+    addMember(db, collectionId, 'mob', 1, { groupId: group.id });
+    addMember(db, collectionId, 'mob', 2);
+
+    const result = bulkAddMembers(
+      db,
+      collectionId,
+      [1, 2, 3].map((entityId) => ({ entityType: 'mob' as const, entityId })),
+      group.id,
+    );
+    expect(result).toMatchObject({ added: 2, skipped: 1 });
+    expect(result.addedRefs.map((r) => r.entityId)).toEqual([2, 3]);
+
+    removePlacements(db, collectionId, result.addedRefs, group.id);
+    const left = listMembers(db, collectionId).map((m) => [m.entityId, m.groupId]);
+    expect(left.sort()).toEqual([
+      [1, group.id],
+      [2, null],
+    ]);
   });
 });

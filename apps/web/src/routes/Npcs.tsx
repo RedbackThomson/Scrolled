@@ -1,7 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { DataTable, useColumnFilters, useTableUrlState } from '@/components/data-table';
-import { CollectionsBulkAddMenu } from '@/components/collections';
 import { TablePageLayout } from '@/components/layout/TablePageLayout';
 import { getDbClient } from '@/db';
 import { columns, defaultSort, defaultVisible, mobileCard, pinnedColumns } from './NpcsColumns';
@@ -16,7 +15,6 @@ export default function Npcs() {
     defaultVisible,
   });
   const { filters, setFilter, clearAll, active: filtersActive } = useColumnFilters(columns);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const npcsQ = useQuery({
     queryKey: [
@@ -67,18 +65,6 @@ export default function Npcs() {
           setState({ page: 1 });
         }}
         entity="npc"
-        selectable
-        selectedIds={selectedIds}
-        onSelectionChange={setSelectedIds}
-        toolbarExtra={
-          selectedIds.size > 0 ? (
-            <CollectionsBulkAddMenu
-              entityType="npc"
-              selectedIds={selectedIds}
-              onClear={() => setSelectedIds(new Set())}
-            />
-          ) : undefined
-        }
       />
     </TablePageLayout>
   );

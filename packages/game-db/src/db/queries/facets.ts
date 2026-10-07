@@ -14,6 +14,7 @@ import {
 } from './shared/filters';
 
 interface Source {
+  table: string;
   from: string;
   /** Conditions every row of the list page satisfies before any filter */
   base: string[];
@@ -23,18 +24,24 @@ interface Source {
 // Each source mirrors its list query's FROM and fixed WHERE so counts agree with the page.
 const SOURCES: Record<FacetSource, Source> = {
   item: {
+    table: 'items',
     from: 'items LEFT JOIN consumable_specs cs ON cs.item_id = items.id',
     base: [],
     allow: ITEM_FILTER,
   },
-  equip: { from: 'equips', base: ['equip_type IS NULL'], allow: EQUIP_FILTER },
-  weapon: { from: 'equips', base: ['equip_type IS NOT NULL'], allow: EQUIP_FILTER },
-  mob: { from: 'mobs', base: [], allow: MOB_FILTER },
-  npc: { from: 'npcs', base: [], allow: NPC_FILTER },
-  map: { from: 'maps', base: [], allow: MAP_FILTER },
-  quest: { from: 'quests', base: [], allow: QUEST_FILTER },
-  questChain: { from: 'quest_chains', base: [], allow: QUEST_CHAIN_FILTER },
-  skill: { from: 'skills', base: [], allow: SKILL_FILTER },
+  equip: { table: 'equips', from: 'equips', base: ['equip_type IS NULL'], allow: EQUIP_FILTER },
+  weapon: {
+    table: 'equips',
+    from: 'equips',
+    base: ['equip_type IS NOT NULL'],
+    allow: EQUIP_FILTER,
+  },
+  mob: { table: 'mobs', from: 'mobs', base: [], allow: MOB_FILTER },
+  npc: { table: 'npcs', from: 'npcs', base: [], allow: NPC_FILTER },
+  map: { table: 'maps', from: 'maps', base: [], allow: MAP_FILTER },
+  quest: { table: 'quests', from: 'quests', base: [], allow: QUEST_FILTER },
+  questChain: { table: 'quest_chains', from: 'quest_chains', base: [], allow: QUEST_CHAIN_FILTER },
+  skill: { table: 'skills', from: 'skills', base: [], allow: SKILL_FILTER },
 };
 
 function whereClause(
@@ -46,6 +53,22 @@ function whereClause(
   const params: (string | number)[] = [];
   applyFilters(src.allow, filters, where, params);
   return { clause: where.length > 0 ? `WHERE ${where.join(' AND ')}` : '', params };
+}
+
+/** Every matching row's id, in id order — what "select all" resolves to. */
+export function matchingIds(
+  sql: Sqlite,
+  source: FacetSource,
+  filters: Record<string, ColumnFilter>,
+): number[] {
+  const src = SOURCES[source];
+  const { clause, params } = whereClause(src, filters);
+  const idCol = `${src.table}.id`;
+  return sql
+    .selectObjects<{
+      id: number;
+    }>(`SELECT ${idCol} AS id FROM ${src.from} ${clause} ORDER BY ${idCol}`, params.length > 0 ? params : undefined)
+    .map((r) => Number(r.id));
 }
 
 /** Row count for each filter set, in order. One call serves a popover's per-value counts. */

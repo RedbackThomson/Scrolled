@@ -221,6 +221,14 @@ export class UserDbApi implements UserDatabase {
     collections.bulkRemoveMembers(this.db, collectionId, refs);
   }
 
+  async removePlacements(
+    collectionId: number,
+    refs: readonly EntityRef[],
+    groupId: number | null,
+  ): Promise<void> {
+    collections.removePlacements(this.db, collectionId, refs, groupId);
+  }
+
   async listMembershipsFor(
     entityType: CollectionEntityType,
     entityId: number,

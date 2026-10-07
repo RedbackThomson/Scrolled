@@ -16,6 +16,7 @@ import {
 } from '@tanstack/react-query';
 import {
   getUserDbClient,
+  type BulkAddResult,
   type CollectionEntityType,
   type CollectionGroup,
   type CollectionMember,
@@ -234,14 +235,30 @@ export function useRemoveMember(): UseMutationResult<
 }
 
 export function useBulkAddMembers(): UseMutationResult<
-  { added: number; skipped: number },
+  BulkAddResult,
   Error,
-  { collectionId: number; refs: readonly EntityRef[] }
+  { collectionId: number; refs: readonly EntityRef[]; groupId?: number | null }
 > {
   const db = useUserDb();
   const invalidate = useInvalidateAll();
   return useMutation({
-    mutationFn: ({ collectionId, refs }) => db.bulkAddMembers(collectionId, refs),
+    mutationFn: ({ collectionId, refs, groupId }) =>
+      db.bulkAddMembers(collectionId, refs, groupId ?? null),
+    onSuccess: () => invalidate(),
+  });
+}
+
+/** Undo for a bulk add: removes exactly the given placements. */
+export function useRemovePlacements(): UseMutationResult<
+  void,
+  Error,
+  { collectionId: number; refs: readonly EntityRef[]; groupId: number | null }
+> {
+  const db = useUserDb();
+  const invalidate = useInvalidateAll();
+  return useMutation({
+    mutationFn: ({ collectionId, refs, groupId }) =>
+      db.removePlacements(collectionId, refs, groupId),
     onSuccess: () => invalidate(),
   });
 }

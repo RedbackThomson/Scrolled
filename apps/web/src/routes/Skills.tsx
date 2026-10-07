@@ -1,7 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { DataTable, useColumnFilters, useTableUrlState } from '@/components/data-table';
-import { CollectionsBulkAddMenu } from '@/components/collections';
 import { TablePageLayout } from '@/components/layout/TablePageLayout';
 import { getDbClient, type JobRecord } from '@/db';
 import { useShowEntityIds } from '@/stores/showEntityIds';
@@ -24,7 +23,6 @@ export default function Skills() {
     defaultVisible,
   });
   const { filters, setFilter, clearAll, active: filtersActive } = useColumnFilters(columns);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const showIds = useShowEntityIds((s) => s.enabled);
 
   const jobsQ = useQuery({
@@ -113,18 +111,6 @@ export default function Skills() {
         entity="skill"
         enumOptions={{ jobId: jobIdValues }}
         enumLabels={{ jobId: jobLabel }}
-        selectable
-        selectedIds={selectedIds}
-        onSelectionChange={setSelectedIds}
-        toolbarExtra={
-          selectedIds.size > 0 ? (
-            <CollectionsBulkAddMenu
-              entityType="skill"
-              selectedIds={selectedIds}
-              onClear={() => setSelectedIds(new Set())}
-            />
-          ) : undefined
-        }
       />
     </TablePageLayout>
   );

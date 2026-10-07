@@ -1,4 +1,4 @@
-import { createContext, type ReactNode } from 'react';
+import { createContext, type MouseEvent, type ReactNode } from 'react';
 
 export interface ListCardStat {
   label: string;
@@ -11,6 +11,8 @@ export interface ListCardLayout {
   /** compact = the mobile row; tall = the desktop card grid. */
   variant: 'compact' | 'tall';
   selected?: boolean;
+  /** Set when rows can be selected: the card's picture becomes its checkbox */
+  onToggleSelect?: (event: MouseEvent<HTMLButtonElement>) => void;
   /** Stats from columns the user turned on beyond the entity's defaults. */
   extraStats?: readonly ListCardStat[];
 }

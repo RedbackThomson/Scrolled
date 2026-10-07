@@ -1,6 +1,6 @@
 // Sort, filter, paginate all happen in SQL — `data` is one server-rendered page;
 // `total` is the count under the same WHERE clause. The table just renders.
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { z } from 'zod';
 import { Link } from 'react-router-dom';
 import {
@@ -13,7 +13,14 @@ import {
   type VisibilityState,
 } from '@tanstack/react-table';
 import { LayoutGrid, SearchX, Table2 } from 'lucide-react';
-import { Checkbox, EmptyState, Pagination, Segmented, Skeleton } from '@scrolled/design';
+import {
+  EmptyState,
+  Kbd,
+  Pagination,
+  Segmented,
+  SelectableSlot,
+  Skeleton,
+} from '@scrolled/design';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@scrolled/design';
 import { DisplayOptionsMenu } from './DisplayOptionsMenu';
 import { ListFilterBar } from './ListFilterBar';
@@ -28,6 +35,8 @@ import { useSavedSearch } from './useSavedSearch';
 import { SaveSearchDialog } from '@/components/pinned-searches/SaveSearchDialog';
 import { ManageSavedSearchesDialog } from '@/components/pinned-searches/ManageSavedSearchesDialog';
 import { useUserSetting } from '@/hooks/useUserSetting';
+import { useRowSelection } from './useRowSelection';
+import { SelectionDockHost } from './SelectionDockHost';
 import { CardGrid } from './CardGrid';
 import { MobileCards } from './MobileCards';
 import type {
@@ -37,7 +46,7 @@ import type {
   TableView,
 } from './useTableUrlState';
 import { useTableStatePersistence } from './useTableStatePersistence';
-import type { ColumnFilter, FacetSource } from '@/db';
+import { getDbClient, type ColumnFilter, type FacetSource } from '@/db';
 import type { CollectionEntityType } from '@/db/user';
 import { useIsMobile } from '@/hooks/useIsMobile';
 
@@ -46,6 +55,8 @@ const NO_FACETS: readonly FacetDef[] = [];
 const NO_PRESETS: readonly ListPreset[] = [];
 const UNFILTERED: Record<string, ColumnFilter>[] = [{}];
 const shelfTabSchema = z.enum(['suggested', 'yours']).nullable();
+/** The sprite column, whose slot doubles as the row's checkbox. */
+const SLOT_COLUMN = 'icon';
 
 export interface DataTableProps<TData> {
   data: readonly TData[];
@@ -79,7 +90,7 @@ export interface DataTableProps<TData> {
   /** Optional per-column label formatter for `enum` filter dropdowns. The
    *  raw value still drives the URL/filter; only the option text changes. */
   enumLabels?: Record<string, (value: string) => string>;
-  /** The collection entity rows belong to. */
+  /** The collection entity rows belong to; set it to let rows be selected and added to collections. */
   entity?: CollectionEntityType;
   /** The list's rows for facet counts and histograms. */
   source: FacetSource;
@@ -89,20 +100,9 @@ export interface DataTableProps<TData> {
   entityPlural: string;
   /** Suggested filter sets shown as tiles above the list. */
   presets?: readonly ListPreset[];
-  /** Extra controls rendered on the left side of the toolbar, immediately
-   *  after the search input. Use for selection-contextual controls (e.g.
-   *  bulk add). */
-  toolbarExtra?: ReactNode;
   /** Extra controls at the right of the result-count row, before the view
    *  toggle. Use for page-level global controls (e.g. saved searches). */
   toolbarRightExtra?: ReactNode;
-  /** Render a sticky checkbox column for bulk selection. Selection is
-   *  scoped to the current page — paging / sorting / resizing clears it
-   *  via the effect below. */
-  selectable?: boolean;
-  /** Controlled set of selected row ids (as returned by `getRowId`). */
-  selectedIds?: ReadonlySet<string>;
-  onSelectionChange?: (next: Set<string>) => void;
   /**
    * Render a row as a card: a compact row on viewports below `md`, and a tall
    * card in the desktop card view. When supplied, mobile viewports always
@@ -139,11 +139,8 @@ export function DataTable<TData>({
   facets = NO_FACETS,
   entityPlural,
   presets = NO_PRESETS,
-  toolbarExtra,
   toolbarRightExtra,
-  selectable = false,
-  selectedIds,
-  onSelectionChange,
+  entity,
   mobileCard,
 }: DataTableProps<TData>) {
   const isMobile = useIsMobile();
@@ -269,60 +266,21 @@ export function DataTable<TData>({
 
   const totalPages = Math.max(Math.ceil(total / state.size), 1);
 
-  // Clear selection whenever the visible page changes underneath the user
-  // (paging, sort, size, search). Without this, a "5 selected" indicator
-  // would persist across rows the user can no longer see.
-  useEffect(() => {
-    if (!selectable || !onSelectionChange) return;
-    if (selectedIds && selectedIds.size === 0) return;
-    onSelectionChange(new Set());
-    // Intentionally exclude `selectedIds` / `onSelectionChange` from deps —
-    // we only want to fire when the visible window itself changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.page, state.size, state.sort, state.dir, state.q, selectable]);
-
-  const pageRowIds = useMemo(
-    () => (selectable ? data.map((row) => getRowId(row)) : []),
-    [selectable, data, getRowId],
+  const selectable = entity != null;
+  const resolveAll = useCallback(
+    () => getDbClient().matchingIds(source, filters).then((ids) => ids.map(String)),
+    [source, filters],
   );
+  const selection = useRowSelection(JSON.stringify(filters), resolveAll);
+  const pageRowIds = useMemo(() => data.map((row) => getRowId(row)), [data, getRowId]);
+  const toggleRow = (id: string, range = false) => selection.toggle(id, range, pageRowIds);
+  const isSelected = (id: string) => selectable && selection.isSelected(id);
+  const nothingSelected = !selection.allMatching && selection.ids.size === 0;
 
-  const selectedOnPageCount = useMemo(() => {
-    if (!selectable || !selectedIds) return 0;
-    let n = 0;
-    for (const id of pageRowIds) if (selectedIds.has(id)) n++;
-    return n;
-  }, [selectable, selectedIds, pageRowIds]);
-
-  const allOnPageSelected =
-    selectable && pageRowIds.length > 0 && selectedOnPageCount === pageRowIds.length;
-  const someOnPageSelected = selectable && selectedOnPageCount > 0 && !allOnPageSelected;
-
-  const toggleAllOnPage = () => {
-    if (!onSelectionChange) return;
-    const next = new Set(selectedIds ?? []);
-    if (allOnPageSelected) {
-      for (const id of pageRowIds) next.delete(id);
-    } else {
-      for (const id of pageRowIds) next.add(id);
-    }
-    onSelectionChange(next);
-  };
-
-  const toggleRow = (id: string) => {
-    if (!onSelectionChange) return;
-    const next = new Set(selectedIds ?? []);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    onSelectionChange(next);
-  };
-
-  const columnCount = table.getVisibleLeafColumns().length + (selectable ? 1 : 0);
+  const columnCount = table.getVisibleLeafColumns().length;
 
   return (
     <div className="space-y-3">
-      {/* Selection-active row sits above the search/controls when present so
-       *  bulk-add affordances don't push the main toolbar to wrap. */}
-      {toolbarExtra && <div className="flex flex-wrap items-center gap-2">{toolbarExtra}</div>}
       {onColumnFilterChange && (presets.length > 0 || savedSearch.saved.length > 0) && (
         <SavedSearchShelf
           tab={shelfTab}
@@ -371,6 +329,11 @@ export function DataTable<TData>({
             : undefined
         }
       >
+        {selectable && nothingSelected && !isMobile && data.length > 0 && (
+          <span className="text-muted-foreground mr-1.5 text-xs">
+            Click a sprite to select · <Kbd>⇧</Kbd> for a range
+          </span>
+        )}
         {toolbarRightExtra}
         {mobileCard && (
           <span className="hidden md:inline-flex">
@@ -401,7 +364,7 @@ export function DataTable<TData>({
           loading={loading}
           fetching={fetching}
           selectable={selectable}
-          selectedIds={selectedIds}
+          isSelected={isSelected}
           toggleRow={toggleRow}
         />
       ) : showCardGrid ? (
@@ -417,7 +380,7 @@ export function DataTable<TData>({
           loading={loading}
           fetching={fetching}
           selectable={selectable}
-          selectedIds={selectedIds}
+          isSelected={isSelected}
           toggleRow={toggleRow}
         />
       ) : (
@@ -425,17 +388,6 @@ export function DataTable<TData>({
           <TableHeader>
             {table.getHeaderGroups().map((group) => (
               <TableRow key={group.id} className="hover:bg-transparent">
-                {selectable && (
-                  <TableHead className="w-9 pr-0">
-                    <Checkbox
-                      size="sm"
-                      checked={allOnPageSelected}
-                      indeterminate={someOnPageSelected && !allOnPageSelected}
-                      onChange={toggleAllOnPage}
-                      aria-label={allOnPageSelected ? 'Deselect all on page' : 'Select all on page'}
-                    />
-                  </TableHead>
-                )}
                 {group.headers.map((header) => {
                   if (header.isPlaceholder) return <TableHead key={header.id} />;
                   return (
@@ -465,25 +417,16 @@ export function DataTable<TData>({
               table.getRowModel().rows.map((row) => {
                 const href = rowLinkTo(row.original);
                 const rowId = row.id;
-                const isSelected = selectable && (selectedIds?.has(rowId) ?? false);
+                const selected = isSelected(rowId);
                 return (
                   <TableRow
                     key={row.id}
-                    className={isSelected ? 'bg-accent/40 relative' : 'relative'}
+                    className={
+                      selected
+                        ? 'relative bg-[var(--accent-glow)] hover:bg-[var(--accent-glow)]'
+                        : 'relative'
+                    }
                   >
-                    {selectable && (
-                      <TableCell className="w-9 pr-0">
-                        <span className="relative z-10 inline-flex">
-                          <Checkbox
-                            size="sm"
-                            checked={isSelected}
-                            onChange={() => toggleRow(rowId)}
-                            onClick={(e) => e.stopPropagation()}
-                            aria-label={isSelected ? 'Deselect row' : 'Select row'}
-                          />
-                        </span>
-                      </TableCell>
-                    )}
                     {row.getVisibleCells().map((cell, idx) => (
                       <TableCell key={cell.id}>
                         {idx === 0 && (
@@ -494,7 +437,17 @@ export function DataTable<TData>({
                           />
                         )}
                         <span className="relative">
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          {selectable && cell.column.id === SLOT_COLUMN ? (
+                            <SelectableSlot
+                              tile={flexRender(cell.column.columnDef.cell, cell.getContext())}
+                              size={36}
+                              selected={selected}
+                              label={String(row.getValue('name') ?? rowId)}
+                              onToggle={(e) => toggleRow(rowId, e.shiftKey)}
+                            />
+                          ) : (
+                            flexRender(cell.column.columnDef.cell, cell.getContext())
+                          )}
                         </span>
                       </TableCell>
                     ))}
@@ -513,6 +466,14 @@ export function DataTable<TData>({
           params={savedSearch.paramsToSave()}
           onClose={() => setSaveOpen(false)}
           onSaved={(s) => setState({ saved: s.id })}
+        />
+      )}
+      {selectable && (
+        <SelectionDockHost
+          selection={selection}
+          entity={entity}
+          total={total}
+          resolveAll={resolveAll}
         />
       )}
       <ManageSavedSearchesDialog

@@ -26,6 +26,8 @@ export interface EntityCardProps {
   /** Accent border, for a card picked in a multi-select */
   selected?: boolean;
   onClick?: () => void;
+  /** Lift on hover. Turn off when the card's container animates hover itself. */
+  lift?: boolean;
 }
 
 export function EntityCard({
@@ -41,6 +43,7 @@ export function EntityCard({
   tags = [],
   selected,
   onClick,
+  lift = true,
 }: EntityCardProps) {
   const [h, setH] = useState(false);
   return (
@@ -59,7 +62,7 @@ export function EntityCard({
         gap: 10,
         cursor: onClick ? 'pointer' : 'default',
         transition: 'transform var(--dur-base) var(--ease-spring)',
-        transform: h ? 'translateY(-4px) rotate(-.4deg)' : 'none',
+        transform: lift && h ? 'translateY(-4px) rotate(-.4deg)' : 'none',
       }}
     >
       <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>

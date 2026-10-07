@@ -1,5 +1,5 @@
 import { useContext, type ReactNode } from 'react';
-import { Chip, EntityCard } from '@scrolled/design';
+import { Chip, EntityCard, SelectableSlot } from '@scrolled/design';
 import type { EntityKind } from '@scrolled/game-db/db/types';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 import { ListCardLayoutContext, type ListCardStat } from './listCardLayout';
@@ -34,13 +34,31 @@ export function ListCardBody({
   stats = [],
   tags,
 }: ListCardBodyProps) {
-  const { variant, selected, extraStats = [] } = useContext(ListCardLayoutContext);
+  const { variant, selected, extraStats = [], onToggleSelect } = useContext(ListCardLayoutContext);
   const altText = alt ?? (typeof name === 'string' ? name : undefined);
+  const avatar = (size: number, spotlight?: boolean) => {
+    const tile = (
+      <EntityAvatar entity={entity} id={id} size={size} spotlight={spotlight} alt={altText} />
+    );
+    if (!onToggleSelect) return tile;
+    // Lifted above the card's full-cover link so the picture takes its own clicks.
+    return (
+      <span className="pointer-events-auto relative z-10 inline-flex">
+        <SelectableSlot
+          tile={tile}
+          size={size}
+          selected={!!selected}
+          label={altText ?? String(id)}
+          onToggle={onToggleSelect}
+        />
+      </span>
+    );
+  };
 
   if (variant === 'tall') {
     return (
       <EntityCard
-        media={<EntityAvatar entity={entity} id={id} size={60} spotlight alt={altText} />}
+        media={avatar(60, true)}
         name={name}
         badge={badge}
         subtitle={subtitle}
@@ -51,6 +69,9 @@ export function ListCardBody({
         }))}
         tags={tags}
         selected={selected}
+        // The grid item lifts the card; a second lift here would pull the
+        // picture out from under the pointer and bounce.
+        lift={false}
       />
     );
   }
@@ -58,7 +79,7 @@ export function ListCardBody({
   const shown = stats.slice(0, COMPACT_STATS);
   return (
     <div className="flex items-center gap-3">
-      <EntityAvatar entity={entity} id={id} size={52} alt={altText} />
+      {avatar(52)}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
           <span className="truncate text-sm font-bold">{name}</span>

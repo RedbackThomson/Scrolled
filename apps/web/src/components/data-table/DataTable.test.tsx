@@ -17,6 +17,7 @@ vi.mock('@/db', async (importOriginal) => ({
   ...(await importOriginal<typeof DbModule>()),
   getDbClient: () => ({
     countMatchingMany: async (_source: string, sets: unknown[]) => sets.map(() => 3),
+    matchingIds: async () => Array.from({ length: 47 }, (_, i) => i + 1),
     columnHistogram: async () => ({
       min: 10,
       max: 30,
@@ -28,6 +29,11 @@ vi.mock('@/db', async (importOriginal) => ({
 
 const userDb = vi.hoisted(() => ({
   saved: [] as PinnedSearchRecord[],
+  bulkAddMembers: vi.fn(async (_c: number, refs: { entityId: number }[], _g: number | null) => ({
+    added: refs.length,
+    skipped: 0,
+    addedRefs: refs,
+  })),
   updatePinnedSearch: vi.fn(async (id: number, patch: Partial<PinnedSearchRecord>) => {
     const row = userDb.saved.find((s) => s.id === id)!;
     Object.assign(row, patch);
@@ -40,6 +46,10 @@ vi.mock('@/db/user', async (importOriginal) => ({
   getUserDbClient: () => ({
     listPinnedSearches: async () => userDb.saved,
     updatePinnedSearch: userDb.updatePinnedSearch,
+    bulkAddMembers: userDb.bulkAddMembers,
+    listCollections: async () => [
+      { id: 1, name: 'Bossing', icon: null, color: null, memberCount: 4 },
+    ],
     getUserSetting: async () => null,
     setUserSetting: async (key: string, value: string) => ({ key, value, updatedAt: 0 }),
   }),
@@ -271,6 +281,33 @@ describe('DataTable', () => {
       }),
     );
     userDb.saved = [];
+  });
+
+  it('selects rows by their sprite, shift-clicks a range, and adds every match to a collection', async () => {
+    const user = userEvent.setup();
+    renderHarness({ data: ROWS, total: 47 });
+
+    await user.click(screen.getByRole('checkbox', { name: 'Alpha' }));
+    await user.keyboard('{Shift>}');
+    await user.click(screen.getByRole('checkbox', { name: 'Gamma' }));
+    await user.keyboard('{/Shift}');
+    expect(screen.getByRole('checkbox', { name: 'Beta' })).toHaveAttribute('aria-checked', 'true');
+    const dock = screen.getByRole('toolbar', { name: 'Selection' });
+    expect(within(dock).getByText('3 selected')).toBeInTheDocument();
+
+    await user.click(within(dock).getByRole('button', { name: 'Select all 47' }));
+    expect(within(dock).getByText('All 47 selected')).toBeInTheDocument();
+
+    await user.click(within(dock).getByRole('button', { name: /Add to collection/ }));
+    const picker = await screen.findByRole('dialog', { name: 'Add to collection' });
+    await user.click(await within(picker).findByRole('button', { name: /^Bossing/ }));
+
+    await waitFor(() => expect(userDb.bulkAddMembers).toHaveBeenCalled());
+    const [collectionId, refs, groupId] = userDb.bulkAddMembers.mock.calls[0]!;
+    expect(collectionId).toBe(1);
+    expect(refs).toHaveLength(47);
+    expect(groupId).toBeNull();
+    await waitFor(() => expect(screen.queryByRole('toolbar', { name: 'Selection' })).toBeNull());
   });
 
   it('/ focuses the filter field', async () => {

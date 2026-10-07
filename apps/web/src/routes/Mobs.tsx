@@ -1,7 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { DataTable, useColumnFilters, useTableUrlState } from '@/components/data-table';
-import { CollectionsBulkAddMenu } from '@/components/collections';
 import { TablePageLayout } from '@/components/layout/TablePageLayout';
 import { getDbClient } from '@/db';
 import { ELEMENT_ORDER } from '@scrolled/game-db/domain/mobElements';
@@ -26,7 +25,6 @@ export default function Mobs() {
     defaultVisible,
   });
   const { filters, setFilter, clearAll, active: filtersActive } = useColumnFilters(columns);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const mobsQ = useQuery({
     queryKey: [
@@ -89,18 +87,6 @@ export default function Mobs() {
           strongAgainst: ELEMENT_ENUM_OPTIONS,
           immuneTo: ELEMENT_ENUM_OPTIONS,
         }}
-        selectable
-        selectedIds={selectedIds}
-        onSelectionChange={setSelectedIds}
-        toolbarExtra={
-          selectedIds.size > 0 ? (
-            <CollectionsBulkAddMenu
-              entityType="mob"
-              selectedIds={selectedIds}
-              onClear={() => setSelectedIds(new Set())}
-            />
-          ) : undefined
-        }
       />
     </TablePageLayout>
   );

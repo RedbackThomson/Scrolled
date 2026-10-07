@@ -1,4 +1,4 @@
-import type { MouseEvent } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 import { Check, Plus } from 'lucide-react';
 import { Icon } from '../core/Icon';
 import { SlotTile, type SlotTileProps } from '../entity/SlotTile';
@@ -11,6 +11,8 @@ export interface SelectableSlotProps extends SlotTileProps {
   label: string;
   /** Selection mode on touch: show the dashed outline without hover */
   selecting?: boolean;
+  /** A ready-made tile (e.g. an app's entity avatar) in place of the SlotTile; match `size` */
+  tile?: ReactNode;
 }
 
 /** A sprite slot that doubles as the row's checkbox. Clicking it never reaches the row. */
@@ -19,8 +21,9 @@ export function SelectableSlot({
   onToggle,
   label,
   selecting,
+  tile,
   size = 36,
-  ...tile
+  ...tileProps
 }: SelectableSlotProps) {
   const radius = Math.round(size * 0.28);
   const overlay = {
@@ -57,7 +60,7 @@ export function SelectableSlot({
         cursor: 'pointer',
       }}
     >
-      <SlotTile size={size} {...tile} />
+      {tile ?? <SlotTile size={size} {...tileProps} />}
       {selected ? (
         <span
           aria-hidden
