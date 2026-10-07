@@ -390,7 +390,7 @@ dependencies than Scrolled.
 |---|---|---|
 | Build / lang | **Vite + TypeScript (strict)** | As requested; aligns tooling across the monorepo. |
 | UI runtime | **React 18** | Required to consume `@scrolled/ui`. The one non-negotiable. |
-| Styling | **Tailwind v3 + `@scrolled/ui` preset/tokens** | Delivers the shared design language. |
+| Styling | **Tailwind v3 + `@scrolled/ui` preset over `@scrolled/design` tokens** | Delivers the shared design language. |
 | Graph view | **React Flow (`@xyflow/react` v12) + `d3-force`** | The heart of the app; new to the monorepo, justified below. |
 | UI state | **Zustand** | Tiny, ergonomic; happens to match Scrolled — kept on merit, not convention. |
 | URL state | **`nuqs`** (or native `URLSearchParams`) | Makes start/end/eligibility a **shareable link** — a core use case. |

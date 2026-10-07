@@ -18,26 +18,26 @@
   }
 }
 
-/* Map React Flow's themable CSS variables onto our shadcn tokens so the
+/* Map React Flow's themable CSS variables onto the design tokens so the
    Background, MiniMap, Controls, and default edges follow light/dark mode.
    Kept OUTSIDE @layer base so React Flow's unlayered defaults don't win the
    cascade (unlayered styles beat layered ones). Var list:
    node_modules/@xyflow/react/dist/style.css. */
 .react-flow {
-  --xy-background-color: hsl(var(--background));
-  --xy-background-pattern-color: hsl(var(--muted-foreground) / 0.35);
-  --xy-edge-stroke: hsl(var(--muted-foreground));
-  --xy-edge-stroke-selected: hsl(var(--primary));
-  --xy-handle-background-color: hsl(var(--muted-foreground));
-  --xy-handle-border-color: hsl(var(--background));
-  --xy-controls-button-background-color: hsl(var(--card));
-  --xy-controls-button-background-color-hover: hsl(var(--accent-surface));
-  --xy-controls-button-color: hsl(var(--foreground));
-  --xy-controls-button-color-hover: hsl(var(--accent-surface-foreground));
-  --xy-controls-button-border-color: hsl(var(--border));
-  --xy-minimap-background-color: hsl(var(--card));
-  --xy-minimap-mask-background-color: hsl(var(--background) / 0.6);
-  --xy-minimap-mask-stroke-color: hsl(var(--border));
-  --xy-minimap-node-background-color: hsl(var(--muted-foreground));
-  --xy-minimap-node-stroke-color: hsl(var(--border));
+  --xy-background-color: var(--surface-page);
+  --xy-background-pattern-color: color-mix(in oklab, var(--text-2) 35%, transparent);
+  --xy-edge-stroke: var(--text-2);
+  --xy-edge-stroke-selected: var(--accent);
+  --xy-handle-background-color: var(--text-2);
+  --xy-handle-border-color: var(--surface-page);
+  --xy-controls-button-background-color: var(--surface-card);
+  --xy-controls-button-background-color-hover: var(--surface-row-hover);
+  --xy-controls-button-color: var(--text-1);
+  --xy-controls-button-color-hover: var(--text-1);
+  --xy-controls-button-border-color: var(--border-1);
+  --xy-minimap-background-color: var(--surface-card);
+  --xy-minimap-mask-background-color: color-mix(in oklab, var(--surface-page) 60%, transparent);
+  --xy-minimap-mask-stroke-color: var(--border-1);
+  --xy-minimap-node-background-color: var(--text-2);
+  --xy-minimap-node-stroke-color: var(--border-1);
 }

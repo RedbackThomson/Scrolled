@@ -1,6 +1,13 @@
 import type { Config } from 'tailwindcss';
 import animate from 'tailwindcss-animate';
 
+// The color variables come from @scrolled/design's tokens.css and hold finished
+// colors (hex/oklch), so opacity modifiers like `bg-muted/40` go through
+// color-mix rather than the `hsl(var(--x) / a)` channel trick.
+const mix = (color: string) =>
+  `color-mix(in oklab, ${color} calc(<alpha-value> * 100%), transparent)`;
+const token = (name: string) => mix(`var(${name})`);
+
 const preset: Partial<Config> = {
   darkMode: 'class',
   theme: {
@@ -13,56 +20,60 @@ const preset: Partial<Config> = {
     },
     extend: {
       colors: {
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
+        border: token('--border-1'),
+        input: token('--border-1'),
+        ring: token('--accent'),
+        background: token('--surface-page'),
+        foreground: token('--text-1'),
         primary: {
-          DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
+          DEFAULT: token('--accent'),
+          foreground: token('--accent-fg'),
         },
         secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))',
+          DEFAULT: token('--surface-sunken'),
+          foreground: token('--text-1'),
         },
         destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
+          DEFAULT: token('--danger'),
+          foreground: mix('#fff'),
         },
         muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
+          DEFAULT: token('--surface-sunken'),
+          foreground: token('--text-2'),
         },
         accent: {
-          DEFAULT: 'hsl(var(--accent-surface))',
-          foreground: 'hsl(var(--accent-surface-foreground))',
+          DEFAULT: token('--surface-row-hover'),
+          foreground: token('--text-1'),
         },
         card: {
-          DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))',
+          DEFAULT: token('--surface-card'),
+          foreground: token('--text-1'),
         },
         sidebar: {
-          DEFAULT: 'hsl(var(--sidebar))',
-          foreground: 'hsl(var(--sidebar-foreground))',
-          muted: 'hsl(var(--sidebar-muted))',
+          DEFAULT: token('--surface-sidebar'),
+          foreground: token('--text-1'),
+          muted: token('--text-2'),
         },
       },
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        sm: 'var(--radius-sm)',
+        md: 'var(--radius-md)',
+        lg: 'var(--radius-lg)',
+        xl: 'var(--radius-xl)',
+        '2xl': 'var(--radius-2xl)',
+      },
+      boxShadow: {
+        rim: 'var(--shadow-rim)',
+        float: 'var(--shadow-float)',
+        pop: 'var(--shadow-pop)',
+        slot: 'var(--shadow-slot)',
+      },
+      transitionTimingFunction: {
+        spring: 'var(--ease-spring)',
       },
       fontFamily: {
-        sans: [
-          'Inter',
-          'system-ui',
-          '-apple-system',
-          'BlinkMacSystemFont',
-          'Segoe UI',
-          'Helvetica Neue',
-          'sans-serif',
-        ],
+        sans: ['Figtree', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+        display: ['Fredoka', 'Figtree', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
     },

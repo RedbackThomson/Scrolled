@@ -68,7 +68,7 @@ export function TravelEdgeView({
   const onPath = data?.onPath ?? false;
   const count = data?.count ?? 1;
   const opacity = data?.opacity ?? 1;
-  const stroke = onPath ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))';
+  const stroke = onPath ? 'var(--accent)' : 'var(--text-2)';
 
   return (
     <>

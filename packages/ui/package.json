@@ -3,11 +3,10 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Shared design system for Scrolled apps: Tailwind preset + CSS-variable token block (incl. the accent system), cn(), shadcn primitives, HoverPopover, useTheme (with injected persistence), and PanZoomCanvas.",
+  "description": "Shared UI for Scrolled apps: Tailwind preset over the @scrolled/design tokens, cn(), shadcn primitives, HoverPopover, useTheme (with injected persistence), and PanZoomCanvas.",
   "exports": {
     ".": "./src/index.ts",
-    "./tailwind-preset": "./src/tailwind-preset.ts",
-    "./tokens.css": "./src/tokens.css"
+    "./tailwind-preset": "./src/tailwind-preset.ts"
   },
   "scripts": {
     "test": "vitest run --passWithNoTests",

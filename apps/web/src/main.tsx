@@ -14,7 +14,6 @@ import { createIdentityProvider } from '@/identity/createProvider';
 import { createSyncProvider } from '@/sync/createProvider';
 import { SyncEngineHost } from '@/sync/SyncEngineHost';
 import { bootstrapSyncedState } from '@/lib/syncedStateBootstrap';
-import '@scrolled/ui/tokens.css';
 import '@scrolled/design/tokens.css';
 import '@/styles/index.css';
 

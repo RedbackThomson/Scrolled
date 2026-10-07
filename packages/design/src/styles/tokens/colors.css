@@ -1,6 +1,7 @@
 /* Scrolled color tokens. Light is default; dark via .dark or [data-theme="dark"] on <html>.
    The accent picker sets [data-accent] and only swaps --accent-h (hue). */
 :root {
+  color-scheme: light;
   --accent-h: 148;
   /* Neutrals: sky-washed */
   --sky-25: #f5faff;
@@ -109,6 +110,7 @@
 }
 .dark,
 [data-theme='dark'] {
+  color-scheme: dark;
   --surface-page: var(--twilight-950);
   --surface-page-top: var(--twilight-850);
   --surface-sidebar: var(--twilight-900);

@@ -23,10 +23,10 @@ beforeEach(() => {
   document.documentElement.removeAttribute('data-accent');
   vi.spyOn(window, 'getComputedStyle').mockImplementation((el) => {
     const accent =
-      el === document.documentElement ? document.documentElement.dataset.accent ?? '' : '';
+      el === document.documentElement ? (document.documentElement.dataset.accent ?? '') : '';
     return {
       getPropertyValue: (name: string) =>
-        name === '--background' && accent ? `bg-${accent}` : '',
+        name === '--surface-page' && accent ? `bg-${accent}` : '',
     } as CSSStyleDeclaration;
   });
 });
@@ -69,8 +69,8 @@ describe('accent store', () => {
     const meta = setMeta('#000000');
     localStorage.setItem(STORAGE_KEY, 'rose');
     const { useAccent } = await loadStore();
-    expect(meta.content).toBe('hsl(bg-rose)');
+    expect(meta.content).toBe('bg-rose');
     useAccent.getState().setAccent('amber');
-    expect(meta.content).toBe('hsl(bg-amber)');
+    expect(meta.content).toBe('bg-amber');
   });
 });

@@ -163,7 +163,7 @@ function GraphCanvasInner({ graph }: GraphCanvasProps) {
         // Arrowheads only clutter the overview — reserve them for the route,
         // where travel direction actually matters.
         const marker = e.onPath
-          ? { type: MarkerType.ArrowClosed, color: 'hsl(var(--primary))' }
+          ? { type: MarkerType.ArrowClosed, color: 'var(--accent)' }
           : undefined;
         return {
           id: e.id,

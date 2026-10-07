@@ -87,7 +87,7 @@ Schema and join-table inventory follow §8.4 of the MVP doc.
 
 ### 2.9 Component library
 
-- **`@scrolled/design`** (`packages/design`) holds the redesign's components, ported from the design hand-off as React + TypeScript with inline styles over CSS custom properties (`src/styles/tokens/`). It sits beside `@scrolled/ui` while screens migrate; both apps load its `tokens.css`, which defines variables, keyframes and fonts only, so it changes nothing until a screen opts in. `base.css` carries the element styles and the `data-motion` / reduced-motion overrides and is adopted with the new shell.
+- **`@scrolled/design`** (`packages/design`) holds the redesign's components, ported from the design hand-off as React + TypeScript with inline styles over CSS custom properties (`src/styles/tokens/`). Its `tokens.css` (variables, keyframes, fonts) is the single source of color, type, radius and shadow tokens: both apps load it, and the `@scrolled/ui` Tailwind preset maps the shadcn color names (`background`, `primary`, `muted`, …) onto it through `color-mix()` so opacity modifiers keep working. `base.css` carries the element styles and the `data-motion` / reduced-motion overrides and is adopted with the new shell.
 - **Storybook 8** (`pnpm storybook`) documents every component, with toolbar controls for theme, accent, motion and backdrop. Stories use Lucide icons and invented names only; no sprites or game names.
 - **Fonts** are self-hosted through `@fontsource` (Figtree, Fredoka, JetBrains Mono; latin + latin-ext subsets) so the app never fetches fonts at runtime.
 
@@ -117,8 +117,8 @@ Schema and join-table inventory follow §8.4 of the MVP doc.
 ### 3.2 Visual
 
 - **Themes**: light and dark, via Tailwind's `class` strategy, defaulting to system preference. Persisted per user.
-- **Palette**: neutral slate/zinc tokens. No proprietary game branding.
-- **Typography**: system font stack + Inter for UI text; JetBrains Mono for IDs and inline code. The redesign (`@scrolled/design`) moves to Figtree for UI text and Fredoka for display headings.
+- **Palette**: sky-washed light and twilight-navy dark tokens from `@scrolled/design`; the accent picker sets only the hue (`--accent-h`). No proprietary game branding.
+- **Typography**: Figtree for UI text (`font-sans`), Fredoka for display headings (`font-display`), JetBrains Mono for IDs and inline code.
 - **Density**: medium-default with an optional compact mode for power users (toggle in settings).
 - **Iconography**: Lucide throughout.
 

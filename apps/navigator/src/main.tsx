@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client';
 import { setThemePersistence } from '@scrolled/ui';
 
 import { App } from '@/App';
-import '@scrolled/ui/tokens.css';
 import '@scrolled/design/tokens.css';
 import '@xyflow/react/dist/style.css';
 import '@/styles/index.css';
