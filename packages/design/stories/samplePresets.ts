@@ -8,3 +8,6 @@ export const SAMPLE_PRESETS: [LucideIcon, string, number, number][] = [
   [Coins, 'Sold by NPCs', 41, 75],
   [Crown, 'Boss drops', 19, 60],
 ];
+
+/** A 14-bin level distribution peaking in the 30s–40s */
+export const SAMPLE_LEVEL_BINS = [3, 5, 9, 14, 22, 36, 54, 66, 48, 33, 24, 18, 12, 6];

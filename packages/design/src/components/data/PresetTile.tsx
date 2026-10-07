@@ -2,6 +2,8 @@ import { useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { Icon } from '../core/Icon';
 
+const ELLIPSIS = { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } as const;
+
 export interface PresetTileProps {
   icon: LucideIcon;
   label: string;
@@ -11,6 +13,10 @@ export interface PresetTileProps {
   onClick?: () => void;
   /** Pill form for mobile / tight rows; sized to a 44px touch target */
   compact?: boolean;
+  /** Shown after the count, e.g. "pinned" */
+  meta?: string;
+  /** A loaded saved search whose filters have since changed: a gold dot */
+  dirty?: boolean;
 }
 
 export function PresetTile({
@@ -21,6 +27,8 @@ export function PresetTile({
   active,
   onClick,
   compact,
+  meta,
+  dirty,
 }: PresetTileProps) {
   const [hovered, setHovered] = useState(false);
   const edge = active ? `oklch(0.66 0.14 ${hue})` : 'var(--border-1)';
@@ -52,8 +60,27 @@ export function PresetTile({
         cursor: 'pointer',
         transition: 'transform var(--dur-base) var(--ease-spring)',
         transform: hovered ? 'translateY(-3px)' : 'none',
+        position: 'relative',
+        minWidth: 0,
       }}
     >
+      {dirty && (
+        <span
+          aria-hidden
+          className="animate-pop"
+          style={{
+            position: 'absolute',
+            top: compact ? -2 : 5,
+            right: compact ? -2 : 5,
+            width: compact ? 9 : 8,
+            height: compact ? 9 : 8,
+            borderRadius: '50%',
+            background: 'var(--gold)',
+            boxShadow: '0 0 0 3px var(--gold-hi)',
+          }}
+        />
+      )}
+      {dirty && <span className="sr-only">Changed. </span>}
       <span
         style={{
           width: compact ? 22 : 32,
@@ -72,10 +99,15 @@ export function PresetTile({
         <span style={{ fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap' }}>{label}</span>
       ) : (
         <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0, lineHeight: 1.2 }}>
-          <span style={{ font: '600 14px var(--font-display)' }}>{label}</span>
-          {count != null && (
-            <span style={{ fontSize: 11.5, color: 'var(--text-2)' }}>
-              {count.toLocaleString()} {count === 1 ? 'result' : 'results'}
+          <span style={{ font: '600 14px var(--font-display)', ...ELLIPSIS }}>{label}</span>
+          {(count != null || meta) && (
+            <span style={{ fontSize: 11.5, color: 'var(--text-2)', ...ELLIPSIS }}>
+              {[
+                count != null && `${count.toLocaleString()} ${count === 1 ? 'result' : 'results'}`,
+                meta,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
             </span>
           )}
         </span>

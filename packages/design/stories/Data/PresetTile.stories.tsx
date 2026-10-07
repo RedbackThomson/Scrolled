@@ -37,6 +37,21 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
 export const Active: Story = { args: { active: true } };
 export const Compact: Story = { args: { compact: true } };
+export const SavedPinned: Story = {
+  args: { label: 'Thief claws 30–50', hue: 300, count: 38, meta: 'pinned' },
+};
+/** A loaded saved search whose filters have changed since it was saved. */
+export const Dirty: Story = {
+  args: {
+    label: 'Thief claws 30–50',
+    hue: 300,
+    count: 38,
+    meta: 'pinned',
+    active: true,
+    dirty: true,
+  },
+};
+export const CompactDirty: Story = { args: { compact: true, active: true, dirty: true } };
 export const Shelf: Story = {
   decorators: [
     (Story) => (

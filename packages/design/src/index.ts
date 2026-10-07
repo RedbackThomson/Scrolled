@@ -25,7 +25,11 @@ export {
   type CheckboxIndicatorProps,
 } from './components/forms/Checkbox';
 export * from './components/forms/Input';
-export { RangeSlider, type RangeSliderProps } from './components/forms/RangeSlider';
+export {
+  RangeSlider,
+  type RangeSliderProps,
+  type RangeSliderQuickRange,
+} from './components/forms/RangeSlider';
 export { SearchPill, type SearchPillProps } from './components/forms/SearchPill';
 export { Segmented, type SegmentedOption, type SegmentedProps } from './components/forms/Segmented';
 export {
@@ -82,6 +86,22 @@ export { Toast, type ToastProps } from './components/overlays/Toast';
 export { FilterChip, type FilterChipProps } from './components/data/FilterChip';
 export * from './components/data/Table';
 export { PresetTile, type PresetTileProps } from './components/data/PresetTile';
+export { FacetPill, type FacetPillProps } from './components/data/FacetPill';
+export {
+  FacetBar,
+  FACET_BAR_PLACEHOLDER,
+  type FacetBarChip,
+  type FacetBarFacet,
+  type FacetBarProps,
+} from './components/data/FacetBar';
+export {
+  SuggestionList,
+  type SuggestionItem,
+  type SuggestionListProps,
+} from './components/data/SuggestionList';
+export { Histogram, type HistogramProps } from './components/data/Histogram';
+export { SelectableSlot, type SelectableSlotProps } from './components/data/SelectableSlot';
+export { SelectionDock, type SelectionDockProps } from './components/data/SelectionDock';
 
 export { Banner, type BannerProps } from './components/feedback/Banner';
 export { ConfettiBurst, type ConfettiBurstProps } from './components/feedback/ConfettiBurst';
