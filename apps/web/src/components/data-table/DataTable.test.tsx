@@ -174,7 +174,7 @@ describe('DataTable', () => {
     const onUrlUpdate = vi.fn<(e: UrlUpdateEvent) => void>();
     renderHarness({ data: ROWS, total: 3, onUrlUpdate });
 
-    await user.type(screen.getByRole('textbox', { name: 'Filter by name' }), 'Alp');
+    await user.type(screen.getByRole('combobox', { name: 'Filter by name' }), 'Alp');
     await waitFor(() => {
       const params = onUrlUpdate.mock.calls.at(-1)?.[0].searchParams;
       expect(params?.get('f_name')).toBe('Alp');
@@ -185,14 +185,33 @@ describe('DataTable', () => {
       const params = onUrlUpdate.mock.calls.at(-1)?.[0].searchParams;
       expect(params?.get('f_name')).toBeNull();
     });
-    expect(screen.getByRole('textbox', { name: 'Filter by name' })).toHaveValue('');
+    expect(screen.getByRole('combobox', { name: 'Filter by name' })).toHaveValue('');
+  });
+
+  it('a typed range becomes a facet on Enter and clears from the field', async () => {
+    const user = userEvent.setup();
+    const onUrlUpdate = vi.fn<(e: UrlUpdateEvent) => void>();
+    renderHarness({ data: ROWS, total: 3, onUrlUpdate });
+
+    const field = screen.getByRole('combobox', { name: 'Filter by name' });
+    await user.type(field, '10-20');
+    expect(await screen.findByRole('option', { name: /Level\s*10 – 20/ })).toBeInTheDocument();
+    await user.keyboard('{Enter}');
+
+    await waitFor(() => {
+      const params = onUrlUpdate.mock.calls.at(-1)?.[0].searchParams;
+      expect(params?.get('f_level_min')).toBe('10');
+      expect(params?.get('f_level_max')).toBe('20');
+      expect(params?.get('f_name')).toBeNull();
+    });
+    expect(field).toHaveValue('');
   });
 
   it('/ focuses the filter field', async () => {
     const user = userEvent.setup();
     renderHarness({ data: ROWS, total: 3 });
     await user.keyboard('/');
-    const field = screen.getByRole('textbox', { name: 'Filter by name' });
+    const field = screen.getByRole('combobox', { name: 'Filter by name' });
     expect(field).toHaveFocus();
     expect(field).toHaveValue('');
   });

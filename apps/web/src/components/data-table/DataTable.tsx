@@ -287,6 +287,7 @@ export function DataTable<TData>({
           source={source}
           filters={columnFilters ?? {}}
           onChange={onColumnFilterChange}
+          entityPlural={entityPlural}
         />
       )}
       <ListMetaRow

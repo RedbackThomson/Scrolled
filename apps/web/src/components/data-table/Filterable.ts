@@ -1,10 +1,11 @@
 import type { ColumnDef } from '@tanstack/react-table';
+import type { LucideIcon } from 'lucide-react';
 
 interface FilterableCol {
   id: string;
   label: string;
   type: 'string' | 'number' | 'enum' | 'boolean';
-  icon?: React.ComponentType<{ className?: string }>;
+  icon?: LucideIcon;
   enumOptions?: readonly string[];
   enumLabel?: (value: string) => string;
   booleanLabels?: { trueLabel: string; falseLabel: string };
