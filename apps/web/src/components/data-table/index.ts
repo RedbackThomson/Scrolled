@@ -5,6 +5,7 @@ export {
   type TableUrlState,
   type TableUrlStatePatch,
   type TableSortDir,
+  type TableView,
   type TableUrlStateOptions,
 } from './useTableUrlState';
 export { useColumnFilters, type UseColumnFiltersResult } from './useColumnFilters';

@@ -2,6 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { AlertTriangle, Folder, GitBranch, GitMerge, Hash, Layers, Network } from 'lucide-react';
 import { QuestChainLink, QuestLink } from '@/components/entity-links';
 import type { QuestChainListRow } from '@/db';
+import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 
 export const columns: ColumnDef<QuestChainListRow>[] = [
   {
@@ -124,7 +125,7 @@ export function mobileCard(row: QuestChainListRow) {
   if (row.parent) meta.push(row.parent);
   return (
     <div className="flex items-center gap-3">
-      <GitBranch className="text-muted-foreground h-8 w-8 shrink-0" aria-hidden />
+      <EntityAvatar entity="questChain" id={row.id} size={52} />
       <div className="min-w-0 flex-1">
         <div className="truncate font-medium">{row.name}</div>
         <div className="text-muted-foreground truncate text-xs">{meta.join(' · ')}</div>

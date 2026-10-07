@@ -24,13 +24,13 @@ export function TablePageLayout({
   return (
     <div className="max-w-6xl space-y-3">
       <header>
-        <h1 className="text-xl font-semibold tracking-tight md:text-3xl">{title}</h1>
-        {description && <p className="text-muted-foreground text-sm md:mt-2">{description}</p>}
+        <h1 className="font-display text-2xl font-semibold leading-none md:text-4xl">{title}</h1>
+        {description && <p className="text-muted-foreground mt-2 text-sm">{description}</p>}
       </header>
 
       <section className="space-y-3 md:space-y-3">
         {isEmpty ? (
-          <div className="border-border bg-muted/40 rounded-md border p-6 text-center text-sm">
+          <div className="border-border bg-card shadow-rim rounded-lg border-2 p-6 text-center text-sm">
             <p className="text-muted-foreground">
               {appConfig.features.enableUserImport ? (
                 <>

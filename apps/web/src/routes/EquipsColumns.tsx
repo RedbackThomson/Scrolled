@@ -17,6 +17,7 @@ import type { EquipRecord } from '@/db';
 import { ABILITY_STAT_FIELDS } from '@scrolled/game-db/domain/abilityStats';
 import { labelForEquipSlot } from '@scrolled/game-db/domain/equipTypes';
 import { isAnyClass, parseEquipReqJob } from '@scrolled/game-db/domain/equipJobs';
+import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 
 const num = (v: number | null) => (v === null ? '—' : v.toLocaleString());
 
@@ -168,7 +169,7 @@ export function mobileCard(row: EquipRecord) {
   if (row.requiredLevel !== null) meta.push(`Lvl ${row.requiredLevel}`);
   return (
     <div className="flex items-center gap-3">
-      <ItemIcon entity="equip" id={row.id} size={40} alt={row.name} />
+      <EntityAvatar entity="equip" id={row.id} size={52} alt={row.name} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
           <span className="truncate font-medium">{row.name}</span>

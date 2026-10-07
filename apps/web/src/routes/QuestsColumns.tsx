@@ -12,6 +12,7 @@ import {
 import { QuestLink } from '@/components/entity-links';
 import type { QuestRecord } from '@/db';
 import { formatDurationSeconds } from '@/lib/duration';
+import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 
 const numberFormatter = new Intl.NumberFormat();
 
@@ -124,7 +125,7 @@ export function mobileCard(row: QuestRecord) {
   if (row.requiredLevel !== null) meta.push(`Lvl ${row.requiredLevel}`);
   return (
     <div className="flex items-center gap-3">
-      <ScrollText className="text-muted-foreground h-8 w-8 shrink-0" aria-hidden />
+      <EntityAvatar entity="quest" id={row.id} size={52} />
       <div className="min-w-0 flex-1">
         <div className="truncate font-medium">{row.name}</div>
         {meta.length > 0 && (

@@ -63,7 +63,7 @@ export function MobileCards<TData>({
       : [];
   if (loading && data.length === 0) {
     return (
-      <div className="border-border bg-card text-muted-foreground rounded-md border px-3 py-6 text-center text-sm">
+      <div className="border-border bg-card text-muted-foreground shadow-rim rounded-lg border-2 px-3 py-6 text-center text-sm">
         <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
         Loading…
       </div>
@@ -71,7 +71,7 @@ export function MobileCards<TData>({
   }
   if (data.length === 0) {
     return (
-      <div className="border-border bg-card text-muted-foreground rounded-md border px-3 py-6 text-center text-sm">
+      <div className="border-border bg-card text-muted-foreground shadow-rim rounded-lg border-2 px-3 py-6 text-center text-sm">
         {emptyMessage}
       </div>
     );
@@ -79,7 +79,7 @@ export function MobileCards<TData>({
   return (
     <ul
       className={cn(
-        'border-border bg-card divide-border divide-y overflow-hidden rounded-md border transition-opacity',
+        'border-border bg-card shadow-rim divide-muted divide-y-[1.5px] overflow-hidden rounded-lg border-2 transition-opacity',
         fetching && 'opacity-60',
       )}
     >
@@ -88,10 +88,7 @@ export function MobileCards<TData>({
         const href = rowLinkTo(row);
         const isSelected = selectable && (selectedIds?.has(rowId) ?? false);
         return (
-          <li
-            key={rowId}
-            className={cn('relative flex items-stretch', isSelected && 'bg-accent/40')}
-          >
+          <li key={rowId} className={cn('relative flex items-stretch', isSelected && 'bg-muted')}>
             {selectable && (
               <label className="z-10 flex shrink-0 items-center pl-3">
                 <Input
@@ -107,7 +104,7 @@ export function MobileCards<TData>({
             <Link
               to={href}
               aria-label={`Open ${href}`}
-              className="focus-visible:ring-ring active:bg-accent flex min-h-[44px] min-w-0 flex-1 items-center gap-3 px-3 py-2.5 focus-visible:outline-none focus-visible:ring-2"
+              className="focus-visible:ring-primary/30 active:bg-muted flex min-h-[44px] min-w-0 flex-1 items-center gap-3 px-3 py-2.5 focus-visible:outline-none focus-visible:ring-2"
             >
               <div className="min-w-0 flex-1">
                 {mobileCard(row)}

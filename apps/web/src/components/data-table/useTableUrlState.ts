@@ -10,6 +10,9 @@ import {
 const SORT_DIR = ['asc', 'desc'] as const;
 export type TableSortDir = (typeof SORT_DIR)[number];
 
+const VIEWS = ['table', 'cards'] as const;
+export type TableView = (typeof VIEWS)[number];
+
 export interface TableUrlStateOptions {
   defaultSort: { id: string; dir: TableSortDir };
   defaultSize: number;
@@ -22,6 +25,7 @@ export interface TableUrlState {
   size: number;
   sort: string;
   dir: TableSortDir;
+  view: TableView;
 }
 
 export interface TableUrlStatePatch {
@@ -30,6 +34,7 @@ export interface TableUrlStatePatch {
   size?: number;
   sort?: string;
   dir?: TableSortDir;
+  view?: TableView;
   cols?: string[] | null;
 }
 
@@ -54,6 +59,7 @@ export function useTableUrlState(opts: TableUrlStateOptions) {
       dir: parseAsStringLiteral(SORT_DIR)
         .withDefault(defaultSort.dir)
         .withOptions({ clearOnDefault: true }),
+      view: parseAsStringLiteral(VIEWS).withDefault('table').withOptions({ clearOnDefault: true }),
       cols: parseAsArrayOf(parseAsString, ',').withOptions({ clearOnDefault: true }),
     },
     { history: 'replace' },
@@ -73,6 +79,7 @@ export function useTableUrlState(opts: TableUrlStateOptions) {
       size: state.size,
       sort: state.sort,
       dir: state.dir,
+      view: state.view,
     } satisfies TableUrlState,
     setState,
     visibleColumns,

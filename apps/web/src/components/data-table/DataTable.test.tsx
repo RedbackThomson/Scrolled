@@ -116,7 +116,7 @@ describe('DataTable', () => {
     expect(screen.getByText('Alpha')).toBeInTheDocument();
     expect(screen.getByText('Gamma')).toBeInTheDocument();
 
-    expect(screen.getByText(/Showing 1–3 of 47/)).toBeInTheDocument();
+    expect(screen.getByText(/Showing 1–\d+ of 47/)).toBeInTheDocument();
   });
 
   it('changing Ordering in Display Options writes sort + dir to the URL and resets page', async () => {

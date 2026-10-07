@@ -12,6 +12,7 @@ import { ArrowDown, ArrowUp, Settings2 } from 'lucide-react';
 import { usePopover } from '@/hooks/usePopover';
 import { cn } from '@scrolled/design';
 import type { TableUrlState, TableUrlStatePatch, TableSortDir } from './useTableUrlState';
+import { toolbarIconButton } from './toolbarStyles';
 
 interface DisplayOptionsMenuProps<TData> {
   table: Table<TData>;
@@ -49,7 +50,7 @@ export function DisplayOptionsMenu<TData>({
         ref={triggerRef}
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="border-input bg-background hover:bg-accent inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border"
+        className={toolbarIconButton(open)}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-label="Display options"
@@ -65,14 +66,14 @@ export function DisplayOptionsMenu<TData>({
             role="dialog"
             aria-label="Display options"
             style={{ position: 'fixed', top: coords.top, left: coords.left }}
-            className="border-border bg-card text-card-foreground z-50 w-72 rounded-md border p-3 shadow-md"
+            className="border-border bg-card text-card-foreground shadow-pop z-50 w-72 rounded-xl border-2 p-3"
           >
             {/* Grouping stubs — not URL-wired yet; the plan calls these out
              *  as placeholders that will gain real options in a follow-up. */}
             <Row label="Grouping">
               <select
                 disabled
-                className="border-input bg-background text-muted-foreground h-7 w-32 rounded-md border px-2 text-xs"
+                className="border-border bg-card text-muted-foreground h-7 w-32 rounded-[10px] border-2 px-2 text-xs"
               >
                 <option>No grouping</option>
               </select>
@@ -80,7 +81,7 @@ export function DisplayOptionsMenu<TData>({
             <Row label="Sub-grouping">
               <select
                 disabled
-                className="border-input bg-background text-muted-foreground h-7 w-32 rounded-md border px-2 text-xs"
+                className="border-border bg-card text-muted-foreground h-7 w-32 rounded-[10px] border-2 px-2 text-xs"
               >
                 <option>No grouping</option>
               </select>
@@ -91,7 +92,7 @@ export function DisplayOptionsMenu<TData>({
                 <select
                   value={state.sort}
                   onChange={(e) => setOrdering(e.target.value, state.dir)}
-                  className="border-input bg-background h-7 w-32 rounded-md border px-2 text-xs"
+                  className="border-border bg-card h-7 w-32 rounded-[10px] border-2 px-2 text-xs"
                   aria-label="Sort column"
                 >
                   {sortableColumns.map((col) => (
@@ -122,10 +123,10 @@ export function DisplayOptionsMenu<TData>({
                         type="button"
                         onClick={() => col.toggleVisibility(!visible)}
                         className={cn(
-                          'inline-flex h-7 items-center gap-1 rounded-md border px-2 text-xs transition-colors',
+                          'inline-flex h-7 items-center gap-1 rounded-full border-2 px-2.5 text-xs font-semibold transition-colors',
                           visible
-                            ? 'border-primary/40 bg-primary/10 text-foreground'
-                            : 'border-input bg-background text-muted-foreground hover:bg-accent',
+                            ? 'border-primary/50 bg-primary/10 text-foreground'
+                            : 'border-border bg-card text-muted-foreground hover:bg-muted',
                         )}
                         aria-pressed={visible}
                       >
@@ -161,15 +162,15 @@ function DirectionToggle({
   onChange: (next: TableSortDir) => void;
 }) {
   return (
-    <div className="border-input bg-background inline-flex h-7 items-center rounded-md border">
+    <div className="bg-muted inline-flex h-8 items-center gap-0.5 rounded-md p-[3px]">
       <button
         type="button"
         onClick={() => onChange('asc')}
         aria-label="Ascending"
         aria-pressed={dir === 'asc'}
         className={cn(
-          'inline-flex h-full w-7 items-center justify-center rounded-l-md',
-          dir === 'asc' ? 'bg-primary/15 text-foreground' : 'text-muted-foreground hover:bg-accent',
+          'inline-flex h-full w-7 items-center justify-center rounded-[9px]',
+          dir === 'asc' ? 'bg-card text-foreground shadow-float' : 'text-muted-foreground',
         )}
       >
         <ArrowUp className="h-3.5 w-3.5" />
@@ -180,8 +181,8 @@ function DirectionToggle({
         aria-label="Descending"
         aria-pressed={dir === 'desc'}
         className={cn(
-          'inline-flex h-full w-7 items-center justify-center rounded-r-md',
-          dir === 'desc' ? 'bg-primary/15 text-foreground' : 'text-muted-foreground hover:bg-accent',
+          'inline-flex h-full w-7 items-center justify-center rounded-[9px]',
+          dir === 'desc' ? 'bg-card text-foreground shadow-float' : 'text-muted-foreground',
         )}
       >
         <ArrowDown className="h-3.5 w-3.5" />

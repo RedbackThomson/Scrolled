@@ -36,6 +36,7 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import type { ColumnFilter } from '@/db';
 import { cn } from '@scrolled/design';
 import { collectFilterable, type FilterableCol } from './Filterable';
+import { toolbarIconButton } from './toolbarStyles';
 
 type Variant = 'button' | 'plus';
 
@@ -97,7 +98,7 @@ export function FilterMenu<TData>({
           ref={triggerRef}
           type="button"
           onClick={() => setOpen((o) => !o)}
-          className="border-input bg-background hover:bg-accent inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border"
+          className={toolbarIconButton(open)}
           aria-haspopup="dialog"
           aria-expanded={open}
           aria-label="Filter (F)"
@@ -110,7 +111,7 @@ export function FilterMenu<TData>({
           ref={triggerRef}
           type="button"
           onClick={() => setOpen((o) => !o)}
-          className="text-muted-foreground hover:bg-accent hover:text-foreground inline-flex h-7 w-7 items-center justify-center rounded-md"
+          className="border-border text-muted-foreground hover:border-primary hover:text-foreground inline-flex h-7 w-7 items-center justify-center rounded-full border-2 border-dashed"
           aria-haspopup="dialog"
           aria-expanded={open}
           aria-label="Add filter"
@@ -127,7 +128,7 @@ export function FilterMenu<TData>({
             role="dialog"
             aria-label="Filter"
             style={{ position: 'fixed', top: coords.top, left: coords.left }}
-            className="border-border bg-card text-card-foreground z-50 w-80 max-w-[calc(100vw-1rem)] rounded-md border shadow-md"
+            className="border-border bg-card text-card-foreground shadow-pop z-50 w-80 max-w-[calc(100vw-1rem)] rounded-xl border-2"
           >
             {stage.kind === 'columns' ? (
               <ColumnStage
@@ -563,7 +564,7 @@ function StringEditor({
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKey}
         placeholder={`${col.label}…`}
-        className="border-input bg-background focus-visible:ring-ring h-8 w-full rounded-md border px-2 text-base focus-visible:outline-none focus-visible:ring-2 sm:text-sm"
+        className="border-border bg-card focus-visible:border-primary focus-visible:ring-primary/30 h-8 w-full rounded-[10px] border-2 px-2 text-base shadow-[var(--shadow-input)] focus-visible:outline-none focus-visible:ring-4 sm:text-sm"
       />
       <div className="flex items-center justify-end gap-1.5">
         <Button type="button" variant="secondary" size="sm" onClick={() => onApply(null)}>
@@ -630,7 +631,7 @@ function NumberEditor({
           onKeyDown={(e) => handleKey(e, true)}
           placeholder="Min"
           aria-label="Minimum"
-          className="border-input bg-background focus-visible:ring-ring h-8 w-full rounded-md border px-2 text-base focus-visible:outline-none focus-visible:ring-2 sm:text-sm"
+          className="border-border bg-card focus-visible:border-primary focus-visible:ring-primary/30 h-8 w-full rounded-[10px] border-2 px-2 text-base shadow-[var(--shadow-input)] focus-visible:outline-none focus-visible:ring-4 sm:text-sm"
         />
         <span className="text-muted-foreground text-xs">–</span>
         <Input
@@ -641,7 +642,7 @@ function NumberEditor({
           onKeyDown={(e) => handleKey(e, false)}
           placeholder="Max"
           aria-label="Maximum"
-          className="border-input bg-background focus-visible:ring-ring h-8 w-full rounded-md border px-2 text-base focus-visible:outline-none focus-visible:ring-2 sm:text-sm"
+          className="border-border bg-card focus-visible:border-primary focus-visible:ring-primary/30 h-8 w-full rounded-[10px] border-2 px-2 text-base shadow-[var(--shadow-input)] focus-visible:outline-none focus-visible:ring-4 sm:text-sm"
         />
       </div>
       <div className="flex items-center justify-end gap-1.5">

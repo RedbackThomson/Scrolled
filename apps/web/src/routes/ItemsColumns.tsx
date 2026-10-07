@@ -4,6 +4,7 @@ import { ItemIcon } from '@/components/entity-display/ItemIcon';
 import { ItemLink } from '@/components/entity-links';
 import { formatDurationSeconds } from '@/lib/duration';
 import type { ItemListRow } from '@/db';
+import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 
 const num = (v: number | null) => (v == null ? '—' : String(v));
 const signedNum = (v: number | null) => (v == null ? '—' : v >= 0 ? `+${v}` : `−${Math.abs(v)}`);
@@ -166,7 +167,7 @@ export function mobileCard(row: ItemListRow) {
   if (row.requiredLevel !== null) meta.push(`Lvl ${row.requiredLevel}`);
   return (
     <div className="flex items-center gap-3">
-      <ItemIcon entity="item" id={row.id} size={40} alt={row.name} />
+      <EntityAvatar entity="item" id={row.id} size={52} alt={row.name} />
       <div className="min-w-0 flex-1">
         <div className="truncate font-medium">{row.name}</div>
         {meta.length > 0 && (

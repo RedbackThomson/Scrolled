@@ -59,7 +59,7 @@ export function SaveSearchPrompt({ entity, onDone }: SaveSearchPromptProps) {
           }
         }}
         placeholder="Name this view…"
-        className="border-input bg-background focus-visible:ring-ring h-7 w-44 rounded-md border px-2 text-base focus-visible:outline-none focus-visible:ring-2 sm:text-xs"
+        className="border-border bg-card focus-visible:border-primary focus-visible:ring-primary/30 h-8 w-44 rounded-[10px] border-2 px-2 text-base shadow-[var(--shadow-input)] focus-visible:outline-none focus-visible:ring-4 sm:text-xs"
       />
       <Button
         type="button"

@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, type ReactNode } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '../core/Button';
 
@@ -7,9 +7,17 @@ export interface PaginationProps {
   pageSize?: number;
   total?: number;
   onPage?: (page: number) => void;
+  /** Shown beside the range text, e.g. a rows-per-page select */
+  pageSizeControl?: ReactNode;
 }
 
-export function Pagination({ page = 1, pageSize = 25, total = 0, onPage }: PaginationProps) {
+export function Pagination({
+  page = 1,
+  pageSize = 25,
+  total = 0,
+  onPage,
+  pageSizeControl,
+}: PaginationProps) {
   const pages = Math.max(1, Math.ceil(total / pageSize));
   const list = [
     ...new Set([1, page - 1, page, page + 1, pages].filter((p) => p >= 1 && p <= pages)),
@@ -22,15 +30,19 @@ export function Pagination({ page = 1, pageSize = 25, total = 0, onPage }: Pagin
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
+        flexWrap: 'wrap',
         gap: 12,
         font: 'var(--type-body)',
         fontSize: 13,
         color: 'var(--text-2)',
       }}
     >
-      <span style={{ fontVariantNumeric: 'tabular-nums' }}>
-        {total ? `Showing ${start}–${end} of ${total.toLocaleString()}` : 'No results'}
-      </span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+          {total ? `Showing ${start}–${end} of ${total.toLocaleString()}` : 'No results'}
+        </span>
+        {pageSizeControl}
+      </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <Button
           variant="secondary"
@@ -49,6 +61,8 @@ export function Pagination({ page = 1, pageSize = 25, total = 0, onPage }: Pagin
             <button
               type="button"
               onClick={() => onPage?.(p)}
+              aria-label={`Page ${p}`}
+              aria-current={p === page ? 'page' : undefined}
               style={{
                 minWidth: 30,
                 height: 30,

@@ -110,30 +110,33 @@ function Badge({ col, filter, onChange }: BadgeProps) {
 
   return (
     <>
-      <span className="border-input bg-background inline-flex h-7 items-center overflow-hidden rounded-md border text-xs">
+      <span
+        className="bg-card inline-flex h-7 items-center gap-1 rounded-full border-2 pr-1 text-[12.5px]"
+        style={{ borderColor: `oklch(0.7 0.12 ${chipHue(col.id)} / .6)` }}
+      >
         <button
           ref={triggerRef}
           type="button"
           onClick={() => setOpen((o) => !o)}
-          className="hover:bg-accent inline-flex h-full items-center gap-1.5 px-2"
+          className="inline-flex h-full items-center gap-1.5 whitespace-nowrap rounded-l-full pl-2.5"
           aria-haspopup="dialog"
           aria-expanded={open}
         >
           <Icon className="text-muted-foreground h-3 w-3" />
-          <span>{col.label}</span>
+          <span className="text-muted-foreground font-semibold">{col.label}</span>
           <span className="text-muted-foreground">{summary.connector}</span>
-          <span className="font-medium">{summary.value}</span>
+          <span className="font-bold">{summary.value}</span>
         </button>
         <button
           type="button"
           onClick={() => onChange(col.id, null)}
           aria-label={`Remove ${col.label} filter`}
           className={cn(
-            'text-muted-foreground hover:bg-muted hover:text-foreground',
-            'inline-flex h-full w-6 items-center justify-center border-l',
+            'bg-muted text-muted-foreground hover:text-foreground',
+            'inline-flex h-[18px] w-[18px] items-center justify-center rounded-full',
           )}
         >
-          <X className="h-3 w-3" />
+          <X className="h-[11px] w-[11px]" />
         </button>
       </span>
       {open &&
@@ -144,7 +147,7 @@ function Badge({ col, filter, onChange }: BadgeProps) {
             role="dialog"
             aria-label={`Edit ${col.label} filter`}
             style={{ position: 'fixed', top: coords.top, left: coords.left }}
-            className="border-border bg-card text-card-foreground z-50 w-72 max-w-[calc(100vw-1rem)] rounded-md border shadow-md"
+            className="border-border bg-card text-card-foreground shadow-pop z-50 w-72 max-w-[calc(100vw-1rem)] rounded-xl border-2"
           >
             <div className="flex items-center gap-1 border-b px-2 py-1.5">
               <Icon className="text-muted-foreground h-3.5 w-3.5" />
@@ -195,4 +198,12 @@ function badgeSummary(col: FilterableCol, filter: ColumnFilter): Summary {
     return { connector: '≤', value: String(filter.max) };
   }
   return { connector: '', value: '' };
+}
+
+// Stable per-column edge colour so a chip keeps its hue as filters come and go.
+const CHIP_HUES = [235, 150, 295, 20, 70, 185];
+function chipHue(columnId: string): number {
+  let h = 0;
+  for (const c of columnId) h = (h * 31 + c.charCodeAt(0)) | 0;
+  return CHIP_HUES[Math.abs(h) % CHIP_HUES.length];
 }

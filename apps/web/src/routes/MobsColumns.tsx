@@ -9,6 +9,7 @@ import {
   ELEMENT_GROUP_LABELS,
   ELEMENT_STATUS_CLASSES,
 } from '@/components/entity-display/mobElementsDisplay';
+import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 
 /** Statuses that get their own column in the listing. Maps each to the
  *  public column id used in URL state and filter keys. */
@@ -170,7 +171,7 @@ export function mobileCard(row: MobRecord) {
   if (row.hp !== null) meta.push(`${row.hp.toLocaleString()} HP`);
   return (
     <div className="flex items-center gap-3">
-      <EntityIcon entity="mob" id={row.id} size={40} placeholder={Skull} alt={row.name} />
+      <EntityAvatar entity="mob" id={row.id} size={52} alt={row.name} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
           <span className="truncate font-medium">{row.name}</span>

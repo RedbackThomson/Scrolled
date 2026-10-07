@@ -11,8 +11,8 @@ import {
   type SortingState,
   type VisibilityState,
 } from '@tanstack/react-table';
-import { Loader2, Search, X } from 'lucide-react';
-import { Button, Input } from '@scrolled/design';
+import { LayoutGrid, Loader2, Search, Table2, X } from 'lucide-react';
+import { Input, Pagination, Segmented } from '@scrolled/design';
 import {
   Table,
   TableBody,
@@ -24,8 +24,14 @@ import {
 import { DisplayOptionsMenu } from './DisplayOptionsMenu';
 import { FilterMenu } from './FilterMenu';
 import { FilterBadges } from './FilterBadges';
+import { CardGrid } from './CardGrid';
 import { MobileCards } from './MobileCards';
-import type { TableUrlState, TableUrlStatePatch, TableSortDir } from './useTableUrlState';
+import type {
+  TableUrlState,
+  TableUrlStatePatch,
+  TableSortDir,
+  TableView,
+} from './useTableUrlState';
 import { useTableStatePersistence } from './useTableStatePersistence';
 import type { ColumnFilter } from '@/db';
 import type { CollectionEntityType } from '@/db/user';
@@ -131,6 +137,7 @@ export function DataTable<TData>({
 }: DataTableProps<TData>) {
   const isMobile = useIsMobile();
   const showCards = isMobile && !!mobileCard;
+  const showCardGrid = !isMobile && !!mobileCard && state.view === 'cards';
   useTableStatePersistence(entity);
 
   const pinned = useMemo(() => new Set(pinnedColumns ?? []), [pinnedColumns]);
@@ -210,8 +217,6 @@ export function DataTable<TData>({
   });
 
   const totalPages = Math.max(Math.ceil(total / state.size), 1);
-  const rangeStart = total === 0 ? 0 : pageIndex * state.size + 1;
-  const rangeEnd = Math.min(rangeStart + data.length - 1, total);
 
   // Clear selection whenever the visible page changes underneath the user
   // (paging, sort, size, search). Without this, a "5 selected" indicator
@@ -285,7 +290,7 @@ export function DataTable<TData>({
               // and uses the OS chrome rather than our token palette —
               // override it with `appearance-none` is overkill; the
               // explicit button below is what the user sees.
-              className="border-input bg-background focus-visible:ring-ring h-8 w-full rounded-md border pl-9 pr-8 text-base focus-visible:outline-none focus-visible:ring-2 sm:text-sm"
+              className="border-border bg-card focus-visible:border-primary focus-visible:ring-primary/30 h-9 w-full rounded-md border-2 pl-9 pr-8 text-base shadow-[var(--shadow-input)] focus-visible:outline-none focus-visible:ring-4 sm:text-sm"
             />
             {(searchValue ?? '').length > 0 && (
               <button
@@ -302,6 +307,19 @@ export function DataTable<TData>({
         )}
         {toolbarRightExtra}
         <div className="ml-auto flex items-center gap-1.5">
+          {mobileCard && (
+            <span className="hidden md:inline-flex">
+              <Segmented
+                size="sm"
+                value={state.view}
+                onChange={(v) => setState({ view: v as TableView })}
+                options={[
+                  { value: 'table', icon: Table2, title: 'Table view' },
+                  { value: 'cards', icon: LayoutGrid, title: 'Card view' },
+                ]}
+              />
+            </span>
+          )}
           {onColumnFilterChange && (
             <FilterMenu
               columns={columns}
@@ -332,6 +350,22 @@ export function DataTable<TData>({
           rowLinkTo={rowLinkTo}
           getRowId={getRowId}
           mobileCard={mobileCard!}
+          columns={columns}
+          visibleColumns={visibleColumns}
+          defaultVisible={defaultVisible}
+          emptyMessage={emptyMessage}
+          loading={loading}
+          fetching={fetching}
+          selectable={selectable}
+          selectedIds={selectedIds}
+          toggleRow={toggleRow}
+        />
+      ) : showCardGrid ? (
+        <CardGrid
+          data={data}
+          rowLinkTo={rowLinkTo}
+          getRowId={getRowId}
+          card={mobileCard!}
           columns={columns}
           visibleColumns={visibleColumns}
           defaultVisible={defaultVisible}
@@ -432,19 +466,18 @@ export function DataTable<TData>({
       </Table>
       )}
 
-      <div className="text-muted-foreground flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div>
-          {total === 0
-            ? 'No results'
-            : `Showing ${rangeStart}–${rangeEnd} of ${total.toLocaleString()}`}
-        </div>
-        <div className="flex items-center gap-2">
+      <Pagination
+        page={state.page}
+        pageSize={state.size}
+        total={total}
+        onPage={(page) => setState({ page: Math.min(Math.max(page, 1), totalPages) })}
+        pageSizeControl={
           <label className="flex items-center gap-1.5">
             Rows
             <select
               value={state.size}
               onChange={(e) => setState({ size: Number(e.target.value), page: 1 })}
-              className="border-input bg-background h-7 rounded-md border px-1 text-base sm:text-xs"
+              className="border-border bg-card h-8 rounded-[10px] border-2 px-1.5 text-base font-semibold sm:text-xs"
             >
               {pageSizes.map((s) => (
                 <option key={s} value={s}>
@@ -453,27 +486,8 @@ export function DataTable<TData>({
               ))}
             </select>
           </label>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setState({ page: Math.max(state.page - 1, 1) })}
-            disabled={state.page <= 1}
-          >
-            Prev
-          </Button>
-          <span className="tabular-nums">
-            Page {state.page} of {totalPages}
-          </span>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setState({ page: Math.min(state.page + 1, totalPages) })}
-            disabled={state.page >= totalPages}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
+        }
+      />
     </div>
   );
 }
