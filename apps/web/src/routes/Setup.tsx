@@ -3,7 +3,7 @@ import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, Info } from 'lucide-react';
 import { detectVersion, detectImageVersion } from '@scrolled/wz';
-import { Button, HopLoader, Input } from '@scrolled/design';
+import { Button, HopLoader } from '@scrolled/design';
 import { WizardLayout, type WizardStep } from '@/components/wizard/WizardLayout';
 import {
   StepFiles,
@@ -678,7 +678,7 @@ function RestoreDropZone({
         >
           Choose file
         </Button>
-        <Input
+        <input
           ref={inputRef}
           type="file"
           accept={acceptForDesktop('.scrolled-backup,.sqlite,.sqlite3,.db,application/gzip')}

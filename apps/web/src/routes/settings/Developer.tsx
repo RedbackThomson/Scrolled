@@ -11,12 +11,11 @@ import {
   Save,
 } from 'lucide-react';
 import { FilePicker } from '@/components/data/FilePicker';
-import { Button } from '@scrolled/design';
+import { Button, cn, TextField } from '@scrolled/design';
 import { ExtractAllPanel } from '@/components/data/ExtractAllPanel';
 import { ProgressBar } from '@/components/common/ProgressBar';
 import { getParserClient, type WzNodeInfo, type WzMapleVersionName } from '@/parser';
 import { getDbClient } from '@/db';
-import { cn, Input } from '@scrolled/design';
 import { buildReport } from '@/lib/diagnosticsReport';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import type { ProgressUpdate } from '@scrolled/game-db/lib/progress';
@@ -175,12 +174,13 @@ export default function SettingsDeveloper() {
           re-uploading here.
         </p>
         <div className="flex items-center gap-2">
-          <Input
-            type="text"
+          <TextField
+            mono
             value={lookupPath}
             onChange={(e) => setLookupPath(e.target.value)}
             placeholder="e.g. String.wz/Eqp.img/Eqp/Cap/1002000/name"
-            className="border-input bg-background h-9 flex-1 rounded-md border px-3 font-mono text-base sm:text-sm"
+            aria-label="Path"
+            className="flex-1"
             onKeyDown={(e) => {
               if (e.key === 'Enter') runLookup();
             }}

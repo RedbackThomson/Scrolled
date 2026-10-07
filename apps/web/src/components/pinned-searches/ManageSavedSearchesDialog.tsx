@@ -17,7 +17,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Button, cn, IconButton, Input, SlotTile } from '@scrolled/design';
+import { Button, cn, IconButton, SlotTile, TextField } from '@scrolled/design';
 import type { PinnedSearchRecord, SavedSearchScope } from '@/db/user';
 import {
   useDeletePinnedSearch,
@@ -177,7 +177,8 @@ function SavedSearchRow({
       >
         <SlotTile icon={look.icon} hue={look.hue} size={36} />
       </button>
-      <Input
+      <TextField
+        variant="ghost"
         value={name}
         onChange={(e) => setName(e.target.value)}
         onBlur={rename}
@@ -189,7 +190,8 @@ function SavedSearchRow({
           }
         }}
         aria-label="Name"
-        className="hover:border-border focus-visible:border-primary h-9 min-w-0 flex-1 rounded-[10px] border-2 border-transparent bg-transparent px-2 text-[14px] font-bold focus-visible:outline-none"
+        className="flex-1"
+        style={{ fontWeight: 700 }}
       />
       <IconButton
         icon={Pin}

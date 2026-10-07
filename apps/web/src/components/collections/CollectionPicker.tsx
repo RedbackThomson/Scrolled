@@ -12,7 +12,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { usePopover } from '@/hooks/usePopover';
 import { BookmarkCheck, Check, Loader2, Plus } from 'lucide-react';
-import { CheckboxIndicator, ConfettiBurst, Input, SearchPill } from '@scrolled/design';
+import { CheckboxIndicator, ConfettiBurst, SearchPill, TextField } from '@scrolled/design';
 import { useMotionPrefs } from '@/hooks/useMotionPrefs';
 import { showToast } from '@/stores/toasts';
 import {
@@ -462,8 +462,9 @@ function PlacementEditor({
         </div>
       )}
       <div className="flex items-center gap-1.5">
-        <Input
+        <TextField
           type="number"
+          size="sm"
           min={0}
           value={qtyDraft}
           onChange={(e) => setQtyDraft(e.target.value)}
@@ -476,10 +477,10 @@ function PlacementEditor({
           }}
           placeholder="Qty"
           aria-label={`Quantity for ${label}`}
-          className="border-border bg-card focus-visible:border-primary focus-visible:ring-primary/30 h-7 w-16 rounded-[8px] border-2 px-1.5 text-base tabular-nums focus-visible:outline-none focus-visible:ring-4 sm:text-[11px]"
+          className="w-16 shrink-0"
         />
-        <Input
-          type="text"
+        <TextField
+          size="sm"
           value={noteDraft}
           onChange={(e) => setNoteDraft(e.target.value)}
           onBlur={commitNote}
@@ -494,7 +495,7 @@ function PlacementEditor({
           }}
           placeholder="Note"
           aria-label={`Note for ${label}`}
-          className="border-border bg-card focus-visible:border-primary focus-visible:ring-primary/30 h-7 min-w-0 flex-1 rounded-[8px] border-2 px-1.5 text-base focus-visible:outline-none focus-visible:ring-4 sm:text-[11px]"
+          className="flex-1"
         />
       </div>
     </div>

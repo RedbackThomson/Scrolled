@@ -4,9 +4,9 @@ import {
   Button,
   CheckboxIndicator,
   Histogram,
-  Input,
   RangeSlider,
   Skeleton,
+  TextField,
   type RangeSliderQuickRange,
 } from '@scrolled/design';
 import type { ColumnFilter, FacetSource } from '@/db';
@@ -30,9 +30,6 @@ import {
 
 const SEARCHABLE_OPTIONS = 8;
 const AROUND_LEVEL = 5;
-
-const fieldClass =
-  'border-border bg-card focus-visible:border-primary focus-visible:ring-primary/30 h-9 w-full rounded-[11px] border-2 px-2.5 text-base shadow-[var(--shadow-input)] focus-visible:outline-none focus-visible:ring-4 sm:text-sm';
 
 export interface FilterValuePanelProps {
   col: FilterableCol;
@@ -173,17 +170,15 @@ function EnumBody({
   return (
     <div className="flex flex-col gap-2">
       {options.length > SEARCHABLE_OPTIONS && (
-        <label className="relative">
-          <Search className="text-muted-foreground pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2" />
-          <Input
-            autoFocus={!isMobile}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={`Find ${col.label.toLowerCase()}…`}
-            aria-label={`Find ${col.label.toLowerCase()}`}
-            className={`${fieldClass} pl-8`}
-          />
-        </label>
+        <TextField
+          icon={Search}
+          size={isMobile ? 'lg' : 'md'}
+          autoFocus={!isMobile}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={`Find ${col.label.toLowerCase()}…`}
+          aria-label={`Find ${col.label.toLowerCase()}`}
+        />
       )}
       <ul className="-ml-1.5 -mr-3 flex max-h-72 flex-col gap-0.5 overflow-y-auto pr-1.5 [scrollbar-gutter:stable]">
         {visible.length === 0 ? (
@@ -372,7 +367,7 @@ function StringBody({
   const toFilter = (v: string): ColumnFilter | null =>
     v.trim() ? { kind: 'string', mode, value: v.trim() } : null;
   return (
-    <Input
+    <TextField
       autoFocus
       type="search"
       value={value}
@@ -386,7 +381,6 @@ function StringBody({
       }}
       placeholder={`${col.label} contains…`}
       aria-label={`${col.label} contains`}
-      className={fieldClass}
     />
   );
 }

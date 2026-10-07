@@ -10,7 +10,7 @@ import {
   Upload,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { Button, Checkbox, Input } from '@scrolled/design';
+import { Button, Checkbox } from '@scrolled/design';
 import { getDbClient } from '@/db';
 import { sha256OfFile } from '@/lib/hashFile';
 import { createLogger, describeError } from '@scrolled/game-db/lib/logger';
@@ -426,7 +426,7 @@ export function StepFiles({
               </Button>
             )}
           </div>
-          <Input
+          <input
             ref={inputRef}
             type="file"
             accept={acceptForDesktop(copy.accept)}
@@ -437,7 +437,7 @@ export function StepFiles({
               e.target.value = '';
             }}
           />
-          <Input
+          <input
             ref={dirInputRef}
             type="file"
             multiple

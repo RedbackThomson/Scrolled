@@ -24,7 +24,6 @@ export {
   type CheckboxProps,
   type CheckboxIndicatorProps,
 } from './components/forms/Checkbox';
-export * from './components/forms/Input';
 export {
   RangeSlider,
   type RangeSliderProps,
@@ -38,7 +37,13 @@ export {
   type SwatchPickerProps,
 } from './components/forms/SwatchPicker';
 export { Switch, type SwitchProps } from './components/forms/Switch';
-export { TextField, type TextFieldProps } from './components/forms/TextField';
+export {
+  TextArea,
+  TextField,
+  type TextAreaProps,
+  type TextFieldProps,
+  type TextFieldSize,
+} from './components/forms/TextField';
 
 export {
   ElementChip,

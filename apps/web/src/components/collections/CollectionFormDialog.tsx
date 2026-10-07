@@ -3,12 +3,10 @@
 
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { Button, Input, Textarea } from '@scrolled/design';
+import { Button, cn, TextArea, TextField } from '@scrolled/design';
 import { useCreateCollection, useUpdateCollection } from '@/hooks/useCollections';
 import type { CollectionRecord } from '@/db/user';
-import { cn } from '@scrolled/design';
 import { Modal } from './Modal';
-import { FIELD, FIELD_LABEL } from './fieldStyles';
 import { DEFAULT_COLLECTION_ICON, resolveCollectionIcon } from './iconRegistry';
 import { ColorField, IconField } from './IconColorFields';
 import { DEFAULT_COLLECTION_COLOR, resolveCollectionColor } from './colorRegistry';
@@ -130,36 +128,29 @@ export function CollectionFormDialog({
           >
             <selectedIcon.Icon className="h-6 w-6" />
           </div>
-          <label className="block min-w-0 flex-1 space-y-1 text-sm">
-            <span className={FIELD_LABEL}>Name</span>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Boss drops to farm"
-              className={cn(FIELD, 'h-[38px]')}
-              autoFocus
-            />
-          </label>
-        </div>
-        <label className="block space-y-1 text-sm">
-          <span className={cn(FIELD_LABEL, 'flex items-center justify-between')}>
-            <span>Description</span>
-            <span className="font-sans text-[11.5px] font-medium">Optional</span>
-          </span>
-          <Textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="What's this collection for? (multi-line)"
-            rows={3}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                e.preventDefault();
-                submit();
-              }
-            }}
-            className={cn(FIELD, 'resize-y py-2')}
+          <TextField
+            label="Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. Boss drops to farm"
+            className="flex-1"
+            autoFocus
           />
-        </label>
+        </div>
+        <TextArea
+          label="Description"
+          hint="Optional"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="What's this collection for? (multi-line)"
+          rows={3}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+              e.preventDefault();
+              submit();
+            }
+          }}
+        />
 
         <IconField value={iconName} onChange={setIconName} colorName={colorName} />
         <ColorField value={colorName} onChange={setColorName} />

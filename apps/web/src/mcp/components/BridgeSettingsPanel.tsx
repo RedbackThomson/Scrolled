@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Plug } from 'lucide-react';
 import { useSettingsSection } from '@/components/settings/useSettingsSection';
 import { SettingsCard, SettingsSection } from '@/components/settings/SettingsSection';
-import { cn, Input } from '@scrolled/design';
+import { cn, TextField } from '@scrolled/design';
 import {
   DEFAULT_BRIDGE_SETTINGS,
   readBridgeSettings,
@@ -87,26 +87,21 @@ export function BridgeSettingsPanel() {
         </div>
 
         <div>
-          <label className="block">
-            <span className="text-sm font-medium">Bridge URL</span>
-            <Input
-              type="text"
-              value={urlDraft}
-              onChange={(e) => setUrlDraft(e.target.value)}
-              onBlur={() => void onCommitUrl()}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  void onCommitUrl();
-                }
-              }}
-              placeholder="ws://localhost:8765"
-              className={cn(
-                'border-border bg-background mt-1 block w-full rounded-md border px-3 py-1.5 font-mono text-sm',
-                !urlValid && 'border-destructive',
-              )}
-            />
-          </label>
+          <TextField
+            label="Bridge URL"
+            mono
+            error={!urlValid}
+            value={urlDraft}
+            onChange={(e) => setUrlDraft(e.target.value)}
+            onBlur={() => void onCommitUrl()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                void onCommitUrl();
+              }
+            }}
+            placeholder="ws://localhost:8765"
+          />
           <p className="text-muted-foreground mt-1 text-xs">
             The bundled <code>@scrolled/mcp-server</code> hosts a WebSocket on
             <code> localhost:8765</code> by default.

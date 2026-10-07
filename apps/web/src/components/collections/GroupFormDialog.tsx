@@ -3,11 +3,10 @@
 
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { Button, cn, Input, Textarea } from '@scrolled/design';
+import { Button, TextArea, TextField } from '@scrolled/design';
 import { useCreateGroup, useUpdateGroup } from '@/hooks/useCollections';
 import type { CollectionGroup } from '@/db/user';
 import { Modal } from './Modal';
-import { FIELD, FIELD_LABEL } from './fieldStyles';
 
 interface GroupFormDialogProps {
   open: boolean;
@@ -98,35 +97,27 @@ export function GroupFormDialog({
           submit();
         }}
       >
-        <label className="block space-y-1 text-sm">
-          <span className={FIELD_LABEL}>Name</span>
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Daily bosses"
-            className={cn(FIELD, 'h-[38px]')}
-            autoFocus
-          />
-        </label>
-        <label className="block space-y-1 text-sm">
-          <span className={cn(FIELD_LABEL, 'flex items-center justify-between')}>
-            <span>Description</span>
-            <span className="font-sans text-[11.5px] font-medium">Optional</span>
-          </span>
-          <Textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="What belongs in this group? (multi-line)"
-            rows={3}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                e.preventDefault();
-                submit();
-              }
-            }}
-            className={cn(FIELD, 'resize-y py-2')}
-          />
-        </label>
+        <TextField
+          label="Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="e.g. Daily bosses"
+          autoFocus
+        />
+        <TextArea
+          label="Description"
+          hint="Optional"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="What belongs in this group? (multi-line)"
+          rows={3}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+              e.preventDefault();
+              submit();
+            }
+          }}
+        />
         {error && <p className="text-destructive text-xs">{error}</p>}
       </form>
     </Modal>

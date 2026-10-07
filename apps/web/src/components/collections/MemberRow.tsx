@@ -4,7 +4,7 @@ import { EntityLink } from '@/components/entity-links';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 import { useRemoveMember, useUpdateMember } from '@/hooks/useCollections';
 import type { CollectionMember } from '@/db/user';
-import { Checkbox, cn, Input } from '@scrolled/design';
+import { Checkbox, cn, TextField } from '@scrolled/design';
 
 interface MemberRowProps {
   member: CollectionMember;
@@ -130,7 +130,8 @@ export function MemberRow({ member, name }: MemberRowProps) {
 
       <div className="ml-auto flex min-w-0 flex-1 basis-full items-center gap-2 sm:basis-auto">
         {editingNote ? (
-          <Input
+          <TextField
+            size="sm"
             value={noteDraft}
             onChange={(e) => setNoteDraft(e.target.value)}
             onBlur={commitNote}
@@ -145,7 +146,8 @@ export function MemberRow({ member, name }: MemberRowProps) {
             }}
             autoFocus
             placeholder="Add a note…"
-            className="border-border bg-card focus-visible:border-primary focus-visible:ring-primary/30 h-8 min-w-0 flex-1 rounded-[10px] border-2 px-2 text-base focus-visible:outline-none focus-visible:ring-4 sm:text-xs"
+            aria-label="Note"
+            className="flex-1"
           />
         ) : (
           <button
@@ -164,8 +166,9 @@ export function MemberRow({ member, name }: MemberRowProps) {
         )}
         <label className="inline-flex shrink-0 items-center gap-1">
           <span className="text-muted-foreground text-[11.5px] font-semibold">Qty</span>
-          <Input
+          <TextField
             type="number"
+            size="sm"
             min={0}
             value={qtyDraft}
             onChange={(e) => setQtyDraft(e.target.value)}
@@ -181,7 +184,7 @@ export function MemberRow({ member, name }: MemberRowProps) {
             }}
             placeholder="—"
             aria-label="Target quantity"
-            className="border-border bg-card focus-visible:border-primary focus-visible:ring-primary/30 h-8 w-16 rounded-[10px] border-2 px-2 text-base tabular-nums focus-visible:outline-none focus-visible:ring-4 sm:text-xs"
+            className="w-16"
           />
         </label>
       </div>

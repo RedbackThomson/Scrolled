@@ -2,14 +2,12 @@ import { SettingsCard } from '@/components/settings/SettingsSection';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { HelpCircle, Pencil, Plus, RotateCcw, X } from 'lucide-react';
+import { TextField } from '@scrolled/design';
 import { getDbClient } from '@/db';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 import { useMagicStats } from './useMagicStats';
 import { useMagicLoadout } from './useMagicLoadout';
 import { DEFAULT_MAGIC_STATS, type MagicStats } from './magicStats';
-
-const FIELD =
-  'border-border bg-background focus-visible:ring-primary/60 h-8 w-full rounded-md border px-2 text-sm focus-visible:outline-none focus-visible:ring-2';
 
 export function MagicStatsPanel() {
   const stats = useMagicStats();
@@ -173,8 +171,8 @@ function NumberInput({
   }, [value]);
 
   return (
-    <input
-      type="text"
+    <TextField
+      size="sm"
       inputMode="numeric"
       value={text}
       onChange={(e) => {
@@ -189,7 +187,6 @@ function NumberInput({
         setText(String(next));
         onChange(next);
       }}
-      className={FIELD}
     />
   );
 }
@@ -301,15 +298,14 @@ function EntityPicker({
       {open && (
         <div className="border-border bg-card text-card-foreground absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-md border shadow-md">
           <div className="border-border/70 border-b p-1.5">
-            <input
-              type="text"
+            <TextField
+              size="sm"
               value={query}
               autoFocus
               placeholder={`Search ${noun}s…`}
-              autoComplete="off"
+              aria-label={`Search ${noun}s`}
               onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}
               onChange={(e) => setQuery(e.target.value)}
-              className={FIELD}
             />
           </div>
           <ul className="max-h-56 overflow-auto py-1">

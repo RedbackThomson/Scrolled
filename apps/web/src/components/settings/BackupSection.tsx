@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Archive, ChevronDown, Download, Loader2, Upload } from 'lucide-react';
 import { useSettingsSection } from '@/components/settings/useSettingsSection';
 import { SettingsCard, SettingsSection } from '@/components/settings/SettingsSection';
-import { Button, Input } from '@scrolled/design';
+import { Button } from '@scrolled/design';
 import { useExportBackup, useImportBackup, type BackupScope } from '@/hooks/useBackup';
 import { acceptForDesktop } from '@/lib/filePickerAccept';
 import { appConfig } from '@/config';
@@ -145,7 +145,7 @@ export function BackupSection() {
                 )}
                 Import backup
               </Button>
-              <Input
+              <input
                 ref={importInputRef}
                 type="file"
                 accept={acceptForDesktop('.scrolled-backup,.sqlite3,.sqlite,.db,application/gzip')}

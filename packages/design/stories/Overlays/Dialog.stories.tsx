@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from '../../src/components/overlays/Dialog';
 import { Button } from '../../src/components/core/Button';
-import { TextField } from '../../src/components/forms/TextField';
+import { TextArea, TextField } from '../../src/components/forms/TextField';
 import { SlotTile } from '../../src/components/entity/SlotTile';
 
 const meta = {
@@ -35,7 +35,7 @@ export const Form: Story = {
         </DialogHeader>
         <DialogBody className="flex flex-col gap-3">
           <TextField label="Name" placeholder="e.g. Boss drops to farm" />
-          <TextField label="Description" hint="Optional" multiline />
+          <TextArea label="Description" hint="Optional" />
         </DialogBody>
         <DialogFooter>
           <Button variant="secondary">Cancel</Button>

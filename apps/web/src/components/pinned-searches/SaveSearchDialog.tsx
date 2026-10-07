@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { createPortal } from 'react-dom';
-import { BottomSheet, Button, cn, Input, SlotTile, Switch } from '@scrolled/design';
+import { BottomSheet, Button, SlotTile, Switch, TextField } from '@scrolled/design';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useCreatePinnedSearch, useUpdatePinnedSearch } from '@/hooks/usePinnedSearches';
 import type { PinnedSearchRecord, SavedSearchScope } from '@/db/user';
 import { Modal } from '@/components/collections/Modal';
-import { FIELD, FIELD_LABEL } from '@/components/collections/fieldStyles';
 import { ColorField, IconField } from '@/components/collections/IconColorFields';
 import { DEFAULT_COLLECTION_COLOR } from '@/components/collections/colorRegistry';
 import { savedSearchLook } from './savedSearchLook';
@@ -93,16 +92,15 @@ export function SaveSearchDialog({
     >
       <div className="flex items-center gap-3">
         <SlotTile icon={look.icon} hue={look.hue} size={48} />
-        <label className="block min-w-0 flex-1 space-y-1 text-sm">
-          <span className={FIELD_LABEL}>Name</span>
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Name this search…"
-            className={cn(FIELD, 'h-[38px]')}
-            autoFocus
-          />
-        </label>
+        <TextField
+          label="Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Name this search…"
+          size={isMobile ? 'lg' : 'md'}
+          className="flex-1"
+          autoFocus
+        />
       </div>
       <IconField
         value={icon ?? ''}
