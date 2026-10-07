@@ -55,6 +55,15 @@ describe('facet queries', () => {
     expect(await db.matchingIds('equip', {})).toEqual([7]);
   });
 
+  it('lists the first matching names', async () => {
+    expect(
+      await db.matchingNames('weapon', { equipType: { kind: 'enum', values: ['claw'] } }, 2),
+    ).toEqual([
+      { id: 1, name: 'Equip 1' },
+      { id: 2, name: 'Equip 2' },
+    ]);
+  });
+
   it('bins a number column from its minimum, skipping nulls', async () => {
     const h = await db.columnHistogram('weapon', 'requiredLevel', 6, {});
     expect(h).toEqual({ min: 10, max: 69, binWidth: 10, bins: [2, 0, 2, 0, 0, 1] });

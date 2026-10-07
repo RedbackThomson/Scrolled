@@ -102,6 +102,14 @@ export {
 export { Histogram, type HistogramProps } from './components/data/Histogram';
 export { SelectableSlot, type SelectableSlotProps } from './components/data/SelectableSlot';
 export { SelectionDock, type SelectionDockProps } from './components/data/SelectionDock';
+export { ChangedBar, type ChangedBarProps } from './components/data/ChangedBar';
+export { SwipeRow, type SwipeRowProps } from './components/data/SwipeRow';
+export {
+  FullScreenSearch,
+  FullScreenSearchSection,
+  type FullScreenSearchProps,
+  type FullScreenSearchSectionProps,
+} from './components/data/FullScreenSearch';
 
 export { Banner, type BannerProps } from './components/feedback/Banner';
 export { ConfettiBurst, type ConfettiBurstProps } from './components/feedback/ConfettiBurst';

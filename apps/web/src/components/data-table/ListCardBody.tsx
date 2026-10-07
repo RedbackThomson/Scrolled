@@ -34,7 +34,8 @@ export function ListCardBody({
   stats = [],
   tags,
 }: ListCardBodyProps) {
-  const { variant, selected, extraStats = [], onToggleSelect } = useContext(ListCardLayoutContext);
+  const { variant, selected, selecting, extraStats = [], onToggleSelect } =
+    useContext(ListCardLayoutContext);
   const altText = alt ?? (typeof name === 'string' ? name : undefined);
   const avatar = (size: number, spotlight?: boolean) => {
     const tile = (
@@ -48,6 +49,7 @@ export function ListCardBody({
           tile={tile}
           size={size}
           selected={!!selected}
+          selecting={selecting}
           label={altText ?? String(id)}
           onToggle={onToggleSelect}
         />

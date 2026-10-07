@@ -1,5 +1,6 @@
 import type { ColumnFilter } from '@/db';
 import type { FilterableCol } from './Filterable';
+import type { FacetDef } from './presets';
 
 const MAX_VALUES = 2;
 
@@ -39,4 +40,32 @@ export function columnHue(columnId: string): number {
 /** "1 weapon", "1,269 weapons" from a lowercase plural ("NPCs", "quest chains"). */
 export function countLabel(n: number, plural: string): string {
   return `${n.toLocaleString()} ${n === 1 ? plural.replace(/s$/, '') : plural}`;
+}
+
+export interface ActiveFilterChip {
+  id: string;
+  label: string;
+  value: string;
+  hue: number;
+}
+
+/** Every active filter as a labelled, coloured chip, in column order. */
+export function activeFilterChips(
+  filterable: readonly FilterableCol[],
+  facets: readonly FacetDef[],
+  filters: Record<string, ColumnFilter>,
+): ActiveFilterChip[] {
+  return filterable.flatMap((col) => {
+    const filter = filters[col.id];
+    if (!isFilterActive(filter)) return [];
+    const facet = facets.find((f) => f.columnId === col.id);
+    return [
+      {
+        id: col.id,
+        label: facet?.label ?? col.label,
+        value: filterValueLabel(col, filter),
+        hue: facet?.hue ?? columnHue(col.id),
+      },
+    ];
+  });
 }

@@ -91,7 +91,7 @@ export function getSettingsGroups(): SettingsGroup[] {
         {
           id: 'customization',
           label: 'Customization',
-          keywords: ['tooltips', 'hover', 'preview', 'fields', 'magic', 'stats'],
+          keywords: ['tooltips', 'hover', 'preview', 'fields', 'magic', 'stats', 'saved searches'],
         },
       ],
     },

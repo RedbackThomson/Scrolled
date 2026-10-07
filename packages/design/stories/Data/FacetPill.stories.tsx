@@ -45,3 +45,7 @@ export const Row: Story = {
     );
   },
 };
+export const Large: Story = {
+  args: { size: 'lg', valueLabel: 'Claw', label: 'Type', hue: 235 },
+  parameters: { viewport: { defaultViewport: 'mobile2' } },
+};

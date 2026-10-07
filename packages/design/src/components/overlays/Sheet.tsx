@@ -2,12 +2,15 @@ import {
   forwardRef,
   useEffect,
   useRef,
+  useState,
   type ComponentPropsWithoutRef,
   type ElementRef,
   type HTMLAttributes,
+  type PointerEvent,
+  type ReactNode,
 } from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
-import { X } from 'lucide-react';
+import { ArrowLeft, X } from 'lucide-react';
 import { cn } from '../../lib/cn';
 
 export const Sheet = DialogPrimitive.Root;
@@ -77,7 +80,7 @@ export const SheetContent = forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          'bg-card text-card-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:ease-out fixed z-50 flex flex-col shadow-[0_12px_40px_rgba(10,20,50,.25)] outline-none data-[state=closed]:duration-200 data-[state=open]:duration-300',
+          'bg-card text-card-foreground data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col shadow-[0_12px_40px_rgba(10,20,50,.25)] outline-none data-[state=closed]:duration-200 data-[state=open]:duration-300 data-[state=open]:ease-out',
           sideClasses[side],
           className,
         )}
@@ -144,23 +147,34 @@ export function SheetHandle({ className }: { className?: string }) {
   );
 }
 
-export interface BottomSheetProps extends HTMLAttributes<HTMLDivElement> {
+export interface BottomSheetProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
   /** Accessible name for the sheet. */
   label: string;
-  /** Tapping the scrim. Escape and outside clicks are the caller's to handle. */
+  /** Tapping the scrim or swiping the sheet down. Escape and outside clicks are the caller's to handle. */
   onDismiss: () => void;
+  /** Gap above a tall sheet, in px; the sheet fills the rest of the screen. Omit to size to content. */
+  top?: number;
+  /** Pinned under the scrolling content, e.g. a full-width action. */
+  footer?: ReactNode;
+  /** Shows a back button for a panel pushed inside the sheet. */
+  onBack?: () => void;
 }
+
+const SWIPE_DISMISS_PX = 90;
 
 /**
  * A bottom sheet for content that manages its own open state, such as a popover
  * that turns into a sheet on phones. Render it only while open, inside a portal.
- * Use `Sheet` when you want a full modal dialog instead.
+ * Swiping down from the handle dismisses it. Use `Sheet` when you want a full
+ * modal dialog instead.
  */
 export const BottomSheet = forwardRef<HTMLDivElement, BottomSheetProps>(function BottomSheet(
-  { label, onDismiss, className, children, ...props },
+  { label, onDismiss, top, footer, onBack, className, style, children, ...props },
   ref,
 ) {
   const sheetRef = useRef<HTMLDivElement | null>(null);
+  const drag = useRef<{ startY: number; pointer: number } | null>(null);
+  const [offset, setOffset] = useState(0);
 
   // The sheet covers its trigger, so focus moves in on open and back out on close.
   useEffect(() => {
@@ -178,6 +192,25 @@ export const BottomSheet = forwardRef<HTMLDivElement, BottomSheetProps>(function
     else if (ref) ref.current = node;
   };
 
+  const grab = {
+    onPointerDown: (e: PointerEvent<HTMLDivElement>) => {
+      drag.current = { startY: e.clientY, pointer: e.pointerId };
+      e.currentTarget.setPointerCapture(e.pointerId);
+    },
+    onPointerMove: (e: PointerEvent<HTMLDivElement>) => {
+      if (drag.current) setOffset(Math.max(0, e.clientY - drag.current.startY));
+    },
+    onPointerUp: () => {
+      drag.current = null;
+      if (offset > SWIPE_DISMISS_PX) onDismiss();
+      else setOffset(0);
+    },
+    onPointerCancel: () => {
+      drag.current = null;
+      setOffset(0);
+    },
+  };
+
   return (
     <>
       <div
@@ -192,13 +225,45 @@ export const BottomSheet = forwardRef<HTMLDivElement, BottomSheetProps>(function
         aria-label={label}
         tabIndex={-1}
         className={cn(
-          'bg-card text-card-foreground animate-in slide-in-from-bottom fixed inset-x-0 bottom-0 z-50 flex max-h-[85dvh] flex-col overflow-y-auto overscroll-contain rounded-t-[30px] pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_-12px_40px_rgba(10,20,50,.25)] duration-300 ease-out focus-visible:outline-none',
+          'bg-card text-card-foreground animate-in slide-in-from-bottom fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-[30px] shadow-[0_-12px_40px_rgba(10,20,50,.25)] duration-300 ease-out focus-visible:outline-none',
+          top == null && 'max-h-[85dvh]',
           className,
         )}
+        style={{
+          top,
+          transform: offset ? `translateY(${offset}px)` : undefined,
+          transition: drag.current ? 'none' : 'transform var(--dur-base) var(--ease-spring)',
+          ...style,
+        }}
         {...props}
       >
-        <SheetHandle className="mb-1 mt-2" />
-        {children}
+        <div {...grab} className="relative flex shrink-0 touch-none justify-center pb-1 pt-2">
+          <SheetHandle />
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              onPointerDown={(e) => e.stopPropagation()}
+              aria-label="Back"
+              className="sc-focus-ring text-muted-foreground absolute left-3 top-2 grid h-11 w-11 place-items-center rounded-full"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+          )}
+        </div>
+        <div
+          className={cn(
+            'min-h-0 flex-1 overflow-y-auto overscroll-contain',
+            !footer && 'pb-[max(1rem,env(safe-area-inset-bottom))]',
+          )}
+        >
+          {children}
+        </div>
+        {footer && (
+          <div className="shrink-0 px-4 pb-[max(1.625rem,env(safe-area-inset-bottom))] pt-2">
+            {footer}
+          </div>
+        )}
       </div>
     </>
   );

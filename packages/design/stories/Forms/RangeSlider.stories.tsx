@@ -57,3 +57,10 @@ export const WithHistogram: Story = {
     );
   },
 };
+
+/** 28px thumbs and 48px fields for touch. */
+export const Large: Story = {
+  ...Interactive,
+  args: { max: 140, quickRanges: QUICK, size: 'lg' },
+  parameters: { viewport: { defaultViewport: 'mobile2' } },
+};

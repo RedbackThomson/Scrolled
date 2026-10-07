@@ -30,3 +30,7 @@ export const WithUndo: Story = {};
 export const NoAction: Story = {
   args: { action: undefined, duration: 0, icon: RefreshCw, children: 'Library updated' },
 };
+export const Block: Story = {
+  args: { block: true },
+  parameters: { viewport: { defaultViewport: 'mobile2' } },
+};

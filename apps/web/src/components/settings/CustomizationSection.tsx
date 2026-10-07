@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { SlidersHorizontal } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ArrowRight, SlidersHorizontal } from 'lucide-react';
 import { useSettingsSection } from '@/components/settings/useSettingsSection';
 import { SettingsCard, SettingsSection } from '@/components/settings/SettingsSection';
 import { resetAllTooltips } from '@/components/entity-links/registry';
@@ -39,6 +40,22 @@ export function CustomizationSection() {
         <TooltipCustomizerPanel />
       </SettingsCard>
       <MagicStatsPanel />
+      <SettingsCard>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-sm font-medium">Saved searches</div>
+            <p className="text-muted-foreground mt-0.5 text-xs">
+              Rename, reorder, restyle or pin the searches you've saved on list pages.
+            </p>
+          </div>
+          <Link
+            to="/saved-searches"
+            className="text-primary inline-flex shrink-0 items-center gap-1 text-[13px] font-semibold hover:underline"
+          >
+            Manage <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+      </SettingsCard>
     </SettingsSection>
   );
 }

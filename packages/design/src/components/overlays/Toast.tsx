@@ -12,6 +12,8 @@ export interface ToastProps {
   duration?: number;
   /** Called when `duration` runs out. Hovering or focusing the toast pauses it. */
   onExpire?: () => void;
+  /** Fill the container's width, as on phones */
+  block?: boolean;
 }
 
 // The countdown bar starts draining once the entrance has settled.
@@ -24,6 +26,7 @@ export function Toast({
   onAction,
   duration = 4200,
   onExpire,
+  block,
 }: ToastProps) {
   const [paused, setPaused] = useState(false);
   const remaining = useRef(duration + BAR_DELAY_MS);
@@ -61,6 +64,8 @@ export function Toast({
         boxShadow: '0 14px 30px rgba(10,20,50,.35)',
         overflow: 'hidden',
         minWidth: 280,
+        width: block ? '100%' : undefined,
+        boxSizing: 'border-box',
       }}
     >
       <span

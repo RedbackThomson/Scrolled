@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import { useState } from 'react';
 import {
+  BottomSheet,
   Sheet,
   SheetContent,
   SheetFooter,
@@ -60,5 +62,42 @@ export const Drawer: Story = {
         </SheetHeader>
       </SheetContent>
     </Sheet>
+  ),
+};
+
+/** A sheet that owns its open state, with a pinned footer and a fixed gap at the top. */
+export const Bottom: Story = {
+  render: function Render() {
+    const [open, setOpen] = useState(true);
+    return open ? (
+      <BottomSheet
+        label="Req Lvl"
+        top={200}
+        onDismiss={() => setOpen(false)}
+        footer={
+          <Button size="lg" fullWidth onClick={() => setOpen(false)}>
+            Show 38 weapons
+          </Button>
+        }
+      >
+        <div className="flex flex-col gap-2 px-4 pb-3">
+          {Array.from({ length: 12 }, (_, i) => (
+            <div key={i} className="bg-muted flex min-h-[52px] items-center rounded-lg px-3.5">
+              Option {i + 1}
+            </div>
+          ))}
+        </div>
+      </BottomSheet>
+    ) : (
+      <Button onClick={() => setOpen(true)}>Open sheet</Button>
+    );
+  },
+};
+
+export const BottomWithBack: Story = {
+  render: () => (
+    <BottomSheet label="Class" onDismiss={() => {}} onBack={() => {}}>
+      <p className="px-4 pb-6">A panel pushed inside the sheet.</p>
+    </BottomSheet>
   ),
 };

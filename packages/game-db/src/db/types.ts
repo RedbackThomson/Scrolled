@@ -1066,6 +1066,12 @@ export interface GameDatabase {
     source: FacetSource,
     filterSets: readonly Record<string, ColumnFilter>[],
   ): Promise<number[]>;
+  /** Up to `limit` matching rows' ids and names, sorted by name. */
+  matchingNames(
+    source: FacetSource,
+    filters: Record<string, ColumnFilter>,
+    limit: number,
+  ): Promise<{ id: number; name: string }[]>;
   /** Ids of every row on a list page matching `filters`. */
   matchingIds(source: FacetSource, filters: Record<string, ColumnFilter>): Promise<number[]>;
   /** A number column's distribution under `filters`; null for non-numeric or empty columns. */

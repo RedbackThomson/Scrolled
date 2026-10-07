@@ -71,6 +71,24 @@ export function matchingIds(
     .map((r) => Number(r.id));
 }
 
+/** The first matching rows' ids and names, by name — a search's quick results. */
+export function matchingNames(
+  sql: Sqlite,
+  source: FacetSource,
+  filters: Record<string, ColumnFilter>,
+  limit: number,
+): { id: number; name: string }[] {
+  const src = SOURCES[source];
+  const { clause, params } = whereClause(src, filters);
+  return sql
+    .selectObjects<{ id: number; name: string }>(
+      `SELECT ${src.table}.id AS id, ${src.table}.name AS name FROM ${src.from} ${clause}
+        ORDER BY ${src.table}.name COLLATE NOCASE LIMIT ?`,
+      [...params, Math.max(1, Math.min(limit, 50))],
+    )
+    .map((r) => ({ id: Number(r.id), name: String(r.name) }));
+}
+
 /** Row count for each filter set, in order. One call serves a popover's per-value counts. */
 export function countMatchingMany(
   sql: Sqlite,

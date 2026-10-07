@@ -100,6 +100,10 @@ export const router = createBrowserRouter(
           lazy: () => import('@/routes/SkillDetail').then((m) => ({ Component: m.default })),
         },
         {
+          path: 'saved-searches',
+          lazy: () => import('@/routes/SavedSearches').then((m) => ({ Component: m.default })),
+        },
+        {
           path: 'collections',
           lazy: () => import('@/routes/Collections').then((m) => ({ Component: m.default })),
         },

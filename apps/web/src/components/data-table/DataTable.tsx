@@ -1,8 +1,8 @@
 // Sort, filter, paginate all happen in SQL — `data` is one server-rendered page;
 // `total` is the count under the same WHERE clause. The table just renders.
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { z } from 'zod';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   flexRender,
   getCoreRowModel,
@@ -14,6 +14,7 @@ import {
 } from '@tanstack/react-table';
 import { LayoutGrid, SearchX, Table2 } from 'lucide-react';
 import {
+  ChangedBar,
   EmptyState,
   Kbd,
   Pagination,
@@ -26,7 +27,7 @@ import { DisplayOptionsMenu } from './DisplayOptionsMenu';
 import { ListFilterBar } from './ListFilterBar';
 import { ListMetaRow } from './ListMetaRow';
 import { collectFilterable } from './Filterable';
-import { isFilterActive } from './filterSummary';
+import { activeFilterChips, isFilterActive } from './filterSummary';
 import { presetMatches, type FacetDef, type ListPreset } from './presets';
 import { useMatchCounts } from './useFacetQueries';
 import { paramsToFilters } from './filterParams';
@@ -35,6 +36,7 @@ import { useSavedSearch } from './useSavedSearch';
 import { SaveSearchDialog } from '@/components/pinned-searches/SaveSearchDialog';
 import { ManageSavedSearchesDialog } from '@/components/pinned-searches/ManageSavedSearchesDialog';
 import { useUserSetting } from '@/hooks/useUserSetting';
+import { useListChrome } from '@/stores/listChrome';
 import { useRowSelection } from './useRowSelection';
 import { SelectionDockHost } from './SelectionDockHost';
 import { CardGrid } from './CardGrid';
@@ -144,6 +146,7 @@ export function DataTable<TData>({
   mobileCard,
 }: DataTableProps<TData>) {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const showCards = isMobile && !!mobileCard;
   const showCardGrid = !isMobile && !!mobileCard && state.view === 'cards';
   useTableStatePersistence(source);
@@ -276,6 +279,22 @@ export function DataTable<TData>({
   const toggleRow = (id: string, range = false) => selection.toggle(id, range, pageRowIds);
   const isSelected = (id: string) => selectable && selection.isSelected(id);
   const nothingSelected = !selection.allMatching && selection.ids.size === 0;
+  const mobileSelecting = isMobile && selectable && !nothingSelected;
+  const setChromeSelection = useListChrome((st) => st.setSelection);
+  const selectionCount = selection.allMatching ? total : selection.ids.size;
+  useEffect(() => {
+    if (!mobileSelecting) return setChromeSelection(null);
+    setChromeSelection({
+      count: selectionCount,
+      total,
+      allMatching: selection.allMatching,
+      selectAll: selection.selectAllMatching,
+      exit: selection.clear,
+    });
+    // The setters are stable per selection state; listing them would loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mobileSelecting, selectionCount, total, selection.allMatching]);
+  useEffect(() => () => setChromeSelection(null), [setChromeSelection]);
 
   const columnCount = table.getVisibleLeafColumns().length;
 
@@ -298,7 +317,7 @@ export function DataTable<TData>({
           onApplyPreset={(p) => (p ? applyFilters(p.filters) : clearFilters())}
           onLoadSaved={(s) => (s ? savedSearch.load(s) : clearFilters())}
           onSaveNew={() => setSaveOpen(true)}
-          onManage={() => setManageOpen(true)}
+          onManage={() => (isMobile ? navigate('/saved-searches') : setManageOpen(true))}
         />
       )}
       {onColumnFilterChange && (
@@ -309,9 +328,20 @@ export function DataTable<TData>({
           filters={columnFilters ?? {}}
           onChange={onColumnFilterChange}
           entityPlural={entityPlural}
+          total={total}
+          onClearAll={clearFilters}
+          entity={entity}
+        />
+      )}
+      {isMobile && savedSearch.loaded && savedSearch.dirty && (
+        <ChangedBar
+          onRevert={savedSearch.revert}
+          onUpdate={() => void savedSearch.update()}
+          updating={savedSearch.updating}
         />
       )}
       <ListMetaRow
+        compact={isMobile}
         total={total}
         unfilteredTotal={unfilteredQ.data?.[0]}
         entityPlural={entityPlural}
@@ -319,7 +349,7 @@ export function DataTable<TData>({
         onClear={clearFilters}
         onSave={canSave ? () => setSaveOpen(true) : undefined}
         changed={
-          savedSearch.loaded && savedSearch.dirty
+          !isMobile && savedSearch.loaded && savedSearch.dirty
             ? {
                 name: savedSearch.loaded.name,
                 onUpdate: () => void savedSearch.update(),
@@ -366,6 +396,7 @@ export function DataTable<TData>({
           selectable={selectable}
           isSelected={isSelected}
           toggleRow={toggleRow}
+          selecting={mobileSelecting}
         />
       ) : showCardGrid ? (
         <CardGrid
@@ -464,6 +495,7 @@ export function DataTable<TData>({
           open
           scope={source}
           params={savedSearch.paramsToSave()}
+          summary={{ count: total, chips: activeFilterChips(filterable, facets, filters) }}
           onClose={() => setSaveOpen(false)}
           onSaved={(s) => setState({ saved: s.id })}
         />
@@ -474,6 +506,7 @@ export function DataTable<TData>({
           entity={entity}
           total={total}
           resolveAll={resolveAll}
+          mobile={isMobile}
         />
       )}
       <ManageSavedSearchesDialog

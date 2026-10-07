@@ -17,6 +17,8 @@ export interface SelectionDockProps {
   /** Omit to hide Compare */
   onCompare?: () => void;
   onClear: () => void;
+  /** mobile = a full-width bar of just the actions; the count and Select all live in the top bar */
+  variant?: 'desktop' | 'mobile';
 }
 
 /** The floating bar that acts on selected table rows. Renders nothing with no selection. */
@@ -29,8 +31,66 @@ export function SelectionDock({
   addOpen,
   onCompare,
   onClear,
+  variant = 'desktop',
 }: SelectionDockProps) {
   if (count === 0) return null;
+  if (variant === 'mobile') {
+    return (
+      <div
+        role="toolbar"
+        aria-label="Selection"
+        data-surface="tooltip"
+        className="sc-toast"
+        style={{
+          position: 'fixed',
+          left: 12,
+          right: 12,
+          bottom: 'calc(22px + env(safe-area-inset-bottom))',
+          zIndex: 40,
+          display: 'flex',
+          gap: 8,
+          padding: 8,
+          borderRadius: 20,
+          background: 'var(--surface-tooltip)',
+          color: 'var(--text-on-tooltip)',
+          boxShadow: '0 18px 40px rgba(10,20,50,.35)',
+        }}
+      >
+        {onCompare && (
+          <button
+            type="button"
+            onClick={onCompare}
+            aria-label="Compare"
+            className="sc-focus-ring"
+            style={{
+              width: 44,
+              height: 44,
+              flex: 'none',
+              display: 'grid',
+              placeItems: 'center',
+              border: 'none',
+              borderRadius: 14,
+              background: 'rgba(255,255,255,.1)',
+              color: 'inherit',
+              cursor: 'pointer',
+            }}
+          >
+            <Icon icon={GitCompare} size={18} />
+          </button>
+        )}
+        <Button
+          icon={BookmarkPlus}
+          fullWidth
+          aria-haspopup="dialog"
+          aria-expanded={addOpen ?? false}
+          onClick={(e) => onAdd(e.currentTarget)}
+          style={{ height: 44, borderRadius: 14, fontSize: 15 }}
+        >
+          Add {count.toLocaleString()} to collection
+        </Button>
+      </div>
+    );
+  }
   const everything = allMatching || count >= total;
   return (
     <div

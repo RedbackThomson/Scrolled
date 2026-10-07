@@ -1,17 +1,35 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { useHotkey } from '@tanstack/react-hotkeys';
-import { FacetBar, SuggestionList, type FacetBarChip, type FacetBarFacet } from '@scrolled/design';
+import { SlidersHorizontal } from 'lucide-react';
+import {
+  FacetBar,
+  FacetPill,
+  SuggestionList,
+  type FacetBarChip,
+  type FacetBarFacet,
+} from '@scrolled/design';
 import type { ColumnFilter, FacetSource } from '@/db';
+import type { CollectionEntityType } from '@/db/user';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import { useListChrome } from '@/stores/listChrome';
 import { usePopover } from '@/hooks/usePopover';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { PopoverPanel } from '@/components/common/PopoverPanel';
 import type { FilterableCol } from './Filterable';
 import { FilterMenuContent } from './FilterMenu';
 import { FilterValuePanel } from './FilterValuePanel';
-import { columnHue, countLabel, filterValueLabel, isFilterActive } from './filterSummary';
+import {
+  activeFilterChips,
+  columnHue,
+  countLabel,
+  filterValueLabel,
+  isFilterActive,
+} from './filterSummary';
 import type { FacetDef } from './presets';
 import { NAME_COLUMN, suggest, type FilterSuggestion } from './smartQuery';
 import { useFacetSuggestions, withSuggestion } from './useFacetSuggestions';
+import { AllFiltersSheet } from './AllFiltersSheet';
+import { MobileListSearch } from './MobileListSearch';
 
 const MORE = 'more';
 const LIST_ID = 'facet-suggestions';
@@ -24,6 +42,11 @@ interface ListFilterBarProps {
   onChange: (columnId: string, value: ColumnFilter | null) => void;
   /** Lowercase plural for suggestion counts, e.g. "weapons" */
   entityPlural: string;
+  /** Rows matching the current filters */
+  total: number;
+  onClearAll: () => void;
+  /** Lets phone search results show avatars and link to rows */
+  entity?: CollectionEntityType;
 }
 
 /** The list page's search field and facet pills, each pill opening its column's value panel. */
@@ -34,7 +57,11 @@ export function ListFilterBar({
   filters,
   onChange,
   entityPlural,
+  total,
+  onClearAll,
+  entity,
 }: ListFilterBarProps) {
+  const isMobile = useIsMobile();
   const inputRef = useRef<HTMLInputElement>(null);
   const { open, close, openAt, coords, popoverRef } = usePopover<HTMLButtonElement, HTMLDivElement>(
     { gap: 12 },
@@ -162,6 +189,130 @@ export function ListFilterBar({
   };
 
   const openCol = shownId && shownId !== MORE ? byId.get(shownId) : undefined;
+  const [allOpen, setAllOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const setChromeSearch = useListChrome((s) => s.setSearch);
+
+  useEffect(() => {
+    if (!isMobile) return;
+    setChromeSearch({ placeholder: `Filter ${entityPlural}…`, open: () => setSearchOpen(true) });
+    return () => setChromeSearch(null);
+  }, [isMobile, entityPlural, setChromeSearch]);
+
+  const activeChips: FacetBarChip[] = activeFilterChips(filterable, facets, filters).filter(
+    (c) => !(c.id === NAME_COLUMN && typedName),
+  );
+
+  const valuePanel = (
+    <>
+      {shownId && (
+        <PopoverPanel
+          label={openCol ? `${openCol.label} filter` : 'Filter'}
+          onClose={close}
+          panelRef={popoverRef}
+          coords={coords}
+          widthClassName={openCol ? 'w-[330px]' : 'w-80'}
+          arrowLeft={coords ? coords.anchorX - coords.left : undefined}
+          className={isMobile ? undefined : 'rounded-[18px]'}
+        >
+          {openCol ? (
+            <FilterValuePanel
+              key={openCol.id}
+              col={openCol}
+              source={source}
+              filters={filters}
+              onChange={onChange}
+              onClose={close}
+              facet={facets.find((f) => f.columnId === openCol.id)}
+              entityPlural={entityPlural}
+            />
+          ) : (
+            <FilterMenuContent
+              filterable={filterable}
+              source={source}
+              filters={filters}
+              onChange={onChange}
+              onClose={close}
+              facets={facets}
+            />
+          )}
+        </PopoverPanel>
+      )}
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <>
+        {/* The fade hints that the row scrolls sideways. */}
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 py-1 [mask-image:linear-gradient(90deg,#000_85%,transparent)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <button
+            type="button"
+            onClick={() => setAllOpen(true)}
+            data-surface="tooltip"
+            className="sc-focus-ring inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full bg-[var(--surface-tooltip)] px-3.5 text-[13px] font-bold text-[color:var(--text-on-tooltip)]"
+          >
+            <SlidersHorizontal className="h-3.5 w-3.5" />
+            All filters{activeChips.length > 0 ? ` · ${activeChips.length}` : ''}
+          </button>
+          {pills.map((p) => (
+            <FacetPill
+              key={p.id}
+              size="lg"
+              label={p.label}
+              valueLabel={p.valueLabel}
+              hue={p.hue}
+              open={shownId === p.id}
+              onClick={(e) => toggle(p.id, e.currentTarget)}
+            />
+          ))}
+        </div>
+        {valuePanel}
+        {allOpen && (
+          <AllFiltersSheet
+            filterable={filterable}
+            facets={facets}
+            source={source}
+            filters={filters}
+            onChange={onChange}
+            onClearAll={() => {
+              setQuery('');
+              onClearAll();
+            }}
+            total={total}
+            entityPlural={entityPlural}
+            onClose={() => setAllOpen(false)}
+          />
+        )}
+        {searchOpen && (
+          <MobileListSearch
+            query={query}
+            onQueryChange={(q) => {
+              setQuery(q);
+              setActive(0);
+            }}
+            onClose={() => {
+              commitName(query.trim());
+              setSearchOpen(false);
+            }}
+            chips={activeChips}
+            onRemoveChip={(id) => {
+              if (id === NAME_COLUMN) setQuery('');
+              onChange(id, null);
+            }}
+            suggestions={items}
+            counts={counts}
+            examples={hints.examples}
+            onApply={(s) => apply(s, true)}
+            source={source}
+            filters={filters}
+            entity={entity}
+            entityPlural={entityPlural}
+          />
+        )}
+      </>
+    );
+  }
 
   return (
     <>
@@ -226,38 +377,7 @@ export function ListFilterBar({
           </div>
         )}
       </FacetBar>
-      {shownId && (
-        <PopoverPanel
-          label={openCol ? `${openCol.label} filter` : 'Filter'}
-          onClose={close}
-          panelRef={popoverRef}
-          coords={coords}
-          widthClassName={openCol ? 'w-[330px]' : 'w-80'}
-          arrowLeft={coords ? coords.anchorX - coords.left : undefined}
-          className="rounded-[18px]"
-        >
-          {openCol ? (
-            <FilterValuePanel
-              key={openCol.id}
-              col={openCol}
-              source={source}
-              filters={filters}
-              onChange={onChange}
-              onClose={close}
-              facet={facets.find((f) => f.columnId === openCol.id)}
-            />
-          ) : (
-            <FilterMenuContent
-              filterable={filterable}
-              source={source}
-              filters={filters}
-              onChange={onChange}
-              onClose={close}
-              facets={facets}
-            />
-          )}
-        </PopoverPanel>
-      )}
+      {valuePanel}
     </>
   );
 }

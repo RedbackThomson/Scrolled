@@ -1,4 +1,4 @@
-import { Bookmark, Cog, Home, LogIn, LogOut, User, Wrench } from 'lucide-react';
+import { Bookmark, BookmarkCheck, Cog, Home, LogIn, LogOut, User, Wrench } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCurrentUser, useIdentity } from '@scrolled/identity-core/react';
@@ -70,6 +70,13 @@ export function NavigationProvider() {
       keywords: ['saved', 'lists'],
       to: '/collections',
       icon: Bookmark,
+    },
+    {
+      id: 'nav-saved-searches',
+      label: 'Saved searches',
+      keywords: ['pinned', 'filters', 'manage'],
+      to: '/saved-searches',
+      icon: BookmarkCheck,
     },
     {
       id: 'nav-settings',

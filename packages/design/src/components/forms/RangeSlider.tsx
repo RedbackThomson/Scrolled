@@ -16,6 +16,8 @@ export interface RangeSliderProps {
   quickRanges?: readonly RangeSliderQuickRange[];
   /** Accessible names for the two thumbs */
   label?: string;
+  /** lg = touch sizing for phone sheets: bigger thumbs, fields and chips */
+  size?: 'md' | 'lg';
 }
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -28,7 +30,10 @@ export function RangeSlider({
   step = 1,
   quickRanges,
   label = 'Range',
+  size = 'md',
 }: RangeSliderProps) {
+  const lg = size === 'lg';
+  const thumb = lg ? 28 : 22;
   const track = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState<0 | 1 | null>(null);
   const span = Math.max(1, max - min);
@@ -81,15 +86,15 @@ export function RangeSlider({
     <label
       className={onChange ? 'sc-focus-within-ring' : undefined}
       style={{
-        height: 34,
+        height: lg ? 48 : 34,
         flex: 1,
         minWidth: 0,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         gap: 6,
-        padding: '0 10px',
-        borderRadius: 11,
+        padding: lg ? '0 14px' : '0 10px',
+        borderRadius: lg ? 14 : 11,
         border: 'var(--border-rim)',
         background: 'var(--surface-card)',
         boxShadow: 'var(--shadow-input)',
@@ -118,7 +123,7 @@ export function RangeSlider({
         onPointerCancel={() => setDragging(null)}
         style={{
           position: 'relative',
-          height: 28,
+          height: thumb + 6,
           touchAction: 'none',
           cursor: onChange ? 'pointer' : undefined,
         }}
@@ -128,7 +133,7 @@ export function RangeSlider({
             position: 'absolute',
             left: 0,
             right: 0,
-            top: 11,
+            top: thumb / 2,
             height: 6,
             borderRadius: 999,
             background: 'var(--surface-sunken)',
@@ -139,7 +144,7 @@ export function RangeSlider({
             position: 'absolute',
             left: pct(a) + '%',
             width: pct(b) - pct(a) + '%',
-            top: 11,
+            top: thumb / 2,
             height: 6,
             borderRadius: 999,
             background: 'var(--gradient-accent)',
@@ -158,10 +163,10 @@ export function RangeSlider({
             className={onChange ? 'sc-focus-ring' : undefined}
             style={{
               position: 'absolute',
-              left: `calc(${pct(v)}% - 11px)`,
+              left: `calc(${pct(v)}% - ${thumb / 2}px)`,
               top: 3,
-              width: 22,
-              height: 22,
+              width: thumb,
+              height: thumb,
               borderRadius: '50%',
               background: '#fff',
               boxShadow: '0 0 0 2px var(--accent), 0 2px 5px rgba(0,0,0,.2)',
@@ -188,7 +193,7 @@ export function RangeSlider({
                 onClick={() => onChange?.([q.value[0], q.value[1]])}
                 className="sc-focus-ring"
                 style={{
-                  padding: '5px 11px',
+                  padding: lg ? '7px 12px' : '5px 11px',
                   border: '2px solid transparent',
                   borderRadius: 999,
                   font: '700 12.5px var(--font-body)',

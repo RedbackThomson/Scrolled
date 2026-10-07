@@ -10,11 +10,13 @@ export interface FacetPillProps extends Omit<ButtonHTMLAttributes<HTMLButtonElem
   hue?: number;
   /** Its value popover is showing */
   open?: boolean;
+  /** lg = the 36px pills of the phone facet row */
+  size?: 'md' | 'lg';
 }
 
 /** A per-column dropdown pill in the facet bar. Opens that column's value popover. */
 export const FacetPill = forwardRef<HTMLButtonElement, FacetPillProps>(function FacetPill(
-  { label, valueLabel, hue = 235, open, className, style, ...props },
+  { label, valueLabel, hue = 235, open, size = 'md', className, style, ...props },
   ref,
 ) {
   const active = valueLabel != null;
@@ -32,6 +34,8 @@ export const FacetPill = forwardRef<HTMLButtonElement, FacetPillProps>(function 
       )}
       style={{
         padding: '4px 10px 4px 12px',
+        minHeight: size === 'lg' ? 36 : undefined,
+        flex: 'none',
         fontFamily: 'var(--font-body)',
         color: 'var(--text-1)',
         cursor: 'pointer',

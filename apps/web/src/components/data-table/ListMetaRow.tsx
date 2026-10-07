@@ -19,6 +19,8 @@ interface ListMetaRowProps {
   changed?: { name: string; onUpdate: () => void; onRevert: () => void; updating: boolean };
   /** Right-aligned controls, e.g. the view toggle */
   children?: ReactNode;
+  /** Phone layout: "38 of 1,269" and a short Save */
+  compact?: boolean;
 }
 
 /** "38 of 1,269 weapons" with Clear, Save search and the changed-from-saved actions, above the table. */
@@ -31,13 +33,16 @@ export function ListMetaRow({
   onSave,
   changed,
   children,
+  compact,
 }: ListMetaRowProps) {
   return (
-    <div className="flex min-h-9 flex-wrap items-center gap-x-3.5 gap-y-2">
+    <div className="flex min-h-9 flex-wrap items-center gap-x-3.5 gap-y-2 max-md:[&>button]:min-h-11">
       <p className="text-muted-foreground text-[13px]" aria-live="polite">
         <b className="text-foreground font-bold tabular-nums">{total.toLocaleString()}</b>
         {filtered && unfilteredTotal != null
-          ? ` of ${countLabel(unfilteredTotal, entityPlural)}`
+          ? compact
+            ? ` of ${unfilteredTotal.toLocaleString()}`
+            : ` of ${countLabel(unfilteredTotal, entityPlural)}`
           : ` ${total === 1 ? entityPlural.replace(/s$/, '') : entityPlural}`}
       </p>
       {filtered && (
@@ -62,7 +67,7 @@ export function ListMetaRow({
         onSave && (
           <button type="button" className={textButton} onClick={onSave}>
             <BookmarkPlus className="h-3.5 w-3.5" />
-            Save search
+            {compact ? 'Save' : 'Save search'}
           </button>
         )
       )}

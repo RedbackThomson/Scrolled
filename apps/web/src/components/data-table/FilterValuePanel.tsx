@@ -20,7 +20,7 @@ import {
 } from '@/components/settings/magicStats';
 import type { FilterableCol } from './Filterable';
 import type { FacetDef } from './presets';
-import { isFilterActive } from './filterSummary';
+import { countLabel, isFilterActive } from './filterSummary';
 import {
   useColumnHistogram,
   useEnumValueCounts,
@@ -43,6 +43,8 @@ export interface FilterValuePanelProps {
   facet?: FacetDef;
   /** Rendered before the title, e.g. a back button */
   leading?: ReactNode;
+  /** Lowercase plural for the phone sheet's "Show 38 weapons" */
+  entityPlural?: string;
 }
 
 /** One column's value editor: a live match count, a type-specific body and Clear / Apply. */
@@ -54,7 +56,9 @@ export function FilterValuePanel({
   onClose,
   facet,
   leading,
+  entityPlural = 'results',
 }: FilterValuePanelProps) {
+  const isMobile = useIsMobile();
   const current = filters[col.id];
   const [draft, setDraft] = useState<ColumnFilter | null>(isFilterActive(current) ? current : null);
 
@@ -76,7 +80,7 @@ export function FilterValuePanel({
     <div className="flex flex-col">
       <div className="flex items-center gap-2 px-4 pb-2 pt-3.5">
         {leading}
-        <h3 className="font-display flex-1 text-base font-semibold">{col.label}</h3>
+        <h3 className="font-display flex-1 text-base font-semibold max-md:text-xl">{col.label}</h3>
         {count != null && (
           <span className="text-muted-foreground text-[12.5px] tabular-nums">
             {count.toLocaleString()} {count === 1 ? 'match' : 'matches'}
@@ -103,19 +107,37 @@ export function FilterValuePanel({
             setDraft={setDraft}
             facet={facet}
             onSubmit={() => apply()}
+            touch={isMobile}
           />
         ) : (
           <StringBody col={col} draft={draft} setDraft={setDraft} onSubmit={apply} />
         )}
       </div>
-      <div className="bg-muted flex items-center justify-end gap-2 rounded-b-[16px] border-t-2 border-[var(--surface-sunken)] px-3 py-2.5 max-md:flex-col-reverse max-md:items-stretch max-md:[&>button]:h-12">
-        <Button type="button" variant="secondary" size="sm" onClick={() => apply(null)}>
-          Clear
-        </Button>
-        <Button type="button" size="sm" onClick={() => apply()}>
-          Apply
-        </Button>
-      </div>
+      {isMobile ? (
+        // Changes only count toward the live total until Show commits them.
+        <div className="flex gap-2 px-4 pb-1 pt-2">
+          <Button
+            type="button"
+            variant="secondary"
+            className="h-12 rounded-2xl"
+            onClick={() => apply(null)}
+          >
+            Clear
+          </Button>
+          <Button type="button" className="h-12 flex-1 rounded-2xl" onClick={() => apply()}>
+            {count == null ? 'Show results' : `Show ${countLabel(count, entityPlural)}`}
+          </Button>
+        </div>
+      ) : (
+        <div className="bg-muted flex items-center justify-end gap-2 rounded-b-[16px] border-t-2 border-[var(--surface-sunken)] px-3 py-2.5">
+          <Button type="button" variant="secondary" size="sm" onClick={() => apply(null)}>
+            Clear
+          </Button>
+          <Button type="button" size="sm" onClick={() => apply()}>
+            Apply
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -177,7 +199,7 @@ function EnumBody({
                   type="button"
                   aria-pressed={on}
                   onClick={() => toggle(v)}
-                  className="sc-focus-ring hover:bg-accent flex min-h-9 w-full items-center gap-2.5 rounded-xl px-2 text-left text-[13.5px] font-semibold"
+                  className="sc-focus-ring hover:bg-accent flex min-h-9 w-full items-center gap-2.5 rounded-xl px-2 text-left text-[13.5px] font-semibold max-md:min-h-[52px] max-md:text-[15px]"
                 >
                   <CheckboxIndicator size="sm" checked={on} />
                   <span className={n === 0 && !on ? 'text-muted-foreground flex-1' : 'flex-1'}>
@@ -231,7 +253,7 @@ function BooleanBody({
               role="radio"
               aria-checked={on}
               onClick={() => setDraft(on ? null : { kind: 'range', min: o.value, max: o.value })}
-              className="sc-focus-ring hover:bg-accent flex min-h-9 w-full items-center gap-2.5 rounded-xl px-2 text-left text-[13.5px] font-semibold"
+              className="sc-focus-ring hover:bg-accent flex min-h-9 w-full items-center gap-2.5 rounded-xl px-2 text-left text-[13.5px] font-semibold max-md:min-h-[52px] max-md:text-[15px]"
             >
               <CheckboxIndicator size="sm" checked={on} />
               <span className="flex-1">{o.label}</span>
@@ -253,6 +275,8 @@ type RangeBodyProps = BodyProps & {
   filters: Record<string, ColumnFilter>;
   facet?: FacetDef;
   onSubmit: () => void;
+  /** Phone sheet sizing */
+  touch?: boolean;
 };
 
 function RangeBody(props: RangeBodyProps) {
@@ -281,6 +305,7 @@ function RangeBodyInner({
   facet,
   onSubmit,
   level,
+  touch,
 }: RangeBodyProps & { level: number | null }) {
   const histogram = useColumnHistogram(source, col.id, filters);
   const h = histogram.data;
@@ -317,6 +342,7 @@ function RangeBodyInner({
         min={h.min}
         max={h.min + h.binWidth * h.bins.length}
         range={cur ? value : undefined}
+        height={touch ? 70 : 54}
       />
       <RangeSlider
         min={h.min}
@@ -326,6 +352,7 @@ function RangeBodyInner({
         onChange={set}
         quickRanges={quickRanges}
         label={col.label}
+        size={touch ? 'lg' : 'md'}
       />
     </div>
   );

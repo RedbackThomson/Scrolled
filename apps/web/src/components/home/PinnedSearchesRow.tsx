@@ -2,7 +2,7 @@
 // page, loaded so its changes can be tracked there.
 
 import { Link } from 'react-router-dom';
-import { X } from 'lucide-react';
+import { ArrowRight, X } from 'lucide-react';
 import { Icon } from '@scrolled/design';
 import { usePinnedSearches, useUpdatePinnedSearch } from '@/hooks/usePinnedSearches';
 import { listingRouteForScope } from '@/lib/entityRoutes';
@@ -16,7 +16,17 @@ export function PinnedSearchesRow() {
   if (items.length === 0) return null;
 
   return (
-    <HomeSection title="Saved searches">
+    <HomeSection
+      title="Saved searches"
+      action={
+        <Link
+          to="/saved-searches"
+          className="text-primary inline-flex items-center gap-1 text-[13px] font-semibold hover:underline"
+        >
+          Manage <ArrowRight className="h-3 w-3" />
+        </Link>
+      }
+    >
       <ul className="flex flex-wrap gap-2">
         {items.map((p) => {
           const look = savedSearchLook(p);

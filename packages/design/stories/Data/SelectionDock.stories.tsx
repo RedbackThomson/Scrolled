@@ -34,3 +34,7 @@ export const Some: Story = {};
 export const AllMatching: Story = { args: { count: 38, allMatching: true } };
 export const WithCompare: Story = { args: { onCompare: () => {} } };
 export const PickerOpen: Story = { args: { addOpen: true } };
+export const Mobile: Story = {
+  args: { variant: 'mobile' },
+  parameters: { viewport: { defaultViewport: 'mobile2' } },
+};

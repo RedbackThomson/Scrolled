@@ -7,6 +7,7 @@ import { showToast } from '@/stores/toasts';
 import { PopoverPanel } from '@/components/common/PopoverPanel';
 import { CollectionDestinationPicker } from '@/components/collections/CollectionDestinationPicker';
 import { CollectionFormDialog } from '@/components/collections/CollectionFormDialog';
+import { CollectionDestinationSheet } from '@/components/collections/CollectionDestinationSheet';
 import type { RowSelection } from './useRowSelection';
 
 interface SelectionDockHostProps {
@@ -16,10 +17,19 @@ interface SelectionDockHostProps {
   total: number;
   /** Every matching id, for "select all" */
   resolveAll: () => Promise<string[]>;
+  /** Phone layout: a full-width dock and a collection sheet */
+  mobile?: boolean;
 }
 
 /** The floating selection bar and its add-to-collection flow, with Undo. */
-export function SelectionDockHost({ selection, entity, total, resolveAll }: SelectionDockHostProps) {
+export function SelectionDockHost({
+  selection,
+  entity,
+  total,
+  resolveAll,
+  mobile,
+}: SelectionDockHostProps) {
+  const [sheetOpen, setSheetOpen] = useState(false);
   const { open, close, openAt, coords, popoverRef } = usePopover<HTMLButtonElement, HTMLDivElement>(
     { gap: 10, placement: 'above' },
   );
@@ -36,6 +46,7 @@ export function SelectionDockHost({ selection, entity, total, resolveAll }: Sele
     const groupId = group?.id ?? null;
     const result = await bulkM.mutateAsync({ collectionId: collection.id, refs, groupId });
     close();
+    setSheetOpen(false);
     selection.clear();
     const where = group ? `${collection.name} › ${group.name}` : collection.name;
     showToast({
@@ -64,11 +75,26 @@ export function SelectionDockHost({ selection, entity, total, resolveAll }: Sele
         total={total}
         allMatching={selection.allMatching}
         onSelectAll={selection.selectAllMatching}
-        onAdd={(anchor) => (open ? close() : openAt(anchor))}
-        addOpen={open}
+        onAdd={(anchor) => (mobile ? setSheetOpen(true) : open ? close() : openAt(anchor))}
+        addOpen={mobile ? sheetOpen : open}
         onClear={selection.clear}
+        variant={mobile ? 'mobile' : 'desktop'}
       />
-      {open && count > 0 && (
+      {mobile && sheetOpen && count > 0 && (
+        <CollectionDestinationSheet
+          count={count}
+          entity={entity}
+          previewIds={[...selection.ids].slice(0, 3).map(Number)}
+          pending={bulkM.isPending}
+          onAdd={(c, g) => void add(c, g)}
+          onNewCollection={() => {
+            setSheetOpen(false);
+            setCreating(true);
+          }}
+          onClose={() => setSheetOpen(false)}
+        />
+      )}
+      {!mobile && open && count > 0 && (
         <PopoverPanel
           label="Add to collection"
           onClose={close}
