@@ -79,7 +79,7 @@ export function FilterValuePanel({
         <h3 className="font-display flex-1 text-base font-semibold">{col.label}</h3>
         {count != null && (
           <span className="text-muted-foreground text-[12.5px] tabular-nums">
-            {count.toLocaleString()} match
+            {count.toLocaleString()} {count === 1 ? 'match' : 'matches'}
           </span>
         )}
       </div>

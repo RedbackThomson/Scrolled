@@ -10,6 +10,8 @@ import { useColumnFilters } from './useColumnFilters';
 import { useTableUrlState } from './useTableUrlState';
 import type { FacetDef } from './presets';
 import type * as DbModule from '@/db';
+import type * as UserDbModule from '@/db/user';
+import type { PinnedSearchRecord } from '@/db/user';
 
 vi.mock('@/db', async (importOriginal) => ({
   ...(await importOriginal<typeof DbModule>()),
@@ -21,6 +23,25 @@ vi.mock('@/db', async (importOriginal) => ({
       binWidth: 2,
       bins: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
     }),
+  }),
+}));
+
+const userDb = vi.hoisted(() => ({
+  saved: [] as PinnedSearchRecord[],
+  updatePinnedSearch: vi.fn(async (id: number, patch: Partial<PinnedSearchRecord>) => {
+    const row = userDb.saved.find((s) => s.id === id)!;
+    Object.assign(row, patch);
+    return row;
+  }),
+}));
+
+vi.mock('@/db/user', async (importOriginal) => ({
+  ...(await importOriginal<typeof UserDbModule>()),
+  getUserDbClient: () => ({
+    listPinnedSearches: async () => userDb.saved,
+    updatePinnedSearch: userDb.updatePinnedSearch,
+    getUserSetting: async () => null,
+    setUserSetting: async (key: string, value: string) => ({ key, value, updatedAt: 0 }),
   }),
 }));
 
@@ -108,12 +129,17 @@ function renderHarness(args: {
   data: Row[];
   total: number;
   onUrlUpdate?: (e: UrlUpdateEvent) => void;
+  searchParams?: string;
 }) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
-        <NuqsTestingAdapter onUrlUpdate={args.onUrlUpdate} hasMemory>
+        <NuqsTestingAdapter
+          onUrlUpdate={args.onUrlUpdate}
+          searchParams={args.searchParams}
+          hasMemory
+        >
           <Harness data={args.data} total={args.total} />
         </NuqsTestingAdapter>
       </MemoryRouter>
@@ -205,6 +231,46 @@ describe('DataTable', () => {
       expect(params?.get('f_name')).toBeNull();
     });
     expect(field).toHaveValue('');
+  });
+
+  it('flags a loaded saved search once its filters change, and Update saves them', async () => {
+    const user = userEvent.setup();
+    userDb.saved = [
+      {
+        id: 7,
+        name: 'Low level',
+        entity: 'mob',
+        params: { f_level_max: '20', sort: 'level' },
+        icon: null,
+        color: null,
+        position: 0,
+        pinned: true,
+        createdAt: 0,
+        updatedAt: 0,
+      },
+    ];
+    renderHarness({ data: ROWS, total: 3, searchParams: '?saved=7&f_level_max=20' });
+
+    // The shelf renders a desktop grid and a mobile row; jsdom shows both.
+    const [tile] = await screen.findAllByRole('button', { name: /Low level/ });
+    expect(tile).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByText('Changed from saved')).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: /^Level/ }));
+    const dialog = await screen.findByRole('dialog', { name: 'Level filter' });
+    const max = await within(dialog).findByRole('textbox', { name: 'Level max' });
+    await user.clear(max);
+    await user.type(max, '25{Enter}');
+    await user.click(within(dialog).getByRole('button', { name: 'Apply' }));
+
+    expect(await screen.findByText('Changed from saved')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Update “Low level”' }));
+    await waitFor(() =>
+      expect(userDb.updatePinnedSearch).toHaveBeenCalledWith(7, {
+        params: { f_level_max: '25' },
+      }),
+    );
+    userDb.saved = [];
   });
 
   it('/ focuses the filter field', async () => {

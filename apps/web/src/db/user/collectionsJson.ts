@@ -8,6 +8,7 @@
 import { z } from 'zod';
 import {
   COLLECTION_ENTITY_TYPES,
+  SAVED_SEARCH_SCOPES,
   COLLECTION_GROUPINGS,
   COLLECTION_SORT_DIRS,
   COLLECTION_SORT_KEYS,
@@ -63,8 +64,12 @@ export const collectionBundleSchema = z.object({
 
 export const pinnedSearchJsonSchema = z.object({
   name: z.string().min(1),
-  entity: z.enum(COLLECTION_ENTITY_TYPES),
+  entity: z.enum(SAVED_SEARCH_SCOPES),
   params: z.record(z.string()),
+  /** Optional so files from before saved-search styling still validate. */
+  icon: z.string().nullable().optional(),
+  color: z.string().nullable().optional(),
+  pinned: z.boolean().optional(),
 });
 
 export const userSettingJsonSchema = z.object({

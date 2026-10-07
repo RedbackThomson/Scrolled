@@ -1,6 +1,7 @@
 // Sort, filter, paginate all happen in SQL — `data` is one server-rendered page;
 // `total` is the count under the same WHERE clause. The table just renders.
-import { useEffect, useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { z } from 'zod';
 import { Link } from 'react-router-dom';
 import {
   flexRender,
@@ -19,8 +20,14 @@ import { ListFilterBar } from './ListFilterBar';
 import { ListMetaRow } from './ListMetaRow';
 import { collectFilterable } from './Filterable';
 import { isFilterActive } from './filterSummary';
-import type { FacetDef } from './presets';
+import { presetMatches, type FacetDef, type ListPreset } from './presets';
 import { useMatchCounts } from './useFacetQueries';
+import { paramsToFilters } from './filterParams';
+import { SavedSearchShelf, type ShelfTab } from './SavedSearchShelf';
+import { useSavedSearch } from './useSavedSearch';
+import { SaveSearchDialog } from '@/components/pinned-searches/SaveSearchDialog';
+import { ManageSavedSearchesDialog } from '@/components/pinned-searches/ManageSavedSearchesDialog';
+import { useUserSetting } from '@/hooks/useUserSetting';
 import { CardGrid } from './CardGrid';
 import { MobileCards } from './MobileCards';
 import type {
@@ -36,7 +43,9 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 
 const DEFAULT_PAGE_SIZES = [25, 50, 100] as const;
 const NO_FACETS: readonly FacetDef[] = [];
-const UNFILTERED = [{}];
+const NO_PRESETS: readonly ListPreset[] = [];
+const UNFILTERED: Record<string, ColumnFilter>[] = [{}];
+const shelfTabSchema = z.enum(['suggested', 'yours']).nullable();
 
 export interface DataTableProps<TData> {
   data: readonly TData[];
@@ -70,8 +79,7 @@ export interface DataTableProps<TData> {
   /** Optional per-column label formatter for `enum` filter dropdowns. The
    *  raw value still drives the URL/filter; only the option text changes. */
   enumLabels?: Record<string, (value: string) => string>;
-  /** Identifies the page's entity for Save (writes to pinned_searches).
-   *  Required when the filter UI's Save button needs to function. */
+  /** The collection entity rows belong to. */
   entity?: CollectionEntityType;
   /** The list's rows for facet counts and histograms. */
   source: FacetSource;
@@ -79,6 +87,8 @@ export interface DataTableProps<TData> {
   facets?: readonly FacetDef[];
   /** Lowercase plural for the result count, e.g. "weapons". */
   entityPlural: string;
+  /** Suggested filter sets shown as tiles above the list. */
+  presets?: readonly ListPreset[];
   /** Extra controls rendered on the left side of the toolbar, immediately
    *  after the search input. Use for selection-contextual controls (e.g.
    *  bulk add). */
@@ -125,10 +135,10 @@ export function DataTable<TData>({
   onClearFilters,
   enumOptions,
   enumLabels,
-  entity,
   source,
   facets = NO_FACETS,
   entityPlural,
+  presets = NO_PRESETS,
   toolbarExtra,
   toolbarRightExtra,
   selectable = false,
@@ -139,14 +149,47 @@ export function DataTable<TData>({
   const isMobile = useIsMobile();
   const showCards = isMobile && !!mobileCard;
   const showCardGrid = !isMobile && !!mobileCard && state.view === 'cards';
-  useTableStatePersistence(entity);
+  useTableStatePersistence(source);
 
   const filterable = useMemo(
     () => collectFilterable(columns, enumOptions, enumLabels),
     [columns, enumOptions, enumLabels],
   );
-  const filtersActive = Object.values(columnFilters ?? {}).some(isFilterActive);
+  const filters = useMemo(() => columnFilters ?? {}, [columnFilters]);
+  const filtersActive = Object.values(filters).some(isFilterActive);
   const unfilteredQ = useMatchCounts(source, UNFILTERED);
+
+  const savedSearch = useSavedSearch({
+    scope: source,
+    filterable,
+    filters,
+    savedId: state.saved,
+  });
+  const [saveOpen, setSaveOpen] = useState(false);
+  const [manageOpen, setManageOpen] = useState(false);
+  const tabSetting = useUserSetting(`shelfTab:${source}`, shelfTabSchema, null);
+  const shelfTab: ShelfTab =
+    tabSetting.value ?? (savedSearch.saved.length > 0 ? 'yours' : 'suggested');
+
+  const presetSets = useMemo(() => presets.map((p) => p.filters), [presets]);
+  const presetCountsQ = useMatchCounts(source, presetSets);
+  const savedSets = useMemo(
+    () => savedSearch.saved.map((s) => paramsToFilters(s.params, filterable)),
+    [savedSearch.saved, filterable],
+  );
+  const savedCountsQ = useMatchCounts(source, savedSets);
+  const matchesPreset = presets.some((p) => presetMatches(p, filters));
+  const canSave = filtersActive && !matchesPreset && (!savedSearch.loaded || savedSearch.dirty);
+
+  const clearFilters = () => {
+    onClearFilters?.();
+    if (state.saved != null) setState({ saved: null });
+  };
+  const applyFilters = (next: Record<string, ColumnFilter>) => {
+    onClearFilters?.();
+    for (const [id, filter] of Object.entries(next)) onColumnFilterChange?.(id, filter);
+    setState({ saved: null, page: 1 });
+  };
 
   const pinned = useMemo(() => new Set(pinnedColumns ?? []), [pinnedColumns]);
   const defaultVisibleKey = useMemo(() => [...defaultVisible].sort().join(','), [defaultVisible]);
@@ -280,6 +323,26 @@ export function DataTable<TData>({
       {/* Selection-active row sits above the search/controls when present so
        *  bulk-add affordances don't push the main toolbar to wrap. */}
       {toolbarExtra && <div className="flex flex-wrap items-center gap-2">{toolbarExtra}</div>}
+      {onColumnFilterChange && (presets.length > 0 || savedSearch.saved.length > 0) && (
+        <SavedSearchShelf
+          tab={shelfTab}
+          onTab={(t) => void tabSetting.set(t)}
+          presets={presets}
+          presetCounts={Object.fromEntries(presets.map((p, i) => [p.id, presetCountsQ.data?.[i]]))}
+          saved={savedSearch.saved}
+          savedCounts={Object.fromEntries(
+            savedSearch.saved.map((s, i) => [s.id, savedCountsQ.data?.[i]]),
+          )}
+          loadedId={savedSearch.loaded?.id ?? null}
+          dirty={savedSearch.dirty}
+          filters={filters}
+          canSaveNew={canSave}
+          onApplyPreset={(p) => (p ? applyFilters(p.filters) : clearFilters())}
+          onLoadSaved={(s) => (s ? savedSearch.load(s) : clearFilters())}
+          onSaveNew={() => setSaveOpen(true)}
+          onManage={() => setManageOpen(true)}
+        />
+      )}
       {onColumnFilterChange && (
         <ListFilterBar
           filterable={filterable}
@@ -295,8 +358,18 @@ export function DataTable<TData>({
         unfilteredTotal={unfilteredQ.data?.[0]}
         entityPlural={entityPlural}
         filtered={filtersActive}
-        onClear={() => onClearFilters?.()}
-        entity={entity}
+        onClear={clearFilters}
+        onSave={canSave ? () => setSaveOpen(true) : undefined}
+        changed={
+          savedSearch.loaded && savedSearch.dirty
+            ? {
+                name: savedSearch.loaded.name,
+                onUpdate: () => void savedSearch.update(),
+                onRevert: savedSearch.revert,
+                updating: savedSearch.updating,
+              }
+            : undefined
+        }
       >
         {toolbarRightExtra}
         {mobileCard && (
@@ -432,6 +505,21 @@ export function DataTable<TData>({
           </TableBody>
         </Table>
       )}
+
+      {saveOpen && (
+        <SaveSearchDialog
+          open
+          scope={source}
+          params={savedSearch.paramsToSave()}
+          onClose={() => setSaveOpen(false)}
+          onSaved={(s) => setState({ saved: s.id })}
+        />
+      )}
+      <ManageSavedSearchesDialog
+        open={manageOpen}
+        onClose={() => setManageOpen(false)}
+        scope={source}
+      />
 
       <Pagination
         page={state.page}

@@ -10,6 +10,7 @@ import { USER_MIGRATIONS } from '../migrations';
 import { addMember, createCollection } from './collections';
 import { createGroup } from './collectionGroups';
 import { setUserSetting } from './userSettings';
+import { createPinnedSearch, listPinnedSearches } from './pinnedSearches';
 import {
   applyRemoteRows,
   drainOutbox,
@@ -276,5 +277,53 @@ describe('drainOutbox', () => {
     expect(meta.cursor).toBe('');
     expect(meta.deviceId).toMatch(/^[0-9a-f]{32}$/);
     expect(meta.accountId).toBeNull();
+  });
+});
+
+describe('saved searches on the wire', () => {
+  const remoteSearch = (extra: RemoteRow): RemoteRow => ({
+    key: 's1',
+    name: 'Bosses',
+    entity: 'mob',
+    params_json: '{"f_boss":"1"}',
+    created_at: 1,
+    ...extra,
+  });
+
+  it('carries icon, colour, position and pin', () => {
+    applyRemoteRows(db, [
+      tagged(
+        'pinned_search',
+        remoteSearch({ icon: 'skull', color: 'red', position: 2, pinned: false }),
+      ),
+    ]);
+    expect(listPinnedSearches(db)[0]).toMatchObject({
+      icon: 'skull',
+      color: 'red',
+      position: 2,
+      pinned: false,
+    });
+  });
+
+  it('reads a row from a client without pins as pinned', () => {
+    applyRemoteRows(db, [tagged('pinned_search', remoteSearch({}))]);
+    expect(listPinnedSearches(db)[0]).toMatchObject({ pinned: true, icon: null, position: null });
+  });
+
+  it('sends the new fields', () => {
+    createPinnedSearch(db, {
+      name: 'Claws',
+      entity: 'weapon',
+      params: {},
+      icon: 'star',
+      pinned: true,
+    });
+    const change = drainOutbox(db, 10).find((c) => c.entity === 'pinned_search');
+    expect(change?.row).toMatchObject({
+      entity: 'weapon',
+      icon: 'star',
+      pinned: true,
+      position: 0,
+    });
   });
 });

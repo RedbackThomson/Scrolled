@@ -8,6 +8,7 @@ import {
   type CollectionMember,
   type CollectionRecord,
   type PinnedSearchRecord,
+  type SavedSearchScope,
 } from '../types';
 
 export function rowToMember(row: Row): CollectionMember {
@@ -54,8 +55,12 @@ export function rowToPinnedSearch(row: Row): PinnedSearchRecord {
   return {
     id: Number(row.id),
     name: String(row.name),
-    entity: String(row.entity) as CollectionEntityType,
+    entity: String(row.entity) as SavedSearchScope,
     params,
+    icon: row.icon == null ? null : String(row.icon),
+    color: row.color == null ? null : String(row.color),
+    position: row.position == null ? null : Number(row.position),
+    pinned: Number(row.pinned ?? 0) === 1,
     createdAt: Number(row.created_at),
     updatedAt: Number(row.updated_at),
   };

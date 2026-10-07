@@ -70,3 +70,14 @@ export function useDeletePinnedSearch(): UseMutationResult<void, Error, number> 
     },
   });
 }
+
+export function useReorderPinnedSearches(): UseMutationResult<void, Error, readonly number[]> {
+  const qc = useQueryClient();
+  const db = getUserDbClient();
+  return useMutation({
+    mutationFn: (ids) => db.reorderPinnedSearches(ids),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ROOT_KEY });
+    },
+  });
+}

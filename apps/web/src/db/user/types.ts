@@ -32,6 +32,14 @@ export const COLLECTION_ENTITY_TYPES = [
   'skill',
 ] as const satisfies readonly CollectionEntityType[];
 
+/** The list page a saved search belongs to; weapons have their own page apart from equips. */
+export type SavedSearchScope = CollectionEntityType | 'weapon';
+
+export const SAVED_SEARCH_SCOPES = [
+  ...COLLECTION_ENTITY_TYPES,
+  'weapon',
+] as const satisfies readonly SavedSearchScope[];
+
 /**
  * Linear-backlog-style display options persisted per collection. Each
  * collection remembers its preferred grouping axes, sort key, and
@@ -195,22 +203,36 @@ export interface BulkAddResult {
 export interface PinnedSearchRecord {
   id: number;
   name: string;
-  entity: CollectionEntityType;
+  entity: SavedSearchScope;
   /** URL search params for the target listing (e.g. f_level_min=50, q=foo). */
   params: Record<string, string>;
+  /** Icon registry key; null uses the default. */
+  icon: string | null;
+  /** Colour registry key; null uses the default. */
+  color: string | null;
+  /** Order within the scope's shelf; null sorts after positioned rows. */
+  position: number | null;
+  /** Shown in Home's saved-search row. */
+  pinned: boolean;
   createdAt: number;
   updatedAt: number;
 }
 
 export interface CreatePinnedSearchInput {
   name: string;
-  entity: CollectionEntityType;
+  entity: SavedSearchScope;
   params: Record<string, string>;
+  icon?: string | null;
+  color?: string | null;
+  pinned?: boolean;
 }
 
 export interface UpdatePinnedSearchPatch {
   name?: string;
   params?: Record<string, string>;
+  icon?: string | null;
+  color?: string | null;
+  pinned?: boolean;
 }
 
 /** A row in the synced `user_settings` key-value table. Value is an opaque
@@ -366,6 +388,8 @@ export interface UserDatabase {
   createPinnedSearch(input: CreatePinnedSearchInput): Promise<PinnedSearchRecord>;
   updatePinnedSearch(id: number, patch: UpdatePinnedSearchPatch): Promise<PinnedSearchRecord>;
   deletePinnedSearch(id: number): Promise<void>;
+  /** Rewrite the shelf order of one scope's saved searches, first id first. */
+  reorderPinnedSearches(ids: readonly number[]): Promise<void>;
 
   /** User setting read; null when the key has never been written. */
   getUserSetting(key: string): Promise<UserSettingRecord | null>;

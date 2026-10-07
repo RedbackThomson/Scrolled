@@ -640,6 +640,12 @@ function localColumns(
         name: str(row.name),
         entity: str(row.entity),
         params_json: str(row.params_json),
+        icon: nstr(row.icon),
+        color: nstr(row.color),
+        position: nnum(row.position),
+        // Clients from before pins never send the flag; their searches all
+        // showed on Home, so a missing flag reads as pinned.
+        pinned: row.pinned == null ? 1 : bit(row.pinned),
         created_at: num(row.created_at),
         updated_at: num(row.updated_at),
         ...sync,
@@ -738,6 +744,10 @@ function toRemoteRow(
         name: str(stored.name),
         entity: str(stored.entity),
         params_json: str(stored.params_json),
+        icon: nstr(stored.icon),
+        color: nstr(stored.color),
+        position: nnum(stored.position),
+        pinned: !!num(stored.pinned),
         created_at: num(stored.created_at),
       };
     case 'collection_group': {

@@ -8,7 +8,7 @@ import { PopoverPanel } from '@/components/common/PopoverPanel';
 import type { FilterableCol } from './Filterable';
 import { FilterMenuContent } from './FilterMenu';
 import { FilterValuePanel } from './FilterValuePanel';
-import { columnHue, filterValueLabel, isFilterActive } from './filterSummary';
+import { columnHue, countLabel, filterValueLabel, isFilterActive } from './filterSummary';
 import type { FacetDef } from './presets';
 import { NAME_COLUMN, suggest, type FilterSuggestion } from './smartQuery';
 import { useFacetSuggestions, withSuggestion } from './useFacetSuggestions';
@@ -211,7 +211,7 @@ export function ListFilterBar({
                   hue: s.hue,
                   label: s.columnLabel,
                   value: s.valueLabel,
-                  count: n == null ? undefined : `${n.toLocaleString()} ${entityPlural}`,
+                  count: n == null ? undefined : countLabel(n, entityPlural),
                 };
               })}
               activeIndex={activeIndex}

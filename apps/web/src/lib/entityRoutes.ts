@@ -6,10 +6,12 @@ import {
   Shield,
   Skull,
   Sparkles,
+  Sword,
   Users,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { EntityKind } from '@/db';
+import type { SavedSearchScope } from '@/db/user';
 
 export function routeForEntity(entity: EntityKind, id: number | string): string {
   switch (entity) {
@@ -109,3 +111,17 @@ export const ENTITY_KINDS: readonly EntityKind[] = [
   'questChain',
   'skill',
 ] as const;
+
+/** A saved search's list page. Weapons share the equip entity but have their own page. */
+export function listingRouteForScope(scope: SavedSearchScope): string {
+  return scope === 'weapon' ? '/weapons' : listingRouteForEntity(scope);
+}
+
+export function iconForScope(scope: SavedSearchScope): LucideIcon {
+  return scope === 'weapon' ? Sword : iconForEntity(scope);
+}
+
+export function labelForScope(scope: SavedSearchScope, plural = false): string {
+  if (scope === 'weapon') return plural ? 'Weapons' : 'Weapon';
+  return labelForEntityKind(scope, plural);
+}

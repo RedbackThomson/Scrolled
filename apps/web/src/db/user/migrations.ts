@@ -409,4 +409,47 @@ export const USER_MIGRATIONS: readonly Migration[] = [
       ALTER TABLE collection_groups ADD COLUMN description TEXT;
     `,
   },
+  {
+    version: 12,
+    name: 'saved search icons, order and pins',
+    // Saved searches become shelf tiles with an icon, colour and order, and
+    // Home shows only the pinned ones. Until now every saved search appeared on
+    // Home, so existing rows start pinned. The entity check widens to every list
+    // page (skills and quest chains already saved under their own kind, which
+    // the old check rejected; weapons get their own scope apart from equips).
+    // SQLite can't alter a CHECK in place, so the table is rebuilt.
+    sql: `
+      CREATE TABLE pinned_searches_new (
+        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        name          TEXT    NOT NULL UNIQUE,
+        entity        TEXT    NOT NULL CHECK (entity IN
+          ('item','equip','weapon','mob','npc','map','quest','questChain','skill')),
+        params_json   TEXT    NOT NULL DEFAULT '{}',
+        icon          TEXT,
+        color         TEXT,
+        position      INTEGER,
+        pinned        INTEGER NOT NULL DEFAULT 0 CHECK (pinned IN (0,1)),
+        created_at    INTEGER NOT NULL,
+        updated_at    INTEGER NOT NULL,
+        uuid          TEXT    NOT NULL DEFAULT '',
+        remote_seq    INTEGER NOT NULL DEFAULT 0,
+        deleted_at    INTEGER,
+        origin_device TEXT    NOT NULL DEFAULT ''
+      );
+
+      INSERT INTO pinned_searches_new
+        (id, name, entity, params_json, pinned, created_at, updated_at,
+         uuid, remote_seq, deleted_at, origin_device)
+      SELECT
+        id, name, entity, params_json, 1, created_at, updated_at,
+        uuid, remote_seq, deleted_at, origin_device
+      FROM pinned_searches;
+
+      DROP TABLE pinned_searches;
+      ALTER TABLE pinned_searches_new RENAME TO pinned_searches;
+
+      CREATE INDEX pinned_searches_uuid_idx ON pinned_searches (uuid);
+      CREATE INDEX pinned_searches_entity_idx ON pinned_searches (entity, position);
+    `,
+  },
 ];

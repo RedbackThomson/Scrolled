@@ -1,9 +1,7 @@
 import { useMemo, useState } from 'react';
-import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { DataTable, useColumnFilters, useTableUrlState } from '@/components/data-table';
-import { PresetShelf } from '@/components/data-table/PresetShelf';
 import { CollectionsBulkAddMenu } from '@/components/collections';
-import { PinnedSearchesMenu } from '@/components/pinned-searches';
 import { TablePageLayout } from '@/components/layout/TablePageLayout';
 import { getDbClient } from '@/db';
 import {
@@ -56,15 +54,6 @@ export default function Items() {
     placeholderData: keepPreviousData,
   });
 
-  const presetCountQs = useQueries({
-    queries: presets.map((preset) => ({
-      queryKey: ['db', 'items', 'preset-count', preset.id],
-      queryFn: () => client.listItems({ limit: 1, filters: preset.filters }),
-      select: (page: { total: number }) => page.total,
-    })),
-  });
-  const presetCounts = Object.fromEntries(presets.map((p, i) => [p.id, presetCountQs[i]?.data]));
-
   const isEmpty = itemsQ.data?.total === 0 && !filtersActive;
 
   return (
@@ -74,20 +63,11 @@ export default function Items() {
       entityPlural="items"
       isEmpty={isEmpty}
     >
-      <PresetShelf
-        presets={presets}
-        filters={filters}
-        counts={presetCounts}
-        onApply={(preset) => {
-          clearAll();
-          for (const [id, filter] of Object.entries(preset?.filters ?? {})) setFilter(id, filter);
-          setState({ page: 1 });
-        }}
-      />
       <DataTable
         source="item"
         facets={facets}
         entityPlural="items"
+        presets={presets}
         data={itemsQ.data?.rows ?? []}
         total={itemsQ.data?.total ?? 0}
         columns={columns}
@@ -126,7 +106,6 @@ export default function Items() {
             />
           ) : undefined
         }
-        toolbarRightExtra={<PinnedSearchesMenu entity="item" />}
       />
     </TablePageLayout>
   );

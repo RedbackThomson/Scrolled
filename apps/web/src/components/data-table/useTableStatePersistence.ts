@@ -16,15 +16,15 @@
 
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { CollectionEntityType } from '@/db/user';
+import type { FacetSource } from '@/db';
 
 const KEY_PREFIX = 'scrolled.tableState.';
 
-function storageKey(entity: CollectionEntityType) {
+function storageKey(entity: FacetSource) {
   return `${KEY_PREFIX}${entity}`;
 }
 
-export function useTableStatePersistence(entity: CollectionEntityType | undefined) {
+export function useTableStatePersistence(entity: FacetSource | undefined) {
   const navigate = useNavigate();
   const restored = useRef(false);
 

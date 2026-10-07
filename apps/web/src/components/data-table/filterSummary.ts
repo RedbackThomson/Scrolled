@@ -35,3 +35,8 @@ export function columnHue(columnId: string): number {
   for (const c of columnId) h = (h * 31 + c.charCodeAt(0)) | 0;
   return CHIP_HUES[Math.abs(h) % CHIP_HUES.length]!;
 }
+
+/** "1 weapon", "1,269 weapons" from a lowercase plural ("NPCs", "quest chains"). */
+export function countLabel(n: number, plural: string): string {
+  return `${n.toLocaleString()} ${n === 1 ? plural.replace(/s$/, '') : plural}`;
+}

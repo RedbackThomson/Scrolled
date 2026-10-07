@@ -17,6 +17,8 @@ export interface CollectionColorOption {
   iconColor: string;
   /** Border / outline class used when the option is selected in the picker. */
   swatch: string;
+  /** oklch hue for components that tint by hue (saved-search tiles); null keeps the caller's default. */
+  hue: number | null;
 }
 
 export const COLLECTION_COLORS: readonly CollectionColorOption[] = [
@@ -27,6 +29,7 @@ export const COLLECTION_COLORS: readonly CollectionColorOption[] = [
     iconBg: 'bg-muted',
     iconColor: 'text-muted-foreground',
     swatch: 'bg-muted',
+    hue: null,
   },
   {
     name: 'red',
@@ -35,6 +38,7 @@ export const COLLECTION_COLORS: readonly CollectionColorOption[] = [
     iconBg: 'bg-red-500/15',
     iconColor: 'text-red-700 dark:text-red-300',
     swatch: 'bg-red-500',
+    hue: 25,
   },
   {
     name: 'orange',
@@ -43,6 +47,7 @@ export const COLLECTION_COLORS: readonly CollectionColorOption[] = [
     iconBg: 'bg-orange-500/15',
     iconColor: 'text-orange-700 dark:text-orange-300',
     swatch: 'bg-orange-500',
+    hue: 50,
   },
   {
     name: 'amber',
@@ -51,6 +56,7 @@ export const COLLECTION_COLORS: readonly CollectionColorOption[] = [
     iconBg: 'bg-amber-500/15',
     iconColor: 'text-amber-700 dark:text-amber-300',
     swatch: 'bg-amber-500',
+    hue: 75,
   },
   {
     name: 'green',
@@ -59,6 +65,7 @@ export const COLLECTION_COLORS: readonly CollectionColorOption[] = [
     iconBg: 'bg-green-500/15',
     iconColor: 'text-green-700 dark:text-green-300',
     swatch: 'bg-green-500',
+    hue: 148,
   },
   {
     name: 'teal',
@@ -67,6 +74,7 @@ export const COLLECTION_COLORS: readonly CollectionColorOption[] = [
     iconBg: 'bg-teal-500/15',
     iconColor: 'text-teal-700 dark:text-teal-300',
     swatch: 'bg-teal-500',
+    hue: 185,
   },
   {
     name: 'sky',
@@ -75,6 +83,7 @@ export const COLLECTION_COLORS: readonly CollectionColorOption[] = [
     iconBg: 'bg-sky-500/15',
     iconColor: 'text-sky-700 dark:text-sky-300',
     swatch: 'bg-sky-500',
+    hue: 235,
   },
   {
     name: 'indigo',
@@ -83,6 +92,7 @@ export const COLLECTION_COLORS: readonly CollectionColorOption[] = [
     iconBg: 'bg-indigo-500/15',
     iconColor: 'text-indigo-700 dark:text-indigo-300',
     swatch: 'bg-indigo-500',
+    hue: 270,
   },
   {
     name: 'violet',
@@ -91,6 +101,7 @@ export const COLLECTION_COLORS: readonly CollectionColorOption[] = [
     iconBg: 'bg-violet-500/15',
     iconColor: 'text-violet-700 dark:text-violet-300',
     swatch: 'bg-violet-500',
+    hue: 300,
   },
   {
     name: 'pink',
@@ -99,6 +110,7 @@ export const COLLECTION_COLORS: readonly CollectionColorOption[] = [
     iconBg: 'bg-pink-500/15',
     iconColor: 'text-pink-700 dark:text-pink-300',
     swatch: 'bg-pink-500',
+    hue: 350,
   },
 ] as const;
 

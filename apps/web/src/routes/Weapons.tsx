@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { DataTable, useColumnFilters, useTableUrlState } from '@/components/data-table';
 import { CollectionsBulkAddMenu } from '@/components/collections';
-import { PinnedSearchesMenu } from '@/components/pinned-searches';
 import { TablePageLayout } from '@/components/layout/TablePageLayout';
 import { getDbClient } from '@/db';
 import { labelForEquipType } from '@scrolled/game-db/domain/equipTypes';
@@ -125,7 +124,6 @@ export default function Weapons() {
             />
           ) : undefined
         }
-        toolbarRightExtra={<PinnedSearchesMenu entity="equip" />}
       />
     </TablePageLayout>
   );

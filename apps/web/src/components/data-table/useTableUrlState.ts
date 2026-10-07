@@ -26,6 +26,8 @@ export interface TableUrlState {
   sort: string;
   dir: TableSortDir;
   view: TableView;
+  /** The saved search these filters were loaded from, kept while they're edited. */
+  saved: number | null;
 }
 
 export interface TableUrlStatePatch {
@@ -36,6 +38,7 @@ export interface TableUrlStatePatch {
   dir?: TableSortDir;
   view?: TableView;
   cols?: string[] | null;
+  saved?: number | null;
 }
 
 /**
@@ -61,6 +64,7 @@ export function useTableUrlState(opts: TableUrlStateOptions) {
         .withOptions({ clearOnDefault: true }),
       view: parseAsStringLiteral(VIEWS).withDefault('table').withOptions({ clearOnDefault: true }),
       cols: parseAsArrayOf(parseAsString, ',').withOptions({ clearOnDefault: true }),
+      saved: parseAsInteger,
     },
     { history: 'replace' },
   );
@@ -80,6 +84,7 @@ export function useTableUrlState(opts: TableUrlStateOptions) {
       sort: state.sort,
       dir: state.dir,
       view: state.view,
+      saved: state.saved,
     } satisfies TableUrlState,
     setState,
     visibleColumns,

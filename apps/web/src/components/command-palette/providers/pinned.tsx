@@ -1,26 +1,29 @@
 import { Pin, PinOff } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CommandGroup, CommandItem as CommandItemPrimitive } from '@scrolled/design';
-import { iconForEntity, labelForEntityKind, listingRouteForEntity } from '@/lib/entityRoutes';
+import { iconForScope, labelForScope, listingRouteForScope } from '@/lib/entityRoutes';
 import { useCommandPalette } from '@/stores/useCommandPalette';
 import {
   useCreatePinnedSearch,
   useDeletePinnedSearch,
   usePinnedSearches,
 } from '@/hooks/usePinnedSearches';
-import type { CollectionEntityType } from '@/db/user';
+import type { SavedSearchScope } from '@/db/user';
 import { PaletteIcon } from '@/components/command-palette/PaletteIcon';
 
-const LISTING_PATHS: Record<string, CollectionEntityType> = {
+const LISTING_PATHS: Record<string, SavedSearchScope> = {
   '/items': 'item',
   '/equips': 'equip',
+  '/weapons': 'weapon',
   '/mobs': 'mob',
   '/npcs': 'npc',
   '/maps': 'map',
   '/quests': 'quest',
+  '/quest-chains': 'questChain',
+  '/skills': 'skill',
 };
 
-function activeListingEntity(pathname: string): CollectionEntityType | null {
+function activeListingEntity(pathname: string): SavedSearchScope | null {
   return LISTING_PATHS[pathname] ?? null;
 }
 
@@ -51,7 +54,7 @@ export function PinCurrentProvider() {
     <CommandGroup heading="Pin">
       <CommandItemPrimitive
         value="pin-current"
-        keywords={['pin', 'save', 'bookmark', labelForEntityKind(activeEntity, true)]}
+        keywords={['pin', 'save', 'bookmark', labelForScope(activeEntity, true)]}
         onSelect={async () => {
           const params = Object.fromEntries(new URLSearchParams(location.search));
           await createM.mutateAsync({
@@ -67,7 +70,7 @@ export function PinCurrentProvider() {
           Pin current filter as "<span className="font-medium">{query.trim()}</span>"
         </span>
         <span className="text-muted-foreground shrink-0 text-xs">
-          {labelForEntityKind(activeEntity, true)}
+          {labelForScope(activeEntity, true)}
         </span>
       </CommandItemPrimitive>
     </CommandGroup>
@@ -83,22 +86,20 @@ export function PinnedSearchesProvider() {
   const deleteM = useDeletePinnedSearch();
 
   const items = pinnedQ.data ?? [];
-  const visible = items.filter((p) =>
-    fuzzyMatch(query, `${p.name} ${labelForEntityKind(p.entity)}`),
-  );
+  const visible = items.filter((p) => fuzzyMatch(query, `${p.name} ${labelForScope(p.entity)}`));
   if (visible.length === 0) return null;
 
   return (
     <CommandGroup heading="Pinned searches">
       {visible.map((p) => {
-        const Icon = iconForEntity(p.entity);
+        const Icon = iconForScope(p.entity);
         const sp = new URLSearchParams(p.params);
-        const target = `${listingRouteForEntity(p.entity)}${sp.toString() ? `?${sp.toString()}` : ''}`;
+        const target = `${listingRouteForScope(p.entity)}${sp.toString() ? `?${sp.toString()}` : ''}`;
         return (
           <CommandItemPrimitive
             key={`pinned-${p.id}`}
             value={`pinned-${p.id}`}
-            keywords={[p.name, labelForEntityKind(p.entity)]}
+            keywords={[p.name, labelForScope(p.entity)]}
             onSelect={() => {
               navigate(target);
               setOpen(false);
@@ -107,7 +108,7 @@ export function PinnedSearchesProvider() {
             <PaletteIcon icon={Icon} />
             <span className="min-w-0 flex-1 truncate">{p.name}</span>
             <span className="text-muted-foreground shrink-0 text-xs">
-              {labelForEntityKind(p.entity, true)}
+              {labelForScope(p.entity, true)}
             </span>
             <button
               type="button"

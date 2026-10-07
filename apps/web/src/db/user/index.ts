@@ -21,6 +21,7 @@ export type {
   PinnedSearchRecord,
   RecentEntityRecord,
   RecentQueryRecord,
+  SavedSearchScope,
   UpdateCollectionPatch,
   UpdateMemberPatch,
   UpdatePinnedSearchPatch,
@@ -40,6 +41,7 @@ export type {
 export { COLLECTIONS_JSON_VERSION } from './collectionsJson';
 export {
   COLLECTION_ENTITY_TYPES,
+  SAVED_SEARCH_SCOPES,
   COLLECTION_GROUPINGS,
   COLLECTION_SORT_DIRS,
   COLLECTION_SORT_KEYS,

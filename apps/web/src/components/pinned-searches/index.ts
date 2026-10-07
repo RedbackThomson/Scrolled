@@ -1,1 +1,3 @@
-export { PinnedSearchesMenu } from './PinnedSearchesMenu';
+export { SaveSearchDialog } from './SaveSearchDialog';
+export { ManageSavedSearchesDialog } from './ManageSavedSearchesDialog';
+export { savedSearchLook } from './savedSearchLook';

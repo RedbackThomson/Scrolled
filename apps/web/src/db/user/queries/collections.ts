@@ -526,6 +526,9 @@ export function exportAllJson(db: Sqlite): CollectionsExportJson {
       name: p.name,
       entity: p.entity,
       params: p.params,
+      icon: p.icon,
+      color: p.color,
+      pinned: p.pinned,
     })),
     userSettings: settings.map((p) => ({ key: p.key, value: p.value })),
   };
@@ -597,9 +600,20 @@ export function importJson(
           continue;
         }
         db.exec(
-          `INSERT INTO pinned_searches (name, entity, params_json, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?)`,
-          [pinned.name, pinned.entity, JSON.stringify(pinned.params), now, now],
+          `INSERT INTO pinned_searches
+             (name, entity, params_json, icon, color, pinned, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            pinned.name,
+            pinned.entity,
+            JSON.stringify(pinned.params),
+            pinned.icon ?? null,
+            pinned.color ?? null,
+            // Files from before pins had every saved search on Home.
+            (pinned.pinned ?? true) ? 1 : 0,
+            now,
+            now,
+          ],
         );
         report.importedPinnedSearches++;
       }

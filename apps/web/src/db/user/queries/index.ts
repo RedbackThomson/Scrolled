@@ -265,6 +265,10 @@ export class UserDbApi implements UserDatabase {
     pinned.deletePinnedSearch(this.db, id);
   }
 
+  async reorderPinnedSearches(ids: readonly number[]): Promise<void> {
+    pinned.reorderPinnedSearches(this.db, ids);
+  }
+
   // -- user settings ----------------------------------------------------------
 
   async getUserSetting(key: string): Promise<UserSettingRecord | null> {

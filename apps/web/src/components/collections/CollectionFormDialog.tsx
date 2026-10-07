@@ -9,12 +9,9 @@ import type { CollectionRecord } from '@/db/user';
 import { cn } from '@scrolled/design';
 import { Modal } from './Modal';
 import { FIELD, FIELD_LABEL } from './fieldStyles';
-import { COLLECTION_ICONS, DEFAULT_COLLECTION_ICON, resolveCollectionIcon } from './iconRegistry';
-import {
-  COLLECTION_COLORS,
-  DEFAULT_COLLECTION_COLOR,
-  resolveCollectionColor,
-} from './colorRegistry';
+import { DEFAULT_COLLECTION_ICON, resolveCollectionIcon } from './iconRegistry';
+import { ColorField, IconField } from './IconColorFields';
+import { DEFAULT_COLLECTION_COLOR, resolveCollectionColor } from './colorRegistry';
 
 interface CollectionFormDialogProps {
   open: boolean;
@@ -164,58 +161,8 @@ export function CollectionFormDialog({
           />
         </label>
 
-        <fieldset className="space-y-1.5">
-          <legend className={FIELD_LABEL}>Icon</legend>
-          <div className="grid grid-cols-6 gap-1.5 sm:grid-cols-8">
-            {COLLECTION_ICONS.map((opt) => {
-              const active = opt.name === iconName;
-              return (
-                <button
-                  key={opt.name}
-                  type="button"
-                  onClick={() => setIconName(opt.name)}
-                  aria-label={opt.label}
-                  aria-pressed={active}
-                  title={opt.label}
-                  className={cn(
-                    'flex h-[38px] w-[38px] items-center justify-center rounded-[10px] text-sm transition-colors',
-                    active
-                      ? cn(selectedColor.iconBg, selectedColor.iconColor, 'ring-2 ring-current')
-                      : 'bg-muted text-muted-foreground hover:text-foreground',
-                  )}
-                >
-                  <opt.Icon className="h-4 w-4" />
-                </button>
-              );
-            })}
-          </div>
-        </fieldset>
-
-        <fieldset className="space-y-1.5">
-          <legend className={FIELD_LABEL}>Color</legend>
-          <div className="grid grid-cols-6 gap-2 sm:grid-cols-10">
-            {COLLECTION_COLORS.map((opt) => {
-              const active = opt.name === colorName;
-              return (
-                <button
-                  key={opt.name}
-                  type="button"
-                  onClick={() => setColorName(opt.name)}
-                  aria-label={opt.label}
-                  aria-pressed={active}
-                  title={opt.label}
-                  className={cn(
-                    'ease-spring flex h-[30px] w-[30px] items-center justify-center rounded-full transition-transform duration-300',
-                    opt.swatch,
-                    active
-                      ? 'ring-offset-card scale-110 ring-2 ring-current ring-offset-[3px]'
-                      : 'shadow-[inset_0_-3px_0_rgba(0,0,0,.15)] hover:scale-105',
-                  )}
-                />
-              );
-            })}
-          </div>
-        </fieldset>
+        <IconField value={iconName} onChange={setIconName} colorName={colorName} />
+        <ColorField value={colorName} onChange={setColorName} />
 
         {error && <p className="text-destructive text-xs">{error}</p>}
       </form>
