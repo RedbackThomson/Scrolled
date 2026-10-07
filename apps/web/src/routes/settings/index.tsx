@@ -13,6 +13,7 @@ import { ACCENTS } from '@/lib/accents';
 import { useAccent } from '@/stores/accent';
 import { appConfig } from '@/config';
 import { popIn } from '@/lib/popIn';
+import { Attribution } from '@/components/settings/Attribution';
 
 export default function SettingsIndex() {
   usePageTitle('Settings');
@@ -23,7 +24,8 @@ export default function SettingsIndex() {
   const hits = searchSettings(query);
 
   return (
-    <div className="space-y-6">
+    // 96px: the 68px top bar plus the shell's top and bottom content padding.
+    <div className="flex min-h-[calc(100dvh-96px)] flex-col gap-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-semibold leading-none md:text-4xl">Settings</h1>
@@ -123,6 +125,8 @@ export default function SettingsIndex() {
           ))}
         </ul>
       )}
+
+      <Attribution />
     </div>
   );
 }

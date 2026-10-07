@@ -6,13 +6,15 @@ export interface ElementChipProps {
   element: ElementKey;
   /** e.g. "Weak", "Strong", "Immune"; omit when neutral */
   status?: ReactNode;
+  /** Fill the container's width, with the status pushed to the right edge. */
+  stretch?: boolean;
 }
 
-export function ElementChip({ element, status }: ElementChipProps) {
+export function ElementChip({ element, status, stretch }: ElementChipProps) {
   return (
     <span
       style={{
-        display: 'inline-flex',
+        display: stretch ? 'flex' : 'inline-flex',
         alignItems: 'center',
         gap: 6,
         padding: '4px 10px 4px 5px',
@@ -33,7 +35,11 @@ export function ElementChip({ element, status }: ElementChipProps) {
         }}
       />
       <span style={{ textTransform: 'capitalize' }}>{element}</span>
-      {status && <span style={{ color: 'var(--text-2)', fontWeight: 500 }}>{status}</span>}
+      {status && (
+        <span style={{ color: 'var(--text-2)', fontWeight: 500, marginLeft: stretch ? 'auto' : 0 }}>
+          {status}
+        </span>
+      )}
     </span>
   );
 }

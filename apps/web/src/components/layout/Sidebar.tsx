@@ -375,18 +375,6 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
         <DbStatusIndicator collapsed={collapsed} trailing={APP_VERSION_LABEL} />
         <DatasetVersionTag collapsed={collapsed} />
       </div>
-      {!collapsed && (
-        <div className="text-sidebar-muted -mt-1.5 flex justify-end px-3.5 text-[10.5px]">
-          <a
-            href="https://github.com/RedbackThomson"
-            target="_blank"
-            rel="noreferrer noopener"
-            className="hover:text-foreground transition-colors"
-          >
-            Redback
-          </a>
-        </div>
-      )}
     </aside>
   );
 }
@@ -553,7 +541,13 @@ function DbStatusIndicator({
       actionTo: undefined,
     };
   }
-  const title = reason ? `${cfg.title}\n\n${reason}` : cfg.title;
+  const title = [
+    cfg.title,
+    reason,
+    dataset.installedVersion && `Data version ${dataset.installedVersion}`,
+  ]
+    .filter(Boolean)
+    .join('\n\n');
   const label = collapsed ? undefined : cfg.label;
 
   const body = (

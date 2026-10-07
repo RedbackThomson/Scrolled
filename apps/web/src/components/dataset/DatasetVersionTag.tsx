@@ -1,11 +1,9 @@
-// Small footer tag, beside the DB health indicator, naming the installed
-// hosted-dataset version. For an optional same-revision republish it becomes an
-// amber, clickable control that downloads and applies it in place. An in-flight
-// refresh and auto updates are shown by the status row above (DbStatusIndicator),
-// so they aren't duplicated here. Renders nothing on the generic build.
+// Footer control offering an optional same-revision dataset republish, which it
+// downloads and applies in place. An in-flight refresh and auto updates are shown
+// by the status row above (DbStatusIndicator), so they aren't duplicated here.
+// Renders nothing when up to date or on the generic build.
 
-import { Package, RefreshCw } from 'lucide-react';
-import { Chip } from '@scrolled/design';
+import { RefreshCw } from 'lucide-react';
 import { useDatasetUpdate } from '@/hooks/dataset/useDatasetUpdate';
 
 export function DatasetVersionTag({ collapsed }: { collapsed: boolean }) {
@@ -49,20 +47,6 @@ export function DatasetVersionTag({ collapsed }: { collapsed: boolean }) {
     );
   }
 
-  // Otherwise a quiet informational tag.
-  const title = `Installed dataset version ${installedVersion}`;
-  if (collapsed) {
-    return (
-      <div className="flex justify-center py-2" title={title}>
-        <Package className="text-sidebar-muted h-4 w-4" aria-label={title} />
-      </div>
-    );
-  }
-  return (
-    <div className="px-3.5 py-1.5" title={title}>
-      <Chip icon={Package}>
-        <span className="truncate">Data Version {installedVersion}</span>
-      </Chip>
-    </div>
-  );
+  // Up to date: the version shows in the database status row's tooltip instead.
+  return null;
 }
