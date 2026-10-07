@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { Sqlite } from '../sqlite';
 import { DbApi } from './index';
-import type { ConsumableSpecRecord, ItemRecord } from '../types';
+import type { ChairRecord, ConsumableSpecRecord, ItemRecord } from '../types';
 
 function makeItem(id: number, name: string, category = 'use'): ItemRecord {
   return {
@@ -113,6 +113,44 @@ describe('listItems with consumable effect columns', () => {
       filters: { buffDurationSeconds: { kind: 'range', min: 9000 } },
     });
     expect(outOfRange.total).toBe(0);
+  });
+});
+
+describe('listItems boolean filters', () => {
+  let db: DbApi;
+
+  beforeEach(async () => {
+    db = new DbApi(new Sqlite({ logTag: 'list-items-bool-test' }));
+    await db.open();
+    await db.upsertItems([
+      makeItem(2000000, 'Red Potion'),
+      { ...makeItem(4031000, 'Old Letter', 'etc'), quest: true },
+      makeItem(3010000, 'Wooden Bench', 'setup'),
+    ]);
+    const chair: ChairRecord = {
+      itemId: 3010000,
+      recoveryHp: 50,
+      recoveryMp: null,
+      frameCount: 1,
+      previewData: new Uint8Array([1]),
+      previewWidth: 1,
+      previewHeight: 1,
+    };
+    await db.upsertChairs([chair]);
+  });
+
+  it('filters quest items', async () => {
+    const { rows } = await db.listItems({ filters: { quest: { kind: 'range', min: 1, max: 1 } } });
+    expect(rows.map((r) => r.id)).toEqual([4031000]);
+  });
+
+  it('filters chairs and flags them on the row', async () => {
+    const { rows } = await db.listItems({ filters: { chair: { kind: 'range', min: 1, max: 1 } } });
+    expect(rows.map((r) => r.id)).toEqual([3010000]);
+    expect(rows[0]!.isChair).toBe(true);
+    const others = await db.listItems({ filters: { chair: { kind: 'range', min: 0, max: 0 } } });
+    expect(others.rows.every((r) => !r.isChair)).toBe(true);
+    expect(others.total).toBe(2);
   });
 });
 

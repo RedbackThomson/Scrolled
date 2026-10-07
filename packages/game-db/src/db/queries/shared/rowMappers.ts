@@ -48,6 +48,7 @@ export interface ItemListRowSql extends ItemRow {
   buff_weapon_attack: number | null;
   buff_speed: number | null;
   buff_jump: number | null;
+  is_chair: number;
 }
 
 export interface EquipRow extends Row {
@@ -201,6 +202,7 @@ export function rowToItemListRow(r: ItemListRowSql): ItemListRow {
     buffWeaponAttack: r.buff_weapon_attack,
     buffSpeed: r.buff_speed,
     buffJump: r.buff_jump,
+    isChair: r.is_chair === 1,
   };
 }
 

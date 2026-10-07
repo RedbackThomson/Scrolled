@@ -84,6 +84,8 @@ const FILTER_KEYS: Record<EntityScope, FilterMap> = {
     attack: { kind: 'number', param: 'buffWeaponAttack' },
     speed: { kind: 'number', param: 'buffSpeed' },
     jump: { kind: 'number', param: 'buffJump' },
+    quest: { kind: 'boolean', param: 'quest' },
+    chair: { kind: 'boolean', param: 'chair' },
   },
   equip: {
     slot: { kind: 'enum', param: 'slot' },

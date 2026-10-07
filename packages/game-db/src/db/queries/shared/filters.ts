@@ -31,6 +31,9 @@ export interface FilterSpec {
   elementStatus?: Exclude<ElementStatus, 'neutral'>;
 }
 
+/** 1 when the item has a chairs row; a chair's generic data stays in `items`. */
+export const IS_CHAIR = '(EXISTS (SELECT 1 FROM chairs ch WHERE ch.item_id = items.id))';
+
 export const ITEM_FILTER: Record<string, FilterSpec> = {
   name: { col: 'name', type: 'string' },
   category: { col: 'category', type: 'string' },
@@ -45,6 +48,9 @@ export const ITEM_FILTER: Record<string, FilterSpec> = {
   buffWeaponAttack: { col: 'cs.pad', type: 'number' },
   buffSpeed: { col: 'cs.speed', type: 'number' },
   buffJump: { col: 'cs.jump', type: 'number' },
+  // Stored 0/1; the UI's boolean filter sends {min:1,max:1} or {min:0,max:0}.
+  quest: { col: 'quest_item', type: 'number' },
+  chair: { col: IS_CHAIR, type: 'number' },
   id: { col: 'id', type: 'string' },
 };
 

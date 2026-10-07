@@ -7,7 +7,7 @@ import {
   clampOffset,
   resolveOrder,
 } from './shared/order';
-import { ITEM_FILTER, applyFilters } from './shared/filters';
+import { IS_CHAIR, ITEM_FILTER, applyFilters } from './shared/filters';
 import { rowToItem, rowToItemListRow, type ItemListRowSql, type ItemRow } from './shared/rowMappers';
 
 export function upsertItemRow(sql: Sqlite, item: ItemRecord): void {
@@ -143,7 +143,8 @@ export function listItems(
                 time_limited, expire_on_logout, pickup_block, not_sale, drop_block, trade_available,
                 source_path, string_path, string_category,
                 cs.hp AS recovery_hp, cs.mp AS recovery_mp, cs.time / 1000 AS buff_duration_seconds,
-                cs.pad AS buff_weapon_attack, cs.speed AS buff_speed, cs.jump AS buff_jump
+                cs.pad AS buff_weapon_attack, cs.speed AS buff_speed, cs.jump AS buff_jump,
+                ${IS_CHAIR} AS is_chair
          ${from} ${clause}
          ORDER BY ${order.col} ${order.dir === 'desc' ? 'DESC' : 'ASC'} NULLS LAST, items.id ASC
          LIMIT ? OFFSET ?`,

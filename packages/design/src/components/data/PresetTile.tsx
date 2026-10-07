@@ -28,11 +28,17 @@ export function PresetTile({
     ? `0 0 0 3px oklch(0.66 0.14 ${hue} / .2), inset 0 -2px 0 oklch(0.66 0.14 ${hue} / .5)`
     : 'inset 0 -2px 0 var(--border-1)';
   return (
-    <div
+    <button
+      type="button"
+      aria-pressed={active}
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
+        width: '100%',
+        textAlign: 'left',
+        font: 'inherit',
+        color: 'inherit',
         display: 'flex',
         alignItems: 'center',
         gap: compact ? 6 : 9,
@@ -46,7 +52,7 @@ export function PresetTile({
         transform: hovered ? 'translateY(-3px)' : 'none',
       }}
     >
-      <div
+      <span
         style={{
           width: compact ? 22 : 32,
           height: compact ? 22 : 32,
@@ -59,17 +65,19 @@ export function PresetTile({
         }}
       >
         <Icon icon={icon} size={compact ? 12 : 16} />
-      </div>
+      </span>
       {compact ? (
         <span style={{ fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap' }}>{label}</span>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, lineHeight: 1.2 }}>
+        <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0, lineHeight: 1.2 }}>
           <span style={{ font: '600 14px var(--font-display)' }}>{label}</span>
           {count != null && (
-            <span style={{ fontSize: 11.5, color: 'var(--text-2)' }}>{count} results</span>
+            <span style={{ fontSize: 11.5, color: 'var(--text-2)' }}>
+              {count.toLocaleString()} {count === 1 ? 'result' : 'results'}
+            </span>
           )}
-        </div>
+        </span>
       )}
-    </div>
+    </button>
   );
 }

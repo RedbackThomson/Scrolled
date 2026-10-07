@@ -1,5 +1,19 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { ArrowUp, Coins, Gauge, Hash, Heart, Sparkles, Sword, Tag, Timer, Wind } from 'lucide-react';
+import {
+  Armchair,
+  ArrowUp,
+  Coins,
+  Gauge,
+  Hash,
+  Heart,
+  ScrollText,
+  Sparkles,
+  Sword,
+  Tag,
+  Timer,
+  Wind,
+} from 'lucide-react';
+import { Chip } from '@scrolled/design';
 import { ItemIcon } from '@/components/entity-display/ItemIcon';
 import { ItemLink } from '@/components/entity-links';
 import { formatDurationSeconds } from '@/lib/duration';
@@ -139,6 +153,42 @@ export const columns: ColumnDef<ItemListRow>[] = [
       card: { label: 'Jump', render: (row) => signedNum(row.buffJump) },
     },
     cell: ({ row }) => signedNum(row.original.buffJump),
+  },
+  {
+    id: 'quest',
+    accessorFn: (i) => i.quest,
+    header: 'Quest',
+    meta: {
+      filter: 'boolean',
+      booleanLabels: { trueLabel: 'Quest item', falseLabel: 'Not a quest item' },
+      icon: ScrollText,
+    },
+    cell: ({ row }) =>
+      row.original.quest ? (
+        <Chip tone="hue" hue={150}>
+          Quest
+        </Chip>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      ),
+  },
+  {
+    id: 'chair',
+    accessorFn: (i) => i.isChair,
+    header: 'Chair',
+    meta: {
+      filter: 'boolean',
+      booleanLabels: { trueLabel: 'Chair', falseLabel: 'Not a chair' },
+      icon: Armchair,
+    },
+    cell: ({ row }) =>
+      row.original.isChair ? (
+        <Chip tone="hue" hue={70}>
+          Chair
+        </Chip>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      ),
   },
   {
     id: 'id',

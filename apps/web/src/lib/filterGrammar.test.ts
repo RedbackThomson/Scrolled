@@ -27,6 +27,11 @@ describe('parseFilterQuery', () => {
     expect(r.hasFilters).toBe(true);
   });
 
+  it('parses item quest and chair flags', () => {
+    expect(parseFilterQuery('items quest').params).toEqual({ f_quest: '1' });
+    expect(parseFilterQuery('items chair:false').params).toEqual({ f_chair: '0' });
+  });
+
   it('accepts the bare `boss` token as boss:true', () => {
     const r = parseFilterQuery('mobs boss');
     expect(r.params).toEqual({ f_boss: '1' });

@@ -76,6 +76,8 @@ export interface ItemListRow extends ItemRecord {
   buffSpeed: number | null;
   /** Jump buff (`spec.jump`). */
   buffJump: number | null;
+  /** Has a chairs row (sit-down Install item). */
+  isChair: boolean;
 }
 
 /** One weighted entry of a `morphRandom` table: transform into `morph` with
