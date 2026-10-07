@@ -11,9 +11,10 @@
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { usePopover } from '@/hooks/usePopover';
-import { Check, Loader2, Plus, Search } from 'lucide-react';
+import { BookmarkCheck, Check, Loader2, Plus, Search } from 'lucide-react';
 import { Button, ConfettiBurst, Input } from '@scrolled/design';
 import { useMotionPrefs } from '@/hooks/useMotionPrefs';
+import { showToast } from '@/stores/toasts';
 import {
   useCollectionGroups,
   useCollectionsList,
@@ -90,13 +91,38 @@ export function CollectionPicker({ entityType, entityId, children }: CollectionP
     }
   }, [motion, triggerRef]);
 
+  const announceSave = useCallback(
+    (collectionId: number, name: string) =>
+      showToast({
+        message: `Saved to ${name}`,
+        icon: BookmarkCheck,
+        action: {
+          label: 'Undo',
+          run: () => toggleM.mutate({ collectionId, entityType, entityId, member: false }),
+        },
+      }),
+    [toggleM, entityType, entityId],
+  );
+
   const onToggleMembership = useCallback(
     (collectionId: number) => {
       const isMember = placementsByCollection.has(collectionId);
       toggleM.mutate({ collectionId, entityType, entityId, member: !isMember });
-      if (!isMember) celebrate();
+      if (!isMember) {
+        celebrate();
+        const name = collectionsQ.data?.find((c) => c.id === collectionId)?.name;
+        if (name) announceSave(collectionId, name);
+      }
     },
-    [placementsByCollection, toggleM, entityType, entityId, celebrate],
+    [
+      placementsByCollection,
+      toggleM,
+      entityType,
+      entityId,
+      celebrate,
+      collectionsQ.data,
+      announceSave,
+    ],
   );
 
   const onCreateAndAdd = useCallback(async () => {
@@ -110,8 +136,9 @@ export function CollectionPicker({ entityType, entityId, children }: CollectionP
       member: true,
     });
     celebrate();
+    announceSave(created.id, created.name);
     setQuery('');
-  }, [query, createM, toggleM, entityType, entityId, celebrate]);
+  }, [query, createM, toggleM, entityType, entityId, celebrate, announceSave]);
 
   // "Create" footer appears when search has no exact match.
   const hasExactMatch = useMemo(() => {

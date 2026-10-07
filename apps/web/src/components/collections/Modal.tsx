@@ -88,11 +88,11 @@ export function Modal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="animate-fade absolute inset-0 bg-[var(--surface-scrim)]" aria-hidden />
+      <div className="sc-scrim absolute inset-0 bg-[var(--surface-scrim)]" aria-hidden />
       <div
         ref={panelRef}
         className={cn(
-          'border-border bg-card text-card-foreground shadow-pop animate-modal relative flex flex-col overflow-hidden rounded-2xl border-2',
+          'border-border bg-card text-card-foreground shadow-pop sc-modal relative flex flex-col overflow-hidden rounded-2xl border-2',
           panelClassName ?? 'w-full max-w-md',
         )}
       >

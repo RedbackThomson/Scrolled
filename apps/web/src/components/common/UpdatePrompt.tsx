@@ -16,9 +16,8 @@ export function UpdatePrompt() {
   return (
     <div
       role="status"
-      aria-live="polite"
       data-surface="tooltip"
-      className="bg-card text-card-foreground fixed bottom-4 right-4 z-50 flex max-w-sm animate-[sc-toast_600ms_var(--ease-spring)_both] items-center gap-2.5 rounded-lg py-2.5 pl-2.5 pr-3 shadow-[0_14px_30px_rgba(10,20,50,.35)]"
+      className="bg-card text-card-foreground sc-toast pointer-events-auto flex max-w-sm items-center gap-2.5 rounded-lg py-2.5 pl-2.5 pr-3 shadow-[0_14px_30px_rgba(10,20,50,.35)]"
     >
       <span className="bg-primary text-primary-foreground grid h-7 w-7 shrink-0 place-items-center rounded-full">
         <RefreshCw className="h-[15px] w-[15px]" aria-hidden />

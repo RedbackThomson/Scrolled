@@ -187,7 +187,7 @@ export function HoverPopover({
             <div
               data-surface="tooltip"
               className={cn(
-                'bg-card text-card-foreground animate-[sc-tip_460ms_var(--ease-spring)_both] rounded-xl p-3 shadow-[var(--shadow-tooltip)]',
+                'bg-card text-card-foreground animate-[sc-tip_460ms_var(--ease-spring)_150ms_both] rounded-xl p-3 shadow-[var(--shadow-tooltip)]',
                 GROW_FROM[coords.placement][coords.align],
                 className,
               )}

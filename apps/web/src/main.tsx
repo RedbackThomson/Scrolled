@@ -7,7 +7,7 @@ import { NuqsAdapter } from 'nuqs/adapters/react-router/v6';
 import { IdentityProviderHost } from '@scrolled/identity-core/react';
 
 import { router } from '@/router';
-import { UpdatePrompt } from '@/components/common/UpdatePrompt';
+import { ToastHost } from '@/components/common/ToastHost';
 import { initAnalytics } from '@/analytics';
 import { initMcp } from '@/mcp';
 import { createIdentityProvider } from '@/identity/createProvider';
@@ -48,7 +48,7 @@ async function bootstrap() {
             <HotkeysProvider>
               <NuqsAdapter>
                 <RouterProvider router={router} />
-                <UpdatePrompt />
+                <ToastHost />
               </NuqsAdapter>
             </HotkeysProvider>
           </SyncEngineHost>
