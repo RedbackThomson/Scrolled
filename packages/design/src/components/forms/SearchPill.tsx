@@ -2,6 +2,7 @@ import type { InputHTMLAttributes } from 'react';
 import { Search, X } from 'lucide-react';
 import { Icon } from '../core/Icon';
 import { Kbd } from '../core/Kbd';
+import { TextField } from './TextField';
 
 const HEIGHT = { sm: 32, md: 36, lg: 40 };
 
@@ -42,7 +43,7 @@ export function SearchPill({
     display: 'flex',
     alignItems: 'center',
     gap: size === 'lg' ? 10 : 8,
-    padding: onChange ? '0 6px 0 12px' : '0 8px 0 16px',
+    padding: '0 8px 0 16px',
     boxSizing: 'border-box' as const,
     borderRadius: 999,
     background: tone === 'sunken' ? 'var(--surface-sunken)' : 'var(--surface-card)',
@@ -53,50 +54,48 @@ export function SearchPill({
 
   if (onChange) {
     return (
-      <label className="sc-focus-within-ring" style={{ ...style, cursor: 'text' }}>
-        <Icon icon={Search} size={size === 'sm' ? 14 : 16} />
-        <input
-          {...inputProps}
-          type={type}
-          value={value ?? ''}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          autoComplete="off"
-          className="sc-input-text"
-          style={{
-            flex: 1,
-            minWidth: 0,
-            border: 'none',
-            outline: 'none',
-            padding: 0,
-            background: 'transparent',
-            color: 'var(--text-1)',
-            font: 'inherit',
-          }}
-        />
-        {value && (
-          <button
-            type="button"
-            aria-label="Clear search"
-            onClick={() => onChange('')}
-            className="sc-focus-ring"
-            style={{
-              width: 22,
-              height: 22,
-              flex: 'none',
-              display: 'grid',
-              placeItems: 'center',
-              border: 'none',
-              borderRadius: 999,
-              background: 'transparent',
-              color: 'var(--text-2)',
-              cursor: 'pointer',
-            }}
-          >
-            <Icon icon={X} size={13} />
-          </button>
-        )}
-      </label>
+      <TextField
+        {...inputProps}
+        type={type}
+        value={value ?? ''}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        variant={tone}
+        shape="pill"
+        icon={Search}
+        style={{
+          width,
+          maxWidth: '100%',
+          height: HEIGHT[size],
+          padding: '0 6px 0 12px',
+          gap: size === 'lg' ? 10 : 8,
+          font: size === 'lg' ? 'var(--type-body)' : '600 13px var(--font-body)',
+        }}
+        trailing={
+          value ? (
+            <button
+              type="button"
+              aria-label="Clear search"
+              onClick={() => onChange('')}
+              className="sc-focus-ring"
+              style={{
+                width: 22,
+                height: 22,
+                flex: 'none',
+                display: 'grid',
+                placeItems: 'center',
+                border: 'none',
+                borderRadius: 999,
+                background: 'transparent',
+                color: 'var(--text-2)',
+                cursor: 'pointer',
+              }}
+            >
+              <Icon icon={X} size={13} />
+            </button>
+          ) : null
+        }
+      />
     );
   }
 

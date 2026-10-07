@@ -1,4 +1,5 @@
 import { useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
+import { TextField } from './TextField';
 
 export interface RangeSliderQuickRange {
   label: string;
@@ -83,34 +84,13 @@ export function RangeSlider({
   };
 
   const box = (lbl: string, v: number, thumb: 0 | 1) => (
-    <label
-      className={onChange ? 'sc-focus-within-ring' : undefined}
-      style={{
-        height: lg ? 48 : 34,
-        flex: 1,
-        minWidth: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 6,
-        padding: lg ? '0 14px' : '0 10px',
-        borderRadius: lg ? 14 : 11,
-        border: 'var(--border-rim)',
-        background: 'var(--surface-card)',
-        boxShadow: 'var(--shadow-input)',
-      }}
-    >
-      <span style={{ font: '700 11px var(--font-body)', color: 'var(--text-2)' }}>{lbl}</span>
-      {onChange ? (
-        <BoundInput
-          aria-label={`${label} ${lbl.toLowerCase()}`}
-          value={v}
-          onCommit={(n) => set(thumb, n)}
-        />
-      ) : (
-        <b>{v}</b>
-      )}
-    </label>
+    <BoundInput
+      tag={lbl}
+      aria-label={`${label} ${lbl.toLowerCase()}`}
+      value={v}
+      size={lg ? 'lg' : 'md'}
+      onCommit={onChange ? (n) => set(thumb, n) : undefined}
+    />
   );
 
   return (
@@ -213,44 +193,45 @@ export function RangeSlider({
 }
 
 function BoundInput({
+  tag,
   value,
+  size,
   onCommit,
   'aria-label': ariaLabel,
 }: {
+  tag: string;
   value: number;
-  onCommit: (value: number) => void;
+  size: 'md' | 'lg';
+  /** Omit for a read-only bound */
+  onCommit?: (value: number) => void;
   'aria-label': string;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
   // Clamping each keystroke would fight the user mid-number, so the draft commits on blur or Enter.
   const commit = () => {
     const n = Number(draft);
-    if (draft !== null && draft.trim() !== '' && Number.isFinite(n)) onCommit(n);
+    if (draft !== null && draft.trim() !== '' && Number.isFinite(n)) onCommit?.(n);
     setDraft(null);
   };
   return (
-    <input
-      type="text"
+    <TextField
       inputMode="numeric"
       aria-label={ariaLabel}
+      readOnly={!onCommit}
+      tabIndex={onCommit ? undefined : -1}
       value={draft ?? String(value)}
       onChange={(e) => setDraft(e.target.value)}
       onBlur={commit}
       onKeyDown={(e) => {
         if (e.key === 'Enter') commit();
       }}
-      className="sc-input-text"
-      style={{
-        width: '100%',
-        minWidth: 0,
-        border: 'none',
-        outline: 'none',
-        padding: 0,
-        background: 'transparent',
-        textAlign: 'right',
-        color: 'var(--text-1)',
-        font: '700 14px var(--font-body)',
-      }}
+      size={size}
+      leading={
+        <span style={{ font: '700 11px var(--font-body)', color: 'var(--text-2)' }}>{tag}</span>
+      }
+      inputClassName="text-right font-bold"
+      className="flex-1"
+      style={{ fontSize: 14 }}
     />
   );
 }

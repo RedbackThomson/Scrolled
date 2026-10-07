@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
+import { Kbd } from '../../src/components/core/Kbd';
 import { TextArea, TextField } from '../../src/components/forms/TextField';
 
 const meta = {
@@ -11,7 +12,8 @@ const meta = {
   argTypes: {
     onChange: { action: 'changed' },
     size: { control: 'inline-radio', options: ['sm', 'md', 'lg'] },
-    variant: { control: 'inline-radio', options: ['default', 'ghost'] },
+    variant: { control: 'inline-radio', options: ['default', 'ghost', 'float', 'sunken'] },
+    shape: { control: 'inline-radio', options: ['rounded', 'pill'] },
   },
   decorators: [
     (Story) => (
@@ -72,4 +74,38 @@ export const Multiline: Story = {
       rows={3}
     />
   ),
+};
+
+/** Pill fields on the page backdrop and inside a popover, with a keycap and a clear button. */
+export const Pills: Story = {
+  render: () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <TextField
+        variant="float"
+        shape="pill"
+        icon={Search}
+        placeholder="Search or jump to…"
+        aria-label="Search"
+        trailing={<Kbd>/</Kbd>}
+      />
+      <TextField
+        variant="sunken"
+        shape="pill"
+        icon={Search}
+        defaultValue="Frost"
+        aria-label="Find a collection"
+        trailing={<X size={13} color="var(--text-2)" />}
+      />
+    </div>
+  ),
+};
+/** A tag before the value, as in the range slider's bounds. */
+export const WithLeading: Story = {
+  args: {
+    label: undefined,
+    leading: <span style={{ font: '700 11px var(--font-body)', color: 'var(--text-2)' }}>MIN</span>,
+    defaultValue: '30',
+    inputMode: 'numeric',
+    inputClassName: 'text-right font-bold',
+  },
 };

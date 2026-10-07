@@ -2,7 +2,7 @@ import { useEffect, useRef, type KeyboardEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft, Search } from 'lucide-react';
 import { IconButton } from '../core/IconButton';
-import { Icon } from '../core/Icon';
+import { TextField } from '../forms/TextField';
 
 export interface FullScreenSearchProps {
   value: string;
@@ -67,50 +67,29 @@ export function FullScreenSearch({
           label="Close search"
           onClick={onClose}
         />
-        <label
-          style={{
-            flex: 1,
-            minWidth: 0,
-            height: 44,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            padding: '0 14px',
-            borderRadius: 999,
-            border: '2px solid var(--accent)',
-            boxShadow: '0 0 0 4px var(--accent-glow)',
-            background: 'var(--surface-card)',
+        <TextField
+          ref={input}
+          type="search"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            onKeyDown?.(e);
+            if (!e.defaultPrevented && e.key === 'Enter' && onSubmit) {
+              e.preventDefault();
+              onSubmit();
+            }
+            if (!e.defaultPrevented && e.key === 'Escape') onClose();
           }}
-        >
-          <Icon icon={Search} size={16} color="var(--text-2)" />
-          <input
-            ref={input}
-            type="search"
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            onKeyDown={(e) => {
-              onKeyDown?.(e);
-              if (!e.defaultPrevented && e.key === 'Enter' && onSubmit) {
-                e.preventDefault();
-                onSubmit();
-              }
-              if (!e.defaultPrevented && e.key === 'Escape') onClose();
-            }}
-            enterKeyHint={enterKeyHint}
-            placeholder={placeholder}
-            autoComplete="off"
-            className="sc-input-text"
-            style={{
-              flex: 1,
-              minWidth: 0,
-              border: 'none',
-              outline: 'none',
-              background: 'transparent',
-              color: 'var(--text-1)',
-              font: '500 16px var(--font-body)',
-            }}
-          />
-        </label>
+          enterKeyHint={enterKeyHint}
+          placeholder={placeholder}
+          aria-label={ariaLabel}
+          shape="pill"
+          icon={Search}
+          // The field is the screen's only job, so it keeps the focus look throughout.
+          focused
+          className="flex-1"
+          style={{ height: 44, gap: 10, padding: '0 14px', font: '500 16px var(--font-body)' }}
+        />
       </div>
       {chips && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, padding: '2px 16px 8px' }}>

@@ -43,6 +43,7 @@ export {
   type TextAreaProps,
   type TextFieldProps,
   type TextFieldSize,
+  type TextFieldVariant,
 } from './components/forms/TextField';
 
 export {

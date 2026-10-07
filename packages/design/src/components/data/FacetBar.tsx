@@ -7,6 +7,7 @@ import {
 } from 'react';
 import { Plus, Search } from 'lucide-react';
 import { Icon } from '../core/Icon';
+import { TextField } from '../forms/TextField';
 import { Kbd } from '../core/Kbd';
 import { FacetPill } from './FacetPill';
 import { FilterChip } from './FilterChip';
@@ -43,7 +44,10 @@ export interface FacetBarProps {
   /** Keycap shown in the empty field, e.g. "/" */
   shortcut?: string;
   inputRef?: Ref<HTMLInputElement>;
-  inputProps?: Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange' | 'placeholder'>;
+  inputProps?: Omit<
+    InputHTMLAttributes<HTMLInputElement>,
+    'value' | 'onChange' | 'placeholder' | 'size'
+  >;
   /** Rendered under the bar, e.g. the suggestion popover */
   children?: ReactNode;
 }
@@ -103,90 +107,85 @@ export function FacetBar({
 
   return (
     <div style={{ position: 'relative' }}>
-      <div
-        className="focus-within:border-primary flex min-h-11 flex-wrap items-center gap-1.5 rounded-[22px] border-2 border-[color:var(--border-1)] bg-[var(--surface-card)] shadow-[var(--shadow-float)] transition-[border-color,box-shadow] focus-within:shadow-[0_0_0_4px_var(--accent-glow),var(--shadow-float)]"
-        style={{ padding: '6px 6px 6px 14px' }}
-      >
-        <Icon icon={Search} size={15} color="var(--text-2)" />
-        <input
-          {...inputProps}
-          ref={setInput}
-          type="text"
-          value={query}
-          onChange={(e) => onQueryChange(e.target.value)}
-          onKeyDown={onInputKeyDown}
-          placeholder={placeholder}
-          autoComplete="off"
-          spellCheck={false}
-          className="sc-input-text"
-          style={{
-            flex: 1,
-            minWidth: 160,
-            border: 'none',
-            outline: 'none',
-            padding: '4px 0',
-            background: 'transparent',
-            color: 'var(--text-1)',
-            font: '500 14px var(--font-body)',
-          }}
-        />
-        {shortcut && query === '' && (
-          <span className="hidden md:inline-flex">
-            <Kbd>{shortcut}</Kbd>
-          </span>
-        )}
-        {facets.map((f) => (
-          <FacetPill
-            key={f.id}
-            ref={register(f.id)}
-            label={f.label}
-            valueLabel={f.valueLabel}
-            hue={f.hue}
-            open={openId === f.id}
-            onClick={(e) => onOpenFacet(f.id, e.currentTarget)}
-            onKeyDown={f.valueLabel != null ? clearFromKey(f.id) : undefined}
-          />
-        ))}
-        {chips.map((c) => (
-          <span
-            key={c.id}
-            ref={(el) => register(c.id)(el?.querySelector('button') ?? null)}
-            onKeyDown={clearFromKey(c.id)}
-            style={{ display: 'inline-flex' }}
-          >
-            <FilterChip
-              label={c.label}
-              value={c.value}
-              hue={c.hue}
-              onRemove={() => onClear(c.id)}
-            />
-          </span>
-        ))}
-        {onOpenMore && (
-          <button
-            type="button"
-            aria-haspopup="dialog"
-            aria-expanded={openId === 'more'}
-            onClick={(e) => onOpenMore(e.currentTarget)}
-            className="sc-focus-ring hover:text-foreground"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-              padding: '4px 10px',
-              border: '2px solid transparent',
-              borderRadius: 999,
-              background: 'transparent',
-              color: 'var(--text-2)',
-              font: '700 13px var(--font-body)',
-              cursor: 'pointer',
-            }}
-          >
-            <Icon icon={Plus} size={14} />
-            More
-          </button>
-        )}
-      </div>
+      <TextField
+        {...inputProps}
+        ref={setInput}
+        value={query}
+        onChange={(e) => onQueryChange(e.target.value)}
+        onKeyDown={onInputKeyDown}
+        placeholder={placeholder}
+        spellCheck={false}
+        icon={Search}
+        wrap
+        inputClassName="min-w-[160px] py-1"
+        style={{
+          minHeight: 44,
+          borderRadius: 22,
+          padding: '4px 6px 4px 14px',
+          gap: 6,
+          font: '500 14px var(--font-body)',
+        }}
+        trailing={
+          <>
+            {shortcut && query === '' && (
+              <span className="hidden md:inline-flex">
+                <Kbd>{shortcut}</Kbd>
+              </span>
+            )}
+            {facets.map((f) => (
+              <FacetPill
+                key={f.id}
+                ref={register(f.id)}
+                label={f.label}
+                valueLabel={f.valueLabel}
+                hue={f.hue}
+                open={openId === f.id}
+                onClick={(e) => onOpenFacet(f.id, e.currentTarget)}
+                onKeyDown={f.valueLabel != null ? clearFromKey(f.id) : undefined}
+              />
+            ))}
+            {chips.map((c) => (
+              <span
+                key={c.id}
+                ref={(el) => register(c.id)(el?.querySelector('button') ?? null)}
+                onKeyDown={clearFromKey(c.id)}
+                style={{ display: 'inline-flex' }}
+              >
+                <FilterChip
+                  label={c.label}
+                  value={c.value}
+                  hue={c.hue}
+                  onRemove={() => onClear(c.id)}
+                />
+              </span>
+            ))}
+            {onOpenMore && (
+              <button
+                type="button"
+                aria-haspopup="dialog"
+                aria-expanded={openId === 'more'}
+                onClick={(e) => onOpenMore(e.currentTarget)}
+                className="sc-focus-ring hover:text-foreground"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: '4px 10px',
+                  border: '2px solid transparent',
+                  borderRadius: 999,
+                  background: 'transparent',
+                  color: 'var(--text-2)',
+                  font: '700 13px var(--font-body)',
+                  cursor: 'pointer',
+                }}
+              >
+                <Icon icon={Plus} size={14} />
+                More
+              </button>
+            )}
+          </>
+        }
+      />
       {children}
     </div>
   );
