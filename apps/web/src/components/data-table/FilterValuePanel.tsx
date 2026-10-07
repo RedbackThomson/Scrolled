@@ -106,7 +106,6 @@ export function FilterValuePanel({
             draft={draft}
             setDraft={setDraft}
             facet={facet}
-            onSubmit={() => apply()}
             touch={isMobile}
           />
         ) : (
@@ -274,7 +273,6 @@ type RangeBodyProps = BodyProps & {
   source: FacetSource;
   filters: Record<string, ColumnFilter>;
   facet?: FacetDef;
-  onSubmit: () => void;
   /** Phone sheet sizing */
   touch?: boolean;
 };
@@ -303,7 +301,6 @@ function RangeBodyInner({
   draft,
   setDraft,
   facet,
-  onSubmit,
   level,
   touch,
 }: RangeBodyProps & { level: number | null }) {
@@ -312,7 +309,13 @@ function RangeBodyInner({
   const cur = draft?.kind === 'range' ? draft : undefined;
 
   if (histogram.isLoading) return <Skeleton rows={3} />;
-  if (!h) return <BoundsFields draft={cur} setDraft={setDraft} onSubmit={onSubmit} />;
+  if (!h) {
+    return (
+      <p className="text-muted-foreground py-2 text-[13px]">
+        Nothing on this page has a {col.label} value.
+      </p>
+    );
+  }
 
   const integral = Number.isInteger(h.binWidth);
   const value: [number, number] = [cur?.min ?? h.min, cur?.max ?? h.max];
@@ -354,40 +357,6 @@ function RangeBodyInner({
         label={col.label}
         size={touch ? 'lg' : 'md'}
       />
-    </div>
-  );
-}
-
-/** Plain min/max fields for a number column with no values to chart. */
-function BoundsFields({
-  draft,
-  setDraft,
-  onSubmit,
-}: {
-  draft: Extract<ColumnFilter, { kind: 'range' }> | undefined;
-  setDraft: (next: ColumnFilter | null) => void;
-  onSubmit: () => void;
-}) {
-  const bound = (key: 'min' | 'max', raw: string) => {
-    const n = raw.trim() === '' ? undefined : Number(raw);
-    const next = { kind: 'range' as const, min: draft?.min, max: draft?.max, [key]: n };
-    setDraft(next.min === undefined && next.max === undefined ? null : next);
-  };
-  return (
-    <div className="flex items-center gap-1.5">
-      {(['min', 'max'] as const).map((key) => (
-        <Input
-          key={key}
-          type="number"
-          inputMode="numeric"
-          value={draft?.[key] ?? ''}
-          onChange={(e) => bound(key, e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && onSubmit()}
-          placeholder={key === 'min' ? 'Min' : 'Max'}
-          aria-label={key === 'min' ? 'Minimum' : 'Maximum'}
-          className={fieldClass}
-        />
-      ))}
     </div>
   );
 }

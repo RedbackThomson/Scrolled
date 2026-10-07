@@ -112,7 +112,7 @@ export function countMatchingMany(
 /**
  * Distribution of a number column under `filters`, in at most `bins` equal-width
  * bins from the column's minimum. Integer columns get integer-width bins so a
- * bin never splits a level. Null when the column isn't numeric or has no values.
+ * bin never splits a level. Null when the column isn't numeric or the page has no values.
  */
 export function columnHistogram(
   sql: Sqlite,
@@ -127,11 +127,16 @@ export function columnHistogram(
   const col = spec.col;
   const { clause, params } = whereClause(src, filters, [`${col} IS NOT NULL`]);
   const bind = params.length > 0 ? params : undefined;
-  return sql.transaction(() => {
-    const range = sql.selectObject<{ lo: number | null; hi: number | null }>(
-      `SELECT MIN(${col}) AS lo, MAX(${col}) AS hi FROM ${src.from} ${clause}`,
-      bind,
+  const bounds = (where: string, args?: (string | number)[]) =>
+    sql.selectObject<{ lo: number | null; hi: number | null }>(
+      `SELECT MIN(${col}) AS lo, MAX(${col}) AS hi FROM ${src.from} ${where}`,
+      args,
     );
+  return sql.transaction(() => {
+    // When the other filters leave no values, chart the page's whole range
+    // with empty bars so the slider still works and the gap is visible.
+    let range = bounds(clause, bind);
+    if (range?.lo == null) range = bounds(whereClause(src, {}, [`${col} IS NOT NULL`]).clause);
     if (range?.lo == null || range.hi == null) return null;
     const min = range.lo;
     const max = range.hi;

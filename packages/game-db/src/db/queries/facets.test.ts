@@ -2,7 +2,30 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { Sqlite } from '../sqlite';
 import { DbApi } from './index';
-import type { EquipRecord } from '../types';
+import type { EquipRecord, FacetSource } from '../types';
+import {
+  EQUIP_FILTER,
+  ITEM_FILTER,
+  MAP_FILTER,
+  MOB_FILTER,
+  NPC_FILTER,
+  QUEST_CHAIN_FILTER,
+  QUEST_FILTER,
+  SKILL_FILTER,
+  type FilterSpec,
+} from './shared/filters';
+
+const FILTERS: Record<FacetSource, Record<string, FilterSpec>> = {
+  item: ITEM_FILTER,
+  equip: EQUIP_FILTER,
+  weapon: EQUIP_FILTER,
+  mob: MOB_FILTER,
+  npc: NPC_FILTER,
+  map: MAP_FILTER,
+  quest: QUEST_FILTER,
+  questChain: QUEST_CHAIN_FILTER,
+  skill: SKILL_FILTER,
+};
 
 function makeEquip(
   id: number,
@@ -78,13 +101,25 @@ describe('facet queries', () => {
     expect(h?.bins.reduce((a, b) => a + b, 0)).toBe(3);
   });
 
+  it('keeps the page-wide range with empty bars when the other filters leave no values', async () => {
+    const h = await db.columnHistogram('weapon', 'attack', 4, {
+      requiredLevel: { kind: 'range', min: 500 },
+    });
+    expect(h).toMatchObject({ min: 5, max: 40, bins: [0, 0, 0, 0] });
+  });
+
   it('returns null for unknown, non-numeric or empty columns', async () => {
     expect(await db.columnHistogram('weapon', 'name', 14, {})).toBeNull();
     expect(await db.columnHistogram('weapon', 'nope', 14, {})).toBeNull();
-    expect(
-      await db.columnHistogram('weapon', 'requiredLevel', 14, {
-        requiredLevel: { kind: 'range', min: 500 },
-      }),
-    ).toBeNull();
+    expect(await db.columnHistogram('weapon', 'incSpeed', 14, {})).toBeNull();
+  });
+
+  it('queries every number column of every source', async () => {
+    for (const [source, specs] of Object.entries(FILTERS) as [FacetSource, typeof ITEM_FILTER][]) {
+      for (const [columnId, spec] of Object.entries(specs)) {
+        if (spec.type !== 'number') continue;
+        await db.columnHistogram(source, columnId, 14, {});
+      }
+    }
   });
 });

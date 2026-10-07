@@ -4,7 +4,7 @@ export interface HistogramProps {
   /** Value domain the bins span */
   min: number;
   max: number;
-  /** Selected range; bins overlapping it fill with the accent */
+  /** Selected range; bins overlapping it fill with the accent. Without one every bar is tinted. */
   range?: readonly [number | undefined, number | undefined];
   height?: number;
 }
@@ -21,7 +21,7 @@ export function Histogram({ bins, min, max, range, height = 54 }: HistogramProps
     <div aria-hidden style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height }}>
       {bins.map((n, i) => {
         const start = min + i * width;
-        const inside = hasRange && start + width > lo && start <= hi;
+        const inside = start + width > lo && start <= hi;
         return (
           <span
             key={i}
@@ -29,7 +29,11 @@ export function Histogram({ bins, min, max, range, height = 54 }: HistogramProps
               flex: 1,
               height: n > 0 ? Math.max(4, Math.round(Math.sqrt(n / peak) * height)) : 2,
               borderRadius: '4px 4px 2px 2px',
-              background: inside ? 'var(--accent)' : 'var(--surface-sunken)',
+              background: !hasRange
+                ? 'color-mix(in oklab, var(--accent) 40%, var(--surface-sunken))'
+                : inside
+                  ? 'var(--accent)'
+                  : 'var(--surface-sunken)',
               transition: 'background var(--dur-fast), height var(--dur-base) var(--ease-spring)',
             }}
           />
