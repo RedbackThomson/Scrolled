@@ -122,7 +122,7 @@ export function CollectionsBulkAddMenu({
             role="dialog"
             aria-label="Add to collection"
             style={{ position: 'fixed', top: coords.top, left: coords.left }}
-            className="border-border bg-card text-card-foreground shadow-pop z-50 w-64 max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl border-2"
+            className="border-border bg-card text-card-foreground shadow-pop animate-tip z-50 w-64 max-w-[calc(100vw-1rem)] origin-top-left overflow-hidden rounded-xl border-2"
           >
             <div className="border-muted border-b-2 p-2">
               <div className="relative">

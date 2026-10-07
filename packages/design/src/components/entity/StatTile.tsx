@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react';
+import { RollingNumber } from './RollingNumber';
+import { isRollable } from './rollingDigits';
 
 export interface StatTileProps {
   label: string;
@@ -15,6 +17,12 @@ export function StatTile({
   color = 'var(--text-2)',
   variant = 'soft',
 }: StatTileProps) {
+  const shown =
+    (typeof value === 'string' || typeof value === 'number') && isRollable(String(value)) ? (
+      <RollingNumber text={String(value)} />
+    ) : (
+      value
+    );
   if (variant === 'pill')
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '3px 2px' }}>
@@ -33,7 +41,7 @@ export function StatTile({
           {label}
         </span>
         <span style={{ flex: 1 }} />
-        <span style={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{value}</span>
+        <span style={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{shown}</span>
       </div>
     );
   return (
@@ -53,7 +61,7 @@ export function StatTile({
       <span
         style={{ font: '600 19px/1.1 var(--font-display)', fontVariantNumeric: 'tabular-nums' }}
       >
-        {value}
+        {shown}
       </span>
     </div>
   );

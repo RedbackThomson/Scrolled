@@ -13,7 +13,8 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { usePopover } from '@/hooks/usePopover';
 import { createPortal } from 'react-dom';
 import { Check, Loader2, Plus, Search } from 'lucide-react';
-import { Button, Input } from '@scrolled/design';
+import { Button, ConfettiBurst, Input } from '@scrolled/design';
+import { useMotionPrefs } from '@/hooks/useMotionPrefs';
 import {
   useCollectionGroups,
   useCollectionsList,
@@ -29,8 +30,13 @@ import { cn } from '@scrolled/design';
 interface CollectionPickerProps {
   entityType: CollectionEntityType;
   entityId: number;
-  /** Trigger element. Click toggles the popover. */
-  children: (args: { open: boolean; toggle: () => void; memberCount: number }) => ReactNode;
+  /** Trigger element. Click toggles the popover. `saves` counts adds this session, for celebrating them. */
+  children: (args: {
+    open: boolean;
+    toggle: () => void;
+    memberCount: number;
+    saves: number;
+  }) => ReactNode;
 }
 
 export function CollectionPicker({ entityType, entityId, children }: CollectionPickerProps) {
@@ -66,12 +72,31 @@ export function CollectionPicker({ entityType, entityId, children }: CollectionP
 
   const toggle = useCallback(() => setOpen((o) => !o), [setOpen]);
 
+  const { motion } = useMotionPrefs();
+  const [saves, setSaves] = useState(0);
+  // Web Animations bypass the CSS motion kill switch, so this checks the setting itself.
+  const celebrate = useCallback(() => {
+    setSaves((n) => n + 1);
+    if (motion) {
+      triggerRef.current?.animate?.(
+        [
+          { transform: 'scale(1)' },
+          { transform: 'scale(0.88, 0.82)', offset: 0.25 },
+          { transform: 'scale(1.08, 1.1)', offset: 0.6 },
+          { transform: 'scale(1)' },
+        ],
+        { duration: 620, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' },
+      );
+    }
+  }, [motion, triggerRef]);
+
   const onToggleMembership = useCallback(
     (collectionId: number) => {
       const isMember = placementsByCollection.has(collectionId);
       toggleM.mutate({ collectionId, entityType, entityId, member: !isMember });
+      if (!isMember) celebrate();
     },
-    [placementsByCollection, toggleM, entityType, entityId],
+    [placementsByCollection, toggleM, entityType, entityId, celebrate],
   );
 
   const onCreateAndAdd = useCallback(async () => {
@@ -84,8 +109,9 @@ export function CollectionPicker({ entityType, entityId, children }: CollectionP
       entityId,
       member: true,
     });
+    celebrate();
     setQuery('');
-  }, [query, createM, toggleM, entityType, entityId]);
+  }, [query, createM, toggleM, entityType, entityId, celebrate]);
 
   // "Create" footer appears when search has no exact match.
   const hasExactMatch = useMemo(() => {
@@ -96,8 +122,9 @@ export function CollectionPicker({ entityType, entityId, children }: CollectionP
 
   return (
     <>
-      <span ref={triggerRef} className="inline-flex">
-        {children({ open, toggle, memberCount: placementsByCollection.size })}
+      <span ref={triggerRef} className="relative inline-flex">
+        {children({ open, toggle, memberCount: placementsByCollection.size, saves })}
+        <ConfettiBurst trigger={saves} />
       </span>
       {open &&
         coords &&

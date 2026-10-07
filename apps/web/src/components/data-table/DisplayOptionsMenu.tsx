@@ -66,7 +66,7 @@ export function DisplayOptionsMenu<TData>({
             role="dialog"
             aria-label="Display options"
             style={{ position: 'fixed', top: coords.top, left: coords.left }}
-            className="border-border bg-card text-card-foreground shadow-pop z-50 w-72 rounded-xl border-2 p-3"
+            className="border-border bg-card text-card-foreground shadow-pop animate-tip z-50 w-72 origin-top-right rounded-xl border-2 p-3"
           >
             {/* Grouping stubs — not URL-wired yet; the plan calls these out
              *  as placeholders that will gain real options in a follow-up. */}

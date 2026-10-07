@@ -9,6 +9,7 @@ import { resolveCollectionIcon } from '@/components/collections/iconRegistry';
 import { useCollectionsList } from '@/hooks/useCollections';
 import { cn } from '@scrolled/design';
 import { HomeSection } from './HomeSection';
+import { popIn } from '@/lib/popIn';
 
 export function PinnedCollectionsPanel() {
   const q = useCollectionsList();
@@ -37,12 +38,12 @@ export function PinnedCollectionsPanel() {
         <EmptyState />
       ) : (
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {pinned.map((c) => {
+          {pinned.map((c, i) => {
             const { Icon } = resolveCollectionIcon(c.icon);
             const color = resolveCollectionColor(c.color);
             const progress = computeProgress(c.memberCount);
             return (
-              <li key={c.id}>
+              <li key={c.id} {...popIn(i)}>
                 <Link
                   to={`/collections/${c.id}`}
                   className="border-border bg-card text-card-foreground shadow-rim ease-spring group flex h-full gap-3 rounded-lg border-2 p-3.5 transition-transform duration-300 hover:-translate-y-[3px]"

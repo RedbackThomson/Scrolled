@@ -3,6 +3,8 @@ import { AccentPicker } from '@/components/common/AccentPicker';
 import { useSettingsSection } from '@/components/settings/useSettingsSection';
 import { useShowEntityIds } from '@/stores/showEntityIds';
 import { useHideMinorPortals } from '@/stores/hideMinorPortals';
+import { useMotionPrefs } from '@/hooks/useMotionPrefs';
+import { useMotion } from '@/stores/motion';
 import { Segmented, Switch, useTheme, type ThemeMode } from '@scrolled/design';
 
 const THEMES = [
@@ -10,6 +12,11 @@ const THEMES = [
   { value: 'dark', label: 'Dark', icon: Moon },
   { value: 'system', label: 'System', icon: Monitor },
 ] satisfies { value: ThemeMode; label: string; icon: typeof Sun }[];
+
+const BACKDROPS = [
+  { value: 'sky', label: 'Sky' },
+  { value: 'clouds', label: 'Sky + clouds' },
+];
 
 export function AppearanceSection() {
   const sectionProps = useSettingsSection('appearance');
@@ -19,6 +26,10 @@ export function AppearanceSection() {
   const setShowIds = useShowEntityIds((s) => s.setEnabled);
   const hideMinorPortals = useHideMinorPortals((s) => s.enabled);
   const setHideMinorPortals = useHideMinorPortals((s) => s.setEnabled);
+  const motionPrefs = useMotionPrefs();
+  const setBackdrop = useMotion((s) => s.setBackdrop);
+  const setDrift = useMotion((s) => s.setDrift);
+  const setMotion = useMotion((s) => s.setMotion);
 
   return (
     <section {...sectionProps} className="scroll-mt-24 space-y-3">
@@ -49,6 +60,33 @@ export function AppearanceSection() {
           </div>
           <AccentPicker />
         </div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="font-bold">Backdrop</div>
+            <p className="text-muted-foreground mt-0.5 text-[12.5px]">
+              What sits behind every page.
+            </p>
+          </div>
+          <Segmented
+            options={BACKDROPS}
+            value={motionPrefs.backdrop}
+            onChange={(v) => setBackdrop(v === 'sky' ? 'sky' : 'clouds')}
+          />
+        </div>
+        {motionPrefs.backdrop === 'clouds' && (
+          <Switch
+            label="Drifting clouds"
+            description="Let the clouds float slowly across the sky. Off by default when your device asks for reduced motion."
+            checked={motionPrefs.drift}
+            onChange={setDrift}
+          />
+        )}
+        <Switch
+          label="Interface motion"
+          description="Animate hovers, pop-ups, and pages as they appear. Off by default when your device asks for reduced motion."
+          checked={motionPrefs.motion}
+          onChange={setMotion}
+        />
         <Switch
           label="Show entity IDs"
           description="Show the numeric ID next to entity names in detail pages, hover previews, lists, and search results."

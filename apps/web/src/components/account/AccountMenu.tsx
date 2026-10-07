@@ -70,7 +70,7 @@ function SignedInMenu() {
       {open && (
         <div
           role="menu"
-          className="border-border bg-card text-card-foreground absolute right-0 z-20 mt-2 w-56 rounded-md border p-1 shadow-md"
+          className="border-border bg-card text-card-foreground animate-tip absolute right-0 z-20 origin-top-right mt-2 w-56 rounded-md border p-1 shadow-md"
         >
           <div className="px-2 py-1.5">
             <div className="truncate text-sm font-medium">{name}</div>

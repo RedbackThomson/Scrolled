@@ -116,7 +116,7 @@ export function CollectionDisplayOptionsMenu({ collection }: CollectionDisplayOp
             role="dialog"
             aria-label="Display options"
             style={{ position: 'fixed', top: coords.top, left: coords.left }}
-            className="border-border bg-card text-card-foreground shadow-pop z-50 w-72 rounded-xl border-2 p-3"
+            className="border-border bg-card text-card-foreground shadow-pop animate-tip z-50 w-72 origin-top-right rounded-xl border-2 p-3"
           >
             <Row label="Grouping">
               <select

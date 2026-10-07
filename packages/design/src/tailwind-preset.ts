@@ -71,6 +71,18 @@ const preset: Partial<Config> = {
       transitionTimingFunction: {
         spring: 'var(--ease-spring)',
       },
+      // Keyframes live in tokens/motion.css; `both` keeps staggered items hidden until their turn.
+      animation: {
+        rise: 'sc-rise 420ms var(--ease-out) both',
+        pop: 'sc-pop var(--dur-pop) var(--ease-spring) both',
+        fade: 'sc-fade 260ms ease-out both',
+        modal: 'sc-modal var(--dur-modal) var(--ease-spring) both',
+        tip: 'sc-tip 460ms var(--ease-spring) both',
+        toast: 'sc-toast 600ms var(--ease-spring) both',
+        squish: 'sc-squish 620ms var(--ease-spring)',
+        bob: 'sc-bob 1.8s ease-in-out infinite',
+        hop: 'sc-hop 900ms var(--ease-hop) infinite',
+      },
       fontFamily: {
         sans: ['Figtree', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
         display: ['Fredoka', 'Figtree', 'system-ui', 'sans-serif'],

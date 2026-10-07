@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 export interface SwitchProps {
   checked?: boolean;
   onChange?: (checked: boolean) => void;
@@ -9,13 +11,19 @@ export interface SwitchProps {
 }
 
 export function Switch({ checked, onChange, label, description, ariaLabel }: SwitchProps) {
+  // Alternating between two identical keyframes restarts the stretch on every flip
+  // without remounting the knob (which would skip its slide).
+  const [flips, setFlips] = useState(0);
   const track = (
     <button
       type="button"
       role="switch"
       aria-checked={!!checked}
       aria-label={label ?? ariaLabel}
-      onClick={() => onChange?.(!checked)}
+      onClick={() => {
+        setFlips((n) => n + 1);
+        onChange?.(!checked);
+      }}
       style={{
         width: 46,
         height: 28,
@@ -24,6 +32,7 @@ export function Switch({ checked, onChange, label, description, ariaLabel }: Swi
         border: 'none',
         padding: 0,
         position: 'relative',
+        overflow: 'hidden',
         cursor: 'pointer',
         background: checked ? 'var(--accent)' : 'var(--border-1)',
         boxShadow: 'inset 0 2px 0 rgba(0,0,0,.12)',
@@ -41,6 +50,7 @@ export function Switch({ checked, onChange, label, description, ariaLabel }: Swi
           background: '#fff',
           boxShadow: '0 2px 4px rgba(0,0,0,.25)',
           transition: 'left 480ms var(--ease-spring)',
+          animation: flips ? `sc-knob-${flips % 2 ? 'a' : 'b'} 360ms var(--ease-out)` : 'none',
         }}
       />
     </button>

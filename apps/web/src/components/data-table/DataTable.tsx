@@ -298,7 +298,7 @@ export function DataTable<TData>({
                 onClick={() => onSearchChange('')}
                 aria-label="Clear search"
                 title="Clear search"
-                className="text-muted-foreground hover:bg-muted hover:text-foreground absolute right-1.5 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md transition-colors"
+                className="text-muted-foreground hover:bg-muted hover:text-foreground absolute right-1.5 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md transition-[color,background-color,transform] duration-300 ease-spring hover:rotate-90"
               >
                 <X className="h-3.5 w-3.5" />
               </button>

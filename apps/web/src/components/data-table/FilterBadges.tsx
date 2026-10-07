@@ -147,7 +147,7 @@ function Badge({ col, filter, onChange }: BadgeProps) {
             role="dialog"
             aria-label={`Edit ${col.label} filter`}
             style={{ position: 'fixed', top: coords.top, left: coords.left }}
-            className="border-border bg-card text-card-foreground shadow-pop z-50 w-72 max-w-[calc(100vw-1rem)] rounded-xl border-2"
+            className="border-border bg-card text-card-foreground shadow-pop animate-tip z-50 w-72 max-w-[calc(100vw-1rem)] origin-top-left rounded-xl border-2"
           >
             <div className="flex items-center gap-1 border-b px-2 py-1.5">
               <Icon className="text-muted-foreground h-3.5 w-3.5" />

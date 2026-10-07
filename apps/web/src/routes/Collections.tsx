@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, Plus } from 'lucide-react';
-import { Button } from '@scrolled/design';
+import { Plus } from 'lucide-react';
+import { Button, Skeleton } from '@scrolled/design';
 import {
   CollectionFormDialog,
   CollectionsOverflowMenu,
@@ -12,6 +12,7 @@ import { useCollectionsList } from '@/hooks/useCollections';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import type { CollectionRecord } from '@/db/user';
 import { cn } from '@scrolled/design';
+import { popIn } from '@/lib/popIn';
 
 export default function Collections() {
   usePageTitle('Collections');
@@ -44,10 +45,10 @@ export default function Collections() {
 
       <section className="space-y-3">
         {collectionsQ.isPending ? (
-          <p className="text-muted-foreground inline-flex items-center gap-2 text-sm">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Loading…
-          </p>
+          <div role="status">
+            <span className="sr-only">Loading…</span>
+            <Skeleton rows={4} />
+          </div>
         ) : collectionsQ.isError ? (
           <p className="text-destructive text-sm">
             Failed to load collections: {(collectionsQ.error as Error).message}
@@ -61,8 +62,8 @@ export default function Collections() {
           </div>
         ) : (
           <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {collectionsQ.data!.map((c) => (
-              <CollectionTile key={c.id} collection={c} />
+            {collectionsQ.data!.map((c, i) => (
+              <CollectionTile key={c.id} collection={c} index={i} />
             ))}
           </ul>
         )}
@@ -71,11 +72,11 @@ export default function Collections() {
   );
 }
 
-function CollectionTile({ collection }: { collection: CollectionRecord }) {
+function CollectionTile({ collection, index }: { collection: CollectionRecord; index: number }) {
   const { Icon } = resolveCollectionIcon(collection.icon);
   const color = resolveCollectionColor(collection.color);
   return (
-    <li>
+    <li {...popIn(index)}>
       <Link
         to={`/collections/${collection.id}`}
         className="border-border bg-card text-card-foreground shadow-rim ease-spring focus-visible:ring-primary/30 group flex items-start gap-3 rounded-lg border-2 p-4 transition-transform duration-300 hover:-translate-y-1 hover:-rotate-[.4deg] focus-visible:outline-none focus-visible:ring-4"

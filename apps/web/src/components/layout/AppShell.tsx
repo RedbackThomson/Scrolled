@@ -10,7 +10,7 @@ import { StorageUnavailableScreen } from '@/components/layout/StorageUnavailable
 import { TopBar } from '@/components/layout/TopBar';
 import { CloudBackdrop, Sheet, SheetContent, SheetTitle } from '@scrolled/design';
 import { useFeatures } from '@/hooks/useFeatures';
-import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { useMotionPrefs } from '@/hooks/useMotionPrefs';
 import { useDataState } from '@/hooks/useDataState';
 import { useStorageHealth } from '@/hooks/useStorageHealth';
 import { useSidebarLayout } from '@/stores/sidebarState';
@@ -29,23 +29,29 @@ export function AppShell() {
   // past this screen.
   const storageBlocked = storage.resolved && storage.unavailable && !bypassed;
   const { showBoot, needsInstall } = useSetupGate(storageBlocked);
-  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+  const { backdrop, drift } = useMotionPrefs();
+  const { pathname } = useLocation();
 
   if (storageBlocked) return <StorageUnavailableScreen failures={storage.failures} />;
   if (needsInstall) return <DatasetInstallScreen />;
   if (showBoot) return <AppBootScreen />;
   return (
     <div className="relative isolate flex min-h-screen w-full">
-      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
-        <CloudBackdrop animate={!reducedMotion} />
-      </div>
+      {backdrop === 'clouds' && (
+        <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
+          <CloudBackdrop animate={drift} />
+        </div>
+      )}
       <Sidebar />
       <MobileSidebarDrawer />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar />
         <main className="isolate">
           <div className="container pb-[22px] pl-3 pr-6 pt-1.5 max-md:px-2">
-            <Outlet />
+            {/* Keyed by pathname only: list pages keep filters and paging in the query string. */}
+            <div key={pathname} className="animate-rise [animation-fill-mode:backwards]">
+              <Outlet />
+            </div>
           </div>
         </main>
       </div>

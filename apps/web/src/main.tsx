@@ -14,6 +14,8 @@ import { createIdentityProvider } from '@/identity/createProvider';
 import { createSyncProvider } from '@/sync/createProvider';
 import { SyncEngineHost } from '@/sync/SyncEngineHost';
 import { bootstrapSyncedState } from '@/lib/syncedStateBootstrap';
+// Applies the saved motion preference to <html> before the first paint.
+import '@/stores/motion';
 import '@scrolled/design/tokens.css';
 import '@/styles/index.css';
 

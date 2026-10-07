@@ -128,7 +128,7 @@ export function FilterMenu<TData>({
             role="dialog"
             aria-label="Filter"
             style={{ position: 'fixed', top: coords.top, left: coords.left }}
-            className="border-border bg-card text-card-foreground shadow-pop z-50 w-80 max-w-[calc(100vw-1rem)] rounded-xl border-2"
+            className="border-border bg-card text-card-foreground shadow-pop animate-tip z-50 w-80 origin-top-left max-w-[calc(100vw-1rem)] rounded-xl border-2"
           >
             {stage.kind === 'columns' ? (
               <ColumnStage

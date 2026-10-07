@@ -149,3 +149,34 @@
     transform: scaleX(0);
   }
 }
+@keyframes sc-burst {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(var(--rot)) scale(0.4);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(1);
+  }
+}
+@keyframes sc-knob-a {
+  0%,
+  100% {
+    transform: scaleX(1);
+  }
+  40% {
+    transform: scaleX(1.15);
+  }
+}
+@keyframes sc-knob-b {
+  0%,
+  100% {
+    transform: scaleX(1);
+  }
+  40% {
+    transform: scaleX(1.15);
+  }
+}

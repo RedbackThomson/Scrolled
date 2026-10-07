@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, CheckCircle2, Loader2, XCircle } from 'lucide-react';
-import { Scrolly } from '@scrolled/design';
 import { AccentPicker } from '@/components/common/AccentPicker';
 import { EXTRACTOR_CARD_KEYS, EXTRACTOR_CARD_META } from '@/components/common/extractorCatalog';
 import { ProgressBar } from '@/components/common/ProgressBar';
@@ -14,6 +13,7 @@ import {
 } from '@/hooks/extraction/useWizardExtract';
 import { cn } from '@scrolled/design';
 import { buildPlan } from './plan';
+import { SetupCelebration } from './SetupCelebration';
 import type { WizardFile } from './StepFiles';
 
 interface Props {
@@ -99,7 +99,7 @@ export function StepRun({ version, files, onComplete, mode }: Props) {
     return (
       <section className="space-y-5">
         <div className="flex items-center gap-4">
-          <Scrolly pose="cheer" size={64} />
+          <SetupCelebration />
           <div>
             <h2 className="font-display text-xl font-semibold">
               {mode === 'update' ? 'Update complete' : 'Your wiki is ready'}

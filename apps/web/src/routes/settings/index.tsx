@@ -12,6 +12,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { ACCENTS } from '@/lib/accents';
 import { useAccent } from '@/stores/accent';
 import { appConfig } from '@/config';
+import { popIn } from '@/lib/popIn';
 
 export default function SettingsIndex() {
   usePageTitle('Settings');
@@ -85,11 +86,11 @@ export default function SettingsIndex() {
         )
       ) : (
         <ul className="grid gap-4 md:grid-cols-2">
-          {groups.map((g) => (
-            <li key={g.id}>
+          {groups.map((g, i) => (
+            <li key={g.id} {...popIn(i)}>
               <Link
                 to={`/settings/${g.id}`}
-                className="border-border bg-card shadow-rim ease-spring hover:border-primary/40 focus-visible:ring-primary/30 group flex h-full flex-col gap-4 rounded-[20px] border-2 p-5 transition-[transform,border-color] duration-300 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-4"
+                className="border-border bg-card shadow-rim ease-spring hover:border-primary/40 focus-visible:ring-primary/30 group flex h-full flex-col gap-4 rounded-[20px] border-2 p-5 transition-[transform,border-color] duration-300 hover:-translate-y-[3px] focus-visible:outline-none focus-visible:ring-4"
               >
                 <div className="flex items-center gap-3.5">
                   <SlotTile icon={g.icon} hue={g.hue} size={48} />

@@ -210,7 +210,7 @@ export function MapViewerSidebar({
             onClick={() => onSelect(null)}
             aria-label="Clear selection"
             title="Clear selection"
-            className="bg-muted text-muted-foreground hover:text-foreground focus-visible:ring-primary/50 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2"
+            className="bg-muted text-muted-foreground hover:text-foreground focus-visible:ring-primary/50 ease-spring inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-transform duration-300 hover:rotate-90 focus-visible:outline-none focus-visible:ring-2"
           >
             <X className="h-4 w-4" aria-hidden />
           </button>

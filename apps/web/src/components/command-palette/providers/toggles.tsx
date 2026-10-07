@@ -1,9 +1,11 @@
 import {
+  Cloud,
   Monitor,
   Moon,
   PanelLeftClose,
   PanelLeftOpen,
   Sidebar as SidebarIcon,
+  Sparkles,
   Sun,
   type LucideIcon,
 } from 'lucide-react';
@@ -13,6 +15,8 @@ import { useTheme, type ThemeMode } from '@scrolled/design';
 import { useAccent } from '@/stores/accent';
 import { ACCENTS } from '@/lib/accents';
 import { useSidebarLayout } from '@/stores/sidebarState';
+import { useMotionPrefs } from '@/hooks/useMotionPrefs';
+import { useMotion } from '@/stores/motion';
 
 function fuzzy(q: string, hay: string): boolean {
   const t = q.trim().toLowerCase();
@@ -83,6 +87,9 @@ export function TogglesProvider() {
   const collapsed = useSidebarLayout((s) => s.collapsed);
   const setCollapsed = useSidebarLayout((s) => s.setCollapsed);
   const toggleCollapsed = useSidebarLayout((s) => s.toggleCollapsed);
+  const motionPrefs = useMotionPrefs();
+  const setMotion = useMotion((s) => s.setMotion);
+  const setDrift = useMotion((s) => s.setDrift);
 
   const themeItems = THEME_CHOICES.filter((c) => fuzzy(query, c.label));
   const accentItems = ACCENTS.filter((a) => fuzzy(query, `Accent: ${a.label}`));
@@ -96,8 +103,36 @@ export function TogglesProvider() {
         fuzzy(query, `${c.label} ${c.keywords.join(' ')}`),
       )
     : [];
+  // Query-gated like the sidebar commands.
+  const motionItems = hasQuery
+    ? [
+        {
+          id: 'motion',
+          label: `Interface motion: Turn ${motionPrefs.motion ? 'off' : 'on'}`,
+          keywords: ['motion', 'animation', 'reduce', 'interface'],
+          icon: Sparkles,
+          run: () => setMotion(!motionPrefs.motion),
+        },
+        ...(motionPrefs.backdrop === 'clouds'
+          ? [
+              {
+                id: 'drift',
+                label: `Drifting clouds: Turn ${motionPrefs.drift ? 'off' : 'on'}`,
+                keywords: ['clouds', 'drift', 'backdrop', 'motion'],
+                icon: Cloud,
+                run: () => setDrift(!motionPrefs.drift),
+              },
+            ]
+          : []),
+      ].filter((c) => fuzzy(query, `${c.label} ${c.keywords.join(' ')}`))
+    : [];
 
-  if (themeItems.length === 0 && accentItems.length === 0 && sidebarItems.length === 0)
+  if (
+    themeItems.length === 0 &&
+    accentItems.length === 0 &&
+    sidebarItems.length === 0 &&
+    motionItems.length === 0
+  )
     return null;
 
   return (
@@ -151,6 +186,23 @@ export function TogglesProvider() {
             keywords={c.keywords}
             onSelect={() => {
               c.run({ collapsed, setCollapsed, toggleCollapsed });
+              setOpen(false);
+            }}
+          >
+            <Icon className="text-muted-foreground h-4 w-4" />
+            <span className="min-w-0 flex-1 truncate">{c.label}</span>
+          </CommandItemPrimitive>
+        );
+      })}
+      {motionItems.map((c) => {
+        const Icon = c.icon;
+        return (
+          <CommandItemPrimitive
+            key={`motion-${c.id}`}
+            value={`motion-${c.id}`}
+            keywords={c.keywords}
+            onSelect={() => {
+              c.run();
               setOpen(false);
             }}
           >

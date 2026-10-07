@@ -17,7 +17,7 @@ import {
   PinOff,
   Trash2,
 } from 'lucide-react';
-import { Button } from '@scrolled/design';
+import { Button, Skeleton } from '@scrolled/design';
 import {
   CollectionFormDialog,
   downloadJson,
@@ -146,9 +146,10 @@ export default function CollectionDetail() {
 
   if (collectionQ.isPending) {
     return (
-      <p className="text-muted-foreground text-sm">
-        <Loader2 className="inline h-4 w-4 animate-spin" /> Loading collection…
-      </p>
+      <div role="status">
+        <span className="sr-only">Loading collection…</span>
+        <Skeleton rows={4} />
+      </div>
     );
   }
   if (!collectionQ.data) {
@@ -265,9 +266,10 @@ export default function CollectionDetail() {
       />
 
       {membersQ.isPending ? (
-        <p className="text-muted-foreground text-sm">
-          <Loader2 className="inline h-4 w-4 animate-spin" /> Loading members…
-        </p>
+        <div role="status">
+          <span className="sr-only">Loading members…</span>
+          <Skeleton rows={4} />
+        </div>
       ) : (
         <>
           {!hasMembers && (

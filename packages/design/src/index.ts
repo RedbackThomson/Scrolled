@@ -2,6 +2,7 @@ export { cn } from './lib/cn';
 export { ENTITY_HUES, type EntityHueKey } from './lib/entityHues';
 export { useHoverPress, SPRING, type SlotTint } from './lib/interaction';
 export { syncThemeColorMeta } from './lib/themeColorMeta';
+export { resolveMotion, usePrefersMotion } from './lib/motion';
 export {
   THEME_SETTING_KEY,
   setThemePersistence,
@@ -43,6 +44,7 @@ export {
 export { EntityRow, type EntityRowProps } from './components/entity/EntityRow';
 export { SlotTile, type SlotTileProps } from './components/entity/SlotTile';
 export { StatRange, type StatRangeProps } from './components/entity/StatRange';
+export { RollingNumber } from './components/entity/RollingNumber';
 export { StatTile, type StatTileProps } from './components/entity/StatTile';
 
 export { CloudBackdrop, type CloudBackdropProps } from './components/surfaces/CloudBackdrop';
@@ -86,6 +88,7 @@ export * from './components/data/Table';
 export { PresetTile, type PresetTileProps } from './components/data/PresetTile';
 
 export { Banner, type BannerProps } from './components/feedback/Banner';
+export { ConfettiBurst, type ConfettiBurstProps } from './components/feedback/ConfettiBurst';
 export { EmptyState, type EmptyStateProps } from './components/feedback/EmptyState';
 export { Skeleton, type SkeletonProps } from './components/feedback/Skeleton';
 export { StatusDot, type StatusDotProps } from './components/feedback/StatusDot';

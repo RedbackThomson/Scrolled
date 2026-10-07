@@ -114,7 +114,7 @@ export function BackupSection() {
             {menuOpen && (
               <div
                 role="menu"
-                className="border-border bg-card text-card-foreground absolute left-0 top-full z-50 mt-1 w-56 overflow-hidden rounded-md border py-1 shadow-md"
+                className="border-border bg-card text-card-foreground animate-tip absolute left-0 top-full z-50 mt-1 w-56 origin-top-left overflow-hidden rounded-md border py-1 shadow-md"
               >
                 {EXPORT_SCOPES.map(({ scope, label, hint }) => (
                   <button

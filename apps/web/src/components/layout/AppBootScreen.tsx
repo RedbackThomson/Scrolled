@@ -10,7 +10,9 @@ export function AppBootScreen() {
     >
       <div className="flex flex-col items-center gap-5">
         <Logo size={44} />
-        <Scrolly pose="read" size={84} />
+        <div className="animate-hop">
+          <Scrolly pose="read" size={84} />
+        </div>
         <p className="text-muted-foreground sr-only">Loading</p>
       </div>
     </div>

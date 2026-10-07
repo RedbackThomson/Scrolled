@@ -27,13 +27,14 @@ pre {
   background: var(--accent-glow);
 }
 @media (prefers-reduced-motion: reduce) {
-  :root:not([data-motion='on']) * {
+  /* Drifting clouds have their own setting, so the motion kill switch skips them. */
+  :root:not([data-motion='on']) *:not([data-drift]) {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
 }
-[data-motion='off'] * {
+[data-motion='off'] *:not([data-drift]) {
   animation-duration: 0.001ms !important;
   animation-iteration-count: 1 !important;
   transition-duration: 0.001ms !important;

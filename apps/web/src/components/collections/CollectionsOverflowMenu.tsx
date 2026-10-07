@@ -35,7 +35,7 @@ export function CollectionsOverflowMenu({ hasAny }: Props) {
         >
           <MoreHorizontal className="h-4 w-4" />
         </summary>
-        <div className="border-border bg-card text-card-foreground shadow-pop absolute right-0 z-20 mt-1.5 w-52 rounded-xl border-2 p-1.5">
+        <div className="border-border bg-card text-card-foreground shadow-pop animate-tip absolute right-0 z-20 origin-top-right mt-1.5 w-52 rounded-xl border-2 p-1.5">
           <button
             type="button"
             onClick={() => setImportOpen(true)}

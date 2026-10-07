@@ -32,7 +32,7 @@ export function ListSortControl({ fields, value, onChange }: ListSortControlProp
         <Icon className="h-3.5 w-3.5" />
         Sort
       </summary>
-      <div className="border-border bg-card text-card-foreground absolute right-0 z-20 mt-1 min-w-[14rem] max-w-[calc(100vw-1rem)] rounded-md border p-2 shadow-md">
+      <div className="border-border bg-card text-card-foreground animate-tip absolute right-0 z-20 mt-1 min-w-[14rem] max-w-[calc(100vw-1rem)] origin-top-right rounded-md border p-2 shadow-md">
         <label className="text-muted-foreground block px-1 pb-1 text-xs uppercase tracking-wide">
           Sort by
         </label>

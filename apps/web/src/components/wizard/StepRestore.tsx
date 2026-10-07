@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { AlertTriangle, ArrowLeft, ArrowRight, Loader2, Upload } from 'lucide-react';
-import { Button, Scrolly } from '@scrolled/design';
+import { Button } from '@scrolled/design';
+import { SetupCelebration } from './SetupCelebration';
 
 export type RestoreState =
   | { phase: 'pending' }
@@ -45,7 +46,7 @@ export function StepRestore({ file, state, onPickAgain, onSwitchBack, parentMode
     return (
       <section className="space-y-4">
         <div className="flex items-center gap-4">
-          <Scrolly pose="cheer" size={64} />
+          <SetupCelebration />
           <div>
             <h2 className="font-display text-xl font-semibold">Backup restored</h2>
             <p className="text-muted-foreground text-sm">

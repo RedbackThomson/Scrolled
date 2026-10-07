@@ -87,7 +87,7 @@ export function PinnedSearchesMenu({ entity }: Props) {
             role="dialog"
             aria-label="Saved searches"
             style={{ position: 'fixed', top: coords.top, left: coords.left }}
-            className="border-border bg-card text-card-foreground shadow-pop z-50 w-80 max-w-[calc(100vw-1rem)] rounded-xl border-2"
+            className="border-border bg-card text-card-foreground shadow-pop animate-tip z-50 w-80 max-w-[calc(100vw-1rem)] origin-top-left rounded-xl border-2"
             onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="border-border border-b p-2">

@@ -71,7 +71,20 @@ export function getSettingsGroups(): SettingsGroup[] {
         {
           id: 'appearance',
           label: 'Appearance',
-          keywords: ['theme', 'dark', 'light', 'system', 'accent', 'color', 'ids', 'portals'],
+          keywords: [
+            'theme',
+            'dark',
+            'light',
+            'system',
+            'accent',
+            'color',
+            'ids',
+            'portals',
+            'backdrop',
+            'clouds',
+            'motion',
+            'animation',
+          ],
         },
         {
           id: 'customization',

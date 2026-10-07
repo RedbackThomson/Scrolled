@@ -14,6 +14,7 @@ import { iconForEntity, listingRouteForEntity } from '@/lib/entityRoutes';
 import { ENTITY_HUES, SlotTile } from '@scrolled/design';
 import type { Features } from '@/hooks/useFeatures';
 import { HomeSection } from './HomeSection';
+import { popIn } from '@/lib/popIn';
 
 const TOP_N = 3;
 
@@ -139,10 +140,10 @@ export function BrowseTiles({ features }: { features: Features }) {
   return (
     <HomeSection title="Browse">
       <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {enabled.map((t) => {
+        {enabled.map((t, i) => {
           const Icon = iconForEntity(t.entity);
           return (
-            <li key={t.entity}>
+            <li key={t.entity} {...popIn(i)}>
               <div className="border-border bg-card text-card-foreground shadow-rim overflow-hidden rounded-lg border-2">
                 <Link
                   to={listingRouteForEntity(t.entity)}

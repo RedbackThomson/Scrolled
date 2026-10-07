@@ -76,7 +76,9 @@ export function DatasetInstallScreen() {
           </>
         ) : (
           <>
-            <Scrolly pose="read" size={84} />
+            <div className="animate-hop">
+              <Scrolly pose="read" size={84} />
+            </div>
             <div className="w-full space-y-2">
               <p className="text-[13px] font-semibold">{label}</p>
               {progress?.phase === 'downloading' && (

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { cn, Input } from '@scrolled/design';
+import { popIn } from '@/lib/popIn';
 
 interface Props<TData> {
   data: readonly TData[];
@@ -71,15 +72,18 @@ export function CardGrid<TData>({
         fetching && 'opacity-60',
       )}
     >
-      {data.map((row) => {
+      {data.map((row, i) => {
         const rowId = getRowId(row);
+        const pop = popIn(i);
         const href = rowLinkTo(row);
         const isSelected = selectable && (selectedIds?.has(rowId) ?? false);
         return (
           <li
             key={rowId}
+            style={pop.style}
             className={cn(
               PANEL,
+              pop.className,
               'ease-spring relative flex flex-col gap-2.5 p-3 transition-transform duration-300 hover:-translate-y-1 hover:-rotate-[.4deg]',
               isSelected && 'border-primary',
             )}

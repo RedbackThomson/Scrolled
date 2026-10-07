@@ -8,6 +8,7 @@ import { useRecentEntities } from '@/lib/recents';
 import { routeForEntity } from '@/lib/entityRoutes';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 import { HomeSection } from './HomeSection';
+import { popIn } from '@/lib/popIn';
 
 const MAX = 6;
 
@@ -20,8 +21,8 @@ export function ContinueStrip() {
   return (
     <HomeSection title="Continue">
       <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-        {slice.map((r) => (
-          <li key={`${r.entity}-${r.id}`}>
+        {slice.map((r, i) => (
+          <li key={`${r.entity}-${r.id}`} {...popIn(i)}>
             <Link
               to={routeForEntity(r.entity, r.id)}
               className="border-border bg-card text-card-foreground shadow-rim ease-spring flex h-full items-center gap-2.5 rounded-[14px] border-2 p-2.5 transition-transform duration-300 hover:-translate-y-[3px]"

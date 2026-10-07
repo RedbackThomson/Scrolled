@@ -1,14 +1,17 @@
-import { Loader2, SearchX } from 'lucide-react';
+import { SearchX } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { cn, EmptyState } from '@scrolled/design';
+import { cn, EmptyState, Skeleton } from '@scrolled/design';
 import { appConfig } from '@/config';
 
 export function DetailPageLoading({ entity, id }: { entity: string; id: number | string }) {
   return (
-    <p className="text-muted-foreground flex items-center gap-2 py-6 text-[13px]">
-      <Loader2 className="text-primary h-4 w-4 animate-spin" /> Loading {entity.toLowerCase()} {id}…
-    </p>
+    <div role="status" className="py-6">
+      <span className="sr-only">
+        Loading {entity.toLowerCase()} {id}…
+      </span>
+      <Skeleton rows={5} />
+    </div>
   );
 }
 

@@ -64,7 +64,7 @@ export function RewardFilterControl() {
           </span>
         )}
       </summary>
-      <div className="border-border bg-card text-card-foreground absolute right-0 z-20 mt-1 w-64 max-w-[calc(100vw-1rem)] rounded-md border p-2 shadow-md">
+      <div className="border-border bg-card text-card-foreground animate-tip absolute right-0 z-20 mt-1 w-64 max-w-[calc(100vw-1rem)] origin-top-right rounded-md border p-2 shadow-md">
         <div className="text-muted-foreground mb-1 flex items-center justify-between px-1">
           <span className="text-xs uppercase tracking-wide">Class</span>
           {job !== null && <ClearButton onClick={() => setJob(null)} label="Clear class" />}

@@ -19,7 +19,7 @@ export function HoverCardSaveFooter({ entityType, entityId, className }: HoverCa
       className={cn('-mx-3 mt-1.5 border-t border-[var(--tooltip-line)] px-3 pt-1.5', className)}
     >
       <CollectionPicker entityType={entityType} entityId={entityId}>
-        {({ toggle, open, memberCount }) => (
+        {({ toggle, open, memberCount, saves }) => (
           <button
             type="button"
             onClick={toggle}
@@ -33,7 +33,15 @@ export function HoverCardSaveFooter({ entityType, entityId, className }: HoverCa
             <BookmarkPlus className="h-3.5 w-3.5" aria-hidden />
             <span className="flex-1 text-left">Save to collection</span>
             {memberCount > 0 && (
-              <span className="text-foreground font-mono text-[10px]">in {memberCount}</span>
+              <span
+                key={saves}
+                className={cn(
+                  'rounded-full bg-[image:var(--gradient-gold)] px-1.5 py-px text-[10px] font-bold text-[var(--gold-fg)]',
+                  saves > 0 && 'animate-pop',
+                )}
+              >
+                in {memberCount}
+              </span>
             )}
           </button>
         )}

@@ -277,7 +277,7 @@ function EntityPicker({
               onClick={onClear}
               aria-label={`Clear ${noun}`}
               title={`Clear ${noun}`}
-              className="text-muted-foreground hover:text-foreground shrink-0"
+              className="text-muted-foreground hover:text-foreground ease-spring shrink-0 transition-transform duration-300 hover:rotate-90"
             >
               <X className="h-4 w-4" />
             </button>

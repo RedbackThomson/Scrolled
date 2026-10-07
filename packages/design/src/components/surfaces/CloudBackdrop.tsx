@@ -8,7 +8,7 @@ const SPEC: [top: number, scale: number, dur: number, phase: number, opacity: nu
 ];
 
 export interface CloudBackdropProps {
-  /** Tie to the "Drifting clouds" setting; paused clouds stay visible */
+  /** Tie to the "Drifting clouds" setting; still clouds rest where they'd be mid-drift */
   animate?: boolean;
   count?: number;
 }
@@ -44,9 +44,11 @@ export function CloudBackdrop({ animate = true, count = 6 }: CloudBackdropProps)
               width: W,
               height: W * 0.5,
               opacity: op,
-              animation: `sc-drift ${dur}s linear ${-dur * f}s infinite`,
-              animationPlayState: animate ? 'running' : 'paused',
+              ...(animate
+                ? { animation: `sc-drift ${dur}s linear ${-dur * f}s infinite` }
+                : { transform: `translateX(calc(${f} * (100vw + 540px) - 420px))` }),
             }}
+            data-drift={animate || undefined}
           >
             {puff(0, 0, 1, 0.2, 999)}
             {puff(0.12, 0.08, 0.34, 0.34, '50%')}
