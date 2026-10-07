@@ -1,17 +1,12 @@
-// "In N collections" chip strip rendered on every entity detail page.
-// Click any chip → navigate to that collection. Click the trailing "+"
-// → open the shared CollectionPicker. Renders nothing while membership
-// hasn't loaded (keeps the layout calm on detail pages that have a lot
-// going on).
+// The collections an entity belongs to, as chips linking to each one. Saving
+// lives in the detail header; this renders nothing until there's membership.
 
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { BookmarkPlus } from 'lucide-react';
 import { HoverPopover } from '@scrolled/design';
 import { useMembership } from '@/hooks/useCollections';
 import type { CollectionEntityType, MembershipBadge } from '@/db/user';
 import { cn } from '@scrolled/design';
-import { CollectionPicker } from './CollectionPicker';
 import { resolveCollectionIcon } from './iconRegistry';
 import { resolveCollectionColor } from './colorRegistry';
 
@@ -37,31 +32,12 @@ export function CollectionBadgeStrip({
     return [...seen.values()];
   }, [membershipQ.data]);
 
+  if (collections.length === 0) return null;
   return (
     <div className={cn('flex flex-wrap items-center gap-1.5', className)}>
-      {collections.length > 0 ? (
-        collections.map((m) => <BadgeChip key={m.collectionId} membership={m} />)
-      ) : (
-        <></>
-      )}
-      <CollectionPicker entityType={entityType} entityId={entityId}>
-        {({ toggle, open }) => (
-          <button
-            type="button"
-            onClick={toggle}
-            aria-haspopup="dialog"
-            aria-expanded={open}
-            aria-label="Add to a collection"
-            className={cn(
-              'border-border text-muted-foreground hover:border-primary/50 hover:text-foreground inline-flex items-center gap-1 rounded-full border-2 border-dashed px-2.5 py-0.5 text-xs font-bold transition-colors',
-              open && 'border-primary text-foreground',
-            )}
-          >
-            <BookmarkPlus className="h-3 w-3" aria-hidden />
-            Save
-          </button>
-        )}
-      </CollectionPicker>
+      {collections.map((m) => (
+        <BadgeChip key={m.collectionId} membership={m} />
+      ))}
     </div>
   );
 }

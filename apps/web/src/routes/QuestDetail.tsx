@@ -8,7 +8,6 @@ import {
   Coins,
   Copy,
   Dices,
-  GitBranch,
   Package,
   ScrollText,
   Sparkles,
@@ -33,10 +32,12 @@ import {
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 import { EntityRow } from '@/components/entity-display/EntityRow';
 import { ExpValue } from '@/components/entity-display/ExpValue';
+import { QuestChainBanner } from '@/components/entity-display/QuestChainBanner';
 import { RewardFilterControl } from '@/components/common/RewardFilterControl';
 import { getDbClient } from '@/db';
 import type { QuestRequirementWithName, QuestRewardWithName } from '@/db';
-import { NpcLink, QuestChainLink } from '@/components/entity-links';
+import { NpcLink } from '@/components/entity-links';
+import { SlotTile } from '@scrolled/design';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -189,19 +190,7 @@ export default function QuestDetail() {
     >
       <CollectionBadgeStrip entityType="quest" entityId={q.id} />
 
-      {chainQ.data && (
-        <p className="bg-muted text-muted-foreground flex items-center gap-2 rounded-md px-3.5 py-2.5 text-sm">
-          <GitBranch className="h-4 w-4 shrink-0" />
-          Part of{' '}
-          <QuestChainLink
-            id={chainQ.data.id}
-            className="text-foreground font-semibold hover:underline"
-          >
-            {chainQ.data.name}
-          </QuestChainLink>
-          <span>({chainQ.data.size} quests)</span>
-        </p>
-      )}
+      {chainQ.data && <QuestChainBanner chain={chainQ.data} questId={q.id} />}
 
       {q.description && (
         <DetailSection title="Description">
@@ -294,33 +283,41 @@ export default function QuestDetail() {
         }
         action={hasAnyReward ? <RewardFilterControl /> : null}
       >
-        {expReward && (
-          <ScalarRewardRow
-            icon={Sparkles}
-            label="Experience"
-            value={<ExpValue exp={expReward.amount ?? 0} />}
-          />
-        )}
-        {mesoReward && (
-          <ScalarRewardRow
-            icon={Coins}
-            label="Mesos"
-            value={(mesoReward.amount ?? 0).toLocaleString()}
-          />
-        )}
-        {spReward && (
-          <ScalarRewardRow
-            icon={Zap}
-            label="Skill points"
-            value={(spReward.amount ?? 0).toLocaleString()}
-          />
-        )}
-        {fameReward && (
-          <ScalarRewardRow
-            icon={Star}
-            label="Fame"
-            value={(fameReward.amount ?? 0).toLocaleString()}
-          />
+        {(expReward || mesoReward || spReward || fameReward) && (
+          <li className="grid grid-cols-2 gap-2.5 p-3 sm:grid-cols-3">
+            {expReward && (
+              <RewardCard
+                icon={Sparkles}
+                hue={80}
+                label="Experience"
+                value={<ExpValue exp={expReward.amount ?? 0} />}
+              />
+            )}
+            {mesoReward && (
+              <RewardCard
+                icon={Coins}
+                hue={60}
+                label="Mesos"
+                value={(mesoReward.amount ?? 0).toLocaleString()}
+              />
+            )}
+            {spReward && (
+              <RewardCard
+                icon={Zap}
+                hue={260}
+                label="Skill points"
+                value={(spReward.amount ?? 0).toLocaleString()}
+              />
+            )}
+            {fameReward && (
+              <RewardCard
+                icon={Star}
+                hue={330}
+                label="Fame"
+                value={(fameReward.amount ?? 0).toLocaleString()}
+              />
+            )}
+          </li>
         )}
         {buffReward && buffReward.targetId !== null && <BuffRewardRow id={buffReward.targetId} />}
         {skillReward && skillReward.targetId !== null && (
@@ -436,21 +433,27 @@ function RequirementRow({
   );
 }
 
-function ScalarRewardRow({
-  icon: Icon,
+function RewardCard({
+  icon,
+  hue,
   label,
   value,
 }: {
   icon: LucideIcon;
+  hue: number;
   label: string;
   value: React.ReactNode;
 }) {
   return (
-    <li className="flex items-center gap-3 px-3 py-2 text-sm">
-      <Icon className="text-muted-foreground h-6 w-6 shrink-0" />
-      <span className="flex-1">{label}</span>
-      <span className="font-mono text-xs">{value}</span>
-    </li>
+    <div className="border-border bg-card shadow-rim flex items-center gap-3 rounded-[14px] border-2 p-3">
+      <SlotTile icon={icon} hue={hue} size={40} />
+      <div className="min-w-0">
+        <div className="font-display truncate text-[19px] font-semibold tabular-nums leading-tight">
+          {value}
+        </div>
+        <div className="text-muted-foreground text-xs font-semibold">{label}</div>
+      </div>
+    </div>
   );
 }
 
@@ -519,22 +522,24 @@ function RandomPoolBlock({
   rowLinkable: (r: QuestRewardWithName) => boolean;
 }) {
   return (
-    <li className="space-y-1.5 px-3 py-2 text-sm">
-      <div className="text-muted-foreground flex items-center gap-1.5 text-xs uppercase tracking-wide">
-        <Dices className="h-3.5 w-3.5" />
-        Choose one
-        <span className="text-muted-foreground/70 normal-case">({pool.rewards.length})</span>
+    <li className="px-3 py-2 text-sm">
+      <div className="border-border overflow-hidden rounded-[14px] border-2">
+        <div className="bg-muted text-muted-foreground flex items-center gap-1.5 px-3 py-2 text-xs font-bold">
+          <Dices className="h-3.5 w-3.5" aria-hidden />
+          Choose one
+          <span className="font-semibold">({pool.rewards.length})</span>
+        </div>
+        <ul className="divide-muted bg-card divide-y-[1.5px]">
+          {pool.rewards.map((r) => (
+            <PoolEntry
+              key={`pool-entry-${r.idx}-${r.targetId}`}
+              reward={r}
+              totalWeight={pool.totalWeight}
+              linkable={rowLinkable(r)}
+            />
+          ))}
+        </ul>
       </div>
-      <ul className="border-border bg-background divide-border divide-y rounded-md border">
-        {pool.rewards.map((r) => (
-          <PoolEntry
-            key={`pool-entry-${r.idx}-${r.targetId}`}
-            reward={r}
-            totalWeight={pool.totalWeight}
-            linkable={rowLinkable(r)}
-          />
-        ))}
-      </ul>
     </li>
   );
 }

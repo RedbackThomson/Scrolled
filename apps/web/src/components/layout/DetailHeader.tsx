@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { EntityKind } from '@scrolled/game-db/db/types';
+import { SaveButton } from '@/components/collections/SaveButton';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useShowEntityIds } from '@/stores/showEntityIds';
@@ -17,7 +18,7 @@ interface DetailHeaderProps {
   badges?: ReactNode;
   /** Secondary lines under the title (street name, quest parent). */
   subtitle?: ReactNode;
-  /** Buttons under the title. */
+  /** Buttons under the title, after Save. */
   actions?: ReactNode;
   /** Slot size on desktop; quests use a smaller glyph tile. */
   size?: number;
@@ -64,7 +65,10 @@ export function DetailHeader({
             {showIds && <span className="font-mono text-xs">{id}</span>}
           </div>
         )}
-        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+        <div className="flex flex-wrap items-center gap-2">
+          <SaveButton entityType={entity} entityId={id} />
+          {actions}
+        </div>
       </div>
     </header>
   );
