@@ -8,8 +8,7 @@ export function SetupCelebration() {
       <Scrolly pose="cheer" size={64} />
       <span
         aria-hidden
-        className="text-primary-foreground animate-pop absolute -bottom-1 -right-1 grid h-6 w-6 place-items-center rounded-full bg-[image:var(--gradient-accent)] shadow-[0_0_0_3px_var(--surface-card)]"
-        style={{ animationDelay: '250ms' }}
+        className="text-primary-foreground absolute -bottom-1 -right-1 grid h-6 w-6 place-items-center rounded-full bg-[image:var(--gradient-accent)] shadow-[0_0_0_3px_var(--surface-card)] [animation:sc-pop_640ms_var(--ease-spring)_80ms_both]"
       >
         <Check className="h-3.5 w-3.5" strokeWidth={3} />
       </span>

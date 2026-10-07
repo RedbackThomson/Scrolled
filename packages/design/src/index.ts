@@ -91,6 +91,7 @@ export { Banner, type BannerProps } from './components/feedback/Banner';
 export { ConfettiBurst, type ConfettiBurstProps } from './components/feedback/ConfettiBurst';
 export { EmptyState, type EmptyStateProps } from './components/feedback/EmptyState';
 export { Skeleton, type SkeletonProps } from './components/feedback/Skeleton';
+export { HopLoader, type HopLoaderProps } from './components/feedback/HopLoader';
 export { StatusDot, type StatusDotProps } from './components/feedback/StatusDot';
 
 export { Logo, type LogoProps } from './components/brand/Logo';

@@ -48,8 +48,10 @@ export function StepRestore({ file, state, onPickAgain, onSwitchBack, parentMode
         <div className="flex items-center gap-4">
           <SetupCelebration />
           <div>
-            <h2 className="font-display text-xl font-semibold">Backup restored</h2>
-            <p className="text-muted-foreground text-sm">
+            <h2 className="font-display animate-rise text-xl font-semibold [animation-delay:300ms]">
+              Backup restored
+            </h2>
+            <p className="text-muted-foreground animate-rise text-sm [animation-delay:380ms]">
               Restored {restored} from {file.name} ({sizeMb} MB). Your wiki is ready.
             </p>
           </div>

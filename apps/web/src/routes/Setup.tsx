@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, ArrowRight, Info, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Info } from 'lucide-react';
 import { detectVersion, detectImageVersion } from '@scrolled/wz';
-import { Button, Input } from '@scrolled/design';
+import { Button, HopLoader, Input } from '@scrolled/design';
 import { WizardLayout, type WizardStep } from '@/components/wizard/WizardLayout';
 import {
   StepFiles,
@@ -370,9 +370,7 @@ function SetupWizard() {
   if (!isReady || mode === null) {
     return (
       <WizardLayout title="Loading…" steps={[]} currentStepId="">
-        <div className="text-muted-foreground flex items-center gap-2 text-sm">
-          <Loader2 className="h-4 w-4 animate-spin" /> Preparing your local database…
-        </div>
+        <HopLoader label="Preparing your local database" />
       </WizardLayout>
     );
   }

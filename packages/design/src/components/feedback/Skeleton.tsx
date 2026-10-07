@@ -3,22 +3,30 @@ export interface SkeletonProps {
 }
 
 export function Skeleton({ rows = 4 }: SkeletonProps) {
-  const bar = (w: number | string, h: number, r: number) => (
+  // Each row's shimmer trails the one above by 120ms.
+  const bar = (w: number | string, h: number, r: number, row: number) => (
     <span
+      className="sc-skeleton"
       style={{
         width: w,
         height: h,
         borderRadius: r,
         flex: w === '100%' ? 1 : 'none',
-        background:
-          'linear-gradient(90deg, var(--surface-sunken) 0%, var(--surface-page-top) 50%, var(--surface-sunken) 100%)',
-        backgroundSize: '200% 100%',
-        animation: 'sc-shimmer 1.4s linear infinite',
+        animationDelay: `${row * 120}ms`,
       }}
     />
   );
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div
+      aria-hidden
+      // Waits before appearing so loads that finish quickly never flash placeholders.
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+        animation: 'sc-fade 200ms ease-out 150ms both',
+      }}
+    >
       {Array.from({ length: rows }).map((_, i) => (
         <div
           key={i}
@@ -33,9 +41,9 @@ export function Skeleton({ rows = 4 }: SkeletonProps) {
             border: 'var(--border-rim)',
           }}
         >
-          {bar(36, 36, 10)}
-          {bar('100%', 10, 6)}
-          {bar(40, 10, 6)}
+          {bar(36, 36, 10, i)}
+          {bar('100%', 10, 6, i)}
+          {bar(40, 10, 6, i)}
         </div>
       ))}
     </div>

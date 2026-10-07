@@ -1,7 +1,7 @@
 import { SearchX } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { cn, EmptyState, Skeleton } from '@scrolled/design';
+import { cn, EmptyState, HopLoader, Skeleton } from '@scrolled/design';
 import { appConfig } from '@/config';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { DetailTabs, type DetailTab } from './DetailTabs';
@@ -9,10 +9,8 @@ import { partitionDetailChildren } from './partitionDetailChildren';
 
 export function DetailPageLoading({ entity, id }: { entity: string; id: number | string }) {
   return (
-    <div role="status" className="py-6">
-      <span className="sr-only">
-        Loading {entity.toLowerCase()} {id}…
-      </span>
+    <div className="space-y-6 py-6">
+      <HopLoader size={56} label={`Loading ${entity.toLowerCase()} ${id}`} />
       <Skeleton rows={5} />
     </div>
   );

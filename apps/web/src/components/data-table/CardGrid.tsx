@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { cn, Input } from '@scrolled/design';
+import { cn, Input, Skeleton } from '@scrolled/design';
 import { popIn } from '@/lib/popIn';
 
 interface Props<TData> {
@@ -51,9 +50,9 @@ export function CardGrid<TData>({
 
   if (loading && data.length === 0) {
     return (
-      <div className={cn(PANEL, 'text-muted-foreground px-3 py-6 text-center text-sm')}>
-        <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
-        Loading…
+      <div role="status">
+        <span className="sr-only">Loading…</span>
+        <Skeleton rows={6} />
       </div>
     );
   }

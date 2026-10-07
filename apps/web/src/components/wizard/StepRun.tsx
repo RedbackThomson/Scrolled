@@ -101,10 +101,10 @@ export function StepRun({ version, files, onComplete, mode }: Props) {
         <div className="flex items-center gap-4">
           <SetupCelebration />
           <div>
-            <h2 className="font-display text-xl font-semibold">
+            <h2 className="font-display animate-rise text-xl font-semibold [animation-delay:300ms]">
               {mode === 'update' ? 'Update complete' : 'Your wiki is ready'}
             </h2>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-muted-foreground animate-rise text-sm [animation-delay:380ms]">
               {total.toLocaleString()} entries indexed in {(stats.ms / 1000).toFixed(1)}s.
               Everything is stored on this device and ready to explore.
             </p>

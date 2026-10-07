@@ -11,8 +11,8 @@ import {
   type SortingState,
   type VisibilityState,
 } from '@tanstack/react-table';
-import { LayoutGrid, Loader2, Search, Table2, X } from 'lucide-react';
-import { Input, Pagination, Segmented } from '@scrolled/design';
+import { LayoutGrid, Search, Table2, X } from 'lucide-react';
+import { Input, Pagination, Segmented, Skeleton } from '@scrolled/design';
 import {
   Table,
   TableBody,
@@ -409,9 +409,9 @@ export function DataTable<TData>({
         <TableBody className={fetching ? 'opacity-60 transition-opacity' : 'transition-opacity'}>
           {loading && data.length === 0 ? (
             <TableRow className="hover:bg-transparent">
-              <TableCell colSpan={columnCount} className="text-muted-foreground py-6 text-center">
-                <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
-                Loading…
+              <TableCell colSpan={columnCount} className="p-3" role="status">
+                <span className="sr-only">Loading…</span>
+                <Skeleton rows={6} />
               </TableCell>
             </TableRow>
           ) : data.length === 0 ? (
