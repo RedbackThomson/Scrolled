@@ -26,7 +26,7 @@ export function EquipLink({
   );
   if (noPreview) return link;
   return (
-    <HoverPopover content={<GenericHoverCard entity="equip" id={id} />} triggerClassName={triggerClassName}>
+    <HoverPopover bare content={<GenericHoverCard entity="equip" id={id} />} triggerClassName={triggerClassName}>
       {link}
     </HoverPopover>
   );

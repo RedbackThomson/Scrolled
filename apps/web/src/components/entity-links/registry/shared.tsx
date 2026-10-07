@@ -6,7 +6,7 @@ export function Badge({ children, className }: { children: ReactNode; className?
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[9px] font-medium',
+        'inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[10.5px] font-bold',
         className,
       )}
     >
@@ -15,7 +15,7 @@ export function Badge({ children, className }: { children: ReactNode; className?
   );
 }
 
-/** Monospace numeric value, matching the tooltip stat styling. */
-export function Mono({ children }: { children: ReactNode }) {
-  return <span className="text-foreground font-mono">{children}</span>;
+/** Numeric value with aligned digits, in whatever font its slot uses. */
+export function Num({ children }: { children: ReactNode }) {
+  return <span className="text-foreground tabular-nums">{children}</span>;
 }

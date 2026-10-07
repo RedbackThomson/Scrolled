@@ -36,6 +36,8 @@ export interface TooltipField<TRecord, TExtra> {
   /** Short header shown as the `<dt>` for `gridCell` fields (e.g. "Lvl").
    *  Falls back to `label`. */
   short?: string;
+  /** Hue (0–360) tinting a `gridCell` label, matching the stat's colour elsewhere. */
+  tone?: number;
   defaultMode: FieldMode;
   /** True when the field has meaningful content for this record. */
   isPresent: (ctx: FieldCtx<TRecord, TExtra>) => boolean;
@@ -58,6 +60,9 @@ export interface TooltipEntityConfig<TRecord, TExtra = EmptyExtra> {
   useExtraData?: (id: number) => TExtra;
   /** Fixed anchors — never customizable. */
   renderIcon: (record: TRecord, id: number) => ReactNode;
+  /** Tile behind the icon: 64px on the tooltip tile colour unless set. A hue
+   *  tints it for glyph icons (quests, maps) that have no sprite. */
+  iconTile?: { size?: number; hue?: number };
   renderName: (record: TRecord, id: number) => ReactNode;
   /** Resolve a representative id to seed the settings preview, or null when
    *  the library holds none of this type. */

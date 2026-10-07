@@ -31,6 +31,8 @@ interface HoverPopoverProps {
   hideDelay?: number;
   /** Additional className for the popover panel. */
   className?: string;
+  /** Skip the panel's own surface and padding, for content that draws its own card. */
+  bare?: boolean;
   /** Classes applied to the trigger span itself (positioning, styling). */
   triggerClassName?: string;
   /** Inline style for the trigger span (e.g. absolute positioning). */
@@ -60,6 +62,7 @@ const GROW_FROM = {
 export function HoverPopover({
   children,
   content,
+  bare,
   delay = 250,
   hideDelay = 120,
   className,
@@ -187,7 +190,9 @@ export function HoverPopover({
             <div
               data-surface="tooltip"
               className={cn(
-                'bg-card text-card-foreground animate-[sc-tip_460ms_var(--ease-spring)_150ms_both] rounded-xl p-3 shadow-[var(--shadow-tooltip)]',
+                'animate-[sc-tip_460ms_var(--ease-spring)_150ms_both]',
+                !bare &&
+                  'bg-card text-card-foreground rounded-xl p-3 shadow-[var(--shadow-tooltip)]',
                 GROW_FROM[coords.placement][coords.align],
                 className,
               )}

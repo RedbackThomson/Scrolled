@@ -15,9 +15,7 @@ interface HoverCardSaveFooterProps {
 
 export function HoverCardSaveFooter({ entityType, entityId, className }: HoverCardSaveFooterProps) {
   return (
-    <div
-      className={cn('-mx-3 mt-1.5 border-t border-[var(--tooltip-line)] px-3 pt-1.5', className)}
-    >
+    <div className={cn('border-t border-[var(--tooltip-line)] p-1.5', className)}>
       <CollectionPicker entityType={entityType} entityId={entityId}>
         {({ toggle, open, memberCount, saves }) => (
           <button

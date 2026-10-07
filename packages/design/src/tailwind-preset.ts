@@ -80,7 +80,6 @@ const preset: Partial<Config> = {
         tip: 'sc-tip 460ms var(--ease-spring) both',
         toast: 'sc-toast 600ms var(--ease-spring) both',
         squish: 'sc-squish 620ms var(--ease-spring)',
-        bob: 'sc-bob 1.8s ease-in-out infinite',
         hop: 'sc-hop 900ms var(--ease-hop) infinite',
       },
       fontFamily: {

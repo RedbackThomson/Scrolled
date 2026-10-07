@@ -20,7 +20,7 @@ export function MobLink({ id, children, className, noPreview, triggerClassName }
   );
   if (noPreview) return link;
   return (
-    <HoverPopover content={<GenericHoverCard entity="mob" id={id} />} triggerClassName={triggerClassName}>
+    <HoverPopover bare content={<GenericHoverCard entity="mob" id={id} />} triggerClassName={triggerClassName}>
       {link}
     </HoverPopover>
   );

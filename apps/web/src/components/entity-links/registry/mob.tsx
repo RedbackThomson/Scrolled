@@ -4,15 +4,11 @@ import { EntityIcon } from '@/components/entity-display/EntityIcon';
 import { getDbClient, type MobRecord } from '@/db';
 import { routeForEntity } from '@/lib/entityRoutes';
 import { elementsByStatus } from '@scrolled/game-db/domain/mobElements';
-import {
-  ELEMENT_GROUP_LABELS,
-  ELEMENT_STATUS_CLASSES,
-} from '@/components/entity-display/mobElementsDisplay';
-import { Mono } from './shared';
+import { ElementAffinities } from './ElementAffinities';
+import { ELEMENT_AFFINITY_STATUSES } from '@/components/entity-display/mobElementsDisplay';
+import { Num } from './shared';
 import { flagField } from './flags';
 import type { TooltipEntityConfig, TooltipField } from './types';
-
-const HOVER_CARD_STATUSES = ['immune', 'resistant', 'weak'] as const;
 
 type MobField = TooltipField<MobRecord, Record<string, never>>;
 
@@ -22,65 +18,70 @@ const fields: MobField[] = [
     whenTrue: 'Boss',
     whenFalse: 'Normal',
     defaultMode: 'whenPresent',
-    trueClassName: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
+    trueClassName: 'bg-[image:var(--gradient-gold)] text-[color:var(--gold-fg)]',
     trueIcon: <Crown className="h-3 w-3" />,
   }),
   {
     key: 'level',
     label: 'Level',
     short: 'Lvl',
+    tone: 148,
     zone: 'meta',
     metaVariant: 'gridCell',
     defaultMode: 'always',
     isPresent: ({ record }) => record.level !== null,
-    render: ({ record }) => <Mono>{record.level ?? '—'}</Mono>,
+    render: ({ record }) => <Num>{record.level ?? '—'}</Num>,
   },
   {
     key: 'hp',
     label: 'HP',
     short: 'HP',
+    tone: 22,
     zone: 'meta',
     metaVariant: 'gridCell',
     defaultMode: 'always',
     isPresent: ({ record }) => record.hp !== null,
-    render: ({ record }) => <Mono>{record.hp?.toLocaleString() ?? '—'}</Mono>,
+    render: ({ record }) => <Num>{record.hp?.toLocaleString() ?? '—'}</Num>,
   },
   {
     key: 'exp',
     label: 'EXP',
     short: 'EXP',
+    tone: 80,
     zone: 'meta',
     metaVariant: 'gridCell',
     defaultMode: 'always',
     isPresent: ({ record }) => record.exp !== null,
-    render: ({ record }) => <Mono>{record.exp?.toLocaleString() ?? '—'}</Mono>,
+    render: ({ record }) => <Num>{record.exp?.toLocaleString() ?? '—'}</Num>,
   },
   {
     key: 'expHp',
     label: 'EXP / HP',
     short: 'EXP/HP',
+    tone: 80,
     hint: 'Experience per point of HP (EXP ÷ HP).',
     zone: 'meta',
     metaVariant: 'gridCell',
     defaultMode: 'never',
     isPresent: ({ record }) => record.exp !== null && record.hp !== null && record.hp > 0,
     render: ({ record }) => (
-      <Mono>
+      <Num>
         {record.exp !== null && record.hp
           ? (record.exp / record.hp).toLocaleString(undefined, { maximumFractionDigits: 3 })
           : '—'}
-      </Mono>
+      </Num>
     ),
   },
   {
     key: 'mp',
     label: 'MP',
     short: 'MP',
+    tone: 240,
     zone: 'meta',
     metaVariant: 'gridCell',
     defaultMode: 'never',
     isPresent: ({ record }) => record.mp !== null && record.mp !== 0,
-    render: ({ record }) => <Mono>{record.mp?.toLocaleString() ?? '—'}</Mono>,
+    render: ({ record }) => <Num>{record.mp?.toLocaleString() ?? '—'}</Num>,
   },
   {
     key: 'elements',
@@ -89,23 +90,8 @@ const fields: MobField[] = [
     zone: 'body',
     defaultMode: 'whenPresent',
     isPresent: ({ record }) =>
-      HOVER_CARD_STATUSES.some((status) => elementsByStatus(record.elementAttack, status).length > 0),
-    render: ({ record }) => {
-      const groups = HOVER_CARD_STATUSES.map((status) => ({
-        status,
-        names: elementsByStatus(record.elementAttack, status),
-      })).filter((g) => g.names.length > 0);
-      return (
-        <dl className="space-y-0.5 text-[11px]">
-          {groups.map(({ status, names }) => (
-            <div key={status} className="flex gap-2">
-              <dt className="text-muted-foreground shrink-0">{ELEMENT_GROUP_LABELS[status]}</dt>
-              <dd className={ELEMENT_STATUS_CLASSES[status]}>{names.join(', ')}</dd>
-            </div>
-          ))}
-        </dl>
-      );
-    },
+      ELEMENT_AFFINITY_STATUSES.some((status) => elementsByStatus(record.elementAttack, status).length > 0),
+    render: ({ record }) => <ElementAffinities element={record.elementAttack} />,
   },
 ];
 
@@ -120,7 +106,7 @@ export const mobConfig: TooltipEntityConfig<MobRecord> = {
   renderName: (record, id) => (
     <Link
       to={routeForEntity('mob', id)}
-      className="hover:text-primary block truncate text-sm font-semibold hover:underline"
+      className="hover:text-primary block truncate hover:underline"
     >
       {record.name}
     </Link>

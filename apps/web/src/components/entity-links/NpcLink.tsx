@@ -22,7 +22,7 @@ export function NpcLink({ id, children, className, noPreview, triggerClassName }
   );
   if (noPreview) return link;
   return (
-    <HoverPopover content={<GenericHoverCard entity="npc" id={id} />} triggerClassName={triggerClassName}>
+    <HoverPopover bare content={<GenericHoverCard entity="npc" id={id} />} triggerClassName={triggerClassName}>
       {link}
     </HoverPopover>
   );

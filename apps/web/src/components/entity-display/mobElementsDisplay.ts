@@ -31,3 +31,14 @@ export const ELEMENT_STATUS_CLASSES: Record<ElementStatus, string> = {
   resistant: 'text-amber-700 dark:text-amber-300',
   weak: 'text-rose-700 dark:text-rose-300',
 };
+
+/** Statuses worth calling out on a hover card, most useful first; neutral is the norm. */
+export const ELEMENT_AFFINITY_STATUSES = ['weak', 'resistant', 'immune'] as const;
+
+/** The same palette for hover cards, which are dark in both themes. */
+export const ELEMENT_STATUS_ON_DARK_CLASSES: Record<ElementStatus, string> = {
+  neutral: 'text-muted-foreground',
+  immune: 'text-sky-300',
+  resistant: 'text-amber-300',
+  weak: 'text-rose-300',
+};

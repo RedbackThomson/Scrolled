@@ -1,3 +1,4 @@
+import { ENTITY_HUES } from '@scrolled/design';
 import { GitBranch } from 'lucide-react';
 import { getDbClient, type QuestChainDetail } from '@/db';
 import type { TooltipEntityConfig, TooltipField } from './types';
@@ -48,12 +49,9 @@ export const questChainConfig: TooltipEntityConfig<QuestChainDetail> = {
   idPrefix: 'Chain',
   fetch: (id) => getDbClient().getQuestChain(id),
   queryKey: (id) => ['db', 'quest-chain', id],
-  renderIcon: () => (
-    <span className="bg-muted text-muted-foreground inline-flex h-16 w-16 shrink-0 items-center justify-center rounded">
-      <GitBranch className="h-7 w-7" />
-    </span>
-  ),
-  renderName: (record) => <div className="truncate text-sm font-semibold">{record.chain.name}</div>,
+  iconTile: { hue: ENTITY_HUES.quest },
+  renderIcon: () => <GitBranch className="h-7 w-7" aria-hidden />,
+  renderName: (record) => <div className="truncate">{record.chain.name}</div>,
   getSampleId: () =>
     getDbClient().listQuestChains({ limit: 1 }).then((r) => r.rows[0]?.id ?? null),
   fields,

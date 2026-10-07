@@ -3,57 +3,51 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Users } from 'lucide-react';
 import { EntityIcon } from '@/components/entity-display/EntityIcon';
-import { getDbClient, type MapRecord, type NpcRecord } from '@/db';
+import { getDbClient, type NpcRecord } from '@/db';
 import { routeForEntity } from '@/lib/entityRoutes';
 import type { TooltipEntityConfig, TooltipField } from './types';
 
 interface NpcExtra {
-  maps: MapRecord[];
+  maps: number;
+  quests: number;
 }
 
 type NpcField = TooltipField<NpcRecord, NpcExtra>;
 
+const plural = (n: number, one: string, many: string) =>
+  `${n.toLocaleString()} ${n === 1 ? one : many}`;
+
 const fields: NpcField[] = [
+  {
+    key: 'maps',
+    label: 'Maps',
+    hint: 'How many maps this NPC appears on.',
+    zone: 'meta',
+    metaVariant: 'inline',
+    defaultMode: 'whenPresent',
+    isPresent: ({ extra }) => extra.maps > 0,
+    render: ({ extra }) => <span>Appears on {plural(extra.maps, 'map', 'maps')}</span>,
+  },
+  {
+    key: 'quests',
+    label: 'Quests',
+    hint: 'How many quests this NPC starts or completes.',
+    zone: 'meta',
+    metaVariant: 'inline',
+    defaultMode: 'whenPresent',
+    isPresent: ({ extra }) => extra.quests > 0,
+    render: ({ extra }) => <span>Gives {plural(extra.quests, 'quest', 'quests')}</span>,
+  },
   {
     key: 'description',
     label: 'Description',
-    zone: 'meta',
-    metaVariant: 'line',
+    zone: 'body',
     defaultMode: 'whenPresent',
     isPresent: ({ record }) => !!record.description?.trim(),
     render: ({ record }) => (
-      <p className="text-muted-foreground line-clamp-2 text-xs">{record.description}</p>
-    ),
-  },
-  {
-    key: 'maps',
-    label: 'Found in',
-    hint: 'Maps where this NPC appears (up to four).',
-    zone: 'meta',
-    metaVariant: 'line',
-    defaultMode: 'whenPresent',
-    isPresent: ({ extra }) => extra.maps.length > 0,
-    render: ({ extra }) => (
-      <div>
-        <div className="text-muted-foreground mb-0.5 text-[10px] uppercase tracking-wide">
-          Found in
-        </div>
-        <ul className="space-y-0.5 text-xs">
-          {extra.maps.slice(0, 4).map((m) => (
-            <li key={m.id}>
-              <Link
-                to={routeForEntity('map', m.id)}
-                className="text-primary block truncate hover:underline"
-              >
-                {m.name ?? `Map ${m.id}`}
-              </Link>
-            </li>
-          ))}
-          {extra.maps.length > 4 && (
-            <li className="text-muted-foreground">…{extra.maps.length - 4} more</li>
-          )}
-        </ul>
-      </div>
+      <p className="line-clamp-2 rounded-xl bg-white/[.07] px-2.5 py-2 text-[12.5px] leading-[1.45] opacity-90">
+        “{record.description?.trim()}”
+      </p>
     ),
   },
 ];
@@ -65,12 +59,18 @@ export const npcConfig: TooltipEntityConfig<NpcRecord, NpcExtra> = {
   queryKey: (id) => ['db', 'npc', id],
   useExtraData: (id) => {
     const client = useMemo(() => getDbClient(), []);
+    // Keys match the NPC page's, so hovering then opening the NPC reuses the data.
     const mapsQ = useQuery({
-      queryKey: ['db', 'npc-maps', id],
+      queryKey: ['db', 'npc', id, 'maps'],
       queryFn: () => client.getNpcMaps(id),
       staleTime: 5 * 60_000,
     });
-    return { maps: mapsQ.data ?? [] };
+    const questsQ = useQuery({
+      queryKey: ['db', 'npc', id, 'quests'],
+      queryFn: () => client.getNpcQuests(id),
+      staleTime: 5 * 60_000,
+    });
+    return { maps: mapsQ.data?.length ?? 0, quests: questsQ.data?.length ?? 0 };
   },
   renderIcon: (record, id) => (
     <EntityIcon entity="npc" id={id} size={64} placeholder={Users} alt={record.name} />
@@ -78,11 +78,14 @@ export const npcConfig: TooltipEntityConfig<NpcRecord, NpcExtra> = {
   renderName: (record, id) => (
     <Link
       to={routeForEntity('npc', id)}
-      className="hover:text-primary block truncate text-sm font-semibold hover:underline"
+      className="hover:text-primary block truncate hover:underline"
     >
       {record.name}
     </Link>
   ),
-  getSampleId: () => getDbClient().listNpcs({ limit: 1 }).then((r) => r.rows[0]?.id ?? null),
+  getSampleId: () =>
+    getDbClient()
+      .listNpcs({ limit: 1 })
+      .then((r) => r.rows[0]?.id ?? null),
   fields,
 };

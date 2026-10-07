@@ -27,6 +27,7 @@ export function QuestChainLink({
   if (noPreview) return link;
   return (
     <HoverPopover
+      bare
       content={<GenericHoverCard entity="questChain" id={id} />}
       triggerClassName={triggerClassName}
     >

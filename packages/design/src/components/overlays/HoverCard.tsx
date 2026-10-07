@@ -55,7 +55,6 @@ export function HoverCard({
                 width: 54,
                 height: 54,
                 objectFit: 'contain',
-                animation: 'sc-bob 1.8s ease-in-out 600ms infinite',
               }}
             />
           ) : (

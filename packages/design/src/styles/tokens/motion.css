@@ -261,9 +261,6 @@
   flex-direction: column;
   animation: sc-roll var(--roll-ms, 320ms) var(--ease-out) var(--roll-delay, 0ms) both;
 }
-.sc-bob {
-  animation: sc-bob 1.8s ease-in-out 600ms infinite;
-}
 .sc-hop {
   animation: sc-hop 1.1s var(--ease-hop) infinite;
 }

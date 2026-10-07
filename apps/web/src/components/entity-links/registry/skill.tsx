@@ -5,7 +5,7 @@ import { getDbClient, type SkillRecord } from '@/db';
 import { routeForEntity } from '@/lib/entityRoutes';
 import { useJobsMap } from '@/hooks/useJobs';
 import { decodeRequiredWeapon, decodeSkillElement } from '@scrolled/game-db/domain/skillElements';
-import { Mono } from './shared';
+import { Num } from './shared';
 import type { TooltipEntityConfig, TooltipField } from './types';
 
 interface SkillExtra {
@@ -42,7 +42,7 @@ const fields: SkillField[] = [
     metaVariant: 'gridCell',
     defaultMode: 'always',
     isPresent: ({ record }) => record.maxLevel !== null,
-    render: ({ record }) => <Mono>{record.maxLevel ?? '—'}</Mono>,
+    render: ({ record }) => <Num>{record.maxLevel ?? '—'}</Num>,
   },
   {
     key: 'element',
@@ -66,7 +66,7 @@ const fields: SkillField[] = [
     metaVariant: 'gridCell',
     defaultMode: 'never',
     isPresent: ({ record }) => record.masterLevel !== null,
-    render: ({ record }) => <Mono>{record.masterLevel ?? '—'}</Mono>,
+    render: ({ record }) => <Num>{record.masterLevel ?? '—'}</Num>,
   },
   {
     key: 'requiredWeapon',
@@ -114,7 +114,7 @@ export const skillConfig: TooltipEntityConfig<SkillRecord, SkillExtra> = {
   renderName: (record, id) => (
     <Link
       to={routeForEntity('skill', id)}
-      className="hover:text-primary block truncate text-sm font-semibold hover:underline"
+      className="hover:text-primary block truncate hover:underline"
     >
       {record.name ?? `Skill ${id}`}
     </Link>

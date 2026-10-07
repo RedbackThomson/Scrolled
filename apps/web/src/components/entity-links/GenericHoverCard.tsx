@@ -40,17 +40,26 @@ function buildMetaBlocks(fields: AnyField[]): MetaBlock[] {
 
 function renderMetaBlock(block: MetaBlock, ctx: AnyCtx, index: number): ReactNode {
   if (block.kind === 'grid') {
-    const cols = Math.min(block.fields.length, 4);
+    // Tiles size to their values and share the row, so a big number (12,500,000
+    // HP) widens its own tile instead of being truncated.
     return (
-      <dl
-        key={`grid-${index}`}
-        className="text-muted-foreground grid gap-1 text-[11px]"
-        style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
-      >
+      <dl key={`grid-${index}`} className="flex flex-wrap gap-1">
         {block.fields.map((f) => (
-          <div key={f.key}>
-            <dt className="uppercase tracking-wide">{f.short ?? f.label}</dt>
-            <dd className="text-foreground">{f.render(ctx)}</dd>
+          <div
+            key={f.key}
+            className="flex min-w-[56px] flex-auto flex-col rounded-[10px] bg-white/[.07] px-2 py-1.5"
+          >
+            <dt
+              className="whitespace-nowrap text-[10.5px] font-extrabold uppercase"
+              style={{
+                color: f.tone === undefined ? 'var(--text-2)' : `oklch(0.78 0.13 ${f.tone})`,
+              }}
+            >
+              {f.short ?? f.label}
+            </dt>
+            <dd className="font-display whitespace-nowrap text-[15px] font-semibold tabular-nums">
+              {f.render(ctx)}
+            </dd>
           </div>
         ))}
       </dl>
@@ -58,7 +67,10 @@ function renderMetaBlock(block: MetaBlock, ctx: AnyCtx, index: number): ReactNod
   }
   if (block.kind === 'inline') {
     return (
-      <div key={`inline-${index}`} className="text-muted-foreground text-[11px]">
+      <div
+        key={`inline-${index}`}
+        className="text-muted-foreground flex flex-wrap items-center gap-x-1 text-xs"
+      >
         {block.fields.map((f, i) => (
           <Fragment key={f.key}>
             {i > 0 && ' · '}
@@ -88,14 +100,13 @@ export function GenericHoverCard({ entity, id }: { entity: EntityKind; id: numbe
   // render.
   const extra = config.useExtraData ? config.useExtraData(id) : EMPTY_EXTRA;
 
-  if (recordQ.isLoading) {
-    return <p className="text-muted-foreground text-xs">Loading…</p>;
-  }
-  if (!recordQ.data) {
+  if (recordQ.isLoading || !recordQ.data) {
     return (
-      <p className="text-muted-foreground text-xs">
-        {config.idPrefix} {id} not found.
-      </p>
+      <CardSurface>
+        <p className="text-muted-foreground p-3 text-xs">
+          {recordQ.isLoading ? 'Loading…' : `${config.idPrefix} ${id} not found.`}
+        </p>
+      </CardSurface>
     );
   }
 
@@ -106,30 +117,68 @@ export function GenericHoverCard({ entity, id }: { entity: EntityKind; id: numbe
     return mode === 'always' || (mode === 'whenPresent' && f.isPresent(ctx));
   });
   const metaBlocks = buildMetaBlocks(visible.filter((f) => f.zone === 'meta'));
+  // Stat tiles get the card's full width: beside the sprite there's too little
+  // room for three tiles once one holds a long number.
+  const statBlocks = metaBlocks.filter((b) => b.kind === 'grid');
+  const headerBlocks = metaBlocks.filter((b) => b.kind !== 'grid');
   const bodyFields = visible.filter((f) => f.zone === 'body');
 
+  const tile = config.iconTile ?? {};
+  const tileSize = tile.size ?? 64;
   return (
-    <div className="w-72 max-w-[calc(100vw-1rem)] space-y-1.5">
-      <div className="flex gap-3">
-        <div className="animate-bob shrink-0 self-start" style={{ animationDelay: '600ms' }}>
+    <CardSurface>
+      <div className="flex gap-3 p-3">
+        <div
+          className="grid shrink-0 place-items-center self-start overflow-hidden rounded-[14px] shadow-[inset_0_1px_0_rgba(255,255,255,.08),inset_0_-2px_0_rgba(0,0,0,.06)] [&_img]:max-h-[56px] [&_img]:max-w-[56px]"
+          style={{
+            width: tileSize,
+            height: tileSize,
+            background:
+              tile.hue === undefined
+                ? 'var(--surface-tooltip-tile)'
+                : `oklch(0.5 0.08 ${tile.hue} / .5)`,
+            color: tile.hue === undefined ? undefined : `oklch(0.85 0.1 ${tile.hue})`,
+          }}
+        >
           {config.renderIcon(recordQ.data, id)}
         </div>
-        <div className="min-w-0 flex-1 space-y-1.5">
-          <div>
+        <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5">
+          <div className="font-display text-[17px] font-semibold leading-tight">
             {config.renderName(recordQ.data, id)}
             {showIds && (
-              <div className="text-muted-foreground font-mono text-[10px]">
+              <div className="text-muted-foreground font-mono text-[10px] font-normal">
                 {config.idPrefix} #{id}
               </div>
             )}
           </div>
-          {metaBlocks.map((block, i) => renderMetaBlock(block, ctx, i))}
+          {headerBlocks.map((block, i) => renderMetaBlock(block, ctx, i))}
         </div>
       </div>
-      {bodyFields.map((f) => (
-        <Fragment key={f.key}>{f.render(ctx)}</Fragment>
-      ))}
+      {statBlocks.length > 0 && (
+        <div className="space-y-1 px-3 pb-2.5">
+          {statBlocks.map((block, i) => renderMetaBlock(block, ctx, i))}
+        </div>
+      )}
+      {bodyFields.length > 0 && (
+        <div className="space-y-2 px-3 pb-2.5 text-xs">
+          {bodyFields.map((f) => (
+            <Fragment key={f.key}>{f.render(ctx)}</Fragment>
+          ))}
+        </div>
+      )}
       <HoverCardSaveFooter entityType={entity} entityId={id} />
+    </CardSurface>
+  );
+}
+
+/** The card's own dark surface, so the settings preview matches the real hover card. */
+function CardSurface({ children }: { children: ReactNode }) {
+  return (
+    <div
+      data-surface="tooltip"
+      className="bg-card text-card-foreground w-[300px] max-w-[calc(100vw-1rem)] overflow-hidden rounded-[18px] shadow-[0_0_0_1px_var(--tooltip-line),var(--shadow-tooltip)]"
+    >
+      {children}
     </div>
   );
 }

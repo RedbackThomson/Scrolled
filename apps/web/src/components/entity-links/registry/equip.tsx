@@ -2,7 +2,7 @@ import { ItemIcon } from '@/components/entity-display/ItemIcon';
 import { getDbClient, type EquipRecord } from '@/db';
 import { labelForEquipSlot, labelForEquipType } from '@scrolled/game-db/domain/equipTypes';
 import { formatEquipJobs, isAnyClass, parseEquipReqJob } from '@scrolled/game-db/domain/equipJobs';
-import { Mono } from './shared';
+import { Num } from './shared';
 import { flagField } from './flags';
 import type { TooltipEntityConfig, TooltipField } from './types';
 
@@ -21,7 +21,7 @@ const stat = (
   metaVariant: 'gridCell',
   defaultMode,
   isPresent: ({ record }) => record[key] !== null && record[key] !== 0,
-  render: ({ record }) => <Mono>{(record[key] as number | null) ?? '—'}</Mono>,
+  render: ({ record }) => <Num>{(record[key] as number | null) ?? '—'}</Num>,
 });
 
 const fields: EquipField[] = [
@@ -127,7 +127,7 @@ export const equipConfig: TooltipEntityConfig<EquipRecord> = {
   fetch: (id) => getDbClient().getEquip(id),
   queryKey: (id) => ['db', 'equip', id],
   renderIcon: (record, id) => <ItemIcon entity="equip" id={id} size={64} alt={record.name} />,
-  renderName: (record) => <div className="truncate text-sm font-semibold">{record.name}</div>,
+  renderName: (record) => <div className="truncate">{record.name}</div>,
   getSampleId: () =>
     getDbClient()
       .listEquips({ kind: 'weapon', limit: 1 })

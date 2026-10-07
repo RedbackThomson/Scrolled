@@ -1,3 +1,4 @@
+import { ENTITY_HUES } from '@scrolled/design';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { GitBranch, ScrollText, Sparkles } from 'lucide-react';
@@ -114,12 +115,9 @@ export const questConfig: TooltipEntityConfig<QuestRecord, QuestExtra> = {
     });
     return { chain: chainQ.data ?? null };
   },
-  renderIcon: () => (
-    <span className="bg-muted text-muted-foreground inline-flex h-16 w-16 shrink-0 items-center justify-center rounded">
-      <ScrollText className="h-7 w-7" />
-    </span>
-  ),
-  renderName: (record) => <div className="truncate text-sm font-semibold">{record.name}</div>,
+  iconTile: { hue: ENTITY_HUES.quest },
+  renderIcon: () => <ScrollText className="h-7 w-7" aria-hidden />,
+  renderName: (record) => <div className="truncate">{record.name}</div>,
   getSampleId: () => getDbClient().listQuests({ limit: 1 }).then((r) => r.rows[0]?.id ?? null),
   fields,
 };
