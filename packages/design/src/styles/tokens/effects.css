@@ -30,3 +30,14 @@
   outline-offset: 0;
   border-color: var(--accent) !important;
 }
+/* iOS zooms into inputs under 16px, so small-screen inputs stay at 16px. */
+@media (max-width: 639px) {
+  .sc-input-text {
+    font-size: 16px !important;
+  }
+}
+/* For a wrapper drawn around a bare input, like a search pill. */
+.sc-focus-within-ring:focus-within {
+  outline: 4px solid var(--accent-glow);
+  outline-offset: 0;
+}

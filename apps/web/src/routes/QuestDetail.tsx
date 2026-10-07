@@ -26,7 +26,6 @@ import {
   DetailPageLoading,
   DetailPageNotFound,
   DetailSection,
-  InfoRow,
   InfoSection,
   SourceSection,
 } from '@/components/layout/DetailPageLayout';
@@ -38,7 +37,7 @@ import { RewardFilterControl } from '@/components/common/RewardFilterControl';
 import { getDbClient } from '@/db';
 import type { QuestRequirementWithName, QuestRewardWithName } from '@/db';
 import { NpcLink } from '@/components/entity-links';
-import { Chip, cn, RollingNumber, SlotTile } from '@scrolled/design';
+import { Chip, cn, InfoRow, RollingNumber, SlotTile } from '@scrolled/design';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
 import { usePageTitle } from '@/hooks/usePageTitle';

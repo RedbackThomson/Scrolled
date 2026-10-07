@@ -1,10 +1,10 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { MapPin, Search, X } from 'lucide-react';
+import { MapPin, X } from 'lucide-react';
 import type { WorldMapMarkerWithMaps } from '@/db';
 import { MapHoverCard } from '@/components/entity-links';
-import { HoverPopover } from '@scrolled/design';
+import { HoverPopover, IconButton, SearchPill } from '@scrolled/design';
 import { useEntitySummaryNames } from '@/hooks/useEntitySummaries';
-import { cn, Input } from '@scrolled/design';
+import { cn } from '@scrolled/design';
 
 interface Props {
   markers: WorldMapMarkerWithMaps[];
@@ -86,27 +86,26 @@ export function WorldMapViewerSidebar({
   return (
     <aside className="border-border bg-card flex w-[280px] shrink-0 flex-col border-r-2">
       <div className="flex shrink-0 items-center gap-1.5 p-3">
-        <label className="bg-muted text-muted-foreground focus-within:ring-primary/30 flex h-9 min-w-0 flex-1 items-center gap-2 rounded-full px-3 focus-within:ring-4">
-          <Search className="h-4 w-4 shrink-0" aria-hidden />
-          <Input
-            type="text"
+        <div className="min-w-0 flex-1">
+          <SearchPill
+            tone="sunken"
+            size="md"
+            width="100%"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={setSearch}
             placeholder={drilling ? 'Search maps…' : 'Search maps or regions…'}
             aria-label={drilling ? 'Search maps' : 'Search maps or regions'}
-            className="text-foreground placeholder:text-muted-foreground h-full w-full min-w-0 border-0 bg-transparent p-0 text-base font-semibold shadow-none focus-visible:outline-none focus-visible:ring-0 sm:text-[13px]"
           />
-        </label>
+        </div>
         {selectedMarkerId && (
-          <button
-            type="button"
+          <IconButton
+            variant="sunken"
+            round
+            spin
+            icon={X}
+            label="Clear selection"
             onClick={() => onSelectMarker(null)}
-            aria-label="Clear selection"
-            title="Clear selection"
-            className="bg-muted text-muted-foreground hover:text-foreground ease-spring inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-transform duration-300 hover:rotate-90"
-          >
-            <X className="h-4 w-4" aria-hidden />
-          </button>
+          />
         )}
       </div>
 

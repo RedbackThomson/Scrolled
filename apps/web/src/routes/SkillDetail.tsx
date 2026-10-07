@@ -10,10 +10,10 @@ import {
   DetailPageLoading,
   DetailPageNotFound,
   DetailSection,
-  InfoRow,
   InfoSection,
   SourceSection,
 } from '@/components/layout/DetailPageLayout';
+import { InfoRow } from '@scrolled/design';
 import { EntityRow } from '@/components/entity-display/EntityRow';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';

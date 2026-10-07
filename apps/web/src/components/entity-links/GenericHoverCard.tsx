@@ -1,4 +1,5 @@
 import { Fragment, type ReactNode } from 'react';
+import { HoverCard, HoverCardSurface } from '@scrolled/design';
 import { useQuery } from '@tanstack/react-query';
 import { HoverCardSaveFooter } from '@/components/collections';
 import { useShowEntityIds } from '@/stores/showEntityIds';
@@ -102,11 +103,11 @@ export function GenericHoverCard({ entity, id }: { entity: EntityKind; id: numbe
 
   if (recordQ.isLoading || !recordQ.data) {
     return (
-      <CardSurface>
+      <HoverCardSurface>
         <p className="text-muted-foreground p-3 text-xs">
           {recordQ.isLoading ? 'Loading…' : `${config.idPrefix} ${id} not found.`}
         </p>
-      </CardSurface>
+      </HoverCardSurface>
     );
   }
 
@@ -124,65 +125,44 @@ export function GenericHoverCard({ entity, id }: { entity: EntityKind; id: numbe
   const bodyFields = visible.filter((f) => f.zone === 'body');
 
   const tile = config.iconTile ?? {};
-  const tileSize = tile.size ?? 64;
   return (
-    <CardSurface>
-      <div className="flex gap-3 p-3">
-        <div
-          className="grid shrink-0 place-items-center self-start overflow-hidden rounded-[14px] shadow-[inset_0_1px_0_rgba(255,255,255,.08),inset_0_-2px_0_rgba(0,0,0,.06)] [&_img]:max-h-[56px] [&_img]:max-w-[56px]"
-          style={{
-            width: tileSize,
-            height: tileSize,
-            background:
-              tile.hue === undefined
-                ? 'var(--surface-tooltip-tile)'
-                : `oklch(0.5 0.08 ${tile.hue} / .5)`,
-            color: tile.hue === undefined ? undefined : `oklch(0.85 0.1 ${tile.hue})`,
-          }}
-        >
-          {config.renderIcon(recordQ.data, id)}
-        </div>
-        <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5">
-          <div className="font-display text-[17px] font-semibold leading-tight">
-            {config.renderName(recordQ.data, id)}
-            {showIds && (
-              <div className="text-muted-foreground font-mono text-[10px] font-normal">
-                {config.idPrefix} #{id}
+    <HoverCard
+      media={config.renderIcon(recordQ.data, id)}
+      mediaSize={tile.size}
+      mediaHue={tile.hue}
+      title={
+        <>
+          {config.renderName(recordQ.data, id)}
+          {showIds && (
+            <div className="text-muted-foreground font-mono text-[10px] font-normal">
+              {config.idPrefix} #{id}
+            </div>
+          )}
+        </>
+      }
+      below={
+        statBlocks.length + bodyFields.length > 0 && (
+          <>
+            {statBlocks.length > 0 && (
+              <div className="space-y-1">
+                {statBlocks.map((block, i) => renderMetaBlock(block, ctx, i))}
               </div>
             )}
-          </div>
-          {headerBlocks.map((block, i) => renderMetaBlock(block, ctx, i))}
-        </div>
-      </div>
-      {statBlocks.length > 0 && (
-        <div className="space-y-1 px-3 pb-2.5">
-          {statBlocks.map((block, i) => renderMetaBlock(block, ctx, i))}
-        </div>
-      )}
-      {bodyFields.length > 0 && (
-        <div className="space-y-2 px-3 pb-2.5 text-xs">
-          {bodyFields.map((f) => (
-            <Fragment key={f.key}>{f.render(ctx)}</Fragment>
-          ))}
-        </div>
-      )}
-      <HoverCardSaveFooter
-        entityType={entity}
-        entityId={id}
-        entityName={config.nameOf(recordQ.data, id)}
-      />
-    </CardSurface>
-  );
-}
-
-/** The card's own dark surface, so the settings preview matches the real hover card. */
-function CardSurface({ children }: { children: ReactNode }) {
-  return (
-    <div
-      data-surface="tooltip"
-      className="bg-card text-card-foreground w-[300px] max-w-[calc(100vw-1rem)] overflow-hidden rounded-[18px] shadow-[0_0_0_1px_var(--tooltip-line),var(--shadow-tooltip)]"
+            {bodyFields.map((f) => (
+              <Fragment key={f.key}>{f.render(ctx)}</Fragment>
+            ))}
+          </>
+        )
+      }
+      footer={
+        <HoverCardSaveFooter
+          entityType={entity}
+          entityId={id}
+          entityName={config.nameOf(recordQ.data, id)}
+        />
+      }
     >
-      {children}
-    </div>
+      {headerBlocks.map((block, i) => renderMetaBlock(block, ctx, i))}
+    </HoverCard>
   );
 }

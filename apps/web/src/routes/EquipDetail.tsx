@@ -10,12 +10,11 @@ import {
   DetailPageLoading,
   DetailPageNotFound,
   DetailSection,
-  InfoRow,
   InfoSection,
   SourceSection,
 } from '@/components/layout/DetailPageLayout';
 import { EntityRow } from '@/components/entity-display/EntityRow';
-import { Chip } from '@scrolled/design';
+import { Chip, InfoRow, SectionHeader } from '@scrolled/design';
 import {
   AvailabilityChips,
   MetadataFlagBadges,
@@ -171,7 +170,7 @@ export default function EquipDetail() {
           </InfoSection>
           {hasAnyRequirement && (
             <section>
-              <h2 className="font-display mb-2 text-[15px] font-semibold">Requirements</h2>
+              <SectionHeader title="Requirements" size="panel" className="mb-2" />
               <RequirementTiles
                 items={[
                   { label: 'Lv', value: e.requiredLevel },

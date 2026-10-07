@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Check, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { EntityLink } from '@/components/entity-links';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 import { useRemoveMember, useUpdateMember } from '@/hooks/useCollections';
 import type { CollectionMember } from '@/db/user';
-import { cn, Input } from '@scrolled/design';
+import { Checkbox, cn, Input } from '@scrolled/design';
 
 interface MemberRowProps {
   member: CollectionMember;
@@ -101,19 +101,12 @@ export function MemberRow({ member, name }: MemberRowProps) {
         !isTombstone && 'hover:bg-muted hover:pl-4',
       )}
     >
-      <button
-        type="button"
-        onClick={toggleDone}
-        aria-label={member.done ? 'Mark as not done' : 'Mark as done'}
+      <Checkbox
+        checked={member.done}
+        onChange={toggleDone}
+        aria-label="Done"
         title={member.done ? 'Done' : 'Mark as done'}
-        className={cn(
-          'border-border bg-card flex h-5 w-5 shrink-0 items-center justify-center rounded-[7px] border-2',
-          member.done &&
-            'text-primary-foreground border-transparent bg-[image:var(--gradient-accent)] shadow-[inset_0_-2px_0_var(--accent-lo)]',
-        )}
-      >
-        {member.done && <Check className="h-3 w-3" />}
-      </button>
+      />
 
       {isTombstone ? (
         <div className={linkClass}>

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Input } from '@scrolled/design';
+import { SearchPill } from '@scrolled/design';
 import { getSearchIndex, querySearch } from '@/search';
 import { useFeatures } from '@/hooks/useFeatures';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
@@ -37,12 +37,14 @@ export function EntityPreviewPicker({
 
   return (
     <div className="space-y-1.5">
-      <Input
-        type="text"
+      <SearchPill
+        tone="sunken"
+        size="md"
+        width="100%"
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={setQuery}
         placeholder={`Search ${labelForEntityKind(entity, true).toLowerCase()} to preview…`}
-        className="border-border bg-background w-full rounded-md border px-2.5 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary/40"
+        aria-label={`Search ${labelForEntityKind(entity, true).toLowerCase()} to preview`}
       />
       {hits.length > 0 && (
         <ul className="border-border bg-card divide-border divide-y overflow-hidden rounded-md border">

@@ -1,64 +1,47 @@
-import type { CSSProperties, ReactNode } from 'react';
+import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
+import { cn } from '../../lib/cn';
 
-export interface PopoverProps {
-  children?: ReactNode;
+export interface PopoverProps extends HTMLAttributes<HTMLDivElement> {
+  /** Fixed width in px; leave unset to size with `className`. */
   width?: number;
   /** Notch pointing at the trigger */
   arrow?: 'top';
+  /** Notch centre, in px from the panel's left edge. */
+  arrowLeft?: number;
   footer?: ReactNode;
-  style?: CSSProperties;
 }
 
-export function Popover({ children, width = 320, arrow, footer, style }: PopoverProps) {
+/** The rimmed floating panel behind menus and pickers. Positioning is the caller's. */
+export const Popover = forwardRef<HTMLDivElement, PopoverProps>(function Popover(
+  { children, width, arrow, arrowLeft = 37, footer, className, style, ...props },
+  ref,
+) {
   return (
     <div
-      style={{
-        position: 'relative',
-        width,
-        borderRadius: 18,
-        background: 'var(--surface-card)',
-        border: 'var(--border-rim)',
-        boxShadow: 'var(--shadow-pop)',
-        animation: 'sc-tip 460ms var(--ease-spring) both',
-        transformOrigin: arrow === 'top' ? '30px 0' : 'center top',
-        ...style,
-      }}
+      ref={ref}
+      className={cn(
+        'border-border bg-card text-card-foreground shadow-pop animate-tip relative rounded-xl border-2',
+        className,
+      )}
+      style={{ width, transformOrigin: arrow === 'top' ? `${arrowLeft}px 0` : undefined, ...style }}
+      {...props}
     >
       {arrow === 'top' && (
         <span
-          style={{
-            position: 'absolute',
-            left: 30,
-            top: -9,
-            width: 14,
-            height: 14,
-            background: 'var(--surface-card)',
-            borderLeft: '2px solid var(--border-1)',
-            borderTop: '2px solid var(--border-1)',
-            transform: 'rotate(45deg)',
-          }}
+          aria-hidden
+          className="border-border bg-card absolute -top-[9px] h-3.5 w-3.5 rotate-45 border-l-2 border-t-2"
+          style={{ left: arrowLeft - 7 }}
         />
       )}
       {children}
       {footer && (
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            alignItems: 'center',
-            gap: 8,
-            padding: '10px 12px',
-            borderTop: '2px solid var(--surface-sunken)',
-            background: 'var(--surface-sunken)',
-            borderRadius: '0 0 16px 16px',
-          }}
-        >
+        <div className="bg-muted flex items-center justify-end gap-2 rounded-b-[16px] border-t-2 border-[var(--surface-sunken)] px-3 py-2.5">
           {footer}
         </div>
       )}
     </div>
   );
-}
+});
 
 export interface PopoverItemProps {
   icon?: ReactNode;

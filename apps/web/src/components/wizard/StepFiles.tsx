@@ -10,7 +10,7 @@ import {
   Upload,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { Button, Input } from '@scrolled/design';
+import { Button, Checkbox, Input } from '@scrolled/design';
 import { getDbClient } from '@/db';
 import { sha256OfFile } from '@/lib/hashFile';
 import { createLogger, describeError } from '@scrolled/game-db/lib/logger';
@@ -472,11 +472,11 @@ export function StepFiles({
               <li key={f.name} className="space-y-2 px-4 py-3 text-sm">
                 <div className="flex items-center gap-3">
                   <label className="text-muted-foreground flex items-center gap-2 text-xs">
-                    <Input
-                      type="checkbox"
+                    <Checkbox
+                      size="sm"
                       checked={f.include}
-                      onChange={(e) => toggle(f, e.target.checked)}
-                      className="accent-primary h-3.5 w-3.5"
+                      onChange={(include) => toggle(f, include)}
+                      aria-label={`Include ${f.name}`}
                       disabled={f.hashPhase === 'queued' || f.hashPhase === 'hashing'}
                     />
                   </label>

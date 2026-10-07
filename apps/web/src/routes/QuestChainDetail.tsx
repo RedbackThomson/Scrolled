@@ -13,7 +13,7 @@ import {
   ScrollText,
   Target,
 } from 'lucide-react';
-import { Button, cn } from '@scrolled/design';
+import { Button, cn, InfoRow } from '@scrolled/design';
 import { DetailListSection } from '@/components/layout/DetailListSection';
 import { DetailHeader } from '@/components/layout/DetailHeader';
 import {
@@ -21,7 +21,6 @@ import {
   DetailPageError,
   DetailPageLoading,
   DetailPageNotFound,
-  InfoRow,
   InfoSection,
 } from '@/components/layout/DetailPageLayout';
 import { QuestChainLink, QuestLink } from '@/components/entity-links';

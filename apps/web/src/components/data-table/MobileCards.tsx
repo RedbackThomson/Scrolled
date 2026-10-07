@@ -2,7 +2,7 @@ import { Fragment, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, SearchX } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { cn, EmptyState, Input, Skeleton } from '@scrolled/design';
+import { Checkbox, cn, EmptyState, Skeleton } from '@scrolled/design';
 import { ListCardLayoutContext } from './listCardLayout';
 
 interface Props<TData> {
@@ -88,13 +88,11 @@ export function MobileCards<TData>({
           <li key={rowId} className={cn('relative flex items-stretch', isSelected && 'bg-muted')}>
             {selectable && (
               <label className="z-10 flex min-w-11 shrink-0 cursor-pointer items-center justify-center pl-1">
-                <Input
-                  type="checkbox"
+                <Checkbox
                   checked={isSelected}
                   onChange={() => toggleRow(rowId)}
                   onClick={(e) => e.stopPropagation()}
                   aria-label={isSelected ? 'Deselect row' : 'Select row'}
-                  className="accent-primary h-4 w-4 cursor-pointer rounded-sm"
                 />
               </label>
             )}

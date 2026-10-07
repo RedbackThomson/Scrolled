@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 import { EntityLink } from '@/components/entity-links';
 import type { EntityKind } from '@scrolled/game-db/db/types';
-import { cn } from '@scrolled/design';
+import { EntityRow as DesignEntityRow } from '@scrolled/design';
 import { useShowEntityIds } from '@/stores/showEntityIds';
 
 interface Props {
@@ -28,9 +28,9 @@ interface Props {
 }
 
 /**
- * Standard row for detail-page relation lists. Wraps avatar + name + meta + id
- * in the type-appropriate EntityLink; an optional `trailing` slot sits outside
- * the link for sibling interactive elements (pin buttons, etc.).
+ * Standard row for detail-page relation lists: the design EntityRow, with the
+ * avatar, name and meta wrapped in the type-appropriate EntityLink. `trailing`
+ * sits outside the link for sibling controls (pin buttons, etc.).
  */
 export function EntityRow({
   entity,
@@ -46,59 +46,39 @@ export function EntityRow({
 }: Props) {
   const showIds = useShowEntityIds((s) => s.enabled);
   const displayName = name ?? `${ENTITY_LABEL[entity]} #${id}`;
-  const linkClass = 'flex min-w-0 flex-1 items-center gap-3';
   const idVisible = !hideId && showIds;
-  const showRightBlock = meta != null || idVisible;
-  const body = (
-    <>
-      {avatar ?? (
-        <EntityAvatar entity={entity} id={id} alt={typeof name === 'string' ? name : undefined} />
-      )}
-      <div className="min-w-0 flex-1">
-        <div className="truncate font-medium">
-          {name ? (
-            displayName
-          ) : (
-            <span className="text-muted-foreground italic">{displayName}</span>
-          )}
-          {subtitle && <span className="text-muted-foreground"> · {subtitle}</span>}
-        </div>
-        {/* Phone viewports don't have room for a right-aligned meta block, so
-         *  stack meta + id under the name. Hidden from md up — the desktop
-         *  right block below renders them inline instead. */}
-        {showRightBlock && (
-          <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-2 text-[11.5px] md:hidden">
+  return (
+    <DesignEntityRow
+      as="li"
+      divider={false}
+      interactive={linkable}
+      className={className}
+      leading={
+        avatar ?? (
+          <EntityAvatar entity={entity} id={id} alt={typeof name === 'string' ? name : undefined} />
+        )
+      }
+      name={name ? displayName : <span className="text-muted-foreground italic">{displayName}</span>}
+      subtitle={subtitle ?? undefined}
+      meta={
+        meta != null || idVisible ? (
+          <>
             {meta != null && <span>{meta}</span>}
             {idVisible && <span className="font-mono">{id}</span>}
-          </div>
-        )}
-      </div>
-    </>
-  );
-
-  return (
-    <li
-      className={cn(
-        'group ease-spring flex min-h-[46px] items-center gap-3 px-3 py-[5px] text-[13.5px] transition-[background-color,padding] duration-300 max-md:min-h-[44px]',
-        linkable && 'hover:bg-muted hover:pl-4',
-        className,
-      )}
-    >
-      {linkable ? (
-        <EntityLink entity={entity} id={id} className={linkClass} triggerClassName={linkClass}>
-          {body}
-        </EntityLink>
-      ) : (
-        <div className={linkClass}>{body}</div>
-      )}
-      {trailing && <div className="flex shrink-0 items-center gap-2">{trailing}</div>}
-      {showRightBlock && (
-        <div className="text-muted-foreground ml-auto hidden shrink-0 items-center gap-3 text-[11.5px] md:flex">
-          {meta != null && <span>{meta}</span>}
-          {idVisible && <span className="font-mono">{id}</span>}
-        </div>
-      )}
-    </li>
+          </>
+        ) : undefined
+      }
+      trailing={trailing}
+      renderMain={
+        linkable
+          ? ({ className: mainClass, children }) => (
+              <EntityLink entity={entity} id={id} className={mainClass} triggerClassName={mainClass}>
+                {children}
+              </EntityLink>
+            )
+          : undefined
+      }
+    />
   );
 }
 

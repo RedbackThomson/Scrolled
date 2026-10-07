@@ -11,6 +11,7 @@
 // and the section label). Widgets opt in transparently by reading
 // `HomeSectionContext` — they don't have to know about edit mode.
 
+import { SectionHeader } from '@scrolled/design';
 import { createContext, useContext, type ReactNode } from 'react';
 
 interface HomeSectionCtx {
@@ -43,12 +44,7 @@ export function HomeSection({
   const { editing } = useContext(HomeSectionContext);
   return (
     <section className={className}>
-      {!editing && (
-        <header className="mb-3 flex items-baseline justify-between gap-3">
-          <h2 className="font-display text-foreground text-[17px] font-semibold">{title}</h2>
-          {action}
-        </header>
-      )}
+      {!editing && <SectionHeader title={title} action={action} className="mb-3" />}
       {children}
     </section>
   );

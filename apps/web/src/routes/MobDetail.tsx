@@ -3,14 +3,13 @@ import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Copy, Crown, Map as MapIcon, MapPin, Package, ScrollText, Wand2 } from 'lucide-react';
 import { DetailHeader } from '@/components/layout/DetailHeader';
-import { Chip, StatTile } from '@scrolled/design';
+import { Chip, InfoRow, SectionHeader, StatTile } from '@scrolled/design';
 import { DetailListSection } from '@/components/layout/DetailListSection';
 import {
   DetailPageLayout,
   DetailPageError,
   DetailPageLoading,
   DetailPageNotFound,
-  InfoRow,
   InfoSection,
   SourceSection,
 } from '@/components/layout/DetailPageLayout';
@@ -160,7 +159,7 @@ export default function MobDetail() {
           )}
           {/* On mobile the same tiles sit in the strip under the header. */}
           <section className="max-md:hidden">
-            <h2 className="font-display mb-2 text-[15px] font-semibold">Stats</h2>
+            <SectionHeader title="Stats" size="panel" className="mb-2" />
             <div className="grid grid-cols-2 gap-1.5">{statTiles}</div>
           </section>
           <MobElementsSection element={m.elementAttack} />

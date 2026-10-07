@@ -1,6 +1,7 @@
 import { Activity, Database, Loader2, Package, RefreshCw } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useSettingsSection } from '@/components/settings/useSettingsSection';
+import { SettingsCard, SettingsSection } from '@/components/settings/SettingsSection';
 import { useDatasetUpdate } from '@/hooks/dataset/useDatasetUpdate';
 import { getDbClient } from '@/db';
 import { Chip, RollingNumber } from '@scrolled/design';
@@ -16,13 +17,8 @@ export function LibraryStatusSection() {
   const dataset = useDatasetUpdate();
 
   return (
-    <section {...sectionProps} className="scroll-mt-24 space-y-3">
-      <div className="text-muted-foreground flex items-center gap-2">
-        <Activity className="h-4 w-4" />
-        <h2 className="font-display text-foreground text-[17px] font-semibold">Library status</h2>
-      </div>
-
-      <div className="border-border bg-card text-card-foreground shadow-rim rounded-xl border-2 p-5">
+    <SettingsSection {...sectionProps} icon={Activity} title="Library status">
+      <SettingsCard gap={0}>
         {statusQ.isLoading ? (
           <p className="text-muted-foreground text-sm">
             <Loader2 className="text-muted-foreground inline h-4 w-4 animate-spin" /> Connecting
@@ -98,7 +94,7 @@ export function LibraryStatusSection() {
             </div>
           </div>
         )}
-      </div>
-    </section>
+      </SettingsCard>
+    </SettingsSection>
   );
 }

@@ -18,7 +18,7 @@ import {
   SearchX,
   Trash2,
 } from 'lucide-react';
-import { Button, EmptyState, Skeleton } from '@scrolled/design';
+import { Button, EmptyState, Panel, Skeleton } from '@scrolled/design';
 import {
   CollectionFormDialog,
   downloadJson,
@@ -279,12 +279,12 @@ export default function CollectionDetail() {
       ) : (
         <>
           {!hasMembers && (
-            <div className="border-border bg-card shadow-rim rounded-lg border-2 p-4 text-sm">
+            <Panel as="div" className="text-sm">
               <p className="text-muted-foreground">
                 No members yet. Open any item, mob, map, or quest page and click "Save" to add
                 one — or set up groups below to organize them as you go.
               </p>
-            </div>
+            </Panel>
           )}
           <CollectionMembersBoard
             collection={collection}

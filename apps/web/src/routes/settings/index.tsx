@@ -1,18 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, RefreshCw, Search } from 'lucide-react';
-import { Banner, Button, Chip, SlotTile, useTheme, type ThemeMode } from '@scrolled/design';
-import {
-  getSettingsGroups,
-  searchSettings,
-  type SettingsGroupId,
-} from '@/components/settings/settingsGroups';
+import { ChevronRight, RefreshCw } from 'lucide-react';
+import { Banner, Button, SearchPill, SlotTile } from '@scrolled/design';
+import { getSettingsGroups, searchSettings } from '@/components/settings/settingsGroups';
 import { useDatasetUpdate } from '@/hooks/dataset/useDatasetUpdate';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { ACCENTS } from '@/lib/accents';
-import { useAccent } from '@/stores/accent';
 import { appConfig } from '@/config';
 import { popIn } from '@/lib/popIn';
+import { GroupSummary } from '@/components/settings/GroupSummary';
 import { Attribution } from '@/components/settings/Attribution';
 
 export default function SettingsIndex() {
@@ -35,17 +30,15 @@ export default function SettingsIndex() {
               : 'Manage your appearance and preferences.'}
           </p>
         </div>
-        <label className="border-border bg-card text-muted-foreground shadow-float focus-within:ring-primary/30 inline-flex h-10 w-full items-center gap-2 rounded-full border-2 px-4 text-sm font-semibold focus-within:ring-4 sm:w-64">
-          <Search className="h-4 w-4 shrink-0" aria-hidden />
-          <input
-            type="search"
+        <div className="w-full sm:w-64">
+          <SearchPill
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={setQuery}
             placeholder="Find a setting…"
             aria-label="Find a setting"
-            className="text-foreground placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent outline-none"
+            width="100%"
           />
-        </label>
+        </div>
       </header>
 
       {dataset.mode === 'offer' && (
@@ -127,25 +120,6 @@ export default function SettingsIndex() {
       )}
 
       <Attribution />
-    </div>
-  );
-}
-
-const THEME_LABELS: Record<ThemeMode, string> = {
-  light: 'Light theme',
-  dark: 'Dark theme',
-  system: 'System theme',
-};
-
-function GroupSummary({ id }: { id: SettingsGroupId }) {
-  const mode = useTheme((s) => s.mode);
-  const accent = useAccent((s) => s.accent);
-  if (id !== 'look') return null;
-  const accentLabel = ACCENTS.find((a) => a.name === accent)?.label;
-  return (
-    <div className="mt-auto flex flex-wrap gap-1.5">
-      <Chip>{THEME_LABELS[mode]}</Chip>
-      {accentLabel && <Chip>{accentLabel} accent</Chip>}
     </div>
   );
 }

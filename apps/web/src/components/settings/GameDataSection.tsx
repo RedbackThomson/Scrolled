@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Database, Loader2, Trash2, Upload } from 'lucide-react';
 import { useSettingsSection } from '@/components/settings/useSettingsSection';
+import { SettingsCard, SettingsSection } from '@/components/settings/SettingsSection';
 import { Button } from '@scrolled/design';
 import { getDbClient } from '@/db';
 import { RunCard } from '@/components/settings/RunCard';
@@ -37,13 +38,8 @@ export function GameDataSection() {
   }, [clearM]);
 
   return (
-    <section {...sectionProps} className="scroll-mt-24 space-y-3">
-      <div className="text-muted-foreground flex items-center gap-2">
-        <Database className="h-4 w-4" />
-        <h2 className="font-display text-foreground text-[17px] font-semibold">Game data</h2>
-      </div>
-
-      <div className="border-border bg-card text-card-foreground shadow-rim rounded-xl border-2 p-5">
+    <SettingsSection {...sectionProps} icon={Database} title="Game data">
+      <SettingsCard gap={0}>
         <h3 className="text-sm font-semibold">Recent setup runs</h3>
         <p className="text-muted-foreground mt-1 text-xs">
           Each setup run records which files were loaded and what was indexed. Expand a row to see
@@ -105,7 +101,7 @@ export function GameDataSection() {
             Removes every loaded entity from your library. Your game files on disk are untouched.
           </p>
         </div>
-      </div>
-    </section>
+      </SettingsCard>
+    </SettingsSection>
   );
 }

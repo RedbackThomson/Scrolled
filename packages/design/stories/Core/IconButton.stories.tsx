@@ -54,7 +54,7 @@ const meta = {
   tags: ['autodocs'],
   args: { icon: ListFilter, label: 'Filter (F)', variant: 'secondary', size: 36 },
   argTypes: {
-    variant: { control: 'inline-radio', options: ['secondary', 'ghost', 'float'] },
+    variant: { control: 'inline-radio', options: ['secondary', 'ghost', 'float', 'sunken'] },
     icon: { control: 'select', options: Object.keys(ICONS), mapping: ICONS },
     size: { control: { type: 'range', min: 24, max: 56 } },
     onClick: { action: 'clicked' },
@@ -69,6 +69,14 @@ export const Float: Story = {
   args: { variant: 'float', icon: Sun, label: 'Toggle theme', size: 38 },
 };
 export const Ghost: Story = { args: { variant: 'ghost', icon: X, label: 'Close' } };
+export const Sunken: Story = { args: { variant: 'sunken', size: 28, label: 'Move up' } };
+export const SunkenDisabled: Story = {
+  args: { variant: 'sunken', size: 28, label: 'Move up', disabled: true },
+};
+/** Close and clear buttons spin on hover instead of lifting. */
+export const RoundClose: Story = {
+  args: { variant: 'sunken', round: true, spin: true, icon: X, label: 'Clear selection' },
+};
 export const Toolbar: Story = {
   render: () => (
     <div style={{ display: 'flex', gap: 8 }}>

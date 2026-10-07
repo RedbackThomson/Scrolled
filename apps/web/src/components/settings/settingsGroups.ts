@@ -24,6 +24,8 @@ export interface SettingsGroup {
 /** Groups and sections visible in this build, in display order. */
 export function getSettingsGroups(): SettingsGroup[] {
   const canImport = appConfig.features.enableUserImport;
+  const accountMenu = appConfig.features.accountMenu;
+  const analytics = isAnalyticsAvailable();
   const groups: SettingsGroup[] = [
     {
       id: 'library',
@@ -95,37 +97,48 @@ export function getSettingsGroups(): SettingsGroup[] {
     },
     {
       id: 'account',
-      label: 'Account',
-      description: appConfig.features.sync
-        ? 'Sign in and sync your collections across devices.'
-        : 'Sign in to your account.',
+      label: accountMenu ? 'Account' : 'Privacy',
+      description: accountDescription(),
       icon: UserRound,
       hue: 150,
-      sections: appConfig.features.accountMenu
-        ? [
-            {
-              id: 'account',
-              label: appConfig.features.sync ? 'Account & sync' : 'Account',
-              keywords: ['sign in', 'sign out', 'login', 'sync', 'devices', 'profile'],
-            },
-          ]
-        : [],
-    },
-    {
-      id: 'advanced',
-      label: 'Advanced',
-      description: 'External tools, privacy, and developer options.',
-      icon: Wrench,
-      hue: 235,
       sections: [
-        { id: 'mcp', label: 'External tools', keywords: ['mcp', 'bridge', 'ai', 'assistant'] },
-        ...(isAnalyticsAvailable()
+        ...(accountMenu
+          ? [
+              {
+                id: 'account',
+                label: appConfig.features.sync ? 'Account & sync' : 'Account',
+                keywords: ['sign in', 'sign out', 'login', 'sync', 'devices', 'profile'],
+              },
+            ]
+          : []),
+        ...(analytics
           ? [{ id: 'privacy', label: 'Privacy', keywords: ['analytics', 'tracking', 'opt out'] }]
           : []),
       ],
     },
+    {
+      id: 'advanced',
+      label: 'Advanced',
+      description: 'External tools and developer options.',
+      icon: Wrench,
+      hue: 235,
+      sections: [
+        { id: 'mcp', label: 'External tools', keywords: ['mcp', 'bridge', 'ai', 'assistant'] },
+      ],
+    },
   ];
   return groups.filter((g) => g.sections.length > 0);
+}
+
+function accountDescription(): string {
+  const { accountMenu, sync } = appConfig.features;
+  const privacy = isAnalyticsAvailable();
+  if (!accountMenu) return 'Anonymous pageview analytics.';
+  if (sync)
+    return privacy
+      ? 'Sign in, sync, and privacy.'
+      : 'Sign in and sync your collections across devices.';
+  return privacy ? 'Sign in and privacy.' : 'Sign in to your account.';
 }
 
 export function isSettingsGroupId(v: string | undefined): v is SettingsGroupId {

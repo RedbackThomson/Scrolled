@@ -11,9 +11,8 @@
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { usePopover } from '@/hooks/usePopover';
-import { BookmarkCheck, Check, Loader2, Plus, Search } from 'lucide-react';
-import { ConfettiBurst, Input } from '@scrolled/design';
-import { useIsMobile } from '@/hooks/useIsMobile';
+import { BookmarkCheck, Check, Loader2, Plus } from 'lucide-react';
+import { CheckboxIndicator, ConfettiBurst, Input, SearchPill } from '@scrolled/design';
 import { useMotionPrefs } from '@/hooks/useMotionPrefs';
 import { showToast } from '@/stores/toasts';
 import {
@@ -160,7 +159,6 @@ export function CollectionPicker({
     },
     [toggleM, entityType, entityId, celebrate, announceSave],
   );
-  const isMobile = useIsMobile();
   const savedIn = placementsByCollection.size;
 
   // With a query that names no existing collection, the footer creates it directly.
@@ -183,9 +181,9 @@ export function CollectionPicker({
           panelRef={popoverRef}
           coords={coords}
           widthClassName="w-72"
+          arrowLeft={coords ? notchLeft(triggerRef.current, coords.left) : undefined}
           onMouseDown={(e) => e.stopPropagation()}
         >
-          {!isMobile && coords && <Notch trigger={triggerRef.current} panelLeft={coords.left} />}
           <div className="space-y-2 p-2.5 pb-2">
             <div className="px-0.5">
               {entityName && (
@@ -199,23 +197,22 @@ export function CollectionPicker({
                   : 'Not saved yet'}
               </div>
             </div>
-            <div className="relative">
-              <Search className="text-muted-foreground pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2" />
-              <Input
-                autoFocus
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Find a collection…"
-                aria-label="Find a collection"
-                className="bg-muted focus-visible:ring-primary/30 h-8 w-full rounded-full pl-8 pr-2 text-base focus-visible:outline-none focus-visible:ring-4 sm:text-xs"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !hasExactMatch && query.trim()) {
-                    e.preventDefault();
-                    onCreateAndAdd();
-                  }
-                }}
-              />
-            </div>
+            <SearchPill
+              autoFocus
+              tone="sunken"
+              size="sm"
+              width="100%"
+              value={query}
+              onChange={setQuery}
+              placeholder="Find a collection…"
+              aria-label="Find a collection"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !hasExactMatch && query.trim()) {
+                  e.preventDefault();
+                  onCreateAndAdd();
+                }
+              }}
+            />
           </div>
           <ul
             className="border-muted max-h-72 space-y-0.5 overflow-y-auto border-t-2 p-1.5"
@@ -333,21 +330,13 @@ function PickerRow({
       <button
         type="button"
         onClick={onToggle}
+        aria-pressed={isMember}
         className={cn(
           'hover:bg-muted flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] font-semibold',
           isMember && 'bg-muted',
         )}
       >
-        <span
-          className={cn(
-            'border-border bg-card flex h-5 w-5 shrink-0 items-center justify-center rounded-[7px] border-2',
-            isMember &&
-              'text-primary-foreground border-transparent bg-[image:var(--gradient-accent)] shadow-[inset_0_-2px_0_var(--accent-lo)]',
-          )}
-          aria-hidden
-        >
-          {isMember && <Check className="h-3 w-3" />}
-        </span>
+        <CheckboxIndicator checked={isMember} />
         <CollectionGlyph icon={collectionIcon} color={collectionColor} />
         <span className={cn('min-w-0 flex-1 truncate', isMember && 'font-medium')}>
           {collectionName}
@@ -560,15 +549,8 @@ function CollectionGlyph({ icon, color }: { icon: string | null; color: string |
   );
 }
 
-/** Arrow on the panel's top edge, pointing at the middle of the trigger. */
-function Notch({ trigger, panelLeft }: { trigger: HTMLElement | null; panelLeft: number }) {
+/** Where the panel's notch sits so it points at the middle of the trigger. */
+function notchLeft(trigger: HTMLElement | null, panelLeft: number): number {
   const r = trigger?.getBoundingClientRect();
-  const x = r ? Math.max(14, r.left + r.width / 2 - panelLeft) : 22;
-  return (
-    <span
-      aria-hidden
-      className="border-border bg-card absolute -top-[7px] h-3 w-3 rotate-45 border-l-2 border-t-2"
-      style={{ left: x - 6 }}
-    />
-  );
+  return r ? Math.max(14, r.left + r.width / 2 - panelLeft) : 22;
 }

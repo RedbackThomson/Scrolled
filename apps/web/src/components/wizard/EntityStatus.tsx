@@ -1,6 +1,6 @@
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import type { Features } from '@/hooks/useFeatures';
-import { cn } from '@scrolled/design';
+import { cn, ListCard, SectionHeader } from '@scrolled/design';
 import { ALL_EXTRACTOR_KEYS, type ExtractorKey } from '@scrolled/extractor/builder/extractStats';
 import { EXTRACTOR_DEPS } from '@scrolled/extractor/builder/extractorDeps';
 import { EXTRACTOR_CARD_META } from '@/components/common/extractorCatalog';
@@ -62,17 +62,21 @@ export function EntityStatus({ files, features, mode }: Props) {
 
   return (
     <section className="space-y-2">
-      <div className="flex items-baseline justify-between gap-3">
-        <h3 className="font-display text-[17px] font-semibold">What you'll be able to explore</h3>
-        <p className="text-muted-foreground text-[11px]">
-          Each category unlocks when its files are provided.
-        </p>
-      </div>
-      <ul className="border-border bg-card shadow-rim divide-muted divide-y-[1.5px] overflow-hidden rounded-lg border-2">
+      <SectionHeader
+        level={3}
+        size="section"
+        title="What you'll be able to explore"
+        action={
+          <p className="text-muted-foreground text-[11px]">
+            Each category unlocks when its files are provided.
+          </p>
+        }
+      />
+      <ListCard as="ul" divided>
         {ALL_EXTRACTOR_KEYS.map((key) => (
           <EntityRow key={key} ek={key} byName={byName} features={features} mode={mode} />
         ))}
-      </ul>
+      </ListCard>
     </section>
   );
 }

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Archive, ChevronDown, Download, Loader2, Upload } from 'lucide-react';
 import { useSettingsSection } from '@/components/settings/useSettingsSection';
+import { SettingsCard, SettingsSection } from '@/components/settings/SettingsSection';
 import { Button, Input } from '@scrolled/design';
 import { useExportBackup, useImportBackup, type BackupScope } from '@/hooks/useBackup';
 import { acceptForDesktop } from '@/lib/filePickerAccept';
@@ -61,15 +62,12 @@ export function BackupSection() {
   );
 
   return (
-    <section {...sectionProps} className="scroll-mt-24 space-y-3">
-      <div className="text-muted-foreground flex items-center gap-2">
-        <Archive className="h-4 w-4" />
-        <h2 className="font-display text-foreground text-[17px] font-semibold">
-          {canImport ? 'Import & export' : 'Backup'}
-        </h2>
-      </div>
-
-      <div className="border-border bg-card text-card-foreground shadow-rim rounded-xl border-2 p-5">
+    <SettingsSection
+      {...sectionProps}
+      icon={Archive}
+      title={canImport ? 'Import & export' : 'Backup'}
+    >
+      <SettingsCard gap={0}>
         <h3 className="text-sm font-semibold">Backup file</h3>
         <p className="text-muted-foreground mt-1 text-xs">
           {canImport
@@ -183,7 +181,7 @@ export function BackupSection() {
             {((exportM.error ?? importM.error) as Error).message}
           </p>
         )}
-      </div>
-    </section>
+      </SettingsCard>
+    </SettingsSection>
   );
 }

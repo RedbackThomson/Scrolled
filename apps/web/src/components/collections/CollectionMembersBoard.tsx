@@ -19,6 +19,7 @@
 // still navigate; the "Create new group" dropzone only renders when
 // groups are visible somewhere in the layout.
 
+import { ListCard, SectionHeader } from '@scrolled/design';
 import { useMemo, useState } from 'react';
 import {
   DndContext,
@@ -557,12 +558,7 @@ function OuterSection({
   // 'type'
   return (
     <section className="space-y-3">
-      <h2 className="font-display flex items-center gap-2 text-[17px] font-semibold">
-        {TYPE_LABELS[outer.entityType]}
-        <span className="bg-muted text-muted-foreground rounded-full px-2 py-px font-sans text-xs font-medium">
-          {outer.count}
-        </span>
-      </h2>
+      <SectionHeader title={TYPE_LABELS[outer.entityType]} count={outer.count} />
       <div className="space-y-3">
         {outer.inner.map((inner) => (
           <InnerSection
@@ -598,7 +594,7 @@ function InnerSection({
         strategy={verticalListSortingStrategy}
         disabled={!itemDragEnabled}
       >
-        <div className="border-border bg-card text-card-foreground shadow-rim divide-muted divide-y-[1.5px] overflow-hidden rounded-lg border-2">
+        <ListCard divided>
           {inner.members.map((m) => (
             <SortableMemberRow
               key={`${m.entityType}-${m.entityId}-${m.groupId ?? 'default'}`}
@@ -607,7 +603,7 @@ function InnerSection({
               disabled={!itemDragEnabled}
             />
           ))}
-        </div>
+        </ListCard>
       </SortableContext>
     </div>
   );

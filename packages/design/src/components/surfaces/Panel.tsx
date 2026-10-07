@@ -8,9 +8,14 @@ export interface PanelProps {
   count?: number | string;
   action?: ReactNode;
   children?: ReactNode;
-  padding?: number;
+  padding?: number | string;
+  /** Space between the panel's children, in px. */
+  gap?: number;
   /** rim = default card; float = on the backdrop without a border; sunken = inset group */
   variant?: 'rim' | 'float' | 'sunken';
+  /** Landmark to render as; asides on detail pages use `aside`. */
+  as?: 'section' | 'aside' | 'div';
+  className?: string;
   style?: CSSProperties;
 }
 
@@ -21,7 +26,10 @@ export function Panel({
   action,
   children,
   padding = 16,
+  gap = 12,
   variant = 'rim',
+  as: Tag = 'section',
+  className,
   style,
 }: PanelProps) {
   const v: CSSProperties = {
@@ -34,14 +42,15 @@ export function Panel({
     sunken: { background: 'var(--surface-sunken)' },
   }[variant];
   return (
-    <section
+    <Tag
+      className={className}
       style={{
         borderRadius: 16,
         ...v,
         padding,
         display: 'flex',
         flexDirection: 'column',
-        gap: 12,
+        gap,
         ...style,
       }}
     >
@@ -60,6 +69,6 @@ export function Panel({
         </div>
       )}
       {children}
-    </section>
+    </Tag>
   );
 }

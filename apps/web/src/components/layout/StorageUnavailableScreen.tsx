@@ -5,7 +5,7 @@
 // users who understand the consequence (everything is lost on reload) take it.
 
 import { ChevronRight } from 'lucide-react';
-import { Button, Scrolly } from '@scrolled/design';
+import { Button, Panel, Scrolly } from '@scrolled/design';
 import { useStorageBypass } from '@/stores/storageBypass';
 import type { StorageFailure } from '@/hooks/useStorageHealth';
 
@@ -32,7 +32,7 @@ export function StorageUnavailableScreen({ failures }: { failures: StorageFailur
           </div>
         </div>
 
-        <div className="border-border bg-card shadow-rim space-y-2 rounded-lg border-2 p-4">
+        <Panel as="div" gap={8}>
           <p className="font-display text-[15px] font-semibold">What you can try</p>
           <ol className="text-muted-foreground list-decimal space-y-1.5 pl-5 text-[13px]">
             <li>
@@ -43,7 +43,7 @@ export function StorageUnavailableScreen({ failures }: { failures: StorageFailur
             <li>Try a current version of a major browser.</li>
             <li>Turn off strict privacy settings or extensions for this site, then reload.</li>
           </ol>
-        </div>
+        </Panel>
 
         <Button type="button" size="lg" fullWidth onClick={() => window.location.reload()}>
           Reload and try again

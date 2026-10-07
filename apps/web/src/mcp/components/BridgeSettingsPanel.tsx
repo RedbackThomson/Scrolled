@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plug } from 'lucide-react';
 import { useSettingsSection } from '@/components/settings/useSettingsSection';
+import { SettingsCard, SettingsSection } from '@/components/settings/SettingsSection';
 import { cn, Input } from '@scrolled/design';
 import {
   DEFAULT_BRIDGE_SETTINGS,
@@ -53,14 +54,8 @@ export function BridgeSettingsPanel() {
   };
 
   return (
-    <section {...sectionProps} className="scroll-mt-24 space-y-3">
-      <div className="text-muted-foreground flex items-center gap-2">
-        <Plug className="h-4 w-4" />
-        <h2 className="font-display text-foreground text-[17px] font-semibold">
-          External tools (MCP)
-        </h2>
-      </div>
-      <div className="border-border bg-card text-card-foreground shadow-rim space-y-4 rounded-xl border-2 p-5">
+    <SettingsSection {...sectionProps} icon={Plug} title="External tools (MCP)">
+      <SettingsCard>
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-sm font-medium">Allow external connections</div>
@@ -121,8 +116,8 @@ export function BridgeSettingsPanel() {
         <div className="text-muted-foreground text-xs">
           Status: <BridgeStatusLabel status={status} reason={reason} />
         </div>
-      </div>
-    </section>
+      </SettingsCard>
+    </SettingsSection>
   );
 }
 

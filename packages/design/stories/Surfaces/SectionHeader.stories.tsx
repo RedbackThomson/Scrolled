@@ -11,7 +11,8 @@ const meta = {
   tags: ['autodocs'],
   args: { title: 'Drops', icon: Package, count: 35, level: 2 },
   argTypes: {
-    level: { control: 'inline-radio', options: [1, 2] },
+    level: { control: 'inline-radio', options: [1, 2, 3] },
+    size: { control: 'inline-radio', options: ['section', 'panel'] },
     icon: { control: 'select', options: Object.keys(ICONS), mapping: ICONS },
   },
   decorators: [
@@ -45,4 +46,14 @@ export const WithLink: Story = {
     count: undefined,
     action: <a href="#">All collections →</a>,
   },
+};
+
+/** The smaller heading used for groups inside an aside panel. */
+export const PanelSize: Story = {
+  args: { title: 'Info', icon: undefined, count: undefined, size: 'panel' },
+};
+
+/** A sub-heading inside a section. */
+export const SubSection: Story = {
+  args: { title: 'Motion', icon: undefined, count: undefined, level: 3 },
 };

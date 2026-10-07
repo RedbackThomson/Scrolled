@@ -5,6 +5,7 @@ import type {
   QuestChainExternalEdgeWithName,
   QuestChainMemberWithName,
 } from '@/db';
+import { IconButton } from '@scrolled/design';
 import { useShowEntityIds } from '@/stores/showEntityIds';
 import { clamp } from '@scrolled/game-db/lib/math';
 import { edgeKey, shortestPathTo, type ChainPath } from './chainPath';
@@ -81,31 +82,31 @@ export function QuestChainGraphCanvas({ members, edges, externalEdges }: Props) 
       <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
         <QuestChainLegend />
         <div className="bg-card shadow-float absolute right-3 top-3 z-10 flex items-center gap-0.5 rounded-full p-1">
-          <button
-            type="button"
+          <IconButton
+            variant="ghost"
+            round
+            size={32}
+            icon={Minus}
+            label="Zoom out"
             onClick={() => setZoom((z) => clamp(z / 1.25, MIN_ZOOM, MAX_ZOOM))}
-            className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-primary/40 inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2"
-            aria-label="Zoom out"
-          >
-            <Minus className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setZoom(1)}
-            className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-primary/40 inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2"
-            aria-label="Reset zoom"
+          />
+          <IconButton
+            variant="ghost"
+            round
+            size={32}
+            icon={RotateCcw}
+            label="Reset zoom"
             title={`Zoom ${Math.round(zoom * 100)}% — click to reset`}
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-          </button>
-          <button
-            type="button"
+            onClick={() => setZoom(1)}
+          />
+          <IconButton
+            variant="ghost"
+            round
+            size={32}
+            icon={Plus}
+            label="Zoom in"
             onClick={() => setZoom((z) => clamp(z * 1.25, MIN_ZOOM, MAX_ZOOM))}
-            className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-primary/40 inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2"
-            aria-label="Zoom in"
-          >
-            <Plus className="h-4 w-4" />
-          </button>
+          />
         </div>
         <div
           ref={scrollRef}

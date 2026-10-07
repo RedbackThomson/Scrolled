@@ -7,7 +7,7 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
-import { cn } from '@scrolled/design';
+import { cn, IconButton } from '@scrolled/design';
 
 interface ModalProps {
   open: boolean;
@@ -108,15 +108,15 @@ export function Modal({
               </h2>
               {description && <p className="text-muted-foreground text-[12.5px]">{description}</p>}
             </div>
-            <button
-              type="button"
+            <IconButton
               data-modal-close
+              variant="sunken"
+              size={32}
+              spin
+              icon={X}
+              label="Close"
               onClick={onClose}
-              aria-label="Close"
-              className="bg-muted text-muted-foreground hover:text-foreground ease-spring inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] transition-transform duration-300 hover:rotate-90"
-            >
-              <X className="h-4 w-4" />
-            </button>
+            />
           </div>
         )}
         <div

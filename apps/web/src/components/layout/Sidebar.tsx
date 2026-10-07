@@ -3,7 +3,6 @@ import { Link, NavLink, useLocation, useMatch } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   Bookmark,
-  ChevronRight,
   Compass,
   ExternalLink,
   GitBranch,
@@ -36,7 +35,7 @@ import { useDatasetUpdate } from '@/hooks/dataset/useDatasetUpdate';
 import { SidebarSyncStatus } from '@/components/sync/SidebarSyncStatus';
 import { SyncSignInNotice } from '@/components/sync/SyncSignInNotice';
 import { useInstalledDataset } from '@/hooks/dataset/useInstalledDataset';
-import { cn, Logo, StatusDot } from '@scrolled/design';
+import { cn, Logo, NavItem, StatusDot } from '@scrolled/design';
 import { appConfig } from '@/config';
 import { SlidingNavPill } from '@/components/layout/SlidingNavPill';
 import { getSettingsGroups } from '@/components/settings/settingsGroups';
@@ -67,12 +66,6 @@ interface SidebarSection {
     | 'hasQuestChains'
     | 'hasSkills';
 }
-
-const PILL =
-  'rounded-full font-semibold transition-[transform,color,background-color,box-shadow] duration-300 ease-spring';
-// The active background is SlidingNavPill, which slides between rows.
-const PILL_ACTIVE = 'text-foreground';
-const PILL_IDLE = 'text-muted-foreground hover:text-foreground hover:scale-[1.04]';
 
 const ITEM_CATEGORY_CHILDREN = [
   { label: 'Use', to: '/items?f_category=use' },
@@ -269,7 +262,7 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
             watch={[location.pathname, location.search, collapsed]}
           />
           <ul className="relative space-y-0.5">
-            <NavItem to="/" icon={Home} label="Home" end collapsed={collapsed} />
+            <RouteNavItem to="/" icon={Home} label="Home" end collapsed={collapsed} />
             {sectionsToRender.map((section) => {
               // Section's own link uses `end` so query-string children don't
               // also light up the parent — we drive parent active state
@@ -279,65 +272,19 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
               const hasChildren = !!section.children && section.children.length > 0;
               const isExpanded = !collapsed && !!expanded[section.to];
               const childListId = `sidebar-children-${section.to.replace(/[^a-z0-9]/gi, '-')}`;
-              if (collapsed) {
-                // In the collapsed rail, children are inaccessible — only the
-                // parent route is reachable. Tooltip via `title` for discovery.
-                return (
-                  <li key={section.to}>
-                    <NavLink
-                      to={section.to}
-                      end
-                      title={section.label}
-                      aria-label={section.label}
-                      data-nav-active={sectionActive || undefined}
-                      className={cn(
-                        PILL,
-                        'mx-auto flex h-9 w-9 items-center justify-center',
-                        sectionActive ? PILL_ACTIVE : PILL_IDLE,
-                      )}
-                    >
-                      <section.icon className="h-4 w-4" />
-                    </NavLink>
-                  </li>
-                );
-              }
               return (
                 <li key={section.to}>
-                  <div
-                    data-nav-active={sectionActive || undefined}
-                    className={cn(
-                      PILL,
-                      'flex items-center gap-1',
-                      sectionActive ? PILL_ACTIVE : PILL_IDLE,
-                    )}
-                  >
-                    <NavLink
-                      to={section.to}
-                      end
-                      className="flex min-h-9 flex-1 items-center gap-2.5 rounded-full pl-3.5 text-sm max-md:min-h-11"
-                    >
-                      <section.icon className="h-4 w-4" />
-                      {section.label}
-                    </NavLink>
-                    {hasChildren && (
-                      <button
-                        type="button"
-                        onClick={() => toggleSection(section.to)}
-                        aria-expanded={isExpanded}
-                        aria-controls={childListId}
-                        aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${section.label}`}
-                        className="hover:bg-muted mr-1.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full max-md:mr-0 max-md:h-11 max-md:w-11"
-                      >
-                        <ChevronRight
-                          className={cn(
-                            'h-3.5 w-3.5 opacity-[.55] transition-transform',
-                            isExpanded && 'rotate-90',
-                          )}
-                          aria-hidden
-                        />
-                      </button>
-                    )}
-                  </div>
+                  <NavItem
+                    icon={section.icon}
+                    label={section.label}
+                    active={sectionActive}
+                    collapsed={collapsed}
+                    indicator="none"
+                    onToggle={hasChildren ? () => toggleSection(section.to) : undefined}
+                    expanded={isExpanded}
+                    controls={childListId}
+                    renderLink={(props) => <NavLink to={section.to} end {...props} />}
+                  />
                   {hasChildren && isExpanded && (
                     <ul
                       id={childListId}
@@ -366,7 +313,7 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
                 collapsed={collapsed}
               />
             )}
-            <NavItem to="/settings" icon={SettingsIcon} label="Settings" collapsed={collapsed} />
+            <RouteNavItem to="/settings" icon={SettingsIcon} label="Settings" collapsed={collapsed} />
             {!collapsed && location.pathname.startsWith('/settings') && (
               <li>
                 <ul className="border-border my-0.5 ml-[26px] space-y-px border-l-2 pl-3">
@@ -617,9 +564,9 @@ function DbStatusIndicator({
   );
 }
 
-function NavItem({
+function RouteNavItem({
   to,
-  icon: Icon,
+  icon,
   label,
   end,
   collapsed,
@@ -633,24 +580,14 @@ function NavItem({
   const active = useMatch({ path: to, end: !!end }) !== null;
   return (
     <li>
-      <NavLink
-        to={to}
-        end={end}
-        data-nav-active={active || undefined}
-        title={collapsed ? label : undefined}
-        aria-label={collapsed ? label : undefined}
-        className={({ isActive }) =>
-          cn(
-            PILL,
-            'flex items-center text-sm',
-            collapsed ? 'mx-auto h-9 w-9 justify-center' : 'min-h-9 gap-2.5 px-3.5 max-md:min-h-11',
-            isActive ? PILL_ACTIVE : PILL_IDLE,
-          )
-        }
-      >
-        <Icon className="h-4 w-4" />
-        {!collapsed && label}
-      </NavLink>
+      <NavItem
+        icon={icon}
+        label={label}
+        active={active}
+        collapsed={collapsed}
+        indicator="none"
+        renderLink={(props) => <NavLink to={to} end={end} {...props} />}
+      />
     </li>
   );
 }
@@ -658,12 +595,11 @@ function NavItem({
 /**
  * A sibling-app link that leaves the wiki SPA entirely (Navigator lives at its
  * own subpath / origin — client-side routing would land on the wiki NotFound
- * route). Same shape as `NavItem` but uses a real `<a href>` so the browser
- * does a full navigation.
+ * route), so it needs a real `<a href>` for a full navigation.
  */
 function ExternalNavItem({
   href,
-  icon: Icon,
+  icon,
   label,
   collapsed,
 }: {
@@ -674,27 +610,13 @@ function ExternalNavItem({
 }) {
   return (
     <li>
-      <a
-        href={href}
-        target="_blank"
-        rel="noreferrer"
-        title={collapsed ? label : undefined}
-        aria-label={collapsed ? label : undefined}
-        className={cn(
-          PILL,
-          PILL_IDLE,
-          'flex items-center text-sm',
-          collapsed ? 'mx-auto h-9 w-9 justify-center' : 'min-h-9 gap-2.5 px-3.5 max-md:min-h-11',
-        )}
-      >
-        <Icon className="h-4 w-4 shrink-0" />
-        {!collapsed && (
-          <>
-            <span className="flex-1 truncate">{label}</span>
-            <ExternalLink className="h-3 w-3 shrink-0 opacity-70" aria-hidden />
-          </>
-        )}
-      </a>
+      <NavItem
+        icon={icon}
+        label={label}
+        collapsed={collapsed}
+        trailing={<ExternalLink className="h-3 w-3 shrink-0 opacity-70" aria-hidden />}
+        renderLink={(props) => <a href={href} target="_blank" rel="noreferrer" {...props} />}
+      />
     </li>
   );
 }
@@ -707,7 +629,7 @@ function ExternalNavItem({
 function SubNavItem({
   to,
   label,
-  icon: Icon,
+  icon,
   iconClass,
 }: {
   to: string;
@@ -716,22 +638,18 @@ function SubNavItem({
   iconClass?: string;
 }) {
   const location = useLocation();
-  const current = `${location.pathname}${location.search}`;
-  const active = current === to;
+  const active = `${location.pathname}${location.search}` === to;
   return (
     <li>
-      <NavLink
-        to={to}
-        data-nav-active={active || undefined}
-        className={cn(
-          PILL,
-          'flex min-h-[30px] items-center gap-2 px-2.5 text-[13px] max-md:min-h-11',
-          active ? PILL_ACTIVE : PILL_IDLE,
-        )}
-      >
-        {Icon && <Icon className={cn('h-3.5 w-3.5 shrink-0', iconClass)} aria-hidden />}
-        <span className="truncate">{label}</span>
-      </NavLink>
+      <NavItem
+        size="sm"
+        icon={icon}
+        iconClassName={iconClass}
+        label={label}
+        active={active}
+        indicator="none"
+        renderLink={(props) => <NavLink to={to} {...props} />}
+      />
     </li>
   );
 }

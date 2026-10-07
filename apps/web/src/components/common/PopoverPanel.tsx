@@ -1,13 +1,6 @@
-import {
-  useEffect,
-  useRef,
-  type CSSProperties,
-  type MouseEventHandler,
-  type ReactNode,
-  type Ref,
-} from 'react';
+import type { MouseEventHandler, ReactNode, Ref } from 'react';
 import { createPortal } from 'react-dom';
-import { cn } from '@scrolled/design';
+import { BottomSheet, cn, Popover } from '@scrolled/design';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import type { PopoverCoords } from '@/hooks/usePopover';
 
@@ -23,6 +16,8 @@ interface PopoverPanelProps {
   widthClassName?: string;
   /** Corner the desktop popover grows from. */
   align?: 'left' | 'right';
+  /** Desktop notch centre in px from the panel's left edge; omit for no notch. */
+  arrowLeft?: number;
   /** Applied in both layouts — padding, overflow, spacing. */
   className?: string;
   onMouseDown?: MouseEventHandler<HTMLDivElement>;
@@ -41,6 +36,7 @@ export function PopoverPanel({
   coords,
   widthClassName,
   align = 'left',
+  arrowLeft,
   className,
   onMouseDown,
   children,
@@ -50,11 +46,16 @@ export function PopoverPanel({
   if (isMobile) {
     return createPortal(
       <BottomSheet
+        ref={panelRef}
         label={label}
-        onClose={onClose}
-        panelRef={panelRef}
-        className={className}
+        onDismiss={onClose}
         onMouseDown={onMouseDown}
+        className={cn(
+          // Popover bodies are sized for a pointer; lift their rows and fields
+          // to touch size here rather than in every menu.
+          '[&_[cmdk-item]]:min-h-12 [&_input:not([type=checkbox]):not([type=radio])]:h-11 [&_li>button]:min-h-12 [&_select]:h-11',
+          className,
+        )}
       >
         {children}
       </BottomSheet>,
@@ -63,88 +64,24 @@ export function PopoverPanel({
   }
 
   if (!coords) return null;
-  const style: CSSProperties = { position: 'fixed', top: coords.top, left: coords.left };
   return createPortal(
-    <div
+    <Popover
       ref={panelRef}
       role="dialog"
       aria-label={label}
-      style={style}
       onMouseDown={onMouseDown}
+      arrow={arrowLeft === undefined ? undefined : 'top'}
+      arrowLeft={arrowLeft}
+      style={{ position: 'fixed', top: coords.top, left: coords.left }}
       className={cn(
-        'border-border bg-card text-card-foreground shadow-pop animate-tip z-50 max-w-[calc(100vw-1rem)] rounded-xl border-2',
-        align === 'right' ? 'origin-top-right' : 'origin-top-left',
+        'z-50 max-w-[calc(100vw-1rem)]',
+        arrowLeft === undefined && (align === 'right' ? 'origin-top-right' : 'origin-top-left'),
         widthClassName,
         className,
       )}
     >
       {children}
-    </div>,
+    </Popover>,
     document.body,
-  );
-}
-
-function BottomSheet({
-  label,
-  onClose,
-  panelRef,
-  className,
-  onMouseDown,
-  children,
-}: {
-  label: string;
-  onClose: () => void;
-  panelRef: Ref<HTMLDivElement>;
-  className?: string;
-  onMouseDown?: MouseEventHandler<HTMLDivElement>;
-  children: ReactNode;
-}) {
-  const sheetRef = useRef<HTMLDivElement | null>(null);
-
-  // The sheet covers its trigger, so focus moves in on open and back out on close.
-  useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null;
-    const sheet = sheetRef.current;
-    if (sheet && !sheet.contains(document.activeElement)) sheet.focus();
-    return () => {
-      if (previous?.isConnected) previous.focus();
-    };
-  }, []);
-
-  const setRefs = (node: HTMLDivElement | null) => {
-    sheetRef.current = node;
-    if (typeof panelRef === 'function') panelRef(node);
-    else if (panelRef) (panelRef as { current: HTMLDivElement | null }).current = node;
-  };
-
-  return (
-    <>
-      <div
-        aria-hidden
-        onClick={onClose}
-        className="animate-fade fixed inset-0 z-50 bg-[var(--surface-scrim)]"
-      />
-      <div
-        ref={setRefs}
-        role="dialog"
-        aria-modal="true"
-        aria-label={label}
-        tabIndex={-1}
-        onMouseDown={onMouseDown}
-        className={cn(
-          'bg-card text-card-foreground animate-in slide-in-from-bottom fixed inset-x-0 bottom-0 z-50 flex max-h-[85dvh] flex-col overflow-y-auto overscroll-contain rounded-t-[30px] pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_-12px_40px_rgba(10,20,50,.25)] duration-300 ease-out focus-visible:outline-none',
-          // Popover bodies are sized for a pointer; lift their rows and fields
-          // to touch size here rather than in every menu.
-          '[&_[cmdk-item]]:min-h-12 [&_input:not([type=checkbox]):not([type=radio])]:h-11 [&_li>button]:min-h-12 [&_select]:h-11',
-          className,
-        )}
-      >
-        <span
-          aria-hidden
-          className="bg-border mx-auto mb-1 mt-2 h-[5px] w-11 shrink-0 rounded-full"
-        />
-        {children}
-      </div>
-    </>
   );
 }

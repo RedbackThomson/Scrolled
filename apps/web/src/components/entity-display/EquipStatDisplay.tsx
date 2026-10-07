@@ -1,4 +1,4 @@
-import { InfoRow } from '@/components/layout/DetailPageLayout';
+import { InfoRow } from '@scrolled/design';
 import type { EquipStatRange } from '@scrolled/game-db/serverProfiles';
 
 export function StatRow({ label, value }: { label: string; value: number | null }) {

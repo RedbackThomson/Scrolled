@@ -1,9 +1,9 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { DoorOpen, Search, Skull, Users, X, type LucideIcon } from 'lucide-react';
+import { DoorOpen, Skull, Users, X, type LucideIcon } from 'lucide-react';
 import type { MapMobSpawnWithName, MapNpcWithName, MapPortalRecord } from '@/db';
 import { useEntitySummaryNames } from '@/hooks/useEntitySummaries';
 import { MobHoverCard, NpcHoverCard } from '@/components/entity-links';
-import { HoverPopover } from '@scrolled/design';
+import { HoverPopover, IconButton, SearchPill } from '@scrolled/design';
 import { classifyPortal, type PortalGraph } from '@scrolled/game-db/domain/portal-types';
 import { cn } from '@scrolled/design';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
@@ -193,27 +193,26 @@ export function MapViewerSidebar({
       </div>
 
       <div className="flex shrink-0 items-center gap-1.5">
-        <label className="bg-muted text-muted-foreground focus-within:ring-primary/30 flex h-9 min-w-0 flex-1 items-center gap-2 rounded-full px-3 focus-within:ring-4">
-          <Search className="h-4 w-4 shrink-0" aria-hidden />
-          <input
-            type="search"
+        <div className="min-w-0 flex-1">
+          <SearchPill
+            tone="sunken"
+            size="md"
+            width="100%"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={setSearch}
             placeholder="Search…"
             aria-label={`Search ${TAB_META[tab].label}`}
-            className="text-foreground placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none sm:text-[13px]"
           />
-        </label>
+        </div>
         {selection && (
-          <button
-            type="button"
+          <IconButton
+            variant="sunken"
+            round
+            spin
+            icon={X}
+            label="Clear selection"
             onClick={() => onSelect(null)}
-            aria-label="Clear selection"
-            title="Clear selection"
-            className="bg-muted text-muted-foreground hover:text-foreground focus-visible:ring-primary/50 ease-spring inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-transform duration-300 hover:rotate-90 focus-visible:outline-none focus-visible:ring-2"
-          >
-            <X className="h-4 w-4" aria-hidden />
-          </button>
+          />
         )}
       </div>
 

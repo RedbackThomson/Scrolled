@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { SearchX } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
-import { cn, EmptyState, Input, Skeleton } from '@scrolled/design';
+import { Checkbox, cn, EmptyState, Skeleton } from '@scrolled/design';
 import { popIn } from '@/lib/popIn';
 import { ListCardLayoutContext } from './listCardLayout';
 
@@ -100,12 +100,10 @@ export function CardGrid<TData>({
             />
             {selectable && (
               <label className="absolute right-2 top-2 z-10">
-                <Input
-                  type="checkbox"
+                <Checkbox
                   checked={isSelected}
                   onChange={() => toggleRow(rowId)}
                   aria-label={isSelected ? 'Deselect' : 'Select'}
-                  className="accent-primary h-4 w-4 cursor-pointer rounded-sm"
                 />
               </label>
             )}

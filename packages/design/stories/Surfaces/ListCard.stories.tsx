@@ -24,3 +24,18 @@ export const WithRows: Story = {
     </div>
   ),
 };
+
+/** As a `ul` with the divider rule, for lists of `li` rows. */
+export const DividedList: Story = {
+  render: () => (
+    <div style={{ width: 520 }}>
+      <ListCard as="ul" divided>
+        {['Iron Ore', 'Red Tonic', 'Bronze Sword'].map((name) => (
+          <li key={name} style={{ padding: '12px 14px' }}>
+            {name}
+          </li>
+        ))}
+      </ListCard>
+    </div>
+  ),
+};

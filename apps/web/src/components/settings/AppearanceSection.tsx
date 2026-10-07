@@ -1,11 +1,12 @@
 import { Monitor, Moon, Palette, Sun, Wind } from 'lucide-react';
 import { AccentPicker } from '@/components/common/AccentPicker';
 import { useSettingsSection } from '@/components/settings/useSettingsSection';
+import { SettingsCard, SettingsSection } from '@/components/settings/SettingsSection';
 import { useShowEntityIds } from '@/stores/showEntityIds';
 import { useHideMinorPortals } from '@/stores/hideMinorPortals';
 import { useMotionPrefs } from '@/hooks/useMotionPrefs';
 import { useMotion } from '@/stores/motion';
-import { Segmented, Switch, useTheme, type ThemeMode } from '@scrolled/design';
+import { SectionHeader, Segmented, Switch, type ThemeMode, useTheme } from '@scrolled/design';
 
 const THEMES = [
   { value: 'light', label: 'Light', icon: Sun },
@@ -32,12 +33,8 @@ export function AppearanceSection() {
   const setMotion = useMotion((s) => s.setMotion);
 
   return (
-    <section {...sectionProps} className="scroll-mt-24 space-y-3">
-      <div className="text-muted-foreground flex items-center gap-2">
-        <Palette className="h-4 w-4" />
-        <h2 className="font-display text-foreground text-[17px] font-semibold">Appearance</h2>
-      </div>
-      <div className="border-border bg-card text-card-foreground shadow-rim divide-border divide-y rounded-xl border-2 px-5 text-sm [&>*]:py-4">
+    <SettingsSection {...sectionProps} icon={Palette} title="Appearance">
+      <SettingsCard rows>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="font-bold">Theme</div>
@@ -72,12 +69,9 @@ export function AppearanceSection() {
           checked={hideMinorPortals}
           onChange={setHideMinorPortals}
         />
-      </div>
-      <div className="text-muted-foreground flex items-center gap-2 pt-2">
-        <Wind className="h-4 w-4" />
-        <h3 className="font-display text-foreground text-[15px] font-semibold">Motion</h3>
-      </div>
-      <div className="border-border bg-card text-card-foreground shadow-rim divide-border divide-y rounded-xl border-2 px-5 text-sm [&>*]:py-4">
+      </SettingsCard>
+      <SectionHeader level={3} icon={Wind} title="Motion" className="pt-2" />
+      <SettingsCard rows>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="font-bold">Backdrop</div>
@@ -105,10 +99,10 @@ export function AppearanceSection() {
           checked={motionPrefs.motion}
           onChange={setMotion}
         />
-      </div>
+      </SettingsCard>
       <p className="text-muted-foreground px-1 text-[12.5px]">
         Both start off if your system is set to reduce motion.
       </p>
-    </section>
+    </SettingsSection>
   );
 }

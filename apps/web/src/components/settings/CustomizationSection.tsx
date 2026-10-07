@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { SlidersHorizontal } from 'lucide-react';
 import { useSettingsSection } from '@/components/settings/useSettingsSection';
+import { SettingsCard, SettingsSection } from '@/components/settings/SettingsSection';
 import { resetAllTooltips } from '@/components/entity-links/registry';
 import { TooltipCustomizerPanel } from '@/components/settings/tooltips/TooltipCustomizerPanel';
 import { MagicStatsPanel } from '@/components/settings/MagicStatsPanel';
@@ -16,12 +17,8 @@ export function CustomizationSection() {
   };
 
   return (
-    <section {...sectionProps} className="scroll-mt-24 space-y-3">
-      <div className="text-muted-foreground flex items-center gap-2">
-        <SlidersHorizontal className="h-4 w-4" />
-        <h2 className="font-display text-foreground text-[17px] font-semibold">Customization</h2>
-      </div>
-      <div className="border-border bg-card text-card-foreground shadow-rim space-y-4 rounded-xl border-2 p-5">
+    <SettingsSection {...sectionProps} icon={SlidersHorizontal} title="Customization">
+      <SettingsCard>
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-sm font-medium">Tooltips</div>
@@ -40,8 +37,8 @@ export function CustomizationSection() {
           </button>
         </div>
         <TooltipCustomizerPanel />
-      </div>
+      </SettingsCard>
       <MagicStatsPanel />
-    </section>
+    </SettingsSection>
   );
 }

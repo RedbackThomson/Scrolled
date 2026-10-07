@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { Panel } from '@scrolled/design';
 import { appConfig } from '@/config';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
@@ -30,7 +31,7 @@ export function TablePageLayout({
 
       <section className="space-y-3 md:space-y-3">
         {isEmpty ? (
-          <div className="border-border bg-card shadow-rim rounded-lg border-2 p-6 text-center text-sm">
+          <Panel as="div" padding={24} className="text-center text-sm">
             <p className="text-muted-foreground">
               {appConfig.features.enableUserImport ? (
                 <>
@@ -44,7 +45,7 @@ export function TablePageLayout({
                 <>No {entityPlural} available.</>
               )}
             </p>
-          </div>
+          </Panel>
         ) : (
           children
         )}

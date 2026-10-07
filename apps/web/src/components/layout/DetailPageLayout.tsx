@@ -1,7 +1,16 @@
 import { SearchX } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { cn, EmptyState, ErrorState, HopLoader, Skeleton } from '@scrolled/design';
+import {
+  cn,
+  EmptyState,
+  ErrorState,
+  HopLoader,
+  InfoList,
+  Panel,
+  SectionHeader,
+  Skeleton,
+} from '@scrolled/design';
 import { appConfig } from '@/config';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { DetailTabs, type DetailTab } from './DetailTabs';
@@ -74,8 +83,13 @@ interface DetailPageLayoutProps {
   children: ReactNode;
 }
 
-const ASIDE_CARD =
-  'border-border bg-card text-card-foreground shadow-rim min-w-0 space-y-4 rounded-lg border-2 p-4 text-sm';
+function AsidePanel({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <Panel as="aside" gap={16} className={cn('min-w-0 text-sm', className)}>
+      {children}
+    </Panel>
+  );
+}
 
 export function DetailPageLayout({
   header,
@@ -104,7 +118,7 @@ export function DetailPageLayout({
           {header}
           {children}
         </article>
-        {aside !== undefined && <aside className={cn(ASIDE_CARD, 'self-start')}>{aside}</aside>}
+        {aside !== undefined && <AsidePanel className="self-start">{aside}</AsidePanel>}
       </div>
     </div>
   );
@@ -123,7 +137,7 @@ function MobileDetailLayout({
   const tabs: DetailTab[] = [
     ...sections.map((s) => ({ key: s.key, label: s.label, count: s.count, panel: s.node })),
     ...(aside !== undefined
-      ? [{ key: INFO_TAB, label: 'Info', panel: <aside className={ASIDE_CARD}>{aside}</aside> }]
+      ? [{ key: INFO_TAB, label: 'Info', panel: <AsidePanel>{aside}</AsidePanel> }]
       : []),
   ];
   // A single panel needs no tab bar; fall back to the stacked layout.
@@ -150,7 +164,7 @@ function MobileDetailLayout({
       ) : (
         <>
           {children}
-          {aside !== undefined && <aside className={ASIDE_CARD}>{aside}</aside>}
+          {aside !== undefined && <AsidePanel>{aside}</AsidePanel>}
         </>
       )}
     </article>
@@ -164,8 +178,8 @@ function MobileDetailLayout({
  */
 export function DetailSection({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section>
-      <h2 className="font-display mb-2 text-[17px] font-semibold">{title}</h2>
+    <section className="space-y-2">
+      <SectionHeader title={title} />
       {children}
     </section>
   );
@@ -173,32 +187,17 @@ export function DetailSection({ title, children }: { title: string; children: Re
 
 export function InfoSection({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section>
-      <h2 className="font-display mb-1.5 text-[15px] font-semibold">{title}</h2>
-      <dl className="divide-muted divide-y-[1.5px]">{children}</dl>
+    <section className="space-y-1.5">
+      <SectionHeader title={title} size="panel" />
+      <InfoList>{children}</InfoList>
     </section>
-  );
-}
-
-interface InfoRowProps {
-  label: string;
-  value: ReactNode;
-  mono?: boolean;
-}
-
-export function InfoRow({ label, value, mono = false }: InfoRowProps) {
-  return (
-    <div className="flex items-baseline justify-between gap-2.5 px-0.5 py-1.5">
-      <dt className="text-muted-foreground text-[12.5px] font-semibold">{label}</dt>
-      <dd className={cn('text-right font-semibold', mono && 'font-mono text-[12.5px]')}>{value}</dd>
-    </div>
   );
 }
 
 export function SourceSection({ path }: { path: string }) {
   return (
-    <section>
-      <h2 className="font-display mb-1.5 text-[15px] font-semibold">Source</h2>
+    <section className="space-y-1.5">
+      <SectionHeader title="Source" size="panel" />
       <code className="text-muted-foreground break-all font-mono text-xs">{path}</code>
     </section>
   );

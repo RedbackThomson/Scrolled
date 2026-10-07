@@ -1,5 +1,7 @@
 import {
   forwardRef,
+  useEffect,
+  useRef,
   type ComponentPropsWithoutRef,
   type ElementRef,
   type HTMLAttributes,
@@ -81,9 +83,7 @@ export const SheetContent = forwardRef<
         )}
         {...props}
       >
-        {side === 'bottom' && (
-          <span aria-hidden className="bg-border mx-auto mt-2 h-[5px] w-11 shrink-0 rounded-full" />
-        )}
+        {side === 'bottom' && <SheetHandle className="mt-2" />}
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close
@@ -133,3 +133,73 @@ export const SheetDescription = forwardRef<
   />
 ));
 SheetDescription.displayName = DialogPrimitive.Description.displayName;
+
+/** The grab handle at the top of a bottom sheet. */
+export function SheetHandle({ className }: { className?: string }) {
+  return (
+    <span
+      aria-hidden
+      className={cn('bg-border mx-auto h-[5px] w-11 shrink-0 rounded-full', className)}
+    />
+  );
+}
+
+export interface BottomSheetProps extends HTMLAttributes<HTMLDivElement> {
+  /** Accessible name for the sheet. */
+  label: string;
+  /** Tapping the scrim. Escape and outside clicks are the caller's to handle. */
+  onDismiss: () => void;
+}
+
+/**
+ * A bottom sheet for content that manages its own open state, such as a popover
+ * that turns into a sheet on phones. Render it only while open, inside a portal.
+ * Use `Sheet` when you want a full modal dialog instead.
+ */
+export const BottomSheet = forwardRef<HTMLDivElement, BottomSheetProps>(function BottomSheet(
+  { label, onDismiss, className, children, ...props },
+  ref,
+) {
+  const sheetRef = useRef<HTMLDivElement | null>(null);
+
+  // The sheet covers its trigger, so focus moves in on open and back out on close.
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    const sheet = sheetRef.current;
+    if (sheet && !sheet.contains(document.activeElement)) sheet.focus();
+    return () => {
+      if (previous?.isConnected) previous.focus();
+    };
+  }, []);
+
+  const setRefs = (node: HTMLDivElement | null) => {
+    sheetRef.current = node;
+    if (typeof ref === 'function') ref(node);
+    else if (ref) ref.current = node;
+  };
+
+  return (
+    <>
+      <div
+        aria-hidden
+        onClick={onDismiss}
+        className="animate-fade fixed inset-0 z-50 bg-[var(--surface-scrim)]"
+      />
+      <div
+        ref={setRefs}
+        role="dialog"
+        aria-modal="true"
+        aria-label={label}
+        tabIndex={-1}
+        className={cn(
+          'bg-card text-card-foreground animate-in slide-in-from-bottom fixed inset-x-0 bottom-0 z-50 flex max-h-[85dvh] flex-col overflow-y-auto overscroll-contain rounded-t-[30px] pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_-12px_40px_rgba(10,20,50,.25)] duration-300 ease-out focus-visible:outline-none',
+          className,
+        )}
+        {...props}
+      >
+        <SheetHandle className="mb-1 mt-2" />
+        {children}
+      </div>
+    </>
+  );
+});

@@ -10,7 +10,6 @@ import {
   DetailPageLoading,
   DetailPageNotFound,
   DetailSection,
-  InfoRow,
   InfoSection,
   SourceSection,
 } from '@/components/layout/DetailPageLayout';
@@ -18,7 +17,7 @@ import { ChairAnimatedPreview } from '@/components/entity-display/ChairAnimatedP
 import { ConsumableEffects } from '@/components/entity-display/ConsumableEffects';
 import { buildConsumableEffects } from '@/lib/consumableEffects';
 import { EntityRow } from '@/components/entity-display/EntityRow';
-import { Chip } from '@scrolled/design';
+import { Chip, InfoRow } from '@scrolled/design';
 import {
   AvailabilityChips,
   MetadataFlagBadges,

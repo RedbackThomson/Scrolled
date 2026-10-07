@@ -13,7 +13,14 @@ import { EntityCard } from '../../src/components/entity/EntityCard';
 import { SlotTile } from '../../src/components/entity/SlotTile';
 import { PresetTile } from '../../src/components/data/PresetTile';
 import { FilterChip } from '../../src/components/data/FilterChip';
-import { DataTable } from '../../src/components/data/DataTable';
+import {
+  Table as TableFrame,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../../src/components/data/Table';
 import { Pagination } from '../../src/components/navigation/Pagination';
 import { SectionHeader } from '../../src/components/surfaces/SectionHeader';
 import { Segmented } from '../../src/components/forms/Segmented';
@@ -21,7 +28,7 @@ import { Button } from '../../src/components/core/Button';
 import { IconButton } from '../../src/components/core/IconButton';
 import { Chip } from '../../src/components/core/Chip';
 import { SAMPLE_PRESETS } from '../samplePresets';
-import { SAMPLE_WEAPONS, type SampleWeapon } from '../sampleWeapons';
+import { SAMPLE_WEAPONS } from '../sampleWeapons';
 import { ScreenShell } from './ScreenShell';
 
 function WeaponsPage({ initialView }: { initialView: 'table' | 'cards' }) {
@@ -90,31 +97,32 @@ function WeaponsPage({ initialView }: { initialView: 'table' | 'cards' }) {
             ))}
           </div>
         ) : (
-          <DataTable<SampleWeapon>
-            selectable
-            columns={[
-              {
-                key: 'icon',
-                label: '',
-                width: '44px',
-                render: () => <SlotTile icon={Sword} tint="equip" />,
-              },
-              {
-                key: 'name',
-                label: 'Name',
-                render: (r) => <b style={{ fontWeight: 600 }}>{r.name}</b>,
-              },
-              { key: 't', label: 'Type', render: () => 'One Handed Sword' },
-              { key: 'atk', label: 'ATK', width: '60px', render: (r) => <b>{r.atk}</b> },
-              {
-                key: 'slots',
-                label: 'Slots',
-                width: '60px',
-                render: (r) => <Chip>{r.slots}</Chip>,
-              },
-            ]}
-            rows={SAMPLE_WEAPONS}
-          />
+          <TableFrame>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-11" />
+                <TableHead>Name</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead className="w-[60px]">ATK</TableHead>
+                <TableHead className="w-[60px]">Slots</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {SAMPLE_WEAPONS.map((r) => (
+                <TableRow key={r.id}>
+                  <TableCell>
+                    <SlotTile icon={Sword} tint="equip" />
+                  </TableCell>
+                  <TableCell className="font-semibold">{r.name}</TableCell>
+                  <TableCell>One Handed Sword</TableCell>
+                  <TableCell className="font-bold">{r.atk}</TableCell>
+                  <TableCell>
+                    <Chip>{r.slots}</Chip>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </TableFrame>
         )}
         <Pagination page={page} onPage={setPage} pageSize={8} total={1269} />
       </div>

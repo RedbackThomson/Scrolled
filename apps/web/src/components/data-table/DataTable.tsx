@@ -12,7 +12,7 @@ import {
   type VisibilityState,
 } from '@tanstack/react-table';
 import { LayoutGrid, Search, SearchX, Table2, X } from 'lucide-react';
-import { EmptyState, Input, Pagination, Segmented, Skeleton } from '@scrolled/design';
+import { Checkbox, EmptyState, Input, Pagination, Segmented, Skeleton } from '@scrolled/design';
 import {
   Table,
   TableBody,
@@ -384,15 +384,12 @@ export function DataTable<TData>({
             <TableRow key={group.id} className="hover:bg-transparent">
               {selectable && (
                 <TableHead className="w-9 pr-0">
-                  <Input
-                    type="checkbox"
+                  <Checkbox
+                    size="sm"
                     checked={allOnPageSelected}
-                    ref={(el) => {
-                      if (el) el.indeterminate = someOnPageSelected;
-                    }}
+                    indeterminate={someOnPageSelected && !allOnPageSelected}
                     onChange={toggleAllOnPage}
                     aria-label={allOnPageSelected ? 'Deselect all on page' : 'Select all on page'}
-                    className="accent-primary h-3.5 w-3.5 cursor-pointer rounded-sm"
                   />
                 </TableHead>
               )}
@@ -434,13 +431,12 @@ export function DataTable<TData>({
                   {selectable && (
                     <TableCell className="w-9 pr-0">
                       <span className="relative z-10 inline-flex">
-                        <Input
-                          type="checkbox"
+                        <Checkbox
+                          size="sm"
                           checked={isSelected}
                           onChange={() => toggleRow(rowId)}
                           onClick={(e) => e.stopPropagation()}
                           aria-label={isSelected ? 'Deselect row' : 'Select row'}
-                          className="accent-primary h-3.5 w-3.5 cursor-pointer rounded-sm"
                         />
                       </span>
                     </TableCell>

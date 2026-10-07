@@ -20,14 +20,13 @@ import {
   DetailPageLoading,
   DetailPageNotFound,
   DetailSection,
-  InfoRow,
   InfoSection,
   SourceSection,
 } from '@/components/layout/DetailPageLayout';
 import { EntityIcon } from '@/components/entity-display/EntityIcon';
 import { EntityRow } from '@/components/entity-display/EntityRow';
 import { ListSortControl } from '@/components/common/ListSortControl';
-import { Button, Chip, SlotTile } from '@scrolled/design';
+import { Button, Chip, InfoRow, SlotTile } from '@scrolled/design';
 import { PORTAL_LAYER_TILE } from '@/components/MapViewer/portalDisplay';
 import { MapLink } from '@/components/entity-links';
 import { CollectionBadgeStrip } from '@/components/collections';

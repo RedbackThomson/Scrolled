@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { ListCard, SectionHeader } from '@scrolled/design';
 
 interface DetailListSectionProps {
   icon: LucideIcon;
@@ -14,7 +15,7 @@ interface DetailListSectionProps {
 }
 
 export function DetailListSection({
-  icon: Icon,
+  icon,
   title,
   count,
   action,
@@ -25,18 +26,8 @@ export function DetailListSection({
   children,
 }: DetailListSectionProps) {
   return (
-    <section>
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <h2 className="font-display flex items-center gap-2 text-[17px] font-semibold">
-          <Icon className="h-[18px] w-[18px]" /> {title}
-          {count !== undefined && (
-            <span className="bg-muted text-muted-foreground rounded-full px-2 py-px font-sans text-xs font-medium">
-              {count}
-            </span>
-          )}
-        </h2>
-        {action}
-      </div>
+    <section className="space-y-2">
+      <SectionHeader icon={icon} title={title} count={count} action={action} />
       {isLoading && (
         <p className="text-muted-foreground text-[12.5px]">
           {loadingLabel ?? `Loading ${title.toLowerCase()}…`}
@@ -44,9 +35,9 @@ export function DetailListSection({
       )}
       {!isLoading && isEmpty && <p className="text-muted-foreground text-[12.5px]">{emptyLabel}</p>}
       {!isLoading && !isEmpty && children !== undefined && children !== null && (
-        <ul className="border-border bg-card text-card-foreground shadow-rim divide-muted divide-y-[1.5px] overflow-hidden rounded-lg border-2">
+        <ListCard as="ul" divided>
           {children}
-        </ul>
+        </ListCard>
       )}
     </section>
   );

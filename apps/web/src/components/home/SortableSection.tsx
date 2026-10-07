@@ -3,10 +3,10 @@
 // with the drag.
 
 import type { ReactNode } from 'react';
-import { ChevronDown, ChevronUp, EyeOff, GripVertical, type LucideIcon } from 'lucide-react';
+import { ChevronDown, ChevronUp, EyeOff, GripVertical } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { cn } from '@scrolled/design';
+import { cn, IconButton } from '@scrolled/design';
 import { HOME_SECTION_LABEL, type HomeSectionId } from './layout';
 
 export function SortableSection({
@@ -74,34 +74,32 @@ export function SortableSection({
           <GripVertical className="h-4 w-4" />
         </button>
         <span className="font-display text-foreground flex-1 text-base font-semibold">{label}</span>
-        <SectionControl icon={EyeOff} label={`Hide ${label}`} onClick={onHide} />
-        <SectionControl icon={ChevronUp} label={`Move ${label} up`} onClick={onMoveUp} />
-        <SectionControl icon={ChevronDown} label={`Move ${label} down`} onClick={onMoveDown} />
+        <IconButton
+          variant="sunken"
+          size={28}
+          icon={EyeOff}
+          label={`Hide ${label}`}
+          onClick={onHide}
+          disabled={!onHide}
+        />
+        <IconButton
+          variant="sunken"
+          size={28}
+          icon={ChevronUp}
+          label={`Move ${label} up`}
+          onClick={onMoveUp}
+          disabled={!onMoveUp}
+        />
+        <IconButton
+          variant="sunken"
+          size={28}
+          icon={ChevronDown}
+          label={`Move ${label} down`}
+          onClick={onMoveDown}
+          disabled={!onMoveDown}
+        />
       </div>
       <div className="pointer-events-none opacity-90">{children}</div>
     </div>
-  );
-}
-
-function SectionControl({
-  icon: Icon,
-  label,
-  onClick,
-}: {
-  icon: LucideIcon;
-  label: string;
-  onClick?: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={!onClick}
-      aria-label={label}
-      title={label}
-      className="bg-muted text-muted-foreground hover:text-foreground focus-visible:ring-primary/30 grid h-7 w-7 place-items-center rounded-[9px] transition-colors focus-visible:outline-none focus-visible:ring-4 disabled:pointer-events-none disabled:opacity-40"
-    >
-      <Icon className="h-3.5 w-3.5" aria-hidden />
-    </button>
   );
 }

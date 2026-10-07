@@ -18,7 +18,12 @@ export { Icon, type IconProps } from './components/core/Icon';
 export { IconButton, type IconButtonProps } from './components/core/IconButton';
 export { Kbd, type KbdProps } from './components/core/Kbd';
 
-export { Checkbox, type CheckboxProps } from './components/forms/Checkbox';
+export {
+  Checkbox,
+  CheckboxIndicator,
+  type CheckboxProps,
+  type CheckboxIndicatorProps,
+} from './components/forms/Checkbox';
 export * from './components/forms/Input';
 export { RangeSlider, type RangeSliderProps } from './components/forms/RangeSlider';
 export { SearchPill, type SearchPillProps } from './components/forms/SearchPill';
@@ -47,31 +52,24 @@ export { RollingNumber, type RollingNumberProps } from './components/entity/Roll
 export { StatTile, type StatTileProps } from './components/entity/StatTile';
 
 export { CloudBackdrop, type CloudBackdropProps } from './components/surfaces/CloudBackdrop';
-export { InfoRow, type InfoRowProps } from './components/surfaces/InfoRow';
+export {
+  InfoList,
+  InfoRow,
+  type InfoListProps,
+  type InfoRowProps,
+} from './components/surfaces/InfoRow';
 export { ListCard, type ListCardProps } from './components/surfaces/ListCard';
 export { Panel, type PanelProps } from './components/surfaces/Panel';
 export { SectionHeader, type SectionHeaderProps } from './components/surfaces/SectionHeader';
 
 export { Breadcrumb, type BreadcrumbProps } from './components/navigation/Breadcrumb';
-export { NavItem, type NavItemProps } from './components/navigation/NavItem';
+export { NavItem, type NavItemLinkProps, type NavItemProps } from './components/navigation/NavItem';
 export { Pagination, type PaginationProps } from './components/navigation/Pagination';
-export {
-  Sidebar,
-  type SidebarChild,
-  type SidebarItem,
-  type SidebarProps,
-} from './components/navigation/Sidebar';
-export { TopBar, type TopBarProps } from './components/navigation/TopBar';
 
-export {
-  CommandPalette,
-  type CommandPaletteProps,
-  type PaletteItem,
-} from './components/overlays/CommandPalette';
 export * from './components/overlays/Command';
 export * from './components/overlays/Dialog';
 export { HoverPopover } from './components/overlays/HoverPopover';
-export { HoverCard, type HoverCardProps } from './components/overlays/HoverCard';
+export { HoverCard, HoverCardSurface, type HoverCardProps } from './components/overlays/HoverCard';
 export {
   Popover,
   PopoverItem,
@@ -81,7 +79,6 @@ export {
 export * from './components/overlays/Sheet';
 export { Toast, type ToastProps } from './components/overlays/Toast';
 
-export { DataTable, type DataTableColumn, type DataTableProps } from './components/data/DataTable';
 export { FilterChip, type FilterChipProps } from './components/data/FilterChip';
 export * from './components/data/Table';
 export { PresetTile, type PresetTileProps } from './components/data/PresetTile';

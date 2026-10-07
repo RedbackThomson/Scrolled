@@ -1,5 +1,6 @@
 import { Gamepad2 } from 'lucide-react';
 import { useSettingsSection } from '@/components/settings/useSettingsSection';
+import { SettingsCard, SettingsSection } from '@/components/settings/SettingsSection';
 import { BUILTIN_PROFILES } from '@scrolled/game-db/serverProfiles';
 import { useServerProfile, useSetServerProfile } from '@/hooks/useServerProfile';
 import { cn } from '@scrolled/design';
@@ -10,12 +11,8 @@ export function ServerProfileSection() {
   const setM = useSetServerProfile();
 
   return (
-    <section {...sectionProps} className="scroll-mt-24 space-y-3">
-      <div className="text-muted-foreground flex items-center gap-2">
-        <Gamepad2 className="h-4 w-4" />
-        <h2 className="font-display text-foreground text-[17px] font-semibold">Server</h2>
-      </div>
-      <div className="border-border bg-card text-card-foreground shadow-rim space-y-4 rounded-xl border-2 p-5">
+    <SettingsSection {...sectionProps} icon={Gamepad2} title="Server">
+      <SettingsCard>
         <p className="text-muted-foreground text-xs">
           Tailor displayed calculations to your server. A profile sets the EXP rate and how dropped
           equipment stat ranges are estimated.
@@ -51,7 +48,7 @@ export function ServerProfileSection() {
             );
           })}
         </div>
-      </div>
-    </section>
+      </SettingsCard>
+    </SettingsSection>
   );
 }

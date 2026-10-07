@@ -1,3 +1,4 @@
+import { SettingsCard } from '@/components/settings/SettingsSection';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { HelpCircle, Pencil, Plus, RotateCcw, X } from 'lucide-react';
@@ -42,7 +43,7 @@ function MagicStatsForm({
   };
 
   return (
-    <div className="border-border bg-card text-card-foreground shadow-rim space-y-4 rounded-xl border-2 p-5">
+    <SettingsCard>
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-sm font-medium">Magic damage</div>
@@ -127,7 +128,7 @@ function MagicStatsForm({
           .
         </p>
       )}
-    </div>
+    </SettingsCard>
   );
 }
 

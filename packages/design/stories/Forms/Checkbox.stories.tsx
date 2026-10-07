@@ -14,6 +14,9 @@ type Story = StoryObj<typeof meta>;
 
 export const Checked: Story = {};
 export const Unchecked: Story = { args: { checked: false, label: 'Pirate' } };
+export const Indeterminate: Story = { args: { indeterminate: true, label: 'Some selected' } };
+export const Small: Story = { args: { size: 'sm', label: undefined, 'aria-label': 'Select row' } };
+export const Disabled: Story = { args: { disabled: true, label: 'Hashing…' } };
 
 function InteractiveDemo() {
   const [selected, setSelected] = useState(['Thief']);
