@@ -57,6 +57,7 @@ const NO_FACETS: readonly FacetDef[] = [];
 const NO_PRESETS: readonly ListPreset[] = [];
 const UNFILTERED: Record<string, ColumnFilter>[] = [{}];
 const shelfTabSchema = z.enum(['suggested', 'yours']).nullable();
+const viewSchema = z.enum(['table', 'cards']);
 /** The sprite column, whose slot doubles as the row's checkbox. */
 const SLOT_COLUMN = 'icon';
 
@@ -148,7 +149,9 @@ export function DataTable<TData>({
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const showCards = isMobile && !!mobileCard;
-  const showCardGrid = !isMobile && !!mobileCard && state.view === 'cards';
+  const viewSetting = useUserSetting('tables.view', viewSchema, 'table');
+  const view = state.view ?? viewSetting.value;
+  const showCardGrid = !isMobile && !!mobileCard && view === 'cards';
   useTableStatePersistence(source);
 
   const filterable = useMemo(
@@ -369,8 +372,11 @@ export function DataTable<TData>({
           <span className="hidden md:inline-flex">
             <Segmented
               size="sm"
-              value={state.view}
-              onChange={(v) => setState({ view: v as TableView })}
+              value={view}
+              onChange={(v) => {
+                void viewSetting.set(v as TableView);
+                setState({ view: null });
+              }}
               options={[
                 { value: 'table', icon: Table2, title: 'Table view' },
                 { value: 'cards', icon: LayoutGrid, title: 'Card view' },

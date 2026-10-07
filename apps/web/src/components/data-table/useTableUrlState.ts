@@ -25,7 +25,8 @@ export interface TableUrlState {
   size: number;
   sort: string;
   dir: TableSortDir;
-  view: TableView;
+  /** Null when the URL doesn't pick one; the user's saved choice applies. */
+  view: TableView | null;
   /** The saved search these filters were loaded from, kept while they're edited. */
   saved: number | null;
 }
@@ -36,7 +37,7 @@ export interface TableUrlStatePatch {
   size?: number;
   sort?: string;
   dir?: TableSortDir;
-  view?: TableView;
+  view?: TableView | null;
   cols?: string[] | null;
   saved?: number | null;
 }
@@ -62,7 +63,7 @@ export function useTableUrlState(opts: TableUrlStateOptions) {
       dir: parseAsStringLiteral(SORT_DIR)
         .withDefault(defaultSort.dir)
         .withOptions({ clearOnDefault: true }),
-      view: parseAsStringLiteral(VIEWS).withDefault('table').withOptions({ clearOnDefault: true }),
+      view: parseAsStringLiteral(VIEWS),
       cols: parseAsArrayOf(parseAsString, ',').withOptions({ clearOnDefault: true }),
       saved: parseAsInteger,
     },
