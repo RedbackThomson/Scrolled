@@ -58,7 +58,7 @@ function SignedInMenu() {
         aria-expanded={open}
         aria-label="Account menu"
         onClick={() => setOpen((v) => !v)}
-        className="focus-visible:ring-ring focus-visible:ring-offset-background flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-input transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+        className="bg-muted text-muted-foreground shadow-float focus-visible:ring-primary/30 flex h-[38px] w-[38px] items-center justify-center overflow-hidden rounded-full transition-transform duration-300 ease-spring hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-4"
       >
         {user.avatarUrl ? (
           <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" />

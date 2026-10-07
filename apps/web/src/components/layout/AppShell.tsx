@@ -8,8 +8,9 @@ import { AppBootScreen } from '@/components/layout/AppBootScreen';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { StorageUnavailableScreen } from '@/components/layout/StorageUnavailableScreen';
 import { TopBar } from '@/components/layout/TopBar';
-import { Sheet, SheetContent, SheetTitle } from '@scrolled/design';
+import { CloudBackdrop, Sheet, SheetContent, SheetTitle } from '@scrolled/design';
 import { useFeatures } from '@/hooks/useFeatures';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useDataState } from '@/hooks/useDataState';
 import { useStorageHealth } from '@/hooks/useStorageHealth';
 import { useSidebarLayout } from '@/stores/sidebarState';
@@ -28,18 +29,22 @@ export function AppShell() {
   // past this screen.
   const storageBlocked = storage.resolved && storage.unavailable && !bypassed;
   const { showBoot, needsInstall } = useSetupGate(storageBlocked);
+  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
 
   if (storageBlocked) return <StorageUnavailableScreen failures={storage.failures} />;
   if (needsInstall) return <DatasetInstallScreen />;
   if (showBoot) return <AppBootScreen />;
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="relative isolate flex min-h-screen w-full">
+      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
+        <CloudBackdrop animate={!reducedMotion} />
+      </div>
       <Sidebar />
       <MobileSidebarDrawer />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar />
         <main className="isolate">
-          <div className="container py-4 max-md:px-2 md:py-4">
+          <div className="container pb-[22px] pl-3 pr-6 pt-1.5 max-md:px-2">
             <Outlet />
           </div>
         </main>
@@ -72,7 +77,7 @@ function MobileSidebarDrawer() {
       <SheetContent
         side="left"
         aria-label="Navigation"
-        className="bg-sidebar w-64 max-w-[85vw] md:hidden"
+        className="w-[300px] max-w-[85vw] md:hidden"
         overlayClassName="md:hidden"
       >
         <SheetTitle className="sr-only">Navigation</SheetTitle>

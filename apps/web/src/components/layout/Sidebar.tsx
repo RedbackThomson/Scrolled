@@ -2,10 +2,7 @@ import { useMemo } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
-  AlertCircle,
-  AlertTriangle,
   Bookmark,
-  CheckCircle2,
   ChevronRight,
   Compass,
   ExternalLink,
@@ -14,8 +11,6 @@ import {
   Package,
   PanelLeftClose,
   PanelLeftOpen,
-  RefreshCw,
-  RotateCcw,
   Shield,
   Skull,
   Sparkles,
@@ -25,7 +20,6 @@ import {
   ScrollText,
   Home,
   Settings as SettingsIcon,
-  WifiOff,
   type LucideIcon,
 } from 'lucide-react';
 import { WEAPON_TYPE_ORDER, labelForEquipSlot, labelForEquipType } from '@scrolled/game-db/domain/equipTypes';
@@ -42,7 +36,7 @@ import { useDatasetUpdate } from '@/hooks/dataset/useDatasetUpdate';
 import { SidebarSyncStatus } from '@/components/sync/SidebarSyncStatus';
 import { SyncSignInNotice } from '@/components/sync/SyncSignInNotice';
 import { useInstalledDataset } from '@/hooks/dataset/useInstalledDataset';
-import { cn } from '@scrolled/design';
+import { cn, Logo, StatusDot } from '@scrolled/design';
 import { appConfig } from '@/config';
 
 interface SidebarChild {
@@ -71,6 +65,11 @@ interface SidebarSection {
     | 'hasQuestChains'
     | 'hasSkills';
 }
+
+const PILL =
+  'rounded-full font-semibold transition-[transform,color,background-color,box-shadow] duration-300 ease-spring';
+const PILL_ACTIVE = 'bg-card text-foreground shadow-float';
+const PILL_IDLE = 'text-muted-foreground hover:text-foreground hover:scale-[1.04]';
 
 const ITEM_CATEGORY_CHILDREN = [
   { label: 'Use', to: '/items?f_category=use' },
@@ -221,41 +220,23 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
   // and take its parent's width.
   const rootClass =
     variant === 'mobile'
-      ? 'bg-sidebar text-sidebar-foreground border-border flex h-full w-full flex-col'
+      ? 'text-sidebar-foreground flex h-full w-full flex-col gap-3.5 px-3 py-4'
       : cn(
           // Sticky + h-screen + self-start keeps the sidebar pinned in the viewport
           // while the document scrolls underneath it. The outer AppShell flex row
           // would otherwise stretch the aside to the full page height, defeating
           // sticky positioning.
-          'bg-sidebar text-sidebar-foreground border-border hidden shrink-0 self-start border-r transition-[width] duration-200 ease-out md:sticky md:top-0 md:flex md:h-screen md:flex-col',
-          collapsed ? 'w-14' : 'w-60',
+          'text-sidebar-foreground hidden shrink-0 self-start py-4 transition-[width] duration-200 ease-out md:sticky md:top-0 md:flex md:h-screen md:flex-col md:gap-3.5',
+          collapsed ? 'w-16 px-2' : 'w-[228px] px-3',
         );
 
   return (
     <aside className={rootClass}>
-      <div
-        className={cn(
-          'border-border flex h-14 items-center border-b',
-          collapsed ? 'justify-center px-2' : 'gap-2 px-4',
-        )}
-      >
+      <div className={cn('flex items-center', collapsed ? 'justify-center' : 'gap-2 px-2 py-0.5')}>
         {!collapsed && (
-          <>
-            <img
-              src={`${import.meta.env.BASE_URL}icon.svg`}
-              alt=""
-              aria-hidden
-              className="h-7 w-7 shrink-0 rounded"
-            />
-            <div className="flex min-w-0 flex-col leading-tight">
-              <span className="font-semibold tracking-tight">Scrolled</span>
-              {hostedName && (
-                <span className="text-sidebar-muted truncate text-[11px]" title={hostedName}>
-                  {hostedName}
-                </span>
-              )}
-            </div>
-          </>
+          <div className="min-w-0" title={hostedName ?? undefined}>
+            <Logo size={34} subtitle={hostedName ?? undefined} />
+          </div>
         )}
         {showCollapseToggle && (
           <button
@@ -265,7 +246,7 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
             aria-pressed={collapsed}
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             className={cn(
-              'text-sidebar-muted hover:bg-accent hover:text-accent-foreground inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors',
+              'text-muted-foreground hover:bg-card hover:text-foreground hover:shadow-float inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors',
               !collapsed && 'ml-auto',
             )}
           >
@@ -277,8 +258,8 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
           </button>
         )}
       </div>
-      <nav className={cn('flex-1 overflow-y-auto', collapsed ? 'px-1 py-2' : 'p-2')}>
-        <ul className="space-y-1">
+      <nav className="-mx-1 flex-1 overflow-y-auto px-1 py-1">
+        <ul className="space-y-0.5">
           <NavItem to="/" icon={Home} label="Home" end collapsed={collapsed} />
           {sectionsToRender.map((section) => {
             // Section's own link uses `end` so query-string children don't
@@ -300,10 +281,9 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
                     title={section.label}
                     aria-label={section.label}
                     className={cn(
-                      'flex items-center justify-center rounded-md p-2 transition-colors',
-                      sectionActive
-                        ? 'bg-accent text-accent-foreground'
-                        : 'text-sidebar-muted hover:bg-accent hover:text-accent-foreground',
+                      PILL,
+                      'mx-auto flex h-9 w-9 items-center justify-center',
+                      sectionActive ? PILL_ACTIVE : PILL_IDLE,
                     )}
                   >
                     <section.icon className="h-4 w-4" />
@@ -315,16 +295,15 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
               <li key={section.to}>
                 <div
                   className={cn(
-                    'flex items-center gap-1 rounded-md transition-colors',
-                    sectionActive
-                      ? 'bg-accent text-accent-foreground'
-                      : 'text-sidebar-muted hover:bg-accent hover:text-accent-foreground',
+                    PILL,
+                    'flex items-center gap-1',
+                    sectionActive ? PILL_ACTIVE : PILL_IDLE,
                   )}
                 >
                   <NavLink
                     to={section.to}
                     end
-                    className="flex flex-1 items-center gap-2 rounded-md px-3 py-2 text-sm font-medium"
+                    className="flex min-h-9 flex-1 items-center gap-2.5 rounded-full pl-3.5 text-sm"
                   >
                     <section.icon className="h-4 w-4" />
                     {section.label}
@@ -336,11 +315,11 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
                       aria-expanded={isExpanded}
                       aria-controls={childListId}
                       aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${section.label}`}
-                      className="hover:bg-background/40 mr-1 flex h-6 w-6 shrink-0 items-center justify-center rounded"
+                      className="hover:bg-muted mr-1.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
                     >
                       <ChevronRight
                         className={cn(
-                          'h-3.5 w-3.5 transition-transform',
+                          'h-3.5 w-3.5 opacity-[.55] transition-transform',
                           isExpanded && 'rotate-90',
                         )}
                         aria-hidden
@@ -351,7 +330,7 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
                 {hasChildren && isExpanded && (
                   <ul
                     id={childListId}
-                    className="border-border ml-6 mt-1 space-y-0.5 border-l pl-3"
+                    className="border-border my-0.5 ml-[26px] space-y-px border-l-2 pl-3"
                   >
                     {section.children!.map((child) => (
                       <SubNavItem
@@ -367,11 +346,7 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
               </li>
             );
           })}
-          <li
-            role="separator"
-            aria-hidden
-            className={cn('border-border my-2 border-t', collapsed && 'mx-1')}
-          />
+          <li role="separator" aria-hidden className="h-3" />
           {appConfig.navigatorUrl && (
             <ExternalNavItem
               href={appConfig.navigatorUrl}
@@ -383,16 +358,15 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
           <NavItem to="/settings" icon={SettingsIcon} label="Settings" collapsed={collapsed} />
         </ul>
       </nav>
-      <div className="border-border border-t">
+      <div className={cn('bg-card shadow-float py-1', collapsed ? 'rounded-full' : 'rounded-[18px]')}>
         <OfflineIndicator collapsed={collapsed} />
         <SyncSignInNotice collapsed={collapsed} />
         <SidebarSyncStatus collapsed={collapsed} />
-        <DbStatusIndicator collapsed={collapsed} />
+        <DbStatusIndicator collapsed={collapsed} trailing={APP_VERSION_LABEL} />
         <DatasetVersionTag collapsed={collapsed} />
       </div>
       {!collapsed && (
-        <div className="text-sidebar-muted flex items-center justify-between px-3 pb-3 text-[10px]">
-          <span>{APP_VERSION_LABEL}</span>
+        <div className="text-sidebar-muted -mt-1.5 flex justify-end px-3.5 text-[10.5px]">
           <a
             href="https://github.com/RedbackThomson"
             target="_blank"
@@ -427,75 +401,56 @@ type DbHealth =
   | 'update-failed';
 
 interface HealthCfg {
-  icon: LucideIcon;
+  /** Dot colour; omitted while work is in flight, which shows a spinner instead. */
+  dot?: 'ok' | 'warn' | 'danger';
   label: string;
   title: string;
-  iconClass: string;
-  textClass?: string;
-  spin?: boolean;
   /** When set, the indicator links here so the user can act on the state. */
   actionTo?: string;
 }
 
 const HEALTH_CONFIG: Record<DbHealth, HealthCfg> = {
   pending: {
-    icon: Loader2,
     label: 'Checking database…',
     title: 'Verifying database health',
-    iconClass: 'text-sidebar-muted',
-    spin: true,
   },
   healthy: {
-    icon: CheckCircle2,
+    dot: 'ok',
     label: 'Database OK',
     title: 'Database is healthy and persisted to OPFS',
-    iconClass: 'text-green-600 dark:text-green-400',
   },
   warning: {
-    icon: AlertTriangle,
+    dot: 'warn',
     label: 'In-memory only',
     title:
       'Persistent storage (OPFS) is unavailable, so the database lives only in memory. Reloading the page will wipe it and require re-importing.',
-    iconClass: 'text-amber-600 dark:text-amber-400',
-    textClass: 'text-amber-700 dark:text-amber-300',
   },
   error: {
-    icon: AlertCircle,
+    dot: 'danger',
     label: 'Database unavailable',
     title: 'Database is corrupted or unreachable — recreating from scratch may be required',
-    iconClass: 'text-red-600 dark:text-red-400',
-    textClass: 'text-red-700 dark:text-red-300',
   },
   reinitialize: {
-    icon: RotateCcw,
+    dot: 'danger',
     label: 'Rebuild needed',
     title: 'This version changed how your library is stored. Reload your game files to rebuild it.',
-    iconClass: 'text-red-600 dark:text-red-400',
-    textClass: 'text-red-700 dark:text-red-300',
     actionTo: '/setup',
   },
   update: {
-    icon: RefreshCw,
+    dot: 'warn',
     label: 'Refresh library',
     title:
       'Your library is out of date. Re-run setup with your game files to unlock the latest features.',
-    iconClass: 'text-amber-600 dark:text-amber-400',
-    textClass: 'text-amber-700 dark:text-amber-300',
     actionTo: '/setup',
   },
   updating: {
-    icon: Loader2,
     label: 'Updating data…',
     title: 'Downloading and installing the latest data for this version.',
-    iconClass: 'text-sidebar-muted',
-    spin: true,
   },
   'update-failed': {
-    icon: AlertCircle,
+    dot: 'warn',
     label: 'Update failed',
     title: "Couldn't download the latest data. Click to try again.",
-    iconClass: 'text-amber-600 dark:text-amber-400',
-    textClass: 'text-amber-700 dark:text-amber-300',
   },
 };
 
@@ -505,29 +460,27 @@ const OFFLINE_TOOLTIP =
 function OfflineIndicator({ collapsed }: { collapsed: boolean }) {
   const online = useOnlineStatus();
   if (online) return null;
-  if (collapsed) {
-    return (
-      <div
-        className="flex justify-center px-2 pb-0 pt-2"
-        title={OFFLINE_TOOLTIP}
-        role="status"
-        aria-live="polite"
-      >
-        <WifiOff className="text-sidebar-muted h-4 w-4 shrink-0" aria-label="Offline mode" />
-      </div>
-    );
-  }
   return (
-    <div className="px-3 pb-0 pt-3" title={OFFLINE_TOOLTIP} role="status" aria-live="polite">
-      <div className="flex items-center gap-2 text-xs">
-        <WifiOff className="text-sidebar-muted h-3.5 w-3.5 shrink-0" aria-hidden />
-        <span className="text-sidebar-foreground truncate">Offline mode</span>
-      </div>
+    <div
+      className={collapsed ? 'flex justify-center py-2' : 'px-3.5 py-1.5'}
+      title={OFFLINE_TOOLTIP}
+      role="status"
+      aria-live="polite"
+    >
+      <StatusDot status="offline" label={collapsed ? undefined : 'Offline mode'} />
+      {collapsed && <span className="sr-only">Offline mode</span>}
     </div>
   );
 }
 
-function DbStatusIndicator({ collapsed }: { collapsed: boolean }) {
+function DbStatusIndicator({
+  collapsed,
+  trailing,
+}: {
+  collapsed: boolean;
+  /** Small text at the far end of the row, hidden in the collapsed rail. */
+  trailing?: string;
+}) {
   const db = useMemo(() => getDbClient(), []);
   const userDb = useMemo(() => getUserDbClient(), []);
   // Both DBs share the same OPFS-or-bust definition of "healthy" — if either
@@ -590,27 +543,30 @@ function DbStatusIndicator({ collapsed }: { collapsed: boolean }) {
       actionTo: undefined,
     };
   }
-  const Icon = cfg.icon;
   const title = reason ? `${cfg.title}\n\n${reason}` : cfg.title;
+  const label = collapsed ? undefined : cfg.label;
 
-  const body = collapsed ? (
-    <Icon
-      className={cn('h-4 w-4 shrink-0', cfg.iconClass, cfg.spin && 'animate-spin')}
-      aria-label={cfg.label}
-    />
-  ) : (
-    <div className="flex items-center gap-2 text-xs">
-      <Icon
-        className={cn('h-3.5 w-3.5 shrink-0', cfg.iconClass, cfg.spin && 'animate-spin')}
-        aria-hidden
-      />
-      <span className={cn('truncate', cfg.textClass ?? 'text-sidebar-foreground')}>
-        {cfg.label}
-      </span>
+  const body = (
+    <div className="flex items-center gap-2">
+      {cfg.dot ? (
+        <StatusDot status={cfg.dot} label={label} />
+      ) : (
+        <span className="inline-flex items-center gap-2 text-[12.5px] font-semibold">
+          <Loader2 className="text-muted-foreground h-3.5 w-3.5 shrink-0 animate-spin" aria-hidden />
+          {label}
+        </span>
+      )}
+      {collapsed ? (
+        <span className="sr-only">{cfg.label}</span>
+      ) : (
+        trailing && (
+          <span className="text-muted-foreground ml-auto truncate text-[10.5px]">{trailing}</span>
+        )
+      )}
     </div>
   );
 
-  const containerClass = cn(collapsed ? 'flex justify-center px-2 py-2' : 'px-3 pb-2 pt-3');
+  const containerClass = collapsed ? 'flex justify-center py-2' : 'px-3.5 py-1.5';
 
   // A failed refresh retries in place rather than navigating.
   const onAction = health === 'update-failed' ? dataset.apply : undefined;
@@ -619,7 +575,7 @@ function DbStatusIndicator({ collapsed }: { collapsed: boolean }) {
       <button
         type="button"
         onClick={onAction}
-        className={cn(containerClass, 'hover:bg-accent block w-full rounded-md text-left transition-colors')}
+        className={cn(containerClass, 'hover:bg-muted block w-full rounded-[14px] text-left transition-colors')}
         title={title}
       >
         {body}
@@ -631,7 +587,7 @@ function DbStatusIndicator({ collapsed }: { collapsed: boolean }) {
     return (
       <Link
         to={cfg.actionTo}
-        className={cn(containerClass, 'hover:bg-accent block rounded-md transition-colors')}
+        className={cn(containerClass, 'hover:bg-muted block rounded-[14px] transition-colors')}
         title={title}
       >
         {body}
@@ -668,11 +624,10 @@ function NavItem({
         aria-label={collapsed ? label : undefined}
         className={({ isActive }) =>
           cn(
-            'flex items-center rounded-md text-sm font-medium transition-colors',
-            collapsed ? 'justify-center p-2' : 'gap-2 px-3 py-2',
-            isActive
-              ? 'bg-accent text-accent-foreground'
-              : 'text-sidebar-muted hover:bg-accent hover:text-accent-foreground',
+            PILL,
+            'flex items-center text-sm',
+            collapsed ? 'mx-auto h-9 w-9 justify-center' : 'min-h-9 gap-2.5 px-3.5',
+            isActive ? PILL_ACTIVE : PILL_IDLE,
           )
         }
       >
@@ -709,8 +664,10 @@ function ExternalNavItem({
         title={collapsed ? label : undefined}
         aria-label={collapsed ? label : undefined}
         className={cn(
-          'text-sidebar-muted hover:bg-accent hover:text-accent-foreground flex items-center rounded-md text-sm font-medium transition-colors',
-          collapsed ? 'justify-center p-2' : 'gap-2 px-3 py-2',
+          PILL,
+          PILL_IDLE,
+          'flex items-center text-sm',
+          collapsed ? 'mx-auto h-9 w-9 justify-center' : 'min-h-9 gap-2.5 px-3.5',
         )}
       >
         <Icon className="h-4 w-4 shrink-0" />
@@ -749,11 +706,12 @@ function SubNavItem({
       <NavLink
         to={to}
         className={cn(
-          'flex items-center gap-1.5 rounded px-2 py-1 text-xs transition-colors',
-          active ? 'text-foreground font-medium' : 'text-sidebar-muted hover:text-foreground',
+          PILL,
+          'flex min-h-[30px] items-center gap-2 px-2.5 text-[13px]',
+          active ? PILL_ACTIVE : PILL_IDLE,
         )}
       >
-        {Icon && <Icon className={cn('h-3 w-3 shrink-0', iconClass)} aria-hidden />}
+        {Icon && <Icon className={cn('h-3.5 w-3.5 shrink-0', iconClass)} aria-hidden />}
         <span className="truncate">{label}</span>
       </NavLink>
     </li>
