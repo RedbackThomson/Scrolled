@@ -29,7 +29,7 @@ export function AppShell() {
   // past this screen.
   const storageBlocked = storage.resolved && storage.unavailable && !bypassed;
   const { showBoot, needsInstall } = useSetupGate(storageBlocked);
-  const { backdrop, drift } = useMotionPrefs();
+  const { backdrop } = useMotionPrefs();
   const { pathname } = useLocation();
 
   if (storageBlocked) return <StorageUnavailableScreen failures={storage.failures} />;
@@ -39,7 +39,7 @@ export function AppShell() {
     <div className="relative isolate flex min-h-screen w-full">
       {backdrop === 'clouds' && (
         <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
-          <CloudBackdrop animate={drift} />
+          <CloudBackdrop />
         </div>
       )}
       <Sidebar />

@@ -37,12 +37,14 @@ function readInitial(): MotionPrefs {
   }
 }
 
-/** `data-motion` on <html> drives the CSS kill switch; absent means "follow the device". */
+/** `data-motion` and `data-clouds` on <html> drive motion.css; absent means "follow the device". */
 function apply(prefs: MotionPrefs): void {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
   if (prefs.motion === null) delete root.dataset.motion;
   else root.dataset.motion = prefs.motion ? 'on' : 'off';
+  if (prefs.drift === null) delete root.dataset.clouds;
+  else root.dataset.clouds = prefs.drift ? 'running' : 'paused';
 }
 
 function persist(prefs: MotionPrefs): void {

@@ -71,7 +71,7 @@ export function Toast({ icon = Check, children, action, onAction, duration = 420
             width: '100%',
             background: 'var(--accent-hi)',
             transformOrigin: 'left',
-            animation: `sc-toastbar ${duration}ms linear 700ms both`,
+            animation: `sc-shrink-x ${duration}ms linear 700ms both`,
           }}
         />
       )}

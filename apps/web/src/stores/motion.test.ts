@@ -10,6 +10,7 @@ async function loadStore() {
 afterEach(() => {
   localStorage.clear();
   delete document.documentElement.dataset.motion;
+  delete document.documentElement.dataset.clouds;
 });
 
 describe('motion store', () => {
@@ -18,6 +19,7 @@ describe('motion store', () => {
     const s = useMotion.getState();
     expect([s.backdrop, s.drift, s.motion]).toEqual(['clouds', null, null]);
     expect(document.documentElement.dataset.motion).toBeUndefined();
+    expect(document.documentElement.dataset.clouds).toBeUndefined();
   });
 
   it('persists choices and sets data-motion', async () => {
@@ -40,6 +42,7 @@ describe('motion store', () => {
     const { useMotion } = await loadStore();
     expect(useMotion.getState().drift).toBe(true);
     expect(document.documentElement.dataset.motion).toBe('on');
+    expect(document.documentElement.dataset.clouds).toBe('running');
   });
 
   it('ignores malformed storage', async () => {

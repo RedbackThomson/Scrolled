@@ -1,15 +1,19 @@
+/* Motion tokens, keyframes and utilities. Everything here is switched off by
+   <html data-motion="off">, and by prefers-reduced-motion unless the user turns
+   motion back on (data-motion="on"). */
 :root {
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-out: cubic-bezier(0.2, 0.7, 0.3, 1);
   --ease-hop: cubic-bezier(0.4, 0, 0.6, 1);
+  --ease-burst: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --ease-celebrate: cubic-bezier(0.15, 0.8, 0.3, 1);
   --dur-fast: 200ms;
   --dur-base: 300ms;
-  --dur-pop: 520ms;
+  --dur-pop: 560ms;
   --dur-modal: 520ms;
   --stagger: 55ms;
-  --cloud-speed-min: 70s;
-  --cloud-speed-max: 150s;
 }
+
 @keyframes sc-rise {
   from {
     opacity: 0;
@@ -21,11 +25,11 @@
   }
 }
 @keyframes sc-pop {
-  from {
+  0% {
     opacity: 0;
     transform: scale(0.6) translateY(8px);
   }
-  to {
+  100% {
     opacity: 1;
     transform: none;
   }
@@ -39,9 +43,19 @@
   }
 }
 @keyframes sc-modal {
-  from {
+  0% {
     opacity: 0;
     transform: translateY(16px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes sc-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
   }
   to {
     opacity: 1;
@@ -49,23 +63,31 @@
   }
 }
 @keyframes sc-tip {
-  from {
+  0% {
     opacity: 0;
     transform: scale(0.55) translateY(-6px);
   }
-  to {
+  100% {
     opacity: 1;
     transform: none;
   }
 }
 @keyframes sc-toast {
-  from {
+  0% {
     opacity: 0;
     transform: translateY(40px) scale(0.95);
   }
-  to {
+  100% {
     opacity: 1;
     transform: none;
+  }
+}
+@keyframes sc-shrink-x {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
   }
 }
 @keyframes sc-squish {
@@ -82,84 +104,44 @@
     transform: scale(1);
   }
 }
-@keyframes sc-bob {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-4%);
-  }
-}
-@keyframes sc-blink {
-  0%,
-  92%,
-  100% {
-    transform: scaleY(1);
-  }
-  95% {
-    transform: scaleY(0.1);
-  }
-}
-@keyframes sc-hop {
-  0%,
-  100% {
-    transform: translateY(0) scale(1, 1);
-  }
-  10% {
-    transform: scale(1.08, 0.9);
-  }
-  45% {
-    transform: translateY(-22px) scale(0.96, 1.05);
-  }
-  80% {
-    transform: scale(1.06, 0.94);
-  }
-}
-@keyframes sc-shimmer {
-  from {
-    background-position: 200% 0;
-  }
-  to {
-    background-position: -200% 0;
-  }
-}
-@keyframes sc-drift {
-  from {
-    transform: translateX(-420px);
-  }
-  to {
-    transform: translateX(calc(100vw + 120px));
-  }
-}
-@keyframes sc-wave {
-  0%,
-  100% {
-    transform: rotate(-35deg);
-  }
-  50% {
-    transform: rotate(-65deg);
-  }
-}
-@keyframes sc-toastbar {
-  from {
-    transform: scaleX(1);
-  }
-  to {
-    transform: scaleX(0);
-  }
-}
 @keyframes sc-burst {
   0% {
     opacity: 1;
-    transform: translate(0, 0) rotate(var(--rot)) scale(0.4);
+    transform: translate(0, 0) rotate(var(--rot, 0deg)) scale(0.4);
   }
   60% {
     opacity: 1;
   }
   100% {
     opacity: 0;
-    transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(1);
+    transform: translate(var(--dx), var(--dy)) rotate(var(--rot, 0deg)) scale(1);
+  }
+}
+@keyframes sc-roll {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(var(--to));
+  }
+}
+@keyframes sc-stretch {
+  0%,
+  100% {
+    width: var(--knob, 22px);
+  }
+  45% {
+    width: calc(var(--knob, 22px) * 1.38);
+  }
+}
+/* Twin of sc-stretch: alternating names restarts the animation on every toggle. */
+@keyframes sc-stretch-b {
+  0%,
+  100% {
+    width: var(--knob, 22px);
+  }
+  45% {
+    width: calc(var(--knob, 22px) * 1.38);
   }
 }
 @keyframes sc-knob-a {
@@ -179,4 +161,179 @@
   40% {
     transform: scaleX(1.15);
   }
+}
+@keyframes sc-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+@keyframes sc-hop {
+  0%,
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+  10% {
+    transform: translateY(0) scale(1.08, 0.9);
+  }
+  45% {
+    transform: translateY(-22px) scale(0.96, 1.05);
+  }
+  80% {
+    transform: translateY(0) scale(1.06, 0.94);
+  }
+}
+@keyframes sc-hop-shadow {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  45% {
+    transform: scale(0.6);
+    opacity: 0.5;
+  }
+}
+@keyframes sc-dot {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-4px);
+  }
+}
+@keyframes sc-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+@keyframes sc-blink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.1);
+  }
+}
+@keyframes sc-wave {
+  0%,
+  100% {
+    transform: rotate(-35deg);
+  }
+  50% {
+    transform: rotate(-65deg);
+  }
+}
+@keyframes sc-drift {
+  from {
+    transform: translateX(-420px);
+  }
+  to {
+    transform: translateX(calc(100vw + 120px));
+  }
+}
+
+.sc-rise {
+  animation: sc-rise 520ms var(--ease-spring) both;
+}
+.sc-pop {
+  animation: sc-pop 560ms var(--ease-spring) both;
+}
+.sc-stagger > * {
+  animation: sc-pop 560ms var(--ease-spring) both;
+  animation-delay: calc(var(--i, 0) * var(--stagger) + var(--stagger-base, 120ms));
+}
+.sc-scrim {
+  animation: sc-fade 260ms ease-out both;
+}
+.sc-modal {
+  animation: sc-modal 520ms var(--ease-spring) 90ms both;
+}
+.sc-panel-in {
+  animation: sc-slide-in 480ms var(--ease-spring) 60ms both;
+}
+.sc-tip {
+  animation: sc-tip 460ms var(--ease-spring) 150ms both;
+  transform-origin: var(--tip-origin, 20px 0);
+}
+.sc-toast {
+  animation: sc-toast 600ms var(--ease-spring) 100ms both;
+}
+.sc-toast-bar {
+  transform-origin: left;
+  animation: sc-shrink-x var(--toast-ms, 4200ms) linear 700ms both;
+}
+.sc-squish {
+  animation: sc-squish 620ms var(--ease-spring) both;
+}
+.sc-roll-digit {
+  display: flex;
+  flex-direction: column;
+  animation: sc-roll var(--roll-ms, 900ms) var(--ease-spring) var(--roll-delay, 0ms) both;
+}
+.sc-bob {
+  animation: sc-bob 1.8s ease-in-out 600ms infinite;
+}
+.sc-hop {
+  animation: sc-hop 1.1s var(--ease-hop) infinite;
+}
+.sc-hop-shadow {
+  animation: sc-hop-shadow 1.1s var(--ease-hop) infinite;
+}
+.sc-dot {
+  animation: sc-dot 1s ease-in-out infinite;
+}
+.sc-dot:nth-child(2) {
+  animation-delay: 150ms;
+}
+.sc-dot:nth-child(3) {
+  animation-delay: 300ms;
+}
+.sc-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-sunken) 0%,
+    var(--surface-page-top) 50%,
+    var(--surface-sunken) 100%
+  );
+  background-size: 200% 100%;
+  animation: sc-shimmer 1.4s linear infinite;
+}
+.sc-spring-t {
+  transition: transform 300ms var(--ease-spring);
+}
+
+/* Clouds answer to their own setting, so the motion kill switches skip them. */
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='on']) *:not(.sc-cloud),
+  :root:not([data-motion='on']) *::before,
+  :root:not([data-motion='on']) *::after {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  :root:not([data-clouds='running']) .sc-cloud {
+    animation-play-state: paused !important;
+  }
+}
+[data-motion='off'] *:not(.sc-cloud),
+[data-motion='off'] *::before,
+[data-motion='off'] *::after {
+  animation-duration: 0.001ms !important;
+  animation-delay: 0ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
+[data-clouds='paused'] .sc-cloud {
+  animation-play-state: paused !important;
 }
