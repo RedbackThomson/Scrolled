@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, cn } from '@scrolled/design';
+import { Button, Switch, cn } from '@scrolled/design';
 import { SlidersHorizontal } from 'lucide-react';
 import type { NavGraph } from '@scrolled/nav-graph';
 
 import { useDirections, type PathOptions } from '@/stores/useDirections';
 import { RequirementUnlocks } from './RequirementUnlocks';
-import { ToggleSwitch } from './ToggleSwitch';
 
 // Only the boolean travel toggles live in this list; the unlocked-requirements
 // section is rendered separately from the graph's own requirements.
@@ -78,14 +77,18 @@ export function PathOptionsMenu({ graph }: PathOptionsMenuProps) {
         type="button"
         variant="secondary"
         size="sm"
-        className={cn('gap-2', open && 'ring-ring ring-2 ring-offset-1')}
+        icon={SlidersHorizontal}
+        aria-label="Travel setup"
+        className={cn(
+          'h-10 rounded-full px-3.5 max-md:h-11',
+          open && 'border-primary ring-primary/30 ring-4',
+        )}
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => (open ? close() : setOpen(true))}
       >
-        <SlidersHorizontal className="h-4 w-4" aria-hidden />
         {activeCount > 0 ? (
-          <span className="bg-primary text-primary-foreground ml-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-medium tabular-nums">
+          <span className="bg-primary text-primary-foreground flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10.5px] font-bold tabular-nums">
             {activeCount}
           </span>
         ) : null}
@@ -95,28 +98,33 @@ export function PathOptionsMenu({ graph }: PathOptionsMenuProps) {
         <div
           role="dialog"
           aria-label="Travel setup"
-          className="border-border bg-card text-card-foreground absolute left-0 top-full z-20 mt-2 flex max-h-[min(70vh,32rem)] w-[calc(100vw-2rem)] max-w-72 flex-col overflow-y-auto rounded-md border p-3 shadow-md md:left-auto md:right-0 md:w-72"
+          className="border-border bg-card text-card-foreground shadow-pop animate-tip absolute left-0 top-full z-20 mt-2 flex max-h-[min(70vh,32rem)] w-[calc(100vw-2rem)] max-w-80 origin-top-left flex-col overflow-y-auto rounded-[18px] border-2 p-4 md:left-auto md:right-0 md:w-80 md:origin-top-right"
         >
-          <p className="text-sm font-medium">Travel setup</p>
-          <p className="text-muted-foreground mt-0.5 text-xs">Configure your travel options</p>
-          <div className="mt-3 flex flex-col gap-1">
+          <p className="font-display text-[17px] font-semibold">Travel setup</p>
+          <p className="text-muted-foreground mt-0.5 text-[12.5px]">
+            Configure your travel options
+          </p>
+          <div className="mt-3 flex flex-col gap-0.5">
             {OPTIONS.map((opt) => {
               const checked = options[opt.key];
               return (
-                <button
+                // A <label> forwards clicks on the text to the switch, so the whole row is the target.
+                <label
                   key={opt.key}
-                  type="button"
-                  role="switch"
-                  aria-checked={checked}
-                  onClick={() => setOption(opt.key, !checked)}
-                  className="hover:bg-accent flex items-start gap-3 rounded-md p-2 text-left transition-colors"
+                  className="hover:bg-muted flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-2 py-2 transition-colors"
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-medium">{opt.label}</span>
-                    <span className="text-muted-foreground block text-xs">{opt.description}</span>
+                    <span className="block text-sm font-bold">{opt.label}</span>
+                    <span className="text-muted-foreground block text-[12.5px]">
+                      {opt.description}
+                    </span>
                   </span>
-                  <ToggleSwitch checked={checked} />
-                </button>
+                  <Switch
+                    ariaLabel={opt.label}
+                    checked={checked}
+                    onChange={(next) => setOption(opt.key, next)}
+                  />
+                </label>
               );
             })}
           </div>

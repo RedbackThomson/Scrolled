@@ -78,15 +78,17 @@ export function TravelEdgeView({
         markerStart={markerStart}
         style={{
           stroke,
-          strokeWidth: onPath ? 2.5 : count > 1 ? 1.75 : 1.25,
-          strokeDasharray: onPath && data?.minor ? '6 4' : undefined,
+          strokeWidth: onPath ? 4 : 2.5,
+          strokeLinecap: 'round',
+          // A near-zero dash with round caps draws dots; the route stays solid.
+          strokeDasharray: onPath ? (data?.minor ? '8 7' : undefined) : '0.1 6',
           opacity,
         }}
       />
       {count > 1 && opacity > 0.3 ? (
         <EdgeLabelRenderer>
           <div
-            className="bg-background text-muted-foreground border-border pointer-events-none rounded-full border px-1.5 text-[10px] leading-tight"
+            className="bg-card text-muted-foreground border-border pointer-events-none rounded-full border-2 px-1.5 text-[10.5px] font-bold leading-tight"
             style={{
               position: 'absolute',
               transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,

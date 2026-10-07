@@ -240,7 +240,7 @@ function GraphCanvasInner({ graph }: GraphCanvasProps) {
       fitView
       proOptions={{ hideAttribution: true }}
     >
-      <Background />
+      <Background gap={22} size={1.2} color="var(--border-1)" bgColor="var(--surface-sunken)" />
       {!isMobile && <Controls showInteractive={false} />}
       {!isMobile && <MiniMap pannable zoomable />}
     </ReactFlow>

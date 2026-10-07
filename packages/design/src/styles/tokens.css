@@ -1,5 +1,4 @@
-/* Custom properties, keyframes and @font-face only: safe to load next to
-   @scrolled/ui while screens migrate. Element styles live in base.css. */
+/* Custom properties, keyframes and @font-face only. Element styles live in base.css. */
 @import './fonts.css';
 @import './tokens/typography.css';
 @import './tokens/colors.css';

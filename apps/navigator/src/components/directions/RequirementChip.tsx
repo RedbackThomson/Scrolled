@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { Badge, type BadgeTone } from '@scrolled/ui';
-import { Coins, Package, ScrollText, TrendingUp } from 'lucide-react';
+import { Chip } from '@scrolled/design';
+import { Coins, Package, ScrollText, TrendingUp, type LucideIcon } from 'lucide-react';
 import type { Requirement } from '@scrolled/nav-graph';
 
 import { itemUrl, questUrl } from '@/lib/scrolledLinks';
@@ -12,65 +12,52 @@ export interface RequirementChipProps {
 export function RequirementChip({ requirement }: RequirementChipProps) {
   switch (requirement.kind) {
     case 'meso':
-      return (
-        <Chip tone="amber" icon={<Coins className="h-3 w-3" aria-hidden />}>
-          {requirement.amount.toLocaleString()} mesos
-        </Chip>
-      );
+      return <GoldChip icon={Coins}>{requirement.amount.toLocaleString()} mesos</GoldChip>;
     case 'level':
-      return (
-        <Chip tone="blue" icon={<TrendingUp className="h-3 w-3" aria-hidden />}>
-          Level {requirement.min}+
-        </Chip>
-      );
+      return <GoldChip icon={TrendingUp}>Level {requirement.min}+</GoldChip>;
     case 'item': {
       const qty =
         requirement.quantity && requirement.quantity > 1 ? ` ×${requirement.quantity}` : '';
       const verb = requirement.consumed ? 'Use' : 'Have';
       const label = requirement.name ?? `item #${requirement.itemId}`;
       return (
-        <Chip
-          tone="emerald"
-          icon={<Package className="h-3 w-3" aria-hidden />}
-          href={itemUrl(requirement.itemId)}
-        >
+        <GoldChip icon={Package} href={itemUrl(requirement.itemId)}>
           {verb} {label}
           {qty}
-        </Chip>
+        </GoldChip>
       );
     }
     case 'quest': {
       const label = requirement.name ?? `quest #${requirement.questId}`;
       return (
-        <Chip
-          tone="violet"
-          icon={<ScrollText className="h-3 w-3" aria-hidden />}
-          href={questUrl(requirement.questId)}
-        >
+        <GoldChip icon={ScrollText} href={questUrl(requirement.questId)}>
           Complete {label}
-        </Chip>
+        </GoldChip>
       );
     }
   }
 }
 
-interface ChipProps {
-  tone: BadgeTone;
-  icon: ReactNode;
+interface GoldChipProps {
+  icon: LucideIcon;
   href?: string | null;
   children: ReactNode;
 }
 
-function Chip({ tone, icon, href, children }: ChipProps) {
+function GoldChip({ icon, href, children }: GoldChipProps) {
   const body = (
-    <Badge tone={tone} className="gap-1 text-[11px]">
-      {icon}
+    <Chip tone="gold" icon={icon}>
       {children}
-    </Badge>
+    </Chip>
   );
   if (href) {
     return (
-      <a href={href} target="_blank" rel="noreferrer" className="hover:opacity-80">
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        className="focus-visible:ring-primary/30 rounded-full transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-4"
+      >
         {body}
       </a>
     );

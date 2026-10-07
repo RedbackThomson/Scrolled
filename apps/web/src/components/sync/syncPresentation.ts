@@ -12,7 +12,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { SyncStatus } from '@scrolled/sync-core';
-import type { BadgeTone } from '@scrolled/ui';
+
+export type SyncTone = 'blue' | 'emerald' | 'amber' | 'slate' | 'red';
 
 export interface SyncPresentation {
   /** Short label for a chip or button (e.g. "Synced"). */
@@ -20,7 +21,7 @@ export interface SyncPresentation {
   /** One line describing the state and any next step. */
   detail: string;
   icon: LucideIcon;
-  tone: BadgeTone;
+  tone: SyncTone;
   /** Spin the icon while a cycle is in flight. */
   spin: boolean;
 }

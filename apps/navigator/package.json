@@ -15,7 +15,6 @@
     "@dagrejs/dagre": "^3.0.0",
     "@scrolled/design": "workspace:*",
     "@scrolled/nav-graph": "workspace:*",
-    "@scrolled/ui": "workspace:*",
     "@xyflow/react": "^12.3.5",
     "lucide-react": "^0.451.0",
     "nuqs": "^2.8.9",

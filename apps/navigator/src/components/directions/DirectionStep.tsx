@@ -27,6 +27,17 @@ const METHOD_ICONS: Record<TravelMethod, LucideIcon> = {
   other: MoreHorizontal,
 };
 
+const METHOD_HUES: Record<TravelMethod, number | null> = {
+  walk: 150,
+  transport: 230,
+  portal: 295,
+  npc: 70,
+  item: 30,
+  skill: 260,
+  scroll: 185,
+  other: null,
+};
+
 const METHOD_LABELS: Record<TravelMethod, string> = {
   walk: 'Walk',
   transport: 'Transport',
@@ -59,43 +70,54 @@ export function DirectionStep({ index, step, graph, fastTravel, blocked }: Direc
   const secs = edgeSeconds(step, { fastTravel });
   const estimated = step.seconds == null && secs > 0;
 
+  const hue = METHOD_HUES[step.method];
+
   return (
     <li
       className={cn(
-        'border-border bg-card text-card-foreground rounded-md border p-3',
-        blocked && 'opacity-60 ring-1 ring-amber-500/40',
+        'border-border bg-card text-card-foreground shadow-rim rounded-[14px] border-2 p-3',
+        blocked && 'opacity-60 ring-4 ring-amber-500/30',
       )}
     >
       <div className="flex items-start gap-3">
-        <div className="bg-muted text-muted-foreground flex h-7 w-7 flex-none items-center justify-center rounded-full text-xs font-medium">
-          {index + 1}
+        <div
+          className="bg-muted text-muted-foreground grid h-7 w-7 flex-none place-items-center rounded-full"
+          style={
+            hue === null
+              ? undefined
+              : {
+                  background: `oklch(0.72 0.12 ${hue} / .2)`,
+                  color: `oklch(var(--chip-fg-l) 0.14 ${hue})`,
+                }
+          }
+        >
+          <Icon className="h-3.5 w-3.5" aria-hidden />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <Icon className="text-muted-foreground h-3.5 w-3.5 shrink-0" aria-hidden />
-            <span className="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">
-              {METHOD_LABELS[step.method]}
-            </span>
+          <div className="text-muted-foreground flex items-center gap-1.5 text-[11.5px] font-bold">
+            <span className="tabular-nums">{index + 1}</span>
+            <span aria-hidden>·</span>
+            <span>{METHOD_LABELS[step.method]}</span>
             {timed ? (
-              <span className="text-muted-foreground text-[10px] tabular-nums">
+              <span className="font-semibold tabular-nums">
                 · {estimated ? '~' : ''}
                 {formatDuration(secs)}
               </span>
             ) : null}
           </div>
-          <p className="mt-1 break-words text-sm leading-snug">
-            <span className="font-medium">{fromName}</span>
-            <span className="text-muted-foreground"> → </span>
-            <span className="font-medium">{toName}</span>
+          <p className="mt-1 break-words text-[13.5px] font-bold leading-snug">
+            <span>{fromName}</span>
+            <span className="text-muted-foreground font-semibold"> → </span>
+            <span>{toName}</span>
           </p>
           {step.via ? (
-            <p className="text-foreground mt-1.5 text-sm">
+            <p className="text-muted-foreground mt-1 text-[12.5px]">
               {npcLink ? (
                 <a
                   href={npcLink}
                   target="_blank"
                   rel="noreferrer"
-                  className="underline-offset-2 hover:underline"
+                  className="text-primary font-semibold underline-offset-2 hover:underline"
                 >
                   {step.via}
                 </a>

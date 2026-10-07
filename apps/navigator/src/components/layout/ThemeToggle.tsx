@@ -1,5 +1,5 @@
 import { Monitor, Moon, Sun } from 'lucide-react';
-import { Button, useTheme, type ThemeMode } from '@scrolled/design';
+import { useTheme, type ThemeMode } from '@scrolled/design';
 
 const ICONS: Record<ThemeMode, typeof Sun> = {
   light: Sun,
@@ -19,13 +19,13 @@ export function ThemeToggle() {
   const Icon = ICONS[mode];
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
+    <button
+      type="button"
       aria-label={`${LABELS[mode]} (click to change)`}
       onClick={cycle}
+      className="bg-card text-foreground shadow-float ease-spring focus-visible:ring-primary/30 grid h-[38px] w-[38px] flex-none place-items-center rounded-full transition-transform duration-300 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-4 max-md:h-11 max-md:w-11"
     >
       <Icon className="h-4 w-4" aria-hidden />
-    </Button>
+    </button>
   );
 }

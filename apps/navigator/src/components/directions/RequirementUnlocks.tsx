@@ -9,7 +9,7 @@ import {
 } from '@scrolled/nav-graph';
 
 import { useDirections } from '@/stores/useDirections';
-import { ToggleSwitch } from './ToggleSwitch';
+import { Switch } from '@scrolled/design';
 
 // One section per unlockable kind, in this order. Add a kind here (and to the
 // nav-graph UnlockableKind union) as new id-bearing requirements appear.
@@ -59,9 +59,9 @@ export function RequirementUnlocks({ graph }: RequirementUnlocksProps) {
   const lockedSet = new Set(locked);
 
   return (
-    <div className="border-border mt-3 border-t pt-3">
-      <p className="text-sm font-medium">Requirements unlocked</p>
-      <p className="text-muted-foreground mt-0.5 text-xs">
+    <div className="border-muted mt-3 border-t-2 pt-3">
+      <p className="font-display text-[15px] font-semibold">Requirements unlocked</p>
+      <p className="text-muted-foreground mt-0.5 text-[12.5px]">
         Enables routes that require specific items or quests to be completed
       </p>
       <div className="mt-2 flex flex-col gap-3">
@@ -73,7 +73,7 @@ export function RequirementUnlocks({ graph }: RequirementUnlocksProps) {
           return (
             <div key={group.kind}>
               <div className="flex items-center justify-between gap-2 px-2">
-                <span className="text-muted-foreground flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider">
+                <span className="text-muted-foreground flex items-center gap-1.5 text-[11.5px] font-bold uppercase tracking-[.04em]">
                   <Icon className="h-3.5 w-3.5" aria-hidden />
                   {group.meta.label}
                   <span className="tabular-nums">
@@ -83,7 +83,7 @@ export function RequirementUnlocks({ graph }: RequirementUnlocksProps) {
                 <button
                   type="button"
                   onClick={() => setRequirementsLocked(keys, allUnlocked)}
-                  className="text-muted-foreground hover:text-foreground text-[11px] underline-offset-2 hover:underline"
+                  className="text-primary min-h-8 text-[12px] font-bold underline-offset-2 hover:underline max-md:min-h-11"
                 >
                   {allUnlocked ? 'None' : 'All'}
                 </button>
@@ -92,20 +92,19 @@ export function RequirementUnlocks({ graph }: RequirementUnlocksProps) {
                 {group.items.map((entry) => {
                   const checked = !lockedSet.has(entry.key);
                   return (
-                    <button
+                    <label
                       key={entry.key}
-                      type="button"
-                      role="switch"
-                      aria-checked={checked}
-                      aria-label={entry.name ?? `${group.meta.label} #${entry.id}`}
-                      onClick={() => toggleRequirement(entry.key)}
-                      className="hover:bg-accent flex items-center gap-3 rounded-md p-2 text-left transition-colors"
+                      className="hover:bg-muted flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-2 py-1.5 transition-colors"
                     >
-                      <span className="min-w-0 flex-1 truncate text-sm">
+                      <span className="min-w-0 flex-1 truncate text-sm font-semibold">
                         {entry.name ?? `#${entry.id}`}
                       </span>
-                      <ToggleSwitch checked={checked} />
-                    </button>
+                      <Switch
+                        ariaLabel={entry.name ?? `${group.meta.label} #${entry.id}`}
+                        checked={checked}
+                        onChange={() => toggleRequirement(entry.key)}
+                      />
+                    </label>
                   );
                 })}
               </div>

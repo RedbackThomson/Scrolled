@@ -219,27 +219,6 @@ export default tseslint.config(
     },
   },
 
-  // @scrolled/ui only holds Badge until its call sites move to Chip. It may lean
-  // on @scrolled/design but nothing else in the workspace.
-  {
-    files: ['packages/ui/**/*.{ts,tsx}'],
-    plugins: { '@typescript-eslint': tseslint.plugin },
-    rules: {
-      '@typescript-eslint/no-restricted-imports': [
-        BOUNDARY_SEVERITY,
-        {
-          patterns: [
-            {
-              group: ['@scrolled/*', '!@scrolled/design'],
-              message:
-                '@scrolled/ui may only import @scrolled/design. New UI belongs in @scrolled/design.',
-            },
-          ],
-        },
-      ],
-    },
-  },
-
   // @scrolled/design is the shared component library: React-aware, but a leaf
   // among @scrolled/* so both apps can consume it without dragging in
   // app-specific machinery.

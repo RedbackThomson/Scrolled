@@ -53,7 +53,7 @@ export function DirectionsPanel({ graph }: DirectionsPanelProps) {
       ref={ref}
       style={resized ? { height } : undefined}
       className={cn(
-        'border-border bg-background z-10 flex flex-none flex-col overflow-hidden border-t md:h-auto md:max-h-none md:w-80 md:border-l md:border-t-0',
+        'border-border bg-card shadow-float z-10 flex flex-none flex-col overflow-hidden rounded-t-[24px] border-t-2 md:mb-3 md:mr-3 md:h-auto md:max-h-none md:w-80 md:rounded-[18px] md:border-2',
         !resized && 'max-h-[55vh]',
       )}
     >
@@ -61,28 +61,28 @@ export function DirectionsPanel({ graph }: DirectionsPanelProps) {
         type="button"
         aria-label="Resize directions panel"
         onPointerDown={onHandlePointerDown}
-        className="flex flex-none touch-none cursor-row-resize items-center justify-center py-2.5 md:hidden"
+        className="flex min-h-11 flex-none touch-none cursor-row-resize items-center justify-center md:hidden"
       >
-        <span className="bg-muted-foreground/30 h-1.5 w-10 rounded-full" />
+        <span className="bg-border h-[5px] w-11 rounded-full" />
       </button>
-      <header className="border-border flex flex-none items-start justify-between gap-2 border-b px-4 py-3">
+      <header className="border-muted flex flex-none items-start justify-between gap-2 border-b-2 px-4 pb-3 md:pt-3.5">
         <div className="min-w-0">
-          <p className="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">
+          <p className="text-muted-foreground text-[11.5px] font-bold uppercase tracking-[.04em]">
             Directions
           </p>
           {fromName && toName ? (
-            <p className="truncate text-sm">
-              <span className="font-medium">{fromName}</span>
+            <p className="font-display mt-0.5 truncate text-[17px] font-semibold leading-snug">
+              <span>{fromName}</span>
               <span className="text-muted-foreground"> → </span>
-              <span className="font-medium">{toName}</span>
+              <span>{toName}</span>
             </p>
           ) : (
             <p className="text-muted-foreground text-sm">No path</p>
           )}
           {steps.length > 0 ? (
-            <p className="text-muted-foreground mt-0.5 flex items-center gap-1 text-xs">
-              <Clock className="h-3 w-3" aria-hidden />
-              <span className="tabular-nums">
+            <p className="text-muted-foreground mt-1 flex items-center gap-1 text-[12.5px] font-semibold">
+              <Clock className="h-3.5 w-3.5" aria-hidden />
+              <span className="text-foreground font-bold tabular-nums">
                 {approximate ? '~' : ''}
                 {formatDuration(totalSeconds)}
               </span>
@@ -90,12 +90,18 @@ export function DirectionsPanel({ graph }: DirectionsPanelProps) {
             </p>
           ) : null}
         </div>
-        <Button variant="ghost" size="icon" aria-label="Close directions" onClick={clear}>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Close directions"
+          onClick={clear}
+          className="bg-muted ease-spring h-8 w-8 rounded-full hover:rotate-90 max-md:h-11 max-md:w-11"
+        >
           <X className="h-4 w-4" aria-hidden />
         </Button>
       </header>
       {header ? (
-        <div className="border-border border-b bg-amber-500/10 px-4 py-2 text-xs text-amber-700 dark:text-amber-300">
+        <div className="border-muted border-b-2 bg-[linear-gradient(90deg,oklch(0.82_0.13_80/.22),transparent)] px-4 py-2 text-[12.5px] font-semibold text-amber-800 dark:text-amber-200">
           {header}
         </div>
       ) : null}
@@ -104,7 +110,7 @@ export function DirectionsPanel({ graph }: DirectionsPanelProps) {
           No path between these places — try a different start or end.
         </div>
       ) : (
-        <ol className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3">
+        <ol className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto p-3">
           {steps.map((step, i) => (
             <DirectionStep
               key={`${step.from}->${step.to}#${i}`}

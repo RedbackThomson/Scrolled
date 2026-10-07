@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import { cn } from '@scrolled/design';
+import { Logo } from '@scrolled/design';
 
 import { wikiHomeUrl } from '@/lib/scrolledLinks';
 import { ThemeToggle } from './ThemeToggle';
@@ -12,21 +12,24 @@ export interface AppShellProps {
 export function AppShell({ children }: AppShellProps) {
   const wikiUrl = wikiHomeUrl();
   return (
-    <div className="flex h-full flex-col">
-      <header className="border-border bg-background flex h-12 flex-none items-center justify-between gap-3 border-b px-4">
-        <div className="flex min-w-0 items-center gap-2">
+    <div className="flex h-full flex-col bg-[image:var(--gradient-page)]">
+      <header className="flex h-[60px] flex-none items-center justify-between gap-3 px-4">
+        <div className="flex min-w-0 items-center gap-3">
           {wikiUrl ? (
             <a
               href={wikiUrl}
-              className={cn(
-                'hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring focus-visible:ring-offset-background -ml-1 inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
-              )}
+              className="bg-card text-foreground shadow-float ease-spring focus-visible:ring-primary/30 inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold transition-transform duration-300 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-4 max-md:h-11"
             >
-              <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
+              <ArrowLeft className="h-4 w-4" aria-hidden />
               Back to Wiki
             </a>
           ) : null}
-          <h1 className="text-sm font-semibold tracking-tight">Navigator</h1>
+          <div className="flex min-w-0 items-center gap-2">
+            <Logo size={30} wordmark={false} />
+            <h1 className="font-display truncate text-[19px] font-semibold leading-none">
+              Navigator
+            </h1>
+          </div>
         </div>
         <ThemeToggle />
       </header>
