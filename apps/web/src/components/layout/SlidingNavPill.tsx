@@ -1,6 +1,16 @@
 import { useEffect, useLayoutEffect, useState, type RefObject } from 'react';
 import { cn } from '@scrolled/design';
 
+// A spring's overshoot grows with distance, so a jump across the whole nav would
+// swing far past its row. Position eases out; only the small size change springs.
+const SLIDE = [
+  'top 520ms var(--ease-out)',
+  'left 520ms var(--ease-out)',
+  'width 520ms var(--ease-spring)',
+  'height 520ms var(--ease-spring)',
+  'opacity 200ms ease-out',
+].join(', ');
+
 interface Box {
   top: number;
   left: number;
@@ -61,11 +71,9 @@ export function SlidingNavPill({ containerRef, watch }: SlidingNavPillProps) {
       aria-hidden
       className={cn(
         'bg-card shadow-float pointer-events-none absolute rounded-full',
-        placed &&
-          'ease-spring transition-[top,left,width,height,opacity] [transition-duration:520ms]',
         !visible && 'opacity-0',
       )}
-      style={box}
+      style={{ ...box, transition: placed ? SLIDE : undefined }}
     />
   );
 }

@@ -8,9 +8,16 @@ export interface ScrollyProps {
   pose?: ScrollyPose;
   /** Bob + blink; tie to the Interface motion setting */
   animate?: boolean;
+  /** Ground shadow; off when something else draws the shadow, like HopLoader's */
+  shadow?: boolean;
 }
 
-export function Scrolly({ size = 100, pose = 'idle', animate = true }: ScrollyProps) {
+export function Scrolly({
+  size = 100,
+  pose = 'idle',
+  animate = true,
+  shadow = true,
+}: ScrollyProps) {
   const id = useId().replace(/:/g, '');
   const g = (k: string) => `url(#${id}${k})`;
   const anim = animate
@@ -114,7 +121,7 @@ export function Scrolly({ size = 100, pose = 'idle', animate = true }: ScrollyPr
           <stop offset="1" stopColor="#b9802a" />
         </radialGradient>
       </defs>
-      <ellipse cx="50" cy="113" rx="28" ry="3.5" fill="#142a5a" opacity=".14" />
+      {shadow && <ellipse cx="50" cy="113" rx="28" ry="3.5" fill="#142a5a" opacity=".14" />}
       <g style={{ animation: anim, transformOrigin: '50px 100px' }}>
         {armL}
         <rect x="18" y="16" width="64" height="66" rx="7" fill={g('p')} />

@@ -83,6 +83,7 @@ function MobileSidebarDrawer() {
       <SheetContent
         side="left"
         aria-label="Navigation"
+        aria-describedby={undefined}
         className="w-[300px] max-w-[85vw] md:hidden"
         overlayClassName="md:hidden"
       >

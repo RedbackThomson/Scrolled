@@ -28,7 +28,7 @@ export function HopLoader({ label = 'Loading', size = 64, children }: HopLoaderP
     >
       <div aria-hidden style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <div className="sc-hop" style={{ transformOrigin: '50% 100%' }}>
-          {children ?? <Scrolly pose="read" size={size} animate={false} />}
+          {children ?? <Scrolly pose="read" size={size} animate={false} shadow={false} />}
         </div>
         <span
           className="sc-hop-shadow"

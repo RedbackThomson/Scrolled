@@ -141,7 +141,11 @@ export function GraphicViewerModal({
                   <List className="h-5 w-5" aria-hidden />
                 </button>
                 <Sheet open={browserOpen} onOpenChange={setBrowserOpen}>
-                  <SheetContent side="bottom" className="bg-card flex h-[70dvh] flex-col p-0">
+                  <SheetContent
+                    side="bottom"
+                    aria-describedby={undefined}
+                    className="bg-card flex h-[70dvh] flex-col p-0"
+                  >
                     <SheetHeader className="border-muted border-b-2 px-4 py-3">
                       <SheetTitle className="font-display text-[17px]">{mobileSheetTitle}</SheetTitle>
                     </SheetHeader>

@@ -7,7 +7,7 @@ const meta = {
   title: 'Brand/Scrolly',
   component: Scrolly,
   tags: ['autodocs'],
-  args: { pose: 'idle', size: 120, animate: true },
+  args: { pose: 'idle', size: 120, animate: true, shadow: true },
   argTypes: {
     pose: { control: 'inline-radio', options: POSES },
     size: { control: { type: 'range', min: 40, max: 240 } },
