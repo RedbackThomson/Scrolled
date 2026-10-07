@@ -20,7 +20,7 @@ export const SheetOverlay = forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-40 bg-black/50',
+      'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-40 bg-[var(--surface-scrim)]',
       className,
     )}
     {...props}
@@ -34,15 +34,17 @@ type SheetSide = 'top' | 'bottom' | 'left' | 'right';
 // left to the consumer via `className` — left-drawer width and bottom-sheet
 // height aren't one-size-fits-all.
 const sideClasses: Record<SheetSide, string> = {
-  top: 'inset-x-0 top-0 data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top',
+  top: 'inset-x-0 top-0 rounded-b-[30px] data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top',
   bottom:
-    'inset-x-0 bottom-0 data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom',
-  left: 'inset-y-0 left-0 h-full data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left',
+    'inset-x-0 bottom-0 rounded-t-[30px] data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom',
+  left: 'inset-y-0 left-0 h-full rounded-r-[30px] data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left',
   right:
-    'inset-y-0 right-0 h-full data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right',
+    'inset-y-0 right-0 h-full rounded-l-[30px] data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right',
 };
 
-export interface SheetContentProps extends ComponentPropsWithoutRef<typeof DialogPrimitive.Content> {
+export interface SheetContentProps extends ComponentPropsWithoutRef<
+  typeof DialogPrimitive.Content
+> {
   side?: SheetSide;
   /** Render the floating close (X) button inside the sheet. Defaults to true. */
   showCloseButton?: boolean;
@@ -73,17 +75,20 @@ export const SheetContent = forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          'bg-background data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col shadow-xl outline-none',
+          'bg-card text-card-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:ease-spring fixed z-50 flex flex-col shadow-[0_12px_40px_rgba(10,20,50,.25)] outline-none data-[state=closed]:duration-200 data-[state=open]:duration-500',
           sideClasses[side],
           className,
         )}
         {...props}
       >
+        {side === 'bottom' && (
+          <span aria-hidden className="bg-border mx-auto mt-2 h-[5px] w-11 shrink-0 rounded-full" />
+        )}
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close
             aria-label="Close"
-            className="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring absolute right-2 top-2 z-10 inline-flex h-8 w-8 items-center justify-center rounded-md focus-visible:outline-none focus-visible:ring-2"
+            className="bg-muted text-muted-foreground ease-spring hover:text-foreground focus-visible:ring-primary/30 absolute right-3 top-3 z-10 grid h-8 w-8 place-items-center rounded-[10px] transition-transform duration-300 hover:rotate-90 focus-visible:outline-none focus-visible:ring-4"
           >
             <X className="h-4 w-4" />
             <span className="sr-only">Close</span>
@@ -111,7 +116,7 @@ export const SheetTitle = forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn('text-base font-semibold leading-none', className)}
+    className={cn('font-display text-xl font-semibold leading-tight', className)}
     {...props}
   />
 ));

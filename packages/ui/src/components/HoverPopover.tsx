@@ -51,6 +51,12 @@ interface HoverPopoverProps {
 
 const POPOVER_HEIGHT_GUESS = 240;
 
+// The card grows out of the corner nearest its trigger.
+const GROW_FROM = {
+  bottom: { start: 'origin-top-left', end: 'origin-top-right' },
+  top: { start: 'origin-bottom-left', end: 'origin-bottom-right' },
+} as const;
+
 export function HoverPopover({
   children,
   content,
@@ -164,21 +170,30 @@ export function HoverPopover({
               position: 'fixed',
               top: coords.top,
               left: coords.left,
-              transform: [
-                coords.align === 'end' ? 'translateX(-100%)' : null,
-                coords.placement === 'top' ? 'translateY(-100%)' : null,
-              ]
-                .filter(Boolean)
-                .join(' ') || undefined,
+              transform:
+                [
+                  coords.align === 'end' ? 'translateX(-100%)' : null,
+                  coords.placement === 'top' ? 'translateY(-100%)' : null,
+                ]
+                  .filter(Boolean)
+                  .join(' ') || undefined,
             }}
-            className={cn(
-              'border-border bg-card text-card-foreground z-50 rounded-md border p-3 shadow-md',
-              className,
-            )}
+            className="z-50"
             onMouseEnter={cancelTimers}
             onMouseLeave={startHide}
           >
-            {content}
+            {/* The entrance animates `transform`, so it runs on this inner box
+             *  and leaves the outer box's positioning translate alone. */}
+            <div
+              data-surface="tooltip"
+              className={cn(
+                'bg-card text-card-foreground animate-[sc-tip_460ms_var(--ease-spring)_both] rounded-xl p-3 shadow-[var(--shadow-tooltip)]',
+                GROW_FROM[coords.placement][coords.align],
+                className,
+              )}
+            >
+              {content}
+            </div>
           </div>,
           document.body,
         )}

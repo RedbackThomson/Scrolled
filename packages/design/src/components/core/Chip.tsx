@@ -19,7 +19,7 @@ export function Chip({ tone = 'neutral', hue, icon, children, onRemove, size = '
     gold: ['var(--gradient-gold)', 'var(--gold-fg)'],
     danger: ['oklch(0.7 0.18 25 / .14)', 'var(--danger)'],
     ok: ['var(--ok-halo)', 'oklch(0.5 0.14 148)'],
-    hue: [`oklch(0.72 0.12 ${hue} / .2)`, `oklch(0.55 0.14 ${hue})`],
+    hue: [`oklch(0.72 0.12 ${hue} / .2)`, `oklch(var(--chip-fg-l) 0.14 ${hue})`],
   }[tone];
   const fs = size === 'md' ? 12.5 : 11.5;
   return (

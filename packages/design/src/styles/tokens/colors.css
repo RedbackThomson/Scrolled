@@ -3,6 +3,8 @@
 :root {
   color-scheme: light;
   --accent-h: 148;
+  /* Lightness of hue-tinted chip text; raised on dark surfaces to keep AA contrast. */
+  --chip-fg-l: 0.55;
   /* Neutrals: sky-washed */
   --sky-25: #f5faff;
   --sky-50: #f3f8fd;
@@ -111,6 +113,7 @@
 .dark,
 [data-theme='dark'] {
   color-scheme: dark;
+  --chip-fg-l: 0.8;
   --surface-page: var(--twilight-950);
   --surface-page-top: var(--twilight-850);
   --surface-sidebar: var(--twilight-900);
@@ -168,4 +171,19 @@
 }
 [data-accent='teal'] {
   --accent-h: 185;
+}
+
+/* Hover cards and toasts sit on a dark surface in both themes. Re-pointing the
+   surface and text tokens lets content written for cards render correctly. */
+[data-surface='tooltip'] {
+  color-scheme: dark;
+  --chip-fg-l: 0.8;
+  --surface-card: var(--surface-tooltip);
+  --surface-sunken: var(--surface-tooltip-tile);
+  --surface-row-hover: var(--surface-tooltip-tile);
+  --text-1: var(--text-on-tooltip);
+  --text-2: color-mix(in oklab, var(--text-on-tooltip) 72%, transparent);
+  --border-1: var(--tooltip-line);
+  --accent-text: var(--accent-hi);
+  color: var(--text-1);
 }

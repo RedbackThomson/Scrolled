@@ -16,7 +16,7 @@ export const Command = forwardRef<
   <CommandPrimitive
     ref={ref}
     className={cn(
-      'bg-card text-card-foreground flex h-full w-full flex-col overflow-hidden rounded-md',
+      'bg-card text-card-foreground flex h-full w-full flex-col overflow-hidden',
       className,
     )}
     {...props}
@@ -45,20 +45,20 @@ export function CommandDialog({
         // are awkward on narrow phones where the on-screen keyboard already
         // claims half the height. Override translate/positioning so the
         // dialog fills the screen instead of staying centered.
-        className="flex flex-col overflow-hidden p-0 max-md:inset-0 max-md:h-[100dvh] max-md:max-w-none max-md:translate-x-0 max-md:translate-y-0 max-md:rounded-none sm:max-w-2xl"
+        className="flex flex-col gap-0 overflow-hidden p-0 max-md:inset-0 max-md:h-[100dvh] max-md:max-w-none max-md:translate-x-0 max-md:translate-y-0 max-md:rounded-none max-md:border-0 sm:max-w-[600px]"
         aria-label={label ?? 'Command palette'}
       >
         <Command
           label={label ?? 'Command palette'}
           shouldFilter={shouldFilter}
-          className="min-h-0 flex-1 [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5"
+          className="min-h-0 flex-1 [&_[cmdk-group]]:px-2 max-md:[&_[cmdk-item]]:min-h-11 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5"
         >
           {children}
         </Command>
         {footer && (
           // Keyboard hints aren't useful on touch — hide them on mobile so the
           // list claims the recovered vertical space.
-          <div className="border-border bg-muted/40 text-muted-foreground hidden border-t px-3 py-2 text-[11px] md:block">
+          <div className="border-muted bg-muted text-muted-foreground hidden border-t-2 px-4 py-[9px] text-xs md:block">
             {footer}
           </div>
         )}
@@ -71,12 +71,12 @@ export const CommandInput = forwardRef<
   ElementRef<typeof CommandPrimitive.Input>,
   ComponentPropsWithoutRef<typeof CommandPrimitive.Input>
 >(({ className, ...props }, ref) => (
-  <div className="border-border flex items-center border-b px-3" cmdk-input-wrapper="">
-    <Search className="text-muted-foreground mr-2 h-4 w-4 shrink-0" />
+  <div className="border-muted flex items-center gap-3 border-b-2 px-[18px]" cmdk-input-wrapper="">
+    <Search className="text-muted-foreground h-5 w-5 shrink-0" />
     <CommandPrimitive.Input
       ref={ref}
       className={cn(
-        'placeholder:text-muted-foreground flex h-11 w-full rounded-md bg-transparent py-3 text-base outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm',
+        'placeholder:text-muted-foreground flex h-[52px] w-full bg-transparent py-3.5 text-[17px] font-medium outline-none disabled:cursor-not-allowed disabled:opacity-50',
         className,
       )}
       {...props}
@@ -94,7 +94,7 @@ export const CommandList = forwardRef<
     className={cn(
       // Cap height on desktop so the dialog stays a tidy box; let the list
       // claim the available height when the dialog fills the viewport.
-      'max-h-[420px] flex-1 overflow-y-auto overflow-x-hidden max-md:max-h-none',
+      'max-h-[420px] flex-1 overflow-y-auto overflow-x-hidden p-2 max-md:max-h-none',
       className,
     )}
     {...props}
@@ -117,7 +117,7 @@ export const CommandGroup = forwardRef<
   <CommandPrimitive.Group
     ref={ref}
     className={cn(
-      'text-foreground [&_[cmdk-group-heading]]:text-muted-foreground overflow-hidden p-1 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium',
+      'text-foreground [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:font-display overflow-hidden [&_[cmdk-group-heading]]:px-2.5 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:text-[13px] [&_[cmdk-group-heading]]:font-semibold',
       className,
     )}
     {...props}
@@ -131,7 +131,7 @@ export const CommandSeparator = forwardRef<
 >(({ className, ...props }, ref) => (
   <CommandPrimitive.Separator
     ref={ref}
-    className={cn('bg-border -mx-1 h-px', className)}
+    className={cn('bg-muted -mx-1 my-1 h-0.5', className)}
     {...props}
   />
 ));
@@ -144,7 +144,7 @@ export const CommandItem = forwardRef<
   <CommandPrimitive.Item
     ref={ref}
     className={cn(
-      "data-[selected='true']:bg-accent data-[selected='true']:text-accent-foreground relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none data-[disabled='true']:pointer-events-none data-[disabled='true']:opacity-50",
+      "data-[selected='true']:bg-muted data-[selected='true']:text-foreground relative flex cursor-pointer select-none items-center gap-2.5 rounded-xl px-2.5 py-1.5 text-sm font-semibold outline-none data-[disabled='true']:pointer-events-none data-[disabled='true']:opacity-50 data-[selected='true']:shadow-[inset_0_0_0_2px_var(--border-1)]",
       className,
     )}
     {...props}

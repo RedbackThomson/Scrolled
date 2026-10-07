@@ -5,13 +5,13 @@ import { cn } from '../lib/cn';
 // statically-analyzable string. Add a tone here rather than constructing
 // `bg-${color}` at call sites.
 const TONES = {
-  slate: 'bg-slate-500/15 text-slate-700 dark:text-slate-300',
-  pink: 'bg-pink-500/15 text-pink-700 dark:text-pink-300',
-  red: 'bg-red-500/15 text-red-700 dark:text-red-300',
-  amber: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
-  blue: 'bg-blue-500/15 text-blue-700 dark:text-blue-300',
-  emerald: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
-  violet: 'bg-violet-500/15 text-violet-700 dark:text-violet-300',
+  slate: 'bg-muted text-muted-foreground',
+  pink: 'bg-[oklch(0.72_0.12_350/.2)] text-[color:oklch(var(--chip-fg-l)_0.14_350)]',
+  red: 'bg-[oklch(0.72_0.12_25/.2)] text-[color:oklch(var(--chip-fg-l)_0.14_25)]',
+  amber: 'bg-[oklch(0.72_0.12_75/.2)] text-[color:oklch(var(--chip-fg-l)_0.14_75)]',
+  blue: 'bg-[oklch(0.72_0.12_245/.2)] text-[color:oklch(var(--chip-fg-l)_0.14_245)]',
+  emerald: 'bg-[oklch(0.72_0.12_150/.2)] text-[color:oklch(var(--chip-fg-l)_0.14_150)]',
+  violet: 'bg-[oklch(0.72_0.12_295/.2)] text-[color:oklch(var(--chip-fg-l)_0.14_295)]',
 } as const;
 
 export type BadgeTone = keyof typeof TONES;
@@ -28,7 +28,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium',
+        'inline-flex items-center gap-1 whitespace-nowrap rounded-full px-[9px] py-0.5 text-[11.5px] font-bold',
         TONES[tone],
         className,
       )}
