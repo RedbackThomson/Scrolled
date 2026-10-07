@@ -13,7 +13,7 @@ import {
   ScrollText,
   Target,
 } from 'lucide-react';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 import { DetailListSection } from '@/components/layout/DetailListSection';
 import {
   DetailPageLayout,

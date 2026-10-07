@@ -3,7 +3,7 @@ import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, Info, Loader2 } from 'lucide-react';
 import { detectVersion, detectImageVersion } from '@scrolled/wz';
-import { Button, Input } from '@scrolled/ui';
+import { Button, Input } from '@scrolled/design';
 import { WizardLayout, type WizardStep } from '@/components/wizard/WizardLayout';
 import {
   StepFiles,
@@ -19,7 +19,7 @@ import { getUserDbClient } from '@/db/user';
 import { setActiveServerProfileId } from '@/lib/serverProfileResolution';
 import { importBackupBytes } from '@/hooks/useBackup';
 import { createLogger, describeError } from '@scrolled/game-db/lib/logger';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 import { useWizardMode } from '@/hooks/useWizardMode';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { acceptForDesktop } from '@/lib/filePickerAccept';
@@ -673,7 +673,7 @@ function RestoreDropZone({
         </p>
         <Button
           type="button"
-          variant="outline"
+          variant="secondary"
           size="sm"
           className="mt-3"
           onClick={() => inputRef.current?.click()}

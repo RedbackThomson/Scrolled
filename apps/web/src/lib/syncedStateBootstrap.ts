@@ -19,7 +19,7 @@ import type { UserDatabase } from '@/db/user';
 import type { EntityKind } from '@/db';
 import { isAccentName } from '@/lib/accents';
 import { useAccent, ACCENT_SETTING_KEY } from '@/stores/accent';
-import { setThemePersistence, useTheme, THEME_SETTING_KEY } from '@scrolled/ui';
+import { setThemePersistence, useTheme, THEME_SETTING_KEY } from '@scrolled/design';
 
 const LEGACY_ENTITIES_KEY = 'scrolled.recents.entities';
 const LEGACY_QUERIES_KEY = 'scrolled.recents.queries';

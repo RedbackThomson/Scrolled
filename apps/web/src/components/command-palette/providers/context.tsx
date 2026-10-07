@@ -1,4 +1,4 @@
-import { CommandGroup, CommandItem as CommandItemPrimitive } from '@scrolled/ui';
+import { CommandGroup, CommandItem as CommandItemPrimitive } from '@scrolled/design';
 import { useCommandPalette } from '@/stores/useCommandPalette';
 import type { CommandItem } from '../types';
 

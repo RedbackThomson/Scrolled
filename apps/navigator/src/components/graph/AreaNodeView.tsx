@@ -1,5 +1,5 @@
 import { Handle, Position, type Node, type NodeProps } from '@xyflow/react';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 import type { NodeId } from '@scrolled/nav-graph';
 
 export type AreaHighlight = 'start' | 'end' | 'path' | null;

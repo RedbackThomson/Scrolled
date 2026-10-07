@@ -3,10 +3,10 @@
 
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { Button, Input, Textarea } from '@scrolled/ui';
+import { Button, Input, Textarea } from '@scrolled/design';
 import { useCreateCollection, useUpdateCollection } from '@/hooks/useCollections';
 import type { CollectionRecord } from '@/db/user';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 import { Modal } from './Modal';
 import { COLLECTION_ICONS, DEFAULT_COLLECTION_ICON, resolveCollectionIcon } from './iconRegistry';
 import {
@@ -104,7 +104,7 @@ export function CollectionFormDialog({
       title={isEdit ? 'Edit collection' : 'New collection'}
       footer={
         <>
-          <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={pending}>
+          <Button type="button" variant="secondary" size="sm" onClick={onClose} disabled={pending}>
             Cancel
           </Button>
           <Button type="button" size="sm" onClick={submit} disabled={pending || !name.trim()}>

@@ -17,7 +17,7 @@ import {
   PinOff,
   Trash2,
 } from 'lucide-react';
-import { Button } from '@scrolled/ui';
+import { Button } from '@scrolled/design';
 import {
   CollectionFormDialog,
   downloadJson,
@@ -43,7 +43,7 @@ import {
 } from '@/hooks/useCollections';
 import type { CollectionEntityType, CollectionGroup, CollectionMember } from '@/db/user';
 import { COLLECTION_ENTITY_TYPES } from '@/db/user';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 
 const EMPTY_MEMBERS: readonly CollectionMember[] = [];
 const EMPTY_GROUPS: readonly CollectionGroup[] = [];
@@ -202,7 +202,7 @@ export default function CollectionDetail() {
               <CollectionDisplayOptionsMenu collection={collection} />
             )}
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={() => pinM.mutate({ id: collection.id, pinned: !collection.pinned })}
               disabled={pinM.isPending}
@@ -216,7 +216,7 @@ export default function CollectionDetail() {
               {collection.pinned ? 'Unpin' : 'Pin'}
             </Button>
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={onExport}
               disabled={exportM.isPending}
@@ -229,11 +229,11 @@ export default function CollectionDetail() {
               )}
               Export
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+            <Button variant="secondary" size="sm" onClick={() => setEditOpen(true)}>
               <Pencil className="h-3.5 w-3.5" /> Edit
             </Button>
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={onDelete}
               disabled={deleteM.isPending}

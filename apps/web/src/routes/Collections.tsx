@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, Plus } from 'lucide-react';
-import { Button } from '@scrolled/ui';
+import { Button } from '@scrolled/design';
 import {
   CollectionFormDialog,
   CollectionsOverflowMenu,
@@ -11,7 +11,7 @@ import {
 import { useCollectionsList } from '@/hooks/useCollections';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import type { CollectionRecord } from '@/db/user';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 
 export default function Collections() {
   usePageTitle('Collections');

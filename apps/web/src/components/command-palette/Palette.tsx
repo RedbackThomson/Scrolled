@@ -1,4 +1,4 @@
-import { CommandDialog, CommandEmpty, CommandInput, CommandList } from '@scrolled/ui';
+import { CommandDialog, CommandEmpty, CommandInput, CommandList } from '@scrolled/design';
 import { useCommandPalette } from '@/stores/useCommandPalette';
 import { McpPaletteProvider } from '@/mcp';
 import {

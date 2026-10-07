@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { HoverPopover } from '@scrolled/ui';
+import { HoverPopover } from '@scrolled/design';
 import { routeForEntity } from '@/lib/entityRoutes';
 import { GenericHoverCard } from './GenericHoverCard';
 

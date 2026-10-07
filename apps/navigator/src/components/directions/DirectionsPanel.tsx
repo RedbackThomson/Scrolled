@@ -1,4 +1,4 @@
-import { Button, cn } from '@scrolled/ui';
+import { Button, cn } from '@scrolled/design';
 import { Clock, X } from 'lucide-react';
 import type { NavGraph, PathResult, TravelEdge } from '@scrolled/nav-graph';
 

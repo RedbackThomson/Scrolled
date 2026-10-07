@@ -42,7 +42,7 @@ import { useDatasetUpdate } from '@/hooks/dataset/useDatasetUpdate';
 import { SidebarSyncStatus } from '@/components/sync/SidebarSyncStatus';
 import { SyncSignInNotice } from '@/components/sync/SyncSignInNotice';
 import { useInstalledDataset } from '@/hooks/dataset/useInstalledDataset';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 import { appConfig } from '@/config';
 
 interface SidebarChild {

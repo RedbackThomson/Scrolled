@@ -4,11 +4,13 @@ import { useSyncStatus } from '@scrolled/sync-core/react';
 import {
   Button,
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@scrolled/ui';
+} from '@scrolled/design';
 
 /** Rebuilds this device's collections from the account, discarding anything it
  *  has not managed to upload. The recovery path when a device looks out of step. */
@@ -38,7 +40,9 @@ export function SyncResyncButton({ disabled }: { disabled?: boolean }) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Replace this device&rsquo;s collections?</DialogTitle>
-            <DialogDescription>
+          </DialogHeader>
+          <DialogBody>
+            <DialogDescription className="text-sm">
               Your collections, groups, pinned searches, and settings on this device will be
               replaced with the copy stored on your account.
               {status.pendingChanges > 0 && (
@@ -51,16 +55,16 @@ export function SyncResyncButton({ disabled }: { disabled?: boolean }) {
               )}{' '}
               Your loaded game data is untouched.
             </DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" size="sm" disabled={busy} onClick={() => setOpen(false)}>
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="secondary" size="sm" disabled={busy} onClick={() => setOpen(false)}>
               Cancel
             </Button>
             <Button size="sm" disabled={busy} onClick={() => void confirm()}>
               {busy && <Loader2 className="h-4 w-4 animate-spin" />}
               Replace
             </Button>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>

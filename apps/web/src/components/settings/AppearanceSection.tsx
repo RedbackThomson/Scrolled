@@ -3,8 +3,8 @@ import { AccentPicker } from '@/components/common/AccentPicker';
 import { useSettingsSection } from '@/components/settings/SettingsScrollSpy';
 import { useShowEntityIds } from '@/stores/showEntityIds';
 import { useHideMinorPortals } from '@/stores/hideMinorPortals';
-import { useTheme } from '@scrolled/ui';
-import { cn } from '@scrolled/ui';
+import { useTheme } from '@scrolled/design';
+import { cn } from '@scrolled/design';
 
 export function AppearanceSection() {
   const sectionProps = useSettingsSection('appearance');

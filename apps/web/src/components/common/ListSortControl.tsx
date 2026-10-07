@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowDownUp, ArrowUp } from 'lucide-react';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 import type { SortDir, SortState } from '@/hooks/useListSort';
 
 interface ListSortControlProps {

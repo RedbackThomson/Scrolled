@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Database, Loader2, Sparkles } from 'lucide-react';
-import { Button } from '@scrolled/ui';
+import { Button } from '@scrolled/design';
 import { EXTRACTOR_CARD_KEYS, EXTRACTOR_CARD_META } from '@/components/common/extractorCatalog';
 import { ProgressBar } from '@/components/common/ProgressBar';
 import { useExtractAll } from '@/hooks/extraction/useExtractAll';

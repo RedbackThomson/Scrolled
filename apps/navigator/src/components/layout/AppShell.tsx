@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 
 import { wikiHomeUrl } from '@/lib/scrolledLinks';
 import { ThemeToggle } from './ThemeToggle';

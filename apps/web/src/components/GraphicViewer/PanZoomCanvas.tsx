@@ -12,7 +12,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { cn } from '../lib/cn';
+import { cn } from '@scrolled/design';
 
 export interface PanZoomView {
   /** Natural content size in CSS pixels. */

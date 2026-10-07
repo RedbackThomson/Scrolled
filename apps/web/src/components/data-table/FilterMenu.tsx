@@ -29,12 +29,12 @@ import {
   CommandList,
   CommandItem,
   CommandEmpty,
-} from '@scrolled/ui';
-import { Button, Input } from '@scrolled/ui';
+} from '@scrolled/design';
+import { Button, Input } from '@scrolled/design';
 import { usePopover } from '@/hooks/usePopover';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import type { ColumnFilter } from '@/db';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 import { collectFilterable, type FilterableCol } from './Filterable';
 
 type Variant = 'button' | 'plus';
@@ -566,7 +566,7 @@ function StringEditor({
         className="border-input bg-background focus-visible:ring-ring h-8 w-full rounded-md border px-2 text-base focus-visible:outline-none focus-visible:ring-2 sm:text-sm"
       />
       <div className="flex items-center justify-end gap-1.5">
-        <Button type="button" variant="outline" size="sm" onClick={() => onApply(null)}>
+        <Button type="button" variant="secondary" size="sm" onClick={() => onApply(null)}>
           Clear
         </Button>
         <Button
@@ -645,7 +645,7 @@ function NumberEditor({
         />
       </div>
       <div className="flex items-center justify-end gap-1.5">
-        <Button type="button" variant="outline" size="sm" onClick={() => onApply(null)}>
+        <Button type="button" variant="secondary" size="sm" onClick={() => onApply(null)}>
           Clear
         </Button>
         <Button type="button" size="sm" onClick={apply}>

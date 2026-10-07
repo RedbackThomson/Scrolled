@@ -1,4 +1,4 @@
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 
 /**
  * The sliding-pill visual of a switch. Purely presentational — the caller owns

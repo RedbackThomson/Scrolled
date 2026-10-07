@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from '@scrolled/ui';
+import { Button } from '@scrolled/design';
 import { useDataState } from '@/hooks/useDataState';
 import { appConfig } from '@/config';
 

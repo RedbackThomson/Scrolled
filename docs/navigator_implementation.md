@@ -64,15 +64,15 @@ packages/
                        IR types + Zod schema, the authored data, the compiler
                        (IR → runtime adjacency), pathfinding (BFS + eligibility),
                        JSON export for portability. No React, no game-db queries.
-  ui/                @scrolled/ui          — shared design system extracted from
-                       apps/web: theme tokens + tailwind preset, cn(), shadcn
-                       primitives, HoverPopover, PanZoomCanvas, useTheme (with
-                       injected persistence), app-shell pieces.
+  design/            @scrolled/design      — shared component library: theme
+                       tokens + tailwind preset, cn(), Radix/cmdk primitives,
+                       HoverPopover, the redesign components, useTheme (with
+                       injected persistence).
 apps/
   navigator/         @scrolled/navigator   — the React app: graph view, directions
                        panel, eligibility panel, deep-links to Scrolled.
   web/               @scrolled/web         — migrated to import shared bits from
-                       @scrolled/ui (mechanical, lint-guarded).
+                       @scrolled/design (mechanical, lint-guarded).
 ```
 
 Dependency direction (must stay acyclic; ESLint enforces it):
@@ -82,11 +82,11 @@ Dependency direction (must stay acyclic; ESLint enforces it):
         ▲                                               ▲
         │                                               │ (read contract, optional
         │                                               │  — name resolution only)
-   apps/navigator ───────────▶ @scrolled/ui ───────────┘
+   apps/navigator ───────────▶ @scrolled/design ───────┘
         │                          ▲
         └──────────▶ @scrolled/config (Scrolled base URL, analytics gate)
                                    │
-                            apps/web (also consumes @scrolled/ui)
+                            apps/web (also consumes @scrolled/design)
 ```
 
 `@scrolled/nav-graph` is a **leaf-ish core**: it may import *types* from
@@ -379,7 +379,7 @@ A **brand-new standalone Vite SPA** — its own `index.html`, its own entry, its
 own dependency set. It lives in the monorepo as a sibling of `apps/web` *only* so
 it can consume shared `workspace:*` packages; it is **not** bound to Scrolled's
 stack, and we pick libraries on this app's merits. The single hard inheritance is
-what `@scrolled/ui` peer-requires — **React 18 + Tailwind** — because that is how
+what `@scrolled/design` peer-requires — **React 18 + Tailwind** — because that is how
 the shared design language is delivered. Everything else is re-evaluated for a
 graph-centric, mostly-single-view, fully-offline tool, which mostly means *fewer*
 dependencies than Scrolled.
@@ -389,8 +389,8 @@ dependencies than Scrolled.
 | Concern | Choice | Rationale / vs. Scrolled |
 |---|---|---|
 | Build / lang | **Vite + TypeScript (strict)** | As requested; aligns tooling across the monorepo. |
-| UI runtime | **React 18** | Required to consume `@scrolled/ui`. The one non-negotiable. |
-| Styling | **Tailwind v3 + `@scrolled/ui` preset over `@scrolled/design` tokens** | Delivers the shared design language. |
+| UI runtime | **React 18** | Required to consume `@scrolled/design`. The one non-negotiable. |
+| Styling | **Tailwind v3 + `@scrolled/design` preset and tokens** | Delivers the shared design language. |
 | Graph view | **React Flow (`@xyflow/react` v12) + `d3-force`** | The heart of the app; new to the monorepo, justified below. |
 | UI state | **Zustand** | Tiny, ergonomic; happens to match Scrolled — kept on merit, not convention. |
 | URL state | **`nuqs`** (or native `URLSearchParams`) | Makes start/end/eligibility a **shareable link** — a core use case. |
@@ -406,7 +406,7 @@ genuinely fits (Zustand, nuqs, Zod, Vitest, Lucide).
 
 **Rendering library — recommendation: React Flow (`@xyflow/react` v12).** It gives
 pan/zoom, minimap, and **custom React node/edge components** out of the box, so
-nodes can be rendered with `@scrolled/ui` primitives and look identical to
+nodes can be rendered with `@scrolled/design` primitives and look identical to
 Scrolled. It directly supports the deferred features: **sub-flows / parent nodes**
 for region grouping & semantic zoom, and **custom edge/node types** for the
 PCB-style off-page connectors. Layout is decoupled — we feed it positions.
@@ -437,7 +437,7 @@ convention):**
 - `components/eligibility/EligibilityPanel.tsx` — declare level / mesos / items /
   quests; toggles the hard filter; persisted locally (Zustand + `idb-keyval`).
 - `stores/` — `useDirections` (start/end/result), `useEligibility`, plus the
-  shared `useTheme` from `@scrolled/ui`.
+  shared `useTheme` from `@scrolled/design`.
 - `hooks/useNavGraph.ts` — selects the data set for the active server profile and
   memoizes `compileGraph`.
 
@@ -451,7 +451,7 @@ authored `via` text. Navigator never *requires* game data.
 
 **Command palette (optional, not inherited).** Scrolled's "palette wiring ships
 with features" rule is a Scrolled rule, not a constraint on this app. If Navigator
-wants a palette, the cheapest path is the `cmdk` primitive from `@scrolled/ui` with
+wants a palette, the cheapest path is the `cmdk` primitive from `@scrolled/design` with
 a couple of actions (jump-to-node, set start/end, toggle filter); otherwise skip it
 for MVP.
 
@@ -459,7 +459,7 @@ for MVP.
 Navigator, reuse the same host-gated, opt-out, identifier-free approach Scrolled
 uses (via `@scrolled/config`). Optional and off for self-hosters/forks.
 
-## 7. `@scrolled/ui` — the shared design system
+## 7. `@scrolled/design` — the shared design system
 
 This is the "pull things from Scrolled into a common component library" step. It
 lands as milestone **M2** — *after* the headless graph core (M1) but *before* any
@@ -488,7 +488,7 @@ start with a thin local shell that consumes the shared theme + primitives, and w
 generalize the shell only once both apps' needs are clear. Entity-display/link,
 MapViewer/WorldMapViewer, and the command-palette *providers* stay app-specific.
 
-**Migration mechanics.** Add `@scrolled/ui` as a `workspace:*` dep of `apps/web`,
+**Migration mechanics.** Add `@scrolled/design` as a `workspace:*` dep of `apps/web`,
 replace local imports with package imports (mechanical, mostly find/replace),
 update `eslint.config.js` boundaries to allow the new package and keep the
 extractor/cloud-SDK prohibitions intact. **Risk:** this touches many files in
@@ -564,7 +564,7 @@ The handwritten IR needs guardrails since there's no extraction to keep it hones
 - `apps/navigator`: component tests for `DirectionsPanel` rendering of steps and
   requirement chips; `EligibilityPanel` filter wiring; a smoke test that "Get
   Directions" between two fixture nodes highlights a path.
-- `@scrolled/ui`: render/snapshot of primitives in light/dark; `useTheme`
+- `@scrolled/design`: render/snapshot of primitives in light/dark; `useTheme`
   persistence-adapter contract.
 
 ## 12. Phased delivery
@@ -580,7 +580,7 @@ pathfinding/search test suite is green.
    real data to exercise it (fixtures + a starter slice). **Exit criteria: the
    graph compiles to JSON, and the full pathfinding / eligibility / search test
    suite passes — entirely headless, zero UI code.**
-2. **M2 — Shared UI foundation.** Create `@scrolled/ui` with theme preset + tokens
+2. **M2 — Shared UI foundation.** Create `@scrolled/design` with theme preset + tokens
    + `cn()` + core primitives + `HoverPopover` + `useTheme` (injected persistence)
    + `PanZoomCanvas`. Migrate `apps/web` to it; confirm parity. *(De-risks the
    design language before any Navigator UI.)*
@@ -604,7 +604,7 @@ pathfinding/search test suite is green.
   whether free text is enough (the user emphasized item/quest ids).
 - **Meso semantics:** MVP treats meso requirements as per-use affordability, not a
   cumulative trip budget. Confirm that's acceptable until the weighted-cost phase.
-- **`@scrolled/ui` shell scope:** start with a thin local shell in Navigator and
+- **`@scrolled/design` shell scope:** start with a thin local shell in Navigator and
   generalize `AppShell`/`Sidebar` later — confirm we're comfortable deferring the
   shared shell.
 - **React Flow dependency:** confirm adding `@xyflow/react` + `d3-force` is

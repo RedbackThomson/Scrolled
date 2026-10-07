@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { clamp } from '@scrolled/game-db/lib/math';
-import { PanZoomCanvas, type PanZoomView } from '@scrolled/ui';
+import { PanZoomCanvas, type PanZoomView } from './PanZoomCanvas';
 import { bytesToUrl } from '@/lib/blob';
 import type { GraphicViewerView } from './types';
 

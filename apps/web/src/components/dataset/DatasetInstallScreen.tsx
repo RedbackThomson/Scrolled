@@ -5,7 +5,7 @@
 
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
-import { Button } from '@scrolled/ui';
+import { Button } from '@scrolled/design';
 import { useFixedDatasetInstall } from '@/hooks/dataset/useFixedDatasetInstall';
 import { isAppUpdateRequired } from '@/hooks/dataset/errors';
 import { reloadForUpdate } from '@/lib/swReload';
@@ -68,14 +68,14 @@ export function DatasetInstallScreen() {
             {needsAppUpdate ? (
               <Button
                 type="button"
-                variant="outline"
+                variant="secondary"
                 size="sm"
                 onClick={() => reloadForUpdate(updateServiceWorker)}
               >
                 Reload to update
               </Button>
             ) : (
-              <Button type="button" variant="outline" size="sm" onClick={retry}>
+              <Button type="button" variant="secondary" size="sm" onClick={retry}>
                 Try again
               </Button>
             )}

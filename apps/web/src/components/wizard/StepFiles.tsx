@@ -10,12 +10,12 @@ import {
   Upload,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { Button, Input } from '@scrolled/ui';
+import { Button, Input } from '@scrolled/design';
 import { getDbClient } from '@/db';
 import { sha256OfFile } from '@/lib/hashFile';
 import { createLogger, describeError } from '@scrolled/game-db/lib/logger';
 import type { Features } from '@/hooks/useFeatures';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 import { acceptForDesktop } from '@/lib/filePickerAccept';
 import type { DataSourceKind, WzMapleVersionName } from '@/parser';
 import { BUILTIN_PROFILES } from '@scrolled/game-db/serverProfiles';
@@ -408,7 +408,7 @@ export function StepFiles({
             {source !== 'img' && (
               <Button
                 type="button"
-                variant="outline"
+                variant="secondary"
                 size="sm"
                 onClick={() => inputRef.current?.click()}
               >
@@ -418,7 +418,7 @@ export function StepFiles({
             {source !== 'wz' && (
               <Button
                 type="button"
-                variant="outline"
+                variant="secondary"
                 size="sm"
                 onClick={() => dirInputRef.current?.click()}
               >

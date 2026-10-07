@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { bytesToUrl } from '@/lib/blob';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 
 interface Props {
   data: Uint8Array;

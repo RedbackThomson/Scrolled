@@ -1,6 +1,6 @@
 import { BookmarkPlus, FolderPlus, Folder } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { CommandGroup, CommandItem as CommandItemPrimitive } from '@scrolled/ui';
+import { CommandGroup, CommandItem as CommandItemPrimitive } from '@scrolled/design';
 import {
   useCollectionsList,
   useCreateCollection,

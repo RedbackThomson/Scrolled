@@ -7,10 +7,10 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { BookmarkPlus } from 'lucide-react';
-import { HoverPopover } from '@scrolled/ui';
+import { HoverPopover } from '@scrolled/design';
 import { useMembership } from '@/hooks/useCollections';
 import type { CollectionEntityType, MembershipBadge } from '@/db/user';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 import { CollectionPicker } from './CollectionPicker';
 import { resolveCollectionIcon } from './iconRegistry';
 import { resolveCollectionColor } from './colorRegistry';

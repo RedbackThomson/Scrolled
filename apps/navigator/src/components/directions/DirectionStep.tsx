@@ -9,7 +9,7 @@ import {
   Train,
   Users,
 } from 'lucide-react';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 import { edgeSeconds, type NavGraph, type TravelEdge, type TravelMethod } from '@scrolled/nav-graph';
 
 import { formatDuration } from '@/lib/formatDuration';

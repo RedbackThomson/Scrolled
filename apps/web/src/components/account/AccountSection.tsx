@@ -2,7 +2,7 @@ import { UserCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCurrentUser, useIdentity } from '@scrolled/identity-core/react';
 import { useSettingsSection } from '@/components/settings/SettingsScrollSpy';
-import { Button } from '@scrolled/ui';
+import { Button } from '@scrolled/design';
 import { SyncControls } from '@/components/sync/SyncControls';
 import { appConfig } from '@/config';
 import { oauthProviderLabel } from '@/lib/oauthProviders';
@@ -47,7 +47,7 @@ function AccountSectionInner() {
                   </p>
                 )}
               </div>
-              <Button variant="outline" size="sm" className="shrink-0" onClick={() => void logout()}>
+              <Button variant="secondary" size="sm" className="shrink-0" onClick={() => void logout()}>
                 Sign out
               </Button>
             </div>

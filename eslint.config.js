@@ -219,10 +219,8 @@ export default tseslint.config(
     },
   },
 
-  // @scrolled/ui is the shared design system: React-aware, but a leaf among
-  // @scrolled/* — it must not depend on game-db, the extractor, identity, or any
-  // other workspace package. Keeps both apps able to consume it without
-  // dragging in app-specific machinery. See docs/navigator_implementation.md §7.
+  // @scrolled/ui only holds Badge until its call sites move to Chip. It may lean
+  // on @scrolled/design but nothing else in the workspace.
   {
     files: ['packages/ui/**/*.{ts,tsx}'],
     plugins: { '@typescript-eslint': tseslint.plugin },
@@ -232,9 +230,9 @@ export default tseslint.config(
         {
           patterns: [
             {
-              group: ['@scrolled/*'],
+              group: ['@scrolled/*', '!@scrolled/design'],
               message:
-                '@scrolled/ui is a leaf design-system package — it must not import other @scrolled/* packages. See docs/navigator_implementation.md §7.',
+                '@scrolled/ui may only import @scrolled/design. New UI belongs in @scrolled/design.',
             },
           ],
         },
@@ -242,8 +240,9 @@ export default tseslint.config(
     },
   },
 
-  // @scrolled/design is the redesign's component library: a leaf among
-  // @scrolled/* for the same reason as @scrolled/ui, so both apps can adopt it.
+  // @scrolled/design is the shared component library: React-aware, but a leaf
+  // among @scrolled/* so both apps can consume it without dragging in
+  // app-specific machinery.
   {
     files: ['packages/design/**/*.{ts,tsx}'],
     plugins: { '@typescript-eslint': tseslint.plugin },

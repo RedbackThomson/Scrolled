@@ -1,6 +1,6 @@
 import { AlertTriangle, ExternalLink, ScrollText } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 import type { DagreNode } from './useDagreLayout';
 
 interface Props {

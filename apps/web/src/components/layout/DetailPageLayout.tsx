@@ -1,7 +1,7 @@
 import { Loader2 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 import { appConfig } from '@/config';
 
 export function DetailPageLoading({ entity, id }: { entity: string; id: number | string }) {

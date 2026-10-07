@@ -11,7 +11,7 @@ import {
   type ExtractorKey,
   type ExtractorStatus,
 } from '@/hooks/extraction/useWizardExtract';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 import { buildPlan } from './plan';
 import type { WizardFile } from './StepFiles';
 

@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useSyncStatus } from '@scrolled/sync-core/react';
-import { Button } from '@scrolled/ui';
+import { Button } from '@scrolled/design';
 import { getUserDbClient } from '@/db/user';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 import { presentSyncStatus, formatLastSynced } from './syncPresentation';
 import { SyncResyncButton } from './SyncResyncButton';
 
@@ -67,7 +67,7 @@ export function SyncControls() {
           {/* Never gated on `syncing`: a device that cannot finish a cycle is
               exactly the one that needs to rebuild from the account. */}
           <SyncResyncButton />
-          <Button variant="outline" size="sm" disabled={syncing} onClick={() => void onSyncNow()}>
+          <Button variant="secondary" size="sm" disabled={syncing} onClick={() => void onSyncNow()}>
             {syncing ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (

@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { setThemePersistence } from '@scrolled/ui';
+import { setThemePersistence } from '@scrolled/design';
 
 import { App } from '@/App';
 import '@scrolled/design/tokens.css';

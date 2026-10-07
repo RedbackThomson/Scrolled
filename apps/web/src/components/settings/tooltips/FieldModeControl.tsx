@@ -1,4 +1,4 @@
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 import { FIELD_MODES, type FieldMode } from '@/components/entity-links/registry';
 
 const MODE_LABELS: Record<FieldMode, string> = {

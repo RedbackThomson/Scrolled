@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { LogOut, Settings, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCurrentUser, useIdentity } from '@scrolled/identity-core/react';
-import { Button } from '@scrolled/ui';
-import { cn } from '@scrolled/ui';
+import { Button } from '@scrolled/design';
+import { cn } from '@scrolled/design';
 
 /**
  * The account control in the top bar. Mounted only when the deployment enables

@@ -14,7 +14,7 @@ import { useDeleteGroup } from '@/hooks/useCollections';
 import type { CollectionGroup } from '@/db/user';
 import { groupDndId } from './dndIds';
 import { GroupFormDialog } from './GroupFormDialog';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 
 interface GroupSectionProps {
   /** The group record, or null for the default (implicit) group. */

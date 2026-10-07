@@ -7,10 +7,10 @@ import { useEffect, useState } from 'react';
 import { usePopover } from '@/hooks/usePopover';
 import { createPortal } from 'react-dom';
 import { BookmarkPlus, ChevronDown, Loader2, Plus, Search } from 'lucide-react';
-import { Button, Input } from '@scrolled/ui';
+import { Button, Input } from '@scrolled/design';
 import { useBulkAddMembers, useCollectionsList, useCreateCollection } from '@/hooks/useCollections';
 import type { CollectionEntityType, EntityRef } from '@/db/user';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 
 interface CollectionsBulkAddMenuProps {
   entityType: CollectionEntityType;
@@ -95,7 +95,7 @@ export function CollectionsBulkAddMenu({
       <Button
         ref={triggerRef}
         type="button"
-        variant="outline"
+        variant="secondary"
         size="sm"
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="dialog"
@@ -178,7 +178,7 @@ export function CollectionsBulkAddMenu({
                 <Button
                   type="button"
                   size="sm"
-                  variant="outline"
+                  variant="secondary"
                   className="w-full justify-start"
                   onClick={createAndAdd}
                   disabled={createM.isPending || bulkM.isPending}

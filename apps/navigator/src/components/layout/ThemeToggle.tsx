@@ -1,5 +1,5 @@
 import { Monitor, Moon, Sun } from 'lucide-react';
-import { Button, useTheme, type ThemeMode } from '@scrolled/ui';
+import { Button, useTheme, type ThemeMode } from '@scrolled/design';
 
 const ICONS: Record<ThemeMode, typeof Sun> = {
   light: Sun,

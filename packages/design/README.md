@@ -1,8 +1,10 @@
 # @scrolled/design
 
-Component library for the Scrolled redesign: soft, rounded React components
-styled with inline styles over CSS custom properties, plus the tokens and
-self-hosted fonts they depend on. Shared by `apps/web` and `apps/navigator`.
+Scrolled's component library, shared by `apps/web` and `apps/navigator`: the
+redesign's soft, rounded components (inline styles over CSS custom properties),
+the Radix and cmdk primitives (Button, Dialog, Sheet, Command, HoverPopover,
+Input, Table), the Tailwind preset, `cn()`, the theme store, and the tokens and
+self-hosted fonts they all depend on.
 
 ## Use
 
@@ -14,11 +16,12 @@ import { Skull } from 'lucide-react';
 <SlotTile icon={Skull} hue={20} size={52} />;
 ```
 
-| Entry        | Contents                                                                 |
-| ------------ | ------------------------------------------------------------------------ |
-| `tokens.css` | Custom properties, keyframes and fonts. Safe beside `@scrolled/ui`.      |
-| `base.css`   | Element styles (`body`, `a`, selection) and the `data-motion` overrides. |
-| `styles.css` | Both of the above.                                                       |
+| Entry             | Contents                                                                                                          |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `tokens.css`      | Custom properties, keyframes and fonts.                                                                           |
+| `base.css`        | Element styles (`body`, `a`, selection) and the `data-motion` overrides.                                          |
+| `styles.css`      | Both of the above.                                                                                                |
+| `tailwind-preset` | Tailwind preset mapping the shadcn color names onto the tokens. Add `packages/design/src` to the app's `content`. |
 
 Theme follows `.dark` on `<html>`, the accent follows `data-accent`, and
 `data-motion="off"` (with `base.css`) stills every animation.

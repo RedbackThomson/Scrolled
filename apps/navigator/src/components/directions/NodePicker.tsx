@@ -6,7 +6,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from '@scrolled/ui';
+} from '@scrolled/design';
 import { ChevronDown } from 'lucide-react';
 import type { AreaNode, NavGraph, NodeId } from '@scrolled/nav-graph';
 
@@ -25,7 +25,7 @@ export function NodePicker({ label, graph, value, onChange }: NodePickerProps) {
   return (
     <>
       <Button
-        variant="outline"
+        variant="secondary"
         size="sm"
         onClick={() => setOpen(true)}
         className="h-auto w-full justify-between gap-2 py-2"

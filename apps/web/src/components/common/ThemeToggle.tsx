@@ -1,6 +1,6 @@
 import { Moon, Sun } from 'lucide-react';
-import { Button } from '@scrolled/ui';
-import { useTheme } from '@scrolled/ui';
+import { Button } from '@scrolled/design';
+import { useTheme } from '@scrolled/design';
 
 export function ThemeToggle() {
   const theme = useTheme((s) => s.theme);

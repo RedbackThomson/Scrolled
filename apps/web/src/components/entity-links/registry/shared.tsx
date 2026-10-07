@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 
 /** A small pill used for boolean flags in tooltip meta rows. */
 export function Badge({ children, className }: { children: ReactNode; className?: string }) {

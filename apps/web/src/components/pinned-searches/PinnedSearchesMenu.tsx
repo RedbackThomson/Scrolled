@@ -10,12 +10,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Bookmark, ChevronDown, Loader2, X } from 'lucide-react';
-import { Button } from '@scrolled/ui';
+import { Button } from '@scrolled/design';
 import { usePopover } from '@/hooks/usePopover';
 import { useDeletePinnedSearch, usePinnedSearches } from '@/hooks/usePinnedSearches';
 import { listingRouteForEntity } from '@/lib/entityRoutes';
 import type { CollectionEntityType } from '@/db/user';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 
 interface Props {
   entity: CollectionEntityType;
@@ -67,7 +67,7 @@ export function PinnedSearchesMenu({ entity }: Props) {
       <Button
         ref={triggerRef}
         type="button"
-        variant="outline"
+        variant="secondary"
         size="sm"
         onClick={() => setOpen((o) => !o)}
         title="Saved searches for this page"

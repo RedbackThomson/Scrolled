@@ -4,7 +4,7 @@ import { useSettingsSection } from '@/components/settings/SettingsScrollSpy';
 import { Badge } from '@scrolled/ui';
 import { useDatasetUpdate } from '@/hooks/dataset/useDatasetUpdate';
 import { getDbClient } from '@/db';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 import { useMemo } from 'react';
 
 export function LibraryStatusSection() {

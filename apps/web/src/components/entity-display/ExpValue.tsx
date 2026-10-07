@@ -1,4 +1,4 @@
-import { HoverPopover } from '@scrolled/ui';
+import { HoverPopover } from '@scrolled/design';
 import { useServerProfile } from '@/hooks/useServerProfile';
 
 /**

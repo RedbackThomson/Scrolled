@@ -1,5 +1,6 @@
 import type { Preview } from '@storybook/react';
 import '../src/styles/styles.css';
+import './tailwind.css';
 import { Stage, type Globals } from './Stage';
 
 const preview: Preview = {

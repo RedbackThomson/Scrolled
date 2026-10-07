@@ -9,7 +9,7 @@
 
 import { useState, type ChangeEvent } from 'react';
 import { AlertCircle, FileJson, Loader2, Upload } from 'lucide-react';
-import { Button, Input } from '@scrolled/ui';
+import { Button, Input } from '@scrolled/design';
 import { useImportJson } from '@/hooks/useCollections';
 import {
   collectionsExportSchema,
@@ -17,7 +17,7 @@ import {
   type ImportConflictMode,
   type ImportReport,
 } from '@/db/user/collectionsJson';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 import { Modal } from './Modal';
 
 interface CollectionsImportDialogProps {
@@ -120,7 +120,7 @@ export function CollectionsImportDialog({
           <>
             <Button
               type="button"
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={close}
               disabled={importM.isPending}

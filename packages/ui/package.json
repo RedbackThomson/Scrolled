@@ -3,10 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Shared UI for Scrolled apps: Tailwind preset over the @scrolled/design tokens, cn(), shadcn primitives, HoverPopover, useTheme (with injected persistence), and PanZoomCanvas.",
+  "description": "Leftover Badge primitive awaiting removal; new UI comes from @scrolled/design.",
   "exports": {
-    ".": "./src/index.ts",
-    "./tailwind-preset": "./src/tailwind-preset.ts"
+    ".": "./src/index.ts"
   },
   "scripts": {
     "test": "vitest run --passWithNoTests",
@@ -14,25 +13,14 @@
     "lint": "eslint ."
   },
   "peerDependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "tailwindcss": "^3.4.13"
+    "react": "^18.3.1"
   },
   "dependencies": {
-    "@radix-ui/react-dialog": "^1.1.15",
-    "clsx": "^2.1.1",
-    "cmdk": "^1.1.1",
-    "lucide-react": "^0.451.0",
-    "tailwind-merge": "^2.5.2",
-    "tailwindcss-animate": "^1.0.7",
-    "zustand": "^5.0.0"
+    "@scrolled/design": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^18.3.11",
-    "@types/react-dom": "^18.3.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "tailwindcss": "^3.4.13",
     "vitest": "^2.1.2"
   }
 }

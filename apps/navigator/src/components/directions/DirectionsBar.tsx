@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Button } from '@scrolled/ui';
+import { Button } from '@scrolled/design';
 import { ArrowRightLeft, Route, X } from 'lucide-react';
 import { asNodeId, type NavGraph } from '@scrolled/nav-graph';
 

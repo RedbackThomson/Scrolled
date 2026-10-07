@@ -16,7 +16,7 @@ import { CSS } from '@dnd-kit/utilities';
 import type { CollectionMember } from '@/db/user';
 import { MemberRow } from './MemberRow';
 import { memberDndId } from './dndIds';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 
 interface SortableMemberRowProps {
   member: CollectionMember;

@@ -1,130 +1,106 @@
-import type { ReactNode } from 'react';
+import {
+  forwardRef,
+  type ComponentPropsWithoutRef,
+  type ElementRef,
+  type HTMLAttributes,
+} from 'react';
+import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
-import { Icon } from '../core/Icon';
+import { cn } from '../../lib/cn';
 
-export interface DialogProps {
-  open?: boolean;
-  title?: string;
-  subtitle?: string;
-  /** Usually a SlotTile */
-  icon?: ReactNode;
-  children?: ReactNode;
-  /** Buttons; footer sits on a sunken fill */
-  footer?: ReactNode;
-  width?: number;
-  /** null hides the close button */
-  onClose?: (() => void) | null;
-  /** Render without the fixed scrim (docs, nesting) */
-  inline?: boolean;
-}
+export const Dialog = DialogPrimitive.Root;
+export const DialogTrigger = DialogPrimitive.Trigger;
+export const DialogPortal = DialogPrimitive.Portal;
+export const DialogClose = DialogPrimitive.Close;
 
-export function Dialog({
-  open = true,
-  title,
-  subtitle,
-  icon,
-  children,
-  footer,
-  width = 500,
-  onClose,
-  inline,
-}: DialogProps) {
-  if (!open) return null;
-  const card = (
-    <div
-      role="dialog"
-      aria-label={title}
-      style={{
-        width,
-        maxWidth: '100%',
-        borderRadius: 22,
-        background: 'var(--surface-card)',
-        border: 'var(--border-rim)',
-        boxShadow: 'var(--shadow-pop)',
-        overflow: 'hidden',
-        animation: 'sc-modal var(--dur-modal) var(--ease-spring) both',
-      }}
-    >
-      {title && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            padding: '14px 16px 14px 18px',
-            borderBottom: '2px solid var(--surface-sunken)',
-          }}
-        >
-          {icon}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
-            <span style={{ font: '600 19px var(--font-display)' }}>{title}</span>
-            {subtitle && <span style={{ fontSize: 12.5, color: 'var(--text-2)' }}>{subtitle}</span>}
-          </div>
-          {onClose !== null && (
-            <button
-              type="button"
-              aria-label="Close"
-              onClick={onClose}
-              style={{
-                width: 32,
-                height: 32,
-                border: 'none',
-                borderRadius: 10,
-                display: 'grid',
-                placeItems: 'center',
-                background: 'var(--surface-sunken)',
-                color: 'var(--text-2)',
-                cursor: 'pointer',
-                transition: 'transform var(--dur-base) var(--ease-spring)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'rotate(90deg)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'none';
-              }}
-            >
-              <Icon icon={X} size={16} />
-            </button>
-          )}
-        </div>
+export const DialogOverlay = forwardRef<
+  ElementRef<typeof DialogPrimitive.Overlay>,
+  ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Overlay
+    ref={ref}
+    className={cn(
+      'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-[var(--surface-scrim)] duration-[260ms]',
+      className,
+    )}
+    {...props}
+  />
+));
+DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
+
+export const DialogContent = forwardRef<
+  ElementRef<typeof DialogPrimitive.Content>,
+  ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
+    showCloseButton?: boolean;
+  }
+>(({ className, children, showCloseButton = true, ...props }, ref) => (
+  <DialogPortal>
+    <DialogOverlay />
+    <DialogPrimitive.Content
+      ref={ref}
+      className={cn(
+        'border-border bg-card text-card-foreground shadow-pop data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90 data-[state=open]:slide-in-from-bottom-4 data-[state=open]:ease-spring fixed left-1/2 top-1/2 z-50 flex w-full max-w-[500px] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden border-2 data-[state=closed]:duration-200 data-[state=open]:duration-500 sm:rounded-2xl',
+        className,
       )}
-      <div style={{ padding: '16px 18px' }}>{children}</div>
-      {footer && (
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: 8,
-            padding: '12px 16px',
-            borderTop: '2px solid var(--surface-sunken)',
-            background: 'var(--surface-sunken)',
-          }}
-        >
-          {footer}
-        </div>
-      )}
-    </div>
-  );
-  if (inline) return card;
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 50,
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'flex-start',
-        paddingTop: 80,
-        background: 'var(--surface-scrim)',
-        animation: 'sc-fade 260ms ease-out both',
-      }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose?.();
-      }}
+      {...props}
     >
-      {card}
-    </div>
-  );
-}
+      {children}
+      {showCloseButton && (
+        <DialogPrimitive.Close className="bg-muted text-muted-foreground ease-spring hover:text-foreground focus-visible:ring-primary/30 absolute right-4 top-3.5 grid h-8 w-8 place-items-center rounded-[10px] transition-transform duration-300 hover:rotate-90 focus-visible:outline-none focus-visible:ring-4 disabled:pointer-events-none">
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </DialogPrimitive.Close>
+      )}
+    </DialogPrimitive.Content>
+  </DialogPortal>
+));
+DialogContent.displayName = DialogPrimitive.Content.displayName;
+
+/** Title row: an optional icon tile, then the title and description. */
+export const DialogHeader = ({ className, ...props }: HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn(
+      'border-muted flex items-center gap-3 border-b-2 py-3.5 pl-[18px] pr-14',
+      className,
+    )}
+    {...props}
+  />
+);
+DialogHeader.displayName = 'DialogHeader';
+
+export const DialogBody = ({ className, ...props }: HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn('px-[18px] py-4', className)} {...props} />
+);
+DialogBody.displayName = 'DialogBody';
+
+export const DialogFooter = ({ className, ...props }: HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn('border-muted bg-muted flex justify-end gap-2 border-t-2 px-4 py-3', className)}
+    {...props}
+  />
+);
+DialogFooter.displayName = 'DialogFooter';
+
+export const DialogTitle = forwardRef<
+  ElementRef<typeof DialogPrimitive.Title>,
+  ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Title
+    ref={ref}
+    className={cn('font-display text-[19px] font-semibold leading-tight', className)}
+    {...props}
+  />
+));
+DialogTitle.displayName = DialogPrimitive.Title.displayName;
+
+export const DialogDescription = forwardRef<
+  ElementRef<typeof DialogPrimitive.Description>,
+  ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Description
+    ref={ref}
+    className={cn('text-muted-foreground text-[12.5px]', className)}
+    {...props}
+  />
+));
+DialogDescription.displayName = DialogPrimitive.Description.displayName;

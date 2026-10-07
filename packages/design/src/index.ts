@@ -1,4 +1,14 @@
+export { cn } from './lib/cn';
 export { useHoverPress, SPRING, type SlotTint } from './lib/interaction';
+export { syncThemeColorMeta } from './lib/themeColorMeta';
+export {
+  THEME_SETTING_KEY,
+  setThemePersistence,
+  useTheme,
+  type ThemeMode,
+  type ThemePersistence,
+  type ThemeResolved,
+} from './stores/theme';
 
 export { Button, type ButtonProps } from './components/core/Button';
 export { Chip, type ChipProps } from './components/core/Chip';
@@ -7,6 +17,7 @@ export { IconButton, type IconButtonProps } from './components/core/IconButton';
 export { Kbd, type KbdProps } from './components/core/Kbd';
 
 export { Checkbox, type CheckboxProps } from './components/forms/Checkbox';
+export * from './components/forms/Input';
 export { RangeSlider, type RangeSliderProps } from './components/forms/RangeSlider';
 export { SearchPill, type SearchPillProps } from './components/forms/SearchPill';
 export { Segmented, type SegmentedOption, type SegmentedProps } from './components/forms/Segmented';
@@ -51,7 +62,9 @@ export {
   type CommandPaletteProps,
   type PaletteItem,
 } from './components/overlays/CommandPalette';
-export { Dialog, type DialogProps } from './components/overlays/Dialog';
+export * from './components/overlays/Command';
+export * from './components/overlays/Dialog';
+export { HoverPopover } from './components/overlays/HoverPopover';
 export { HoverCard, type HoverCardProps } from './components/overlays/HoverCard';
 export {
   Popover,
@@ -59,11 +72,12 @@ export {
   type PopoverItemProps,
   type PopoverProps,
 } from './components/overlays/Popover';
-export { Sheet, type SheetProps } from './components/overlays/Sheet';
+export * from './components/overlays/Sheet';
 export { Toast, type ToastProps } from './components/overlays/Toast';
 
 export { DataTable, type DataTableColumn, type DataTableProps } from './components/data/DataTable';
 export { FilterChip, type FilterChipProps } from './components/data/FilterChip';
+export * from './components/data/Table';
 export { PresetTile, type PresetTileProps } from './components/data/PresetTile';
 
 export { Banner, type BannerProps } from './components/feedback/Banner';

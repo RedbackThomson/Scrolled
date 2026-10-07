@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Check } from 'lucide-react';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 
 export interface WizardStep {
   id: string;

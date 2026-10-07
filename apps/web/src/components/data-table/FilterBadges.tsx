@@ -10,12 +10,12 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Filter, X } from 'lucide-react';
-import { Button } from '@scrolled/ui';
+import { Button } from '@scrolled/design';
 import { usePopover } from '@/hooks/usePopover';
 import type { ColumnDef } from '@tanstack/react-table';
 import type { ColumnFilter } from '@/db';
 import type { CollectionEntityType } from '@/db/user';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 import { FilterMenu, ValueEditorBody } from './FilterMenu';
 import { SaveSearchPrompt } from './SaveSearchPrompt';
 import type { FilterableCol } from './Filterable';
@@ -76,7 +76,7 @@ export function FilterBadges<TData>({
             <Button type="button" variant="ghost" size="sm" onClick={onClearAll}>
               Clear
             </Button>
-            <Button type="button" variant="outline" size="sm" onClick={() => setSavingOpen(true)}>
+            <Button type="button" variant="secondary" size="sm" onClick={() => setSavingOpen(true)}>
               Save
             </Button>
           </>

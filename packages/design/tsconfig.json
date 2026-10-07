@@ -10,7 +10,6 @@
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
-
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
@@ -18,8 +17,7 @@
     "noUncheckedSideEffectImports": true,
     "verbatimModuleSyntax": true,
     "forceConsistentCasingInFileNames": true,
-
     "types": ["vite/client"]
   },
-  "include": ["src", "stories", ".storybook"]
+  "include": ["src", "stories", ".storybook", "tailwind.config.ts"]
 }

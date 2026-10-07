@@ -11,7 +11,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { Button, Input } from '@scrolled/ui';
+import { Button, Input } from '@scrolled/design';
 import { useCreatePinnedSearch } from '@/hooks/usePinnedSearches';
 import type { CollectionEntityType } from '@/db/user';
 

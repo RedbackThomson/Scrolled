@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Archive, ChevronDown, Download, Loader2, Upload } from 'lucide-react';
 import { useSettingsSection } from '@/components/settings/SettingsScrollSpy';
-import { Button, Input } from '@scrolled/ui';
+import { Button, Input } from '@scrolled/design';
 import { useExportBackup, useImportBackup, type BackupScope } from '@/hooks/useBackup';
 import { acceptForDesktop } from '@/lib/filePickerAccept';
 import { appConfig } from '@/config';
@@ -83,7 +83,7 @@ export function BackupSection() {
           <div className="relative inline-flex" ref={menuRef}>
             <Button
               type="button"
-              variant="outline"
+              variant="secondary"
               size="sm"
               className="rounded-r-none"
               onClick={() => runExport('all')}
@@ -98,7 +98,7 @@ export function BackupSection() {
             </Button>
             <Button
               type="button"
-              variant="outline"
+              variant="secondary"
               size="sm"
               className="rounded-l-none border-l-0 px-2"
               aria-haspopup="menu"
@@ -133,7 +133,7 @@ export function BackupSection() {
             <>
               <Button
                 type="button"
-                variant="outline"
+                variant="secondary"
                 size="sm"
                 onClick={() => importInputRef.current?.click()}
                 disabled={busy}

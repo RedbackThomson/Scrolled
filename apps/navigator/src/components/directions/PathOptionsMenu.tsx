@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, cn } from '@scrolled/ui';
+import { Button, cn } from '@scrolled/design';
 import { SlidersHorizontal } from 'lucide-react';
 import type { NavGraph } from '@scrolled/nav-graph';
 
@@ -76,7 +76,7 @@ export function PathOptionsMenu({ graph }: PathOptionsMenuProps) {
     <div ref={containerRef} className="relative">
       <Button
         type="button"
-        variant="outline"
+        variant="secondary"
         size="sm"
         className={cn('gap-2', open && 'ring-ring ring-2 ring-offset-1')}
         aria-haspopup="dialog"

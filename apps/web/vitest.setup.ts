@@ -25,7 +25,7 @@ if (typeof Element !== 'undefined' && !Element.prototype.scrollIntoView) {
   Element.prototype.scrollIntoView = function () {};
 }
 
-// jsdom doesn't ship window.matchMedia, but @scrolled/ui's theme store calls
+// jsdom doesn't ship window.matchMedia, but @scrolled/design's theme store calls
 // it at module-load time to resolve "system" colour-scheme preference. Reports
 // "no preference" (matches: false) — tests don't assert on system theme.
 if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {

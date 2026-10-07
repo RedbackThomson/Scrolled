@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { Button, Input, Textarea } from '@scrolled/ui';
+import { Button, Input, Textarea } from '@scrolled/design';
 import { useCreateGroup, useUpdateGroup } from '@/hooks/useCollections';
 import type { CollectionGroup } from '@/db/user';
 import { Modal } from './Modal';
@@ -80,7 +80,7 @@ export function GroupFormDialog({
       title={isEdit ? 'Edit group' : 'New group'}
       footer={
         <>
-          <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={pending}>
+          <Button type="button" variant="secondary" size="sm" onClick={onClose} disabled={pending}>
             Cancel
           </Button>
           <Button type="button" size="sm" onClick={submit} disabled={pending || !name.trim()}>

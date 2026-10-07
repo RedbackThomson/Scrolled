@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Database, Loader2, Trash2, Upload } from 'lucide-react';
 import { useSettingsSection } from '@/components/settings/SettingsScrollSpy';
-import { Button } from '@scrolled/ui';
+import { Button } from '@scrolled/design';
 import { getDbClient } from '@/db';
 import { RunCard } from '@/components/settings/RunCard';
 
@@ -87,7 +87,7 @@ export function GameDataSection() {
         <div className="border-border mt-4 flex flex-wrap items-center gap-3 border-t pt-4">
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={onClear}
             disabled={

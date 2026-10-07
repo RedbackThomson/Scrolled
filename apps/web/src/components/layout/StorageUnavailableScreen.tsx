@@ -5,7 +5,7 @@
 // users who understand the consequence (everything is lost on reload) take it.
 
 import { AlertTriangle, ChevronRight } from 'lucide-react';
-import { Button } from '@scrolled/ui';
+import { Button } from '@scrolled/design';
 import { useStorageBypass } from '@/stores/storageBypass';
 import type { StorageFailure } from '@/hooks/useStorageHealth';
 
@@ -76,7 +76,7 @@ export function StorageUnavailableScreen({ failures }: { failures: StorageFailur
                 close this tab, and you'll see this warning again next time. Only continue if you
                 understand that.
               </p>
-              <Button type="button" variant="outline" size="sm" onClick={bypass}>
+              <Button type="button" variant="secondary" size="sm" onClick={bypass}>
                 Continue without saving
               </Button>
             </div>

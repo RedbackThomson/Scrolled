@@ -1,6 +1,6 @@
 import { Handle, Position, type Node, type NodeProps } from '@xyflow/react';
 import { ChevronDown } from 'lucide-react';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 import type { GroupId } from '@scrolled/nav-graph';
 
 export interface RegionNodeData extends Record<string, unknown> {

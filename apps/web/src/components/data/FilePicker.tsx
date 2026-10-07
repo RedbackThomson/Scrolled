@@ -1,6 +1,6 @@
 import { useRef, type ChangeEvent } from 'react';
 import { Upload } from 'lucide-react';
-import { Button, Input } from '@scrolled/ui';
+import { Button, Input } from '@scrolled/design';
 
 interface Props {
   accept?: string;
@@ -39,7 +39,7 @@ export function FilePicker({
       />
       <Button
         type="button"
-        variant="default"
+        variant="primary"
         size="md"
         disabled={disabled}
         onClick={() => inputRef.current?.click()}

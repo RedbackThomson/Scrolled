@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { HoverPopover } from '@scrolled/ui';
-import { cn } from '@scrolled/ui';
+import { HoverPopover } from '@scrolled/design';
+import { cn } from '@scrolled/design';
 
 interface GraphicViewerIconProps {
   pixelX: number;

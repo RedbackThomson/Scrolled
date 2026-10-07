@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plug } from 'lucide-react';
 import { useSettingsSection } from '@/components/settings/SettingsScrollSpy';
-import { cn, Input } from '@scrolled/ui';
+import { cn, Input } from '@scrolled/design';
 import {
   DEFAULT_BRIDGE_SETTINGS,
   readBridgeSettings,

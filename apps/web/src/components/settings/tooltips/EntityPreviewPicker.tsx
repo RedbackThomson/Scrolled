@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Input } from '@scrolled/ui';
+import { Input } from '@scrolled/design';
 import { getSearchIndex, querySearch } from '@/search';
 import { useFeatures } from '@/hooks/useFeatures';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';

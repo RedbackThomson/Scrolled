@@ -7,9 +7,9 @@ import {
   Sun,
   type LucideIcon,
 } from 'lucide-react';
-import { CommandGroup, CommandItem as CommandItemPrimitive } from '@scrolled/ui';
+import { CommandGroup, CommandItem as CommandItemPrimitive } from '@scrolled/design';
 import { useCommandPalette } from '@/stores/useCommandPalette';
-import { useTheme, type ThemeMode } from '@scrolled/ui';
+import { useTheme, type ThemeMode } from '@scrolled/design';
 import { useAccent } from '@/stores/accent';
 import { ACCENTS } from '@/lib/accents';
 import { useSidebarLayout } from '@/stores/sidebarState';

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Loader2, Upload } from 'lucide-react';
-import { Button } from '@scrolled/ui';
+import { Button } from '@scrolled/design';
 
 export type RestoreState =
   | { phase: 'pending' }
@@ -86,7 +86,7 @@ export function StepRestore({ file, state, onPickAgain, onSwitchBack, parentMode
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <Button type="button" variant="outline" size="sm" onClick={onPickAgain}>
+          <Button type="button" variant="secondary" size="sm" onClick={onPickAgain}>
             <Upload className="h-4 w-4" /> Drop a different backup
           </Button>
           <Button type="button" variant="ghost" size="sm" onClick={onSwitchBack}>

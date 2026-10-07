@@ -1,6 +1,6 @@
 import { Pin, PinOff } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { CommandGroup, CommandItem as CommandItemPrimitive } from '@scrolled/ui';
+import { CommandGroup, CommandItem as CommandItemPrimitive } from '@scrolled/design';
 import { iconForEntity, labelForEntityKind, listingRouteForEntity } from '@/lib/entityRoutes';
 import { useCommandPalette } from '@/stores/useCommandPalette';
 import {

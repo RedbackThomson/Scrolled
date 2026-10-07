@@ -16,7 +16,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { DataSourceKind } from '@/parser';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 
 const FEATURES: { Icon: LucideIcon; title: string; body: string }[] = [
   {

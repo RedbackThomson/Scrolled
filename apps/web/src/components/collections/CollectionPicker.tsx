@@ -13,7 +13,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { usePopover } from '@/hooks/usePopover';
 import { createPortal } from 'react-dom';
 import { Check, Loader2, Plus, Search } from 'lucide-react';
-import { Button, Input } from '@scrolled/ui';
+import { Button, Input } from '@scrolled/design';
 import {
   useCollectionGroups,
   useCollectionsList,
@@ -24,7 +24,7 @@ import {
   useUpdateMember,
 } from '@/hooks/useCollections';
 import type { CollectionEntityType, MembershipBadge } from '@/db/user';
-import { cn } from '@scrolled/ui';
+import { cn } from '@scrolled/design';
 
 interface CollectionPickerProps {
   entityType: CollectionEntityType;
@@ -161,7 +161,7 @@ export function CollectionPicker({ entityType, entityId, children }: CollectionP
                 <Button
                   type="button"
                   size="sm"
-                  variant="outline"
+                  variant="secondary"
                   className="w-full justify-start"
                   onClick={onCreateAndAdd}
                   disabled={createM.isPending}

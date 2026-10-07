@@ -11,12 +11,12 @@ import {
   Save,
 } from 'lucide-react';
 import { FilePicker } from '@/components/data/FilePicker';
-import { Button } from '@scrolled/ui';
+import { Button } from '@scrolled/design';
 import { ExtractAllPanel } from '@/components/data/ExtractAllPanel';
 import { ProgressBar } from '@/components/common/ProgressBar';
 import { getParserClient, type WzNodeInfo, type WzMapleVersionName } from '@/parser';
 import { getDbClient } from '@/db';
-import { cn, Input } from '@scrolled/ui';
+import { cn, Input } from '@scrolled/design';
 import { buildReport } from '@/lib/diagnosticsReport';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import type { ProgressUpdate } from '@scrolled/game-db/lib/progress';
@@ -461,7 +461,7 @@ function SupportReportPanel() {
     <section className="space-y-3">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-lg font-semibold">Support report</h2>
-        <Button variant="outline" size="sm" onClick={buildAndCopy} disabled={busy}>
+        <Button variant="secondary" size="sm" onClick={buildAndCopy} disabled={busy}>
           {busy ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (

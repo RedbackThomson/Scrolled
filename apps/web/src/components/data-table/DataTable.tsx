@@ -12,7 +12,7 @@ import {
   type VisibilityState,
 } from '@tanstack/react-table';
 import { Loader2, Search, X } from 'lucide-react';
-import { Button, Input } from '@scrolled/ui';
+import { Button, Input } from '@scrolled/design';
 import {
   Table,
   TableBody,
@@ -20,7 +20,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@scrolled/ui';
+} from '@scrolled/design';
 import { DisplayOptionsMenu } from './DisplayOptionsMenu';
 import { FilterMenu } from './FilterMenu';
 import { FilterBadges } from './FilterBadges';
@@ -454,7 +454,7 @@ export function DataTable<TData>({
             </select>
           </label>
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={() => setState({ page: Math.max(state.page - 1, 1) })}
             disabled={state.page <= 1}
@@ -465,7 +465,7 @@ export function DataTable<TData>({
             Page {state.page} of {totalPages}
           </span>
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={() => setState({ page: Math.min(state.page + 1, totalPages) })}
             disabled={state.page >= totalPages}

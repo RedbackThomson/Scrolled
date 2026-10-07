@@ -3,12 +3,13 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Component library for the Scrolled redesign: React components styled with CSS-variable tokens, self-hosted fonts, and a Storybook to browse them.",
+  "description": "Scrolled's component library: React components and Radix/cmdk primitives on the redesign's CSS-variable tokens, the Tailwind preset, theme store, self-hosted fonts, and a Storybook to browse them.",
   "exports": {
     ".": "./src/index.ts",
     "./tokens.css": "./src/styles/tokens.css",
     "./base.css": "./src/styles/base.css",
-    "./styles.css": "./src/styles/styles.css"
+    "./styles.css": "./src/styles/styles.css",
+    "./tailwind-preset": "./src/tailwind-preset.ts"
   },
   "scripts": {
     "storybook": "storybook dev -p 6006",
@@ -19,13 +20,20 @@
   },
   "peerDependencies": {
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^3.4.13"
   },
   "dependencies": {
     "@fontsource/figtree": "^5.1.0",
     "@fontsource/fredoka": "^5.1.0",
     "@fontsource/jetbrains-mono": "^5.1.0",
-    "lucide-react": "^0.451.0"
+    "@radix-ui/react-dialog": "^1.1.15",
+    "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
+    "lucide-react": "^0.451.0",
+    "tailwind-merge": "^2.5.2",
+    "tailwindcss-animate": "^1.0.7",
+    "zustand": "^5.0.0"
   },
   "devDependencies": {
     "@storybook/addon-a11y": "^8.4.7",
@@ -38,9 +46,12 @@
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.2",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "storybook": "^8.4.7",
+    "tailwindcss": "^3.4.13",
     "vite": "^5.4.8",
     "vitest": "^2.1.2"
   }
