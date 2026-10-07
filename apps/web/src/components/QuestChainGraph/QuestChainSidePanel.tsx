@@ -55,7 +55,7 @@ function SelectedQuest({ node }: { node: DagreNode }) {
     .join(' · ');
 
   return (
-    <>
+    <div className="sc-panel-in flex flex-1 flex-col gap-4">
       <div>
         <div className="text-muted-foreground text-[11px] font-bold uppercase tracking-[.04em]">
           Selected
@@ -118,7 +118,7 @@ function SelectedQuest({ node }: { node: DagreNode }) {
         Open quest
         <ArrowRight className="h-3.5 w-3.5" aria-hidden />
       </Link>
-    </>
+    </div>
   );
 }
 

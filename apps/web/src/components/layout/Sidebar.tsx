@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { useMemo, useRef } from 'react';
+import { Link, NavLink, useLocation, useMatch } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   Bookmark,
@@ -38,6 +38,7 @@ import { SyncSignInNotice } from '@/components/sync/SyncSignInNotice';
 import { useInstalledDataset } from '@/hooks/dataset/useInstalledDataset';
 import { cn, Logo, StatusDot } from '@scrolled/design';
 import { appConfig } from '@/config';
+import { SlidingNavPill } from '@/components/layout/SlidingNavPill';
 import { getSettingsGroups } from '@/components/settings/settingsGroups';
 
 interface SidebarChild {
@@ -69,7 +70,8 @@ interface SidebarSection {
 
 const PILL =
   'rounded-full font-semibold transition-[transform,color,background-color,box-shadow] duration-300 ease-spring';
-const PILL_ACTIVE = 'bg-card text-foreground shadow-float';
+// The active background is SlidingNavPill, which slides between rows.
+const PILL_ACTIVE = 'text-foreground';
 const PILL_IDLE = 'text-muted-foreground hover:text-foreground hover:scale-[1.04]';
 
 const ITEM_CATEGORY_CHILDREN = [
@@ -93,6 +95,7 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
   const db = useMemo(() => getDbClient(), []);
   const userDb = useMemo(() => getUserDbClient(), []);
   const location = useLocation();
+  const navRowsRef = useRef<HTMLDivElement>(null);
   const expanded = useSidebarSections((s) => s.expanded);
   const toggleSection = useSidebarSections((s) => s.toggle);
   const collapsedDesktop = useSidebarLayout((s) => s.collapsed);
@@ -260,113 +263,121 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
         )}
       </div>
       <nav className="-mx-1 flex-1 overflow-y-auto px-1 py-1">
-        <ul className="space-y-0.5">
-          <NavItem to="/" icon={Home} label="Home" end collapsed={collapsed} />
-          {sectionsToRender.map((section) => {
-            // Section's own link uses `end` so query-string children don't
-            // also light up the parent — we drive parent active state
-            // ourselves via pathname so it stays highlighted while a child
-            // is selected.
-            const sectionActive = location.pathname === section.to;
-            const hasChildren = !!section.children && section.children.length > 0;
-            const isExpanded = !collapsed && !!expanded[section.to];
-            const childListId = `sidebar-children-${section.to.replace(/[^a-z0-9]/gi, '-')}`;
-            if (collapsed) {
-              // In the collapsed rail, children are inaccessible — only the
-              // parent route is reachable. Tooltip via `title` for discovery.
+        <div ref={navRowsRef} className="relative">
+          <SlidingNavPill
+            containerRef={navRowsRef}
+            watch={[location.pathname, location.search, collapsed]}
+          />
+          <ul className="relative space-y-0.5">
+            <NavItem to="/" icon={Home} label="Home" end collapsed={collapsed} />
+            {sectionsToRender.map((section) => {
+              // Section's own link uses `end` so query-string children don't
+              // also light up the parent — we drive parent active state
+              // ourselves via pathname so it stays highlighted while a child
+              // is selected.
+              const sectionActive = location.pathname === section.to;
+              const hasChildren = !!section.children && section.children.length > 0;
+              const isExpanded = !collapsed && !!expanded[section.to];
+              const childListId = `sidebar-children-${section.to.replace(/[^a-z0-9]/gi, '-')}`;
+              if (collapsed) {
+                // In the collapsed rail, children are inaccessible — only the
+                // parent route is reachable. Tooltip via `title` for discovery.
+                return (
+                  <li key={section.to}>
+                    <NavLink
+                      to={section.to}
+                      end
+                      title={section.label}
+                      aria-label={section.label}
+                      data-nav-active={sectionActive || undefined}
+                      className={cn(
+                        PILL,
+                        'mx-auto flex h-9 w-9 items-center justify-center',
+                        sectionActive ? PILL_ACTIVE : PILL_IDLE,
+                      )}
+                    >
+                      <section.icon className="h-4 w-4" />
+                    </NavLink>
+                  </li>
+                );
+              }
               return (
                 <li key={section.to}>
-                  <NavLink
-                    to={section.to}
-                    end
-                    title={section.label}
-                    aria-label={section.label}
+                  <div
+                    data-nav-active={sectionActive || undefined}
                     className={cn(
                       PILL,
-                      'mx-auto flex h-9 w-9 items-center justify-center',
+                      'flex items-center gap-1',
                       sectionActive ? PILL_ACTIVE : PILL_IDLE,
                     )}
                   >
-                    <section.icon className="h-4 w-4" />
-                  </NavLink>
+                    <NavLink
+                      to={section.to}
+                      end
+                      className="flex min-h-9 flex-1 items-center gap-2.5 rounded-full pl-3.5 text-sm max-md:min-h-11"
+                    >
+                      <section.icon className="h-4 w-4" />
+                      {section.label}
+                    </NavLink>
+                    {hasChildren && (
+                      <button
+                        type="button"
+                        onClick={() => toggleSection(section.to)}
+                        aria-expanded={isExpanded}
+                        aria-controls={childListId}
+                        aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${section.label}`}
+                        className="hover:bg-muted mr-1.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full max-md:mr-0 max-md:h-11 max-md:w-11"
+                      >
+                        <ChevronRight
+                          className={cn(
+                            'h-3.5 w-3.5 opacity-[.55] transition-transform',
+                            isExpanded && 'rotate-90',
+                          )}
+                          aria-hidden
+                        />
+                      </button>
+                    )}
+                  </div>
+                  {hasChildren && isExpanded && (
+                    <ul
+                      id={childListId}
+                      className="border-border my-0.5 ml-[26px] space-y-px border-l-2 pl-3"
+                    >
+                      {section.children!.map((child) => (
+                        <SubNavItem
+                          key={child.to}
+                          to={child.to}
+                          label={child.label}
+                          icon={child.icon}
+                          iconClass={child.iconClass}
+                        />
+                      ))}
+                    </ul>
+                  )}
                 </li>
               );
-            }
-            return (
-              <li key={section.to}>
-                <div
-                  className={cn(
-                    PILL,
-                    'flex items-center gap-1',
-                    sectionActive ? PILL_ACTIVE : PILL_IDLE,
-                  )}
-                >
-                  <NavLink
-                    to={section.to}
-                    end
-                    className="flex min-h-9 flex-1 items-center gap-2.5 rounded-full pl-3.5 text-sm max-md:min-h-11"
-                  >
-                    <section.icon className="h-4 w-4" />
-                    {section.label}
-                  </NavLink>
-                  {hasChildren && (
-                    <button
-                      type="button"
-                      onClick={() => toggleSection(section.to)}
-                      aria-expanded={isExpanded}
-                      aria-controls={childListId}
-                      aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${section.label}`}
-                      className="hover:bg-muted mr-1.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full max-md:mr-0 max-md:h-11 max-md:w-11"
-                    >
-                      <ChevronRight
-                        className={cn(
-                          'h-3.5 w-3.5 opacity-[.55] transition-transform',
-                          isExpanded && 'rotate-90',
-                        )}
-                        aria-hidden
-                      />
-                    </button>
-                  )}
-                </div>
-                {hasChildren && isExpanded && (
-                  <ul
-                    id={childListId}
-                    className="border-border my-0.5 ml-[26px] space-y-px border-l-2 pl-3"
-                  >
-                    {section.children!.map((child) => (
-                      <SubNavItem
-                        key={child.to}
-                        to={child.to}
-                        label={child.label}
-                        icon={child.icon}
-                        iconClass={child.iconClass}
-                      />
-                    ))}
-                  </ul>
-                )}
+            })}
+            <li role="separator" aria-hidden className="h-3" />
+            {appConfig.navigatorUrl && (
+              <ExternalNavItem
+                href={appConfig.navigatorUrl}
+                icon={Compass}
+                label="Navigator"
+                collapsed={collapsed}
+              />
+            )}
+            <NavItem to="/settings" icon={SettingsIcon} label="Settings" collapsed={collapsed} />
+            {!collapsed && location.pathname.startsWith('/settings') && (
+              <li>
+                <ul className="border-border my-0.5 ml-[26px] space-y-px border-l-2 pl-3">
+                  {getSettingsGroups().map((g) => (
+                    <SubNavItem key={g.id} to={`/settings/${g.id}`} label={g.label} icon={g.icon} />
+                  ))}
+                </ul>
               </li>
-            );
-          })}
-          <li role="separator" aria-hidden className="h-3" />
-          {appConfig.navigatorUrl && (
-            <ExternalNavItem
-              href={appConfig.navigatorUrl}
-              icon={Compass}
-              label="Navigator"
-              collapsed={collapsed}
-            />
-          )}
-          <NavItem to="/settings" icon={SettingsIcon} label="Settings" collapsed={collapsed} />
-          {!collapsed && location.pathname.startsWith('/settings') && (
-            <li>
-              <ul className="border-border my-0.5 ml-[26px] space-y-px border-l-2 pl-3">
-                {getSettingsGroups().map((g) => (
-                  <SubNavItem key={g.id} to={`/settings/${g.id}`} label={g.label} icon={g.icon} />
-                ))}
-              </ul>
-            </li>
-          )}
-        </ul>
+            )}
+          </ul>
+        </div>
       </nav>
       <div className={cn('bg-card shadow-float py-1', collapsed ? 'rounded-full' : 'rounded-[18px]')}>
         <OfflineIndicator collapsed={collapsed} />
@@ -619,11 +630,13 @@ function NavItem({
   end?: boolean;
   collapsed?: boolean;
 }) {
+  const active = useMatch({ path: to, end: !!end }) !== null;
   return (
     <li>
       <NavLink
         to={to}
         end={end}
+        data-nav-active={active || undefined}
         title={collapsed ? label : undefined}
         aria-label={collapsed ? label : undefined}
         className={({ isActive }) =>
@@ -709,6 +722,7 @@ function SubNavItem({
     <li>
       <NavLink
         to={to}
+        data-nav-active={active || undefined}
         className={cn(
           PILL,
           'flex min-h-[30px] items-center gap-2 px-2.5 text-[13px] max-md:min-h-11',

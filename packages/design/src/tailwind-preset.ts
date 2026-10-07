@@ -73,7 +73,7 @@ const preset: Partial<Config> = {
       },
       // Keyframes live in tokens/motion.css; `both` keeps staggered items hidden until their turn.
       animation: {
-        rise: 'sc-rise 420ms var(--ease-out) both',
+        rise: 'sc-rise 520ms var(--ease-spring) both',
         pop: 'sc-pop var(--dur-pop) var(--ease-spring) both',
         fade: 'sc-fade 260ms ease-out both',
         modal: 'sc-modal var(--dur-modal) var(--ease-spring) both',
