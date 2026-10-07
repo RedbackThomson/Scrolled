@@ -64,6 +64,8 @@ export interface TooltipEntityConfig<TRecord, TExtra = EmptyExtra> {
    *  tints it for glyph icons (quests, maps) that have no sprite. */
   iconTile?: { size?: number; hue?: number };
   renderName: (record: TRecord, id: number) => ReactNode;
+  /** Plain-text name, for labels that can't take markup. */
+  nameOf: (record: TRecord, id: number) => string;
   /** Resolve a representative id to seed the settings preview, or null when
    *  the library holds none of this type. */
   getSampleId?: () => Promise<number | null>;

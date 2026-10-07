@@ -21,9 +21,13 @@ export function SearchPill({
   tone = 'float',
 }: SearchPillProps) {
   return (
-    <div
+    <button
+      type="button"
+      className="sc-focus-ring"
       onClick={onClick}
       style={{
+        border: 'none',
+        textAlign: 'left',
         width,
         maxWidth: '100%',
         height: 40,
@@ -45,6 +49,6 @@ export function SearchPill({
         {value || placeholder}
       </span>
       {shortcut && <Kbd>{shortcut}</Kbd>}
-    </div>
+    </button>
   );
 }

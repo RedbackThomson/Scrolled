@@ -1,4 +1,4 @@
-import { CommandDialog, CommandEmpty, CommandInput, CommandList } from '@scrolled/design';
+import { CommandDialog, CommandEmpty, CommandInput, CommandList, Kbd } from '@scrolled/design';
 import { useCommandPalette } from '@/stores/useCommandPalette';
 import { McpPaletteProvider } from '@/mcp';
 import {
@@ -37,7 +37,12 @@ export function Palette() {
       <CommandInput
         value={query}
         onValueChange={setQuery}
-        placeholder="Search or jump to… (type ? for shortcuts)"
+        placeholder="Search or jump to…"
+        trailing={
+          <span className="bg-muted text-muted-foreground shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-[11.5px] font-bold">
+            Type ? for shortcuts
+          </span>
+        }
       />
       <CommandList>
         <HelpProvider />
@@ -92,13 +97,5 @@ function PaletteFooter() {
         shortcuts
       </span>
     </div>
-  );
-}
-
-function Kbd({ children }: { children: React.ReactNode }) {
-  return (
-    <kbd className="bg-background text-muted-foreground inline-flex h-4 min-w-[1rem] select-none items-center justify-center rounded border px-1 font-mono text-[10px]">
-      {children}
-    </kbd>
   );
 }

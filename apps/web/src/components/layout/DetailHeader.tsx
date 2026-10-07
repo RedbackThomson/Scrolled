@@ -66,7 +66,11 @@ export function DetailHeader({
           </div>
         )}
         <div className="flex flex-wrap items-center gap-2">
-          <SaveButton entityType={entity} entityId={id} />
+          <SaveButton
+            entityType={entity}
+            entityId={id}
+            entityName={alt ?? (typeof title === 'string' ? title : undefined)}
+          />
           {actions}
         </div>
       </div>

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Background,
-  Controls,
   MarkerType,
   MiniMap,
   ReactFlow,
@@ -28,6 +27,7 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 
 import { AreaNodeView, type AreaHighlight } from './AreaNodeView';
 import { RegionNodeView } from './RegionNodeView';
+import { ZoomControls } from './ZoomControls';
 import { RegionContainerView } from './RegionContainerView';
 import { TravelEdgeView } from './TravelEdgeView';
 
@@ -241,8 +241,14 @@ function GraphCanvasInner({ graph }: GraphCanvasProps) {
       proOptions={{ hideAttribution: true }}
     >
       <Background gap={22} size={1.2} color="var(--border-1)" bgColor="var(--surface-sunken)" />
-      {!isMobile && <Controls showInteractive={false} />}
-      {!isMobile && <MiniMap pannable zoomable />}
+      {!isMobile && <ZoomControls />}
+      {!isMobile && (
+        <MiniMap
+          pannable
+          zoomable
+          className="border-border shadow-rim overflow-hidden rounded-[14px] border-2"
+        />
+      )}
     </ReactFlow>
   );
 }

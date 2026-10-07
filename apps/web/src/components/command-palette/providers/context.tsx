@@ -1,6 +1,7 @@
 import { CommandGroup, CommandItem as CommandItemPrimitive } from '@scrolled/design';
 import { useCommandPalette } from '@/stores/useCommandPalette';
 import type { CommandItem } from '../types';
+import { PaletteIcon } from '@/components/command-palette/PaletteIcon';
 
 function matches(query: string, item: CommandItem): boolean {
   const q = query.trim().toLowerCase();
@@ -31,7 +32,7 @@ export function ContextProvider() {
               setOpen(false);
             }}
           >
-            {Icon && <Icon className="text-muted-foreground h-4 w-4" />}
+            {Icon && <PaletteIcon icon={Icon} />}
             <span className="min-w-0 flex-1 truncate">{item.label}</span>
             {item.hint && (
               <span className="text-muted-foreground shrink-0 text-xs">{item.hint}</span>

@@ -9,7 +9,7 @@ export function AppBootScreen() {
     >
       <div className="flex flex-col items-center gap-6">
         <Logo size={44} />
-        <HopLoader size={84} />
+        <HopLoader size={84} label="Opening your library" />
       </div>
     </div>
   );

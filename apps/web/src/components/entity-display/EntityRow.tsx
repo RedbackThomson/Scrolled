@@ -23,6 +23,8 @@ interface Props {
   /** Render the row as a non-link (e.g. when the matching feature is disabled). Default true. */
   linkable?: boolean;
   className?: string;
+  /** Replaces the entity sprite, for rows whose entity isn't the best picture (portals). */
+  avatar?: ReactNode;
 }
 
 /**
@@ -40,6 +42,7 @@ export function EntityRow({
   hideId,
   linkable = true,
   className,
+  avatar,
 }: Props) {
   const showIds = useShowEntityIds((s) => s.enabled);
   const displayName = name ?? `${ENTITY_LABEL[entity]} #${id}`;
@@ -48,7 +51,9 @@ export function EntityRow({
   const showRightBlock = meta != null || idVisible;
   const body = (
     <>
-      <EntityAvatar entity={entity} id={id} alt={typeof name === 'string' ? name : undefined} />
+      {avatar ?? (
+        <EntityAvatar entity={entity} id={id} alt={typeof name === 'string' ? name : undefined} />
+      )}
       <div className="min-w-0 flex-1">
         <div className="truncate font-medium">
           {name ? (

@@ -8,6 +8,7 @@ import {
 } from '@/hooks/useCollections';
 import { useCommandPalette } from '@/stores/useCommandPalette';
 import type { CollectionEntityType } from '@/db/user';
+import { PaletteIcon } from '@/components/command-palette/PaletteIcon';
 
 function fuzzy(q: string, hay: string): boolean {
   const t = q.trim().toLowerCase();
@@ -66,7 +67,7 @@ export function CollectionsContextProvider() {
             setOpen(false);
           }}
         >
-          <BookmarkPlus className="text-muted-foreground h-4 w-4" />
+          <PaletteIcon icon={BookmarkPlus} />
           <span className="min-w-0 flex-1 truncate">Add to {c.name}</span>
           <span className="text-muted-foreground shrink-0 font-mono text-xs">{c.memberCount}</span>
         </CommandItemPrimitive>
@@ -114,7 +115,7 @@ export function CollectionsCreateProvider() {
           setOpen(false);
         }}
       >
-        <FolderPlus className="text-muted-foreground h-4 w-4" />
+        <PaletteIcon icon={FolderPlus} />
         <span className="min-w-0 flex-1 truncate">
           Create collection "<span className="font-medium">{trimmed}</span>" with this {entity}
         </span>
@@ -150,7 +151,7 @@ export function CollectionsNavigationProvider() {
             setOpen(false);
           }}
         >
-          <Folder className="text-muted-foreground h-4 w-4" />
+          <PaletteIcon icon={Folder} />
           <span className="min-w-0 flex-1 truncate">{c.name}</span>
           <span className="text-muted-foreground shrink-0 font-mono text-xs">{c.memberCount}</span>
         </CommandItemPrimitive>

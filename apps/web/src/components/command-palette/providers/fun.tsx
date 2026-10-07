@@ -6,6 +6,7 @@ import { getDbClient, type EntityKind } from '@/db';
 import { ENTITY_KINDS, labelForEntityKind, routeForEntity } from '@/lib/entityRoutes';
 import { useCommandPalette } from '@/stores/useCommandPalette';
 import { useFeatures } from '@/hooks/useFeatures';
+import { PaletteIcon } from '@/components/command-palette/PaletteIcon';
 
 function fuzzy(q: string, hay: string): boolean {
   const t = q.trim().toLowerCase();
@@ -55,7 +56,7 @@ export function FunProvider() {
             setOpen(false);
           }}
         >
-          <Dices className="text-muted-foreground h-4 w-4" />
+          <PaletteIcon icon={Dices} />
           <span>{e.label}</span>
         </CommandItemPrimitive>
       ))}

@@ -10,14 +10,23 @@ export interface CheckboxProps {
 
 export function Checkbox({ checked, label, onChange }: CheckboxProps) {
   return (
-    <label
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={!!checked}
+      className="sc-focus-ring"
       style={{
         display: 'inline-flex',
         alignItems: 'center',
         gap: 10,
+        padding: 0,
+        border: 'none',
+        borderRadius: 8,
+        background: 'none',
         cursor: 'pointer',
         font: '600 13.5px var(--font-body)',
         color: 'var(--text-1)',
+        textAlign: 'left',
       }}
       onClick={() => onChange?.(!checked)}
     >
@@ -44,6 +53,6 @@ export function Checkbox({ checked, label, onChange }: CheckboxProps) {
         {checked && <Icon icon={Check} size={12} />}
       </span>
       {label}
-    </label>
+    </button>
   );
 }

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import { Logo } from '@scrolled/design';
+import { CloudBackdrop, Logo } from '@scrolled/design';
 
 import { wikiHomeUrl } from '@/lib/scrolledLinks';
 import { ThemeToggle } from './ThemeToggle';
@@ -12,7 +12,10 @@ export interface AppShellProps {
 export function AppShell({ children }: AppShellProps) {
   const wikiUrl = wikiHomeUrl();
   return (
-    <div className="flex h-full flex-col bg-[image:var(--gradient-page)]">
+    <div className="relative isolate flex h-full flex-col bg-[image:var(--gradient-page)]">
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+        <CloudBackdrop />
+      </div>
       <header className="flex h-[60px] flex-none items-center justify-between gap-3 px-4">
         <div className="flex min-w-0 items-center gap-3">
           {wikiUrl ? (

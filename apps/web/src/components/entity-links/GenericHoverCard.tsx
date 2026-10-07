@@ -166,7 +166,11 @@ export function GenericHoverCard({ entity, id }: { entity: EntityKind; id: numbe
           ))}
         </div>
       )}
-      <HoverCardSaveFooter entityType={entity} entityId={id} />
+      <HoverCardSaveFooter
+        entityType={entity}
+        entityId={id}
+        entityName={config.nameOf(recordQ.data, id)}
+      />
     </CardSurface>
   );
 }

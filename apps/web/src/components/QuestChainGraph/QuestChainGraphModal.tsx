@@ -1,3 +1,5 @@
+import { GitBranch } from 'lucide-react';
+import { ENTITY_HUES, SlotTile } from '@scrolled/design';
 import { Modal } from '@/components/collections/Modal';
 import type {
   QuestChainEdgeRecord,
@@ -42,6 +44,7 @@ export function QuestChainGraphModal({
       open={open}
       onClose={onClose}
       title={chain.name}
+      icon={<SlotTile icon={GitBranch} hue={ENTITY_HUES.quest} size={38} />}
       description={description}
       panelClassName="flex h-[min(90vh,900px)] w-[min(95vw,1200px)] max-w-none flex-col"
       bodyClassName="flex-1 overflow-hidden p-0"

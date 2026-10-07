@@ -70,9 +70,15 @@ export interface PopoverItemProps {
 
 export function PopoverItem({ icon, children, trailing, active, onClick }: PopoverItemProps) {
   return (
-    <div
+    <button
+      type="button"
+      className="sc-focus-ring"
       onClick={onClick}
       style={{
+        width: '100%',
+        border: 'none',
+        color: 'inherit',
+        textAlign: 'left',
         display: 'flex',
         alignItems: 'center',
         gap: 10,
@@ -96,6 +102,6 @@ export function PopoverItem({ icon, children, trailing, active, onClick }: Popov
         {children}
       </span>
       {trailing}
-    </div>
+    </button>
   );
 }

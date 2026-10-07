@@ -1,5 +1,5 @@
-/* Custom properties, keyframes, @font-face and the motion utilities and kill
-   switches. Element styles live in base.css. */
+/* Custom properties, keyframes, @font-face, the focus-ring class and the motion
+   utilities and kill switches. Element styles live in base.css. */
 @import './fonts.css';
 @import './tokens/typography.css';
 @import './tokens/colors.css';

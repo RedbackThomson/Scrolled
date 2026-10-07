@@ -5,7 +5,6 @@ import {
   Gauge,
   Hash,
   RotateCw,
-  ScrollText,
   Sparkles,
   Star,
 } from 'lucide-react';
@@ -13,7 +12,9 @@ import { QuestLink } from '@/components/entity-links';
 import type { QuestRecord } from '@/db';
 import { formatDurationSeconds } from '@/lib/duration';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
-import { MobileCardBody } from '@/components/data-table/MobileCardBody';
+import { ListCardBody } from '@/components/data-table/ListCardBody';
+import type { ListCardStat } from '@/components/data-table/listCardLayout';
+import { ExpValue } from '@/components/entity-display/ExpValue';
 
 const numberFormatter = new Intl.NumberFormat();
 
@@ -28,7 +29,7 @@ export const columns: ColumnDef<QuestRecord>[] = [
     header: '',
     enableSorting: false,
     enableHiding: false,
-    cell: () => <ScrollText className="text-muted-foreground h-5 w-5" />,
+    cell: ({ row }) => <EntityAvatar entity="quest" id={row.original.id} size={36} />,
   },
   {
     id: 'name',
@@ -36,7 +37,7 @@ export const columns: ColumnDef<QuestRecord>[] = [
     header: 'Name',
     meta: { filter: 'string' },
     cell: ({ row }) => (
-      <QuestLink id={row.original.id} className="font-medium">
+      <QuestLink id={row.original.id} className="font-semibold">
         {row.original.name}
       </QuestLink>
     ),
@@ -121,12 +122,17 @@ export const defaultSort = { id: 'name', dir: 'asc' } as const satisfies {
 };
 
 export function mobileCard(row: QuestRecord) {
+  const stats: ListCardStat[] = [];
+  if (row.requiredLevel !== null) stats.push({ label: 'Req Lv', value: row.requiredLevel });
+  if (row.rewardExp) stats.push({ label: 'EXP', value: <ExpValue exp={row.rewardExp} /> });
+  if (row.rewardMeso) stats.push({ label: 'Mesos', value: numberFormatter.format(row.rewardMeso) });
   return (
-    <MobileCardBody
-      media={<EntityAvatar entity="quest" id={row.id} size={52} />}
+    <ListCardBody
+      entity="quest"
+      id={row.id}
       name={row.name}
       subtitle={row.parent ?? undefined}
-      stats={row.requiredLevel !== null ? [`Lvl ${row.requiredLevel}`] : []}
+      stats={stats}
     />
   );
 }

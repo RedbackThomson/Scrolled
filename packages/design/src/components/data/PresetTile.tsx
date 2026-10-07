@@ -30,6 +30,7 @@ export function PresetTile({
   return (
     <button
       type="button"
+      className="sc-focus-ring"
       aria-pressed={active}
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}

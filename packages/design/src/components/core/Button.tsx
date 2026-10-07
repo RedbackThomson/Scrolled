@@ -39,7 +39,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={cn(
-          'ease-spring focus-visible:border-primary focus-visible:ring-primary/30 inline-flex items-center justify-center gap-1.5 whitespace-nowrap transition-[transform,background-color,box-shadow,color] duration-300 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-4 active:translate-y-px active:scale-[.98] disabled:pointer-events-none disabled:opacity-50 [&_svg]:shrink-0',
+          'ease-spring focus-visible:border-primary inline-flex items-center justify-center gap-1.5 whitespace-nowrap transition-[transform,background-color,box-shadow,color] duration-300 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--accent-glow)] active:translate-y-px active:scale-[.98] disabled:pointer-events-none disabled:opacity-50 [&_svg]:shrink-0',
           VARIANTS[variant],
           s.className,
           fullWidth && 'w-full',

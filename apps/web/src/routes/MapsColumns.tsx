@@ -1,9 +1,9 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { Activity, Hash, Map as MapIcon, MapPin, RotateCcw } from 'lucide-react';
-import { EntityIcon } from '@/components/entity-display/EntityIcon';
+import { Activity, Hash, MapPin, RotateCcw } from 'lucide-react';
+import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 import { MapLink } from '@/components/entity-links';
 import type { MapRecord } from '@/db';
-import { MobileCardBody } from '@/components/data-table/MobileCardBody';
+import { ListCardBody } from '@/components/data-table/ListCardBody';
 
 export const columns: ColumnDef<MapRecord>[] = [
   {
@@ -12,11 +12,10 @@ export const columns: ColumnDef<MapRecord>[] = [
     enableSorting: false,
     enableHiding: false,
     cell: ({ row }) => (
-      <EntityIcon
-        entity="map-mini"
+      <EntityAvatar
+        entity="map"
         id={row.original.id}
-        placeholder={MapIcon}
-        fit={{ maxWidth: 56, maxHeight: 28 }}
+        size={36}
         alt={row.original.name ?? `Map ${row.original.id}`}
       />
     ),
@@ -27,7 +26,7 @@ export const columns: ColumnDef<MapRecord>[] = [
     header: 'Name',
     meta: { filter: 'string' },
     cell: ({ row }) => (
-      <MapLink id={row.original.id} className="font-medium">
+      <MapLink id={row.original.id} className="font-semibold">
         {row.original.name ?? `Map ${row.original.id}`}
       </MapLink>
     ),
@@ -91,18 +90,12 @@ export const defaultSort = { id: 'name', dir: 'asc' } as const satisfies {
 
 export function mobileCard(row: MapRecord) {
   return (
-    <MobileCardBody
-      media={
-        <EntityIcon
-          entity="map-mini"
-          id={row.id}
-          placeholder={MapIcon}
-          fit={{ maxWidth: 56, maxHeight: 40 }}
-          alt={row.name ?? `Map ${row.id}`}
-        />
-      }
+    <ListCardBody
+      entity="map"
+      id={row.id}
       name={row.name ?? `Map ${row.id}`}
       subtitle={row.streetName ?? undefined}
+      stats={row.mobRate === null ? [] : [{ label: 'Mob rate', value: row.mobRate.toFixed(2) }]}
     />
   );
 }

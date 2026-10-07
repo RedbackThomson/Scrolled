@@ -127,6 +127,7 @@ export const equipConfig: TooltipEntityConfig<EquipRecord> = {
   fetch: (id) => getDbClient().getEquip(id),
   queryKey: (id) => ['db', 'equip', id],
   renderIcon: (record, id) => <ItemIcon entity="equip" id={id} size={64} alt={record.name} />,
+  nameOf: (record) => record.name,
   renderName: (record) => <div className="truncate">{record.name}</div>,
   getSampleId: () =>
     getDbClient()

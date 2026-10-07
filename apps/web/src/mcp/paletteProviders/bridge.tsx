@@ -10,6 +10,7 @@ import {
   type BridgeSettings,
 } from '../bridge/settings';
 import { getToolRegistry } from '../registry';
+import { PaletteIcon } from '@/components/command-palette/PaletteIcon';
 
 function fuzzy(q: string, hay: string): boolean {
   const t = q.trim().toLowerCase();
@@ -81,7 +82,7 @@ export function McpPaletteProvider() {
               setOpen(false);
             }}
           >
-            <Icon className="text-muted-foreground h-4 w-4" />
+            <PaletteIcon icon={Icon} />
             <span className="min-w-0 flex-1 truncate">{it.label}</span>
           </CommandItemPrimitive>
         );

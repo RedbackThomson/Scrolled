@@ -6,6 +6,7 @@ import { DetailListSection } from '@/components/layout/DetailListSection';
 import { DetailHeader } from '@/components/layout/DetailHeader';
 import {
   DetailPageLayout,
+  DetailPageError,
   DetailPageLoading,
   DetailPageNotFound,
   DetailSection,
@@ -121,7 +122,13 @@ export default function SkillDetail() {
 
   if (skillQ.isLoading) return <DetailPageLoading entity="Skill" id={id} />;
   if (skillQ.error) {
-    return <p className="text-destructive text-sm">{(skillQ.error as Error).message}</p>;
+    return (
+      <DetailPageError
+        entity="Skill"
+        error={skillQ.error}
+        onRetry={() => void skillQ.refetch()}
+      />
+    );
   }
   if (!skillQ.data) return <DetailPageNotFound entity="Skill" id={id} />;
 

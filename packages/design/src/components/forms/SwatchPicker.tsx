@@ -20,6 +20,7 @@ export function SwatchPicker({ options, value, onChange, size = 26 }: SwatchPick
           <button
             key={o.value}
             type="button"
+            className="sc-focus-ring"
             title={o.label || o.value}
             aria-label={o.label || o.value}
             aria-pressed={on}

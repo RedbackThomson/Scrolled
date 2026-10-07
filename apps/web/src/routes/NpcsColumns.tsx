@@ -1,10 +1,9 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { Hash, Users } from 'lucide-react';
-import { EntityIcon } from '@/components/entity-display/EntityIcon';
+import { Hash } from 'lucide-react';
 import { NpcLink } from '@/components/entity-links';
 import type { NpcRecord } from '@/db';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
-import { MobileCardBody } from '@/components/data-table/MobileCardBody';
+import { ListCardBody } from '@/components/data-table/ListCardBody';
 
 export const columns: ColumnDef<NpcRecord>[] = [
   {
@@ -13,13 +12,7 @@ export const columns: ColumnDef<NpcRecord>[] = [
     enableSorting: false,
     enableHiding: false,
     cell: ({ row }) => (
-      <EntityIcon
-        entity="npc"
-        id={row.original.id}
-        size={28}
-        placeholder={Users}
-        alt={row.original.name}
-      />
+      <EntityAvatar entity="npc" id={row.original.id} size={36} alt={row.original.name} />
     ),
   },
   {
@@ -28,7 +21,7 @@ export const columns: ColumnDef<NpcRecord>[] = [
     header: 'Name',
     meta: { filter: 'string' },
     cell: ({ row }) => (
-      <NpcLink id={row.original.id} className="font-medium">
+      <NpcLink id={row.original.id} className="font-semibold">
         {row.original.name}
       </NpcLink>
     ),
@@ -55,8 +48,9 @@ export const defaultSort = { id: 'name', dir: 'asc' } as const satisfies {
 
 export function mobileCard(row: NpcRecord) {
   return (
-    <MobileCardBody
-      media={<EntityAvatar entity="npc" id={row.id} size={52} alt={row.name} />}
+    <ListCardBody
+      entity="npc"
+      id={row.id}
       name={row.name}
       subtitle={<span className="font-mono">{row.id}</span>}
     />

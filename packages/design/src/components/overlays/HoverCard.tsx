@@ -70,14 +70,24 @@ export function HoverCard({
         </div>
       </div>
       {onSave !== null && (
-        <div
+        <button
+          type="button"
+          className="sc-focus-ring"
           onClick={onSave}
           style={{
+            width: '100%',
+            borderWidth: '1px 0 0',
+            borderStyle: 'solid',
+            borderColor: 'var(--tooltip-line)',
+            borderRadius: 0,
+            background: 'none',
+            color: 'inherit',
+            font: 'inherit',
+            textAlign: 'left',
             display: 'flex',
             alignItems: 'center',
             gap: 6,
             padding: '8px 12px',
-            borderTop: '1px solid var(--tooltip-line)',
             fontSize: 12,
             opacity: 0.85,
             cursor: 'pointer',
@@ -85,7 +95,7 @@ export function HoverCard({
         >
           <Icon icon={BookmarkPlus} size={13} />
           Save to collection
-        </div>
+        </button>
       )}
     </div>
   );

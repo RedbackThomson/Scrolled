@@ -33,6 +33,7 @@ export function Segmented({ options, value, onChange, size = 'md' }: SegmentedPr
           <button
             key={o.value}
             type="button"
+            className="sc-focus-ring"
             title={o.title || o.label}
             aria-label={o.label ? undefined : o.title}
             aria-pressed={on}

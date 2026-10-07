@@ -5,6 +5,7 @@ import { useSyncStatus } from '@scrolled/sync-core/react';
 import { CommandGroup, CommandItem as CommandItemPrimitive } from '@scrolled/design';
 import { useCommandPalette } from '@/stores/useCommandPalette';
 import { appConfig } from '@/config';
+import { PaletteIcon } from '@/components/command-palette/PaletteIcon';
 
 function fuzzy(q: string, hay: string): boolean {
   const t = q.trim().toLowerCase();
@@ -47,7 +48,7 @@ export function SyncProvider() {
           setOpen(false);
         }}
       >
-        <Icon className="text-muted-foreground h-4 w-4" />
+        <PaletteIcon icon={Icon} />
         <span className="min-w-0 flex-1 truncate">{label}</span>
       </CommandItemPrimitive>
     </CommandGroup>

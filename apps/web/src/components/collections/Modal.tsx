@@ -13,6 +13,8 @@ interface ModalProps {
   open: boolean;
   onClose: () => void;
   title: string;
+  /** Visible heading when it needs more than plain text (e.g. a breadcrumb); `title` still labels the dialog. */
+  heading?: ReactNode;
   description?: string;
   /** Leading tile in the header, usually a 38px SlotTile. */
   icon?: ReactNode;
@@ -38,6 +40,7 @@ export function Modal({
   open,
   onClose,
   title,
+  heading,
   description,
   icon,
   headerless,
@@ -101,7 +104,7 @@ export function Modal({
             {icon}
             <div className="min-w-0 flex-1">
               <h2 className="font-display truncate text-[19px] font-semibold leading-tight">
-                {title}
+                {heading ?? title}
               </h2>
               {description && <p className="text-muted-foreground text-[12.5px]">{description}</p>}
             </div>

@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { FlaskConical, Sword } from 'lucide-react';
 import { EntityCard } from '../../src/components/entity/EntityCard';
+import { Chip } from '../../src/components/core/Chip';
 
 const wrap = [
   (Story: () => JSX.Element) => (
@@ -47,6 +48,18 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Weapon: Story = { decorators: wrap };
+export const SelectedWithBadge: Story = {
+  decorators: wrap,
+  args: {
+    ...weapon('Gladius', 41, 7),
+    selected: true,
+    badge: (
+      <Chip tone="hue" hue={330}>
+        Cash
+      </Chip>
+    ),
+  },
+};
 export const NoTags: Story = {
   decorators: wrap,
   args: { ...weapon('Sky Parasol', 15, 7), tags: [] },

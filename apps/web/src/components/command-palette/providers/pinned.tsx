@@ -9,6 +9,7 @@ import {
   usePinnedSearches,
 } from '@/hooks/usePinnedSearches';
 import type { CollectionEntityType } from '@/db/user';
+import { PaletteIcon } from '@/components/command-palette/PaletteIcon';
 
 const LISTING_PATHS: Record<string, CollectionEntityType> = {
   '/items': 'item',
@@ -61,7 +62,7 @@ export function PinCurrentProvider() {
           setOpen(false);
         }}
       >
-        <Pin className="text-muted-foreground h-4 w-4" />
+        <PaletteIcon icon={Pin} />
         <span className="min-w-0 flex-1 truncate">
           Pin current filter as "<span className="font-medium">{query.trim()}</span>"
         </span>
@@ -103,7 +104,7 @@ export function PinnedSearchesProvider() {
               setOpen(false);
             }}
           >
-            <Icon className="text-muted-foreground h-4 w-4" />
+            <PaletteIcon icon={Icon} />
             <span className="min-w-0 flex-1 truncate">{p.name}</span>
             <span className="text-muted-foreground shrink-0 text-xs">
               {labelForEntityKind(p.entity, true)}

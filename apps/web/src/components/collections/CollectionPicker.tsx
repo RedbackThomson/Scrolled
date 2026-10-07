@@ -1,6 +1,6 @@
 // Checkbox-list popover used wherever the user can toggle membership for
-// a single entity — hover-card "Save" trigger and entity-detail badge
-// strip both render this. Portaled with the same conventions as
+// a single entity — the hover-card footer and the detail-page Save button
+// both render this. Portaled with the same conventions as
 // `ColumnFilter.tsx`: outside-click and Escape close, recompute position
 // on resize / scroll.
 //
@@ -12,7 +12,8 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { usePopover } from '@/hooks/usePopover';
 import { BookmarkCheck, Check, Loader2, Plus, Search } from 'lucide-react';
-import { Button, ConfettiBurst, Input } from '@scrolled/design';
+import { ConfettiBurst, Input } from '@scrolled/design';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { useMotionPrefs } from '@/hooks/useMotionPrefs';
 import { showToast } from '@/stores/toasts';
 import {
@@ -27,10 +28,15 @@ import {
 import type { CollectionEntityType, MembershipBadge } from '@/db/user';
 import { cn } from '@scrolled/design';
 import { PopoverPanel } from '@/components/common/PopoverPanel';
+import { CollectionFormDialog } from './CollectionFormDialog';
+import { resolveCollectionColor } from './colorRegistry';
+import { resolveCollectionIcon } from './iconRegistry';
 
 interface CollectionPickerProps {
   entityType: CollectionEntityType;
   entityId: number;
+  /** Shown in the popover header when known. */
+  entityName?: string;
   /** Trigger element. Click toggles the popover. `saves` counts adds this session, for celebrating them. */
   children: (args: {
     open: boolean;
@@ -40,8 +46,13 @@ interface CollectionPickerProps {
   }) => ReactNode;
 }
 
-export function CollectionPicker({ entityType, entityId, children }: CollectionPickerProps) {
-  const { open, setOpen, coords, triggerRef, popoverRef } = usePopover<
+export function CollectionPicker({
+  entityType,
+  entityId,
+  entityName,
+  children,
+}: CollectionPickerProps) {
+  const { open, setOpen, close, coords, triggerRef, popoverRef } = usePopover<
     HTMLSpanElement,
     HTMLDivElement
   >();
@@ -140,7 +151,19 @@ export function CollectionPicker({ entityType, entityId, children }: CollectionP
     setQuery('');
   }, [query, createM, toggleM, entityType, entityId, celebrate, announceSave]);
 
-  // "Create" footer appears when search has no exact match.
+  const [formOpen, setFormOpen] = useState(false);
+  const onFormSaved = useCallback(
+    (created: { id: number; name: string }) => {
+      toggleM.mutate({ collectionId: created.id, entityType, entityId, member: true });
+      celebrate();
+      announceSave(created.id, created.name);
+    },
+    [toggleM, entityType, entityId, celebrate, announceSave],
+  );
+  const isMobile = useIsMobile();
+  const savedIn = placementsByCollection.size;
+
+  // With a query that names no existing collection, the footer creates it directly.
   const hasExactMatch = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return true;
@@ -160,17 +183,30 @@ export function CollectionPicker({ entityType, entityId, children }: CollectionP
           panelRef={popoverRef}
           coords={coords}
           widthClassName="w-72"
-          className="overflow-hidden"
           onMouseDown={(e) => e.stopPropagation()}
         >
-          <div className="border-muted border-b-2 p-2">
+          {!isMobile && coords && <Notch trigger={triggerRef.current} panelLeft={coords.left} />}
+          <div className="space-y-2 p-2.5 pb-2">
+            <div className="px-0.5">
+              {entityName && (
+                <div className="font-display truncate text-[15px] font-semibold leading-tight">
+                  {entityName}
+                </div>
+              )}
+              <div className="text-muted-foreground text-xs">
+                {savedIn > 0
+                  ? `Saved in ${savedIn} ${savedIn === 1 ? 'collection' : 'collections'}`
+                  : 'Not saved yet'}
+              </div>
+            </div>
             <div className="relative">
               <Search className="text-muted-foreground pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2" />
               <Input
                 autoFocus
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search or create…"
+                placeholder="Find a collection…"
+                aria-label="Find a collection"
                 className="bg-muted focus-visible:ring-primary/30 h-8 w-full rounded-full pl-8 pr-2 text-base focus-visible:outline-none focus-visible:ring-4 sm:text-xs"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !hasExactMatch && query.trim()) {
@@ -182,7 +218,7 @@ export function CollectionPicker({ entityType, entityId, children }: CollectionP
             </div>
           </div>
           <ul
-            className="max-h-72 space-y-0.5 overflow-y-auto p-1.5"
+            className="border-muted max-h-72 space-y-0.5 overflow-y-auto border-t-2 p-1.5"
             aria-busy={collectionsQ.isPending || membershipQ.isPending}
           >
             {collectionsQ.isPending ? (
@@ -200,6 +236,8 @@ export function CollectionPicker({ entityType, entityId, children }: CollectionP
                   key={c.id}
                   collectionId={c.id}
                   collectionName={c.name}
+                  collectionIcon={c.icon}
+                  collectionColor={c.color}
                   collectionMemberCount={c.memberCount}
                   placements={placementsByCollection.get(c.id) ?? []}
                   entityType={entityType}
@@ -209,27 +247,39 @@ export function CollectionPicker({ entityType, entityId, children }: CollectionP
               ))
             )}
           </ul>
-          {!hasExactMatch && query.trim() && (
-            <div className="border-muted bg-muted border-t-2 p-2">
-              <Button
+          <div className="border-muted bg-muted rounded-b-[16px] border-t-2 p-1.5">
+            {!hasExactMatch && query.trim() ? (
+              <button
                 type="button"
-                size="sm"
-                variant="secondary"
-                className="w-full justify-start"
                 onClick={onCreateAndAdd}
                 disabled={createM.isPending}
+                className="text-primary hover:bg-card flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13px] font-bold disabled:opacity-60"
               >
                 {createM.isPending ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
                 ) : (
-                  <Plus className="h-3.5 w-3.5" />
+                  <Plus className="h-3.5 w-3.5" aria-hidden />
                 )}
-                Create "{query.trim()}"
-              </Button>
-            </div>
-          )}
+                <span className="min-w-0 truncate">Create "{query.trim()}"</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setFormOpen(true)}
+                className="text-primary hover:bg-card flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13px] font-bold"
+              >
+                <Plus className="h-3.5 w-3.5" aria-hidden />
+                New collection…
+              </button>
+            )}
+          </div>
         </PopoverPanel>
       )}
+      <CollectionFormDialog
+        open={formOpen}
+        onClose={() => setFormOpen(false)}
+        onSaved={onFormSaved}
+      />
     </>
   );
 }
@@ -237,6 +287,8 @@ export function CollectionPicker({ entityType, entityId, children }: CollectionP
 interface PickerRowProps {
   collectionId: number;
   collectionName: string;
+  collectionIcon: string | null;
+  collectionColor: string | null;
   collectionMemberCount: number;
   placements: MembershipBadge[];
   entityType: CollectionEntityType;
@@ -247,6 +299,8 @@ interface PickerRowProps {
 function PickerRow({
   collectionId,
   collectionName,
+  collectionIcon,
+  collectionColor,
   collectionMemberCount,
   placements,
   entityType,
@@ -294,6 +348,7 @@ function PickerRow({
         >
           {isMember && <Check className="h-3 w-3" />}
         </span>
+        <CollectionGlyph icon={collectionIcon} color={collectionColor} />
         <span className={cn('min-w-0 flex-1 truncate', isMember && 'font-medium')}>
           {collectionName}
         </span>
@@ -485,5 +540,35 @@ function GroupChip({
       )}
       <span className="max-w-[7rem] truncate">{label}</span>
     </button>
+  );
+}
+
+function CollectionGlyph({ icon, color }: { icon: string | null; color: string | null }) {
+  const { Icon } = resolveCollectionIcon(icon);
+  const c = resolveCollectionColor(color);
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        'shadow-slot inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[8px]',
+        c.iconBg,
+        c.iconColor,
+      )}
+    >
+      <Icon className="h-3.5 w-3.5" />
+    </span>
+  );
+}
+
+/** Arrow on the panel's top edge, pointing at the middle of the trigger. */
+function Notch({ trigger, panelLeft }: { trigger: HTMLElement | null; panelLeft: number }) {
+  const r = trigger?.getBoundingClientRect();
+  const x = r ? Math.max(14, r.left + r.width / 2 - panelLeft) : 22;
+  return (
+    <span
+      aria-hidden
+      className="border-border bg-card absolute -top-[7px] h-3 w-3 rotate-45 border-l-2 border-t-2"
+      style={{ left: x - 6 }}
+    />
   );
 }

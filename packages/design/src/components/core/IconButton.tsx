@@ -62,6 +62,7 @@ export function IconButton({
   return (
     <button
       type="button"
+      className="sc-focus-ring"
       aria-label={label}
       title={label}
       onClick={onClick}

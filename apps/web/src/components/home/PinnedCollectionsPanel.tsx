@@ -28,7 +28,7 @@ export function PinnedCollectionsPanel() {
       action={
         <Link
           to="/collections"
-          className="text-primary inline-flex items-center gap-1 text-xs hover:underline"
+          className="text-primary inline-flex items-center gap-1 text-[13px] font-semibold hover:underline"
         >
           All collections <ArrowRight className="h-3 w-3" />
         </Link>

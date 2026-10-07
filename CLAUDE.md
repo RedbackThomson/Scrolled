@@ -44,8 +44,19 @@ Don't switch these without updating `docs/technical_requirements.md` first.
 ## Design language
 
 - Standard wiki patterns — sidebar with nested nav, top search bar, Cmd/Ctrl+K palette, MediaWiki-style infobox detail pages. Don't reinvent.
-- Light + dark via Tailwind `class` strategy, neutral slate/zinc tokens, no game branding.
+- Light + dark via Tailwind `class` strategy, using the `@scrolled/design` tokens (sky-washed light, twilight-navy dark), no game branding.
 - Desktop-first, accessible (WCAG AA), keyboard navigable.
+
+## Component library (`@scrolled/design`)
+
+`packages/design` is the single source of UI building blocks for both apps. The goal is one look, built once: a new page should be assembled from existing components, not restyled from scratch with its own classes.
+
+- **Reuse before you build.** Before writing markup, check `packages/design/src/components/**` (and its Storybook) for something that already does the job. If something is close, add a prop or variant to it rather than making a near-copy.
+- **Used in more than one place → make it a component.** Anything that appears in two or more places becomes a shared component instead of repeated class strings. Generic UI (buttons, chips, tiles, cards, overlays, form controls, empty/error/loading states) goes in `packages/design`. App-specific compositions that know about the database, routing or stores go in `apps/web/src/components/<concern>/`, built from design components.
+- **Every design component has a story.** Adding or changing a component in `packages/design` includes its Storybook story in `packages/design/stories/<Group>/`, covering its main variants. Stories must build (`nix develop -c pnpm --filter @scrolled/design exec storybook build`).
+- **Style with tokens, not values.** Colours, radii, shadows, fonts and easing come from the token CSS and the Tailwind preset (`--surface-*`, `--accent`, `--text-*`, `shadow-rim`, `ease-spring`, `font-display`, …), not raw hex or one-off values. Dark tooltip-style surfaces set `data-surface="tooltip"` so tokens re-point.
+- **Motion goes through the motion layer.** Use the keyframes, utilities and Tailwind `animate-*` names from `tokens/motion.css` and the preset; they honour the Interface motion setting and `prefers-reduced-motion`. JS-driven motion checks `usePrefersMotion` / `useMotionPrefs`. Name the CSS property for arbitrary timings (`[transition-duration:520ms]`, `[animation-delay:90ms]`): `duration-[…]` and `delay-[…]` are ambiguous with `tailwindcss-animate` and Tailwind silently drops them.
+- **Interactive pieces are real controls.** Use buttons and links, not clickable `div`s, and give them the shared focus ring (`.sc-focus-ring`, or the accent-glow ring on `Button`).
 
 ## Coding standards
 

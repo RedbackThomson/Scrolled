@@ -1,4 +1,4 @@
-import { Monitor, Moon, Palette, Sun } from 'lucide-react';
+import { Monitor, Moon, Palette, Sun, Wind } from 'lucide-react';
 import { AccentPicker } from '@/components/common/AccentPicker';
 import { useSettingsSection } from '@/components/settings/useSettingsSection';
 import { useShowEntityIds } from '@/stores/showEntityIds';
@@ -60,6 +60,24 @@ export function AppearanceSection() {
           </div>
           <AccentPicker />
         </div>
+        <Switch
+          label="Show entity IDs"
+          description="Show the numeric ID next to entity names in detail pages, hover previews, lists, and search results."
+          checked={showIds}
+          onChange={setShowIds}
+        />
+        <Switch
+          label="Hide minor portals"
+          description="Trim a map's Portals list to the ones you can travel through. Hides spawn points, staff-only portals, and dead-end teleports."
+          checked={hideMinorPortals}
+          onChange={setHideMinorPortals}
+        />
+      </div>
+      <div className="text-muted-foreground flex items-center gap-2 pt-2">
+        <Wind className="h-4 w-4" />
+        <h3 className="font-display text-foreground text-[15px] font-semibold">Motion</h3>
+      </div>
+      <div className="border-border bg-card text-card-foreground shadow-rim divide-border divide-y rounded-xl border-2 px-5 text-sm [&>*]:py-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="font-bold">Backdrop</div>
@@ -76,30 +94,21 @@ export function AppearanceSection() {
         {motionPrefs.backdrop === 'clouds' && (
           <Switch
             label="Drifting clouds"
-            description="Let the clouds float slowly across the sky. Off by default when your device asks for reduced motion."
+            description="Let the clouds float slowly across the sky."
             checked={motionPrefs.drift}
             onChange={setDrift}
           />
         )}
         <Switch
           label="Interface motion"
-          description="Animate hovers, pop-ups, and pages as they appear. Off by default when your device asks for reduced motion."
+          description="Animate hovers, pop-ups, and pages as they appear."
           checked={motionPrefs.motion}
           onChange={setMotion}
         />
-        <Switch
-          label="Show entity IDs"
-          description="Show the numeric ID next to entity names in detail pages, hover previews, lists, and search results."
-          checked={showIds}
-          onChange={setShowIds}
-        />
-        <Switch
-          label="Hide minor portals"
-          description="Trim a map's Portals list to the ones you can travel through. Hides spawn points, staff-only portals, and dead-end teleports."
-          checked={hideMinorPortals}
-          onChange={setHideMinorPortals}
-        />
       </div>
+      <p className="text-muted-foreground px-1 text-[12.5px]">
+        Both start off if your system is set to reduce motion.
+      </p>
     </section>
   );
 }

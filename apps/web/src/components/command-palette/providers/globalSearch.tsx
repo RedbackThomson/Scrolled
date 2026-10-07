@@ -5,12 +5,12 @@ import { CommandGroup, CommandItem as CommandItemPrimitive } from '@scrolled/des
 import { getDbClient, type EntityKind } from '@/db';
 import { getSearchIndex, querySearch, type SearchHit } from '@/search';
 import { labelForEntityKind, routeForEntity } from '@/lib/entityRoutes';
-import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 import { labelForEquipSlot } from '@scrolled/game-db/domain/equipTypes';
 import { useRecentQueries } from '@/lib/recents';
 import { useCommandPalette } from '@/stores/useCommandPalette';
 import { useFeatures } from '@/hooks/useFeatures';
 import { useShowEntityIds } from '@/stores/showEntityIds';
+import { PaletteEntityIcon } from '@/components/command-palette/PaletteIcon';
 
 const PREFIX_TO_ENTITY: Record<string, EntityKind> = {
   m: 'mob',
@@ -125,7 +125,7 @@ export function GlobalSearchProvider() {
               setOpen(false);
             }}
           >
-            <EntityAvatar entity={hit.entity} id={hit.id} size={20} alt={hit.name} />
+            <PaletteEntityIcon entity={hit.entity} id={hit.id} alt={hit.name} />
             <span className="min-w-0 flex-1 truncate">{hit.name}</span>
             {showIds && (
               <span className="text-muted-foreground shrink-0 font-mono text-xs">{hit.id}</span>

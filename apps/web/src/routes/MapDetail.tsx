@@ -16,6 +16,7 @@ import { DetailListSection } from '@/components/layout/DetailListSection';
 import { DetailHeader } from '@/components/layout/DetailHeader';
 import {
   DetailPageLayout,
+  DetailPageError,
   DetailPageLoading,
   DetailPageNotFound,
   DetailSection,
@@ -26,7 +27,8 @@ import {
 import { EntityIcon } from '@/components/entity-display/EntityIcon';
 import { EntityRow } from '@/components/entity-display/EntityRow';
 import { ListSortControl } from '@/components/common/ListSortControl';
-import { Chip } from '@scrolled/design';
+import { Button, Chip, SlotTile } from '@scrolled/design';
+import { PORTAL_LAYER_TILE } from '@/components/MapViewer/portalDisplay';
 import { MapLink } from '@/components/entity-links';
 import { CollectionBadgeStrip } from '@/components/collections';
 import type { MapViewerHighlight } from '@/components/MapViewer';
@@ -329,6 +331,15 @@ export default function MapDetail() {
   usePageTitle(mapQ.data?.name);
 
   if (mapQ.isLoading) return <DetailPageLoading entity="Map" id={id} />;
+  if (mapQ.error) {
+    return (
+      <DetailPageError
+        entity="Map"
+        error={mapQ.error}
+        onRetry={() => void mapQ.refetch()}
+      />
+    );
+  }
   if (!mapQ.data) return <DetailPageNotFound entity="Map" id={id} />;
 
   const m = mapQ.data;
@@ -342,6 +353,13 @@ export default function MapDetail() {
             id={m.id}
             title={m.name ?? `Map ${m.id}`}
             subtitle={m.streetName && <span>{m.streetName}</span>}
+            actions={
+              m.minimapPath && (
+                <Button variant="secondary" icon={MapIcon} onClick={() => openViewer()}>
+                  Open map viewer
+                </Button>
+              )
+            }
           />
         }
         aside={
@@ -384,80 +402,24 @@ export default function MapDetail() {
 
         {m.minimapPath && (
           <DetailSection title="Minimap">
-            <div className="flex flex-col items-start gap-2 sm:max-w-full">
-              <button
-                type="button"
-                onClick={() => openViewer()}
-                aria-label="Open map viewer"
-                className="border-border bg-card hover:ring-primary/40 focus-visible:ring-primary/60 sm:width-full inline-flex max-w-full items-center justify-start rounded-md border p-3 transition hover:ring-2 focus-visible:outline-none focus-visible:ring-2"
-              >
-                <EntityIcon
-                  entity="map-mini"
-                  id={m.id}
-                  placeholder={MapIcon}
-                  fit={{ maxWidth: 480, maxHeight: 360 }}
-                  alt={`Minimap for ${m.name ?? `Map ${m.id}`}`}
-                />
-              </button>
-              <button
-                type="button"
-                onClick={() => openViewer()}
-                className="text-primary inline-flex items-center gap-1 text-xs hover:underline"
-              >
-                <MapPin className="h-3.5 w-3.5" /> Show map details
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => openViewer()}
+              aria-label="Open map viewer"
+              className="border-border bg-card shadow-rim ease-spring hover:border-primary/40 focus-visible:ring-primary/30 inline-flex max-w-full items-center justify-start rounded-xl border-2 p-3 transition-[transform,border-color] duration-300 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-4"
+            >
+              <EntityIcon
+                entity="map-mini"
+                id={m.id}
+                placeholder={MapIcon}
+                fit={{ maxWidth: 480, maxHeight: 360 }}
+                alt={`Minimap for ${m.name ?? `Map ${m.id}`}`}
+              />
+            </button>
           </DetailSection>
         )}
 
         <div className="grid items-start gap-3.5 md:grid-cols-2">
-          {features.hasNpcs && (
-            <DetailListSection
-              icon={Users}
-              title="NPCs"
-              count={npcsQ.data?.length}
-              isEmpty={npcsQ.data?.length === 0}
-              action={
-                npcsQ.data && npcsQ.data.length > 0 ? (
-                  <ListSortControl
-                    fields={npcsSort.fieldOptions}
-                    value={npcsSort.sort}
-                    onChange={npcsSort.setSort}
-                  />
-                ) : null
-              }
-            >
-              {npcsSort.sorted.map((n) => (
-                <EntityRow
-                  key={`${n.npcId}-${n.x}-${n.y}`}
-                  entity="npc"
-                  id={n.npcId}
-                  name={n.name}
-                  meta={
-                    n.x !== null || n.y !== null ? (
-                      <span className="font-mono">
-                        ({n.x ?? '?'}, {n.y ?? '?'})
-                      </span>
-                    ) : undefined
-                  }
-                  trailing={
-                    m.minimapPath && (
-                      <button
-                        type="button"
-                        onClick={() => openViewer({ kind: 'npc', key: String(n.npcId) })}
-                        aria-label={`Show ${n.name ?? `NPC ${n.npcId}`} on map`}
-                        title="Show on map"
-                        className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition focus-visible:opacity-100 group-hover:opacity-100 max-md:opacity-100"
-                      >
-                        <MapPin className="h-4 w-4" />
-                      </button>
-                    )
-                  }
-                />
-              ))}
-            </DetailListSection>
-          )}
-
           {features.hasMobs && (
             <DetailListSection
               icon={Skull}
@@ -494,6 +456,53 @@ export default function MapDetail() {
                         type="button"
                         onClick={() => openViewer({ kind: 'mob', key: String(mob.mobId) })}
                         aria-label={`Show ${mob.name ?? `Mob ${mob.mobId}`} on map`}
+                        title="Show on map"
+                        className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition focus-visible:opacity-100 group-hover:opacity-100 max-md:opacity-100"
+                      >
+                        <MapPin className="h-4 w-4" />
+                      </button>
+                    )
+                  }
+                />
+              ))}
+            </DetailListSection>
+          )}
+
+          {features.hasNpcs && (
+            <DetailListSection
+              icon={Users}
+              title="NPCs"
+              count={npcsQ.data?.length}
+              isEmpty={npcsQ.data?.length === 0}
+              action={
+                npcsQ.data && npcsQ.data.length > 0 ? (
+                  <ListSortControl
+                    fields={npcsSort.fieldOptions}
+                    value={npcsSort.sort}
+                    onChange={npcsSort.setSort}
+                  />
+                ) : null
+              }
+            >
+              {npcsSort.sorted.map((n) => (
+                <EntityRow
+                  key={`${n.npcId}-${n.x}-${n.y}`}
+                  entity="npc"
+                  id={n.npcId}
+                  name={n.name}
+                  meta={
+                    n.x !== null || n.y !== null ? (
+                      <span className="font-mono">
+                        ({n.x ?? '?'}, {n.y ?? '?'})
+                      </span>
+                    ) : undefined
+                  }
+                  trailing={
+                    m.minimapPath && (
+                      <button
+                        type="button"
+                        onClick={() => openViewer({ kind: 'npc', key: String(n.npcId) })}
+                        aria-label={`Show ${n.name ?? `NPC ${n.npcId}`} on map`}
                         title="Show on map"
                         className="text-muted-foreground hover:bg-background hover:text-foreground inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md opacity-0 transition focus-visible:opacity-100 group-hover:opacity-100 max-md:opacity-100"
                       >
@@ -546,6 +555,7 @@ export default function MapDetail() {
                 key={p.idx}
                 entity="map"
                 id={p.targetMapId!}
+                avatar={<SlotTile {...PORTAL_LAYER_TILE[layer]} size={36} />}
                 name={p.targetMapName}
                 subtitle={portalSubtitle(p)}
                 meta={coords}
@@ -561,6 +571,7 @@ export default function MapDetail() {
                 key={p.idx}
                 entity="map"
                 id={p.idx}
+                avatar={<SlotTile {...PORTAL_LAYER_TILE[layer]} size={36} />}
                 name={`Portal ${p.portalName}`}
                 subtitle={p.script ?? (p.targetPortal ? `→ ${p.targetPortal}` : null)}
                 meta={

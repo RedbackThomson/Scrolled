@@ -8,8 +8,8 @@
 
 import { lazy, Suspense, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Check, Pencil, Sparkles } from 'lucide-react';
-import { Button } from '@scrolled/design';
+import { ArrowRight, LayoutDashboard, Pencil, Sparkles } from 'lucide-react';
+import { Banner, Button } from '@scrolled/design';
 import {
   BrowseTiles,
   ContinueStrip,
@@ -61,22 +61,47 @@ export default function Home() {
             <p className="text-muted-foreground mt-1 truncate text-sm">{hostedName}</p>
           )}
         </div>
-        <Button
-          type="button"
-          variant={editing ? 'primary' : 'secondary'}
-          icon={editing ? Check : Pencil}
-          onClick={() => setEditing((v) => !v)}
-          title={editing ? 'Finish editing' : 'Edit dashboard'}
-        >
-          {editing ? 'Done' : 'Edit'}
-        </Button>
+        {!editing && (
+          <Button
+            type="button"
+            variant="secondary"
+            icon={Pencil}
+            onClick={() => setEditing(true)}
+            title="Edit dashboard"
+          >
+            Edit
+          </Button>
+        )}
       </header>
 
       {editing ? (
         <HomeSectionProvider editing>
-          <Suspense fallback={<HomeSectionPlaceholder label="Editor" />}>
-            <HomeEditor layout={layout} renderSection={renderSection} />
-          </Suspense>
+          <div className="space-y-3">
+            <Banner
+              tone="dark"
+              icon={LayoutDashboard}
+              title="Editing your home page. Drag sections to reorder, or hide what you don't use."
+              action={
+                // Re-points the surface tokens so the buttons read correctly on the dark banner.
+                <div data-surface="tooltip" className="flex shrink-0 gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => void layout.reset()}
+                  >
+                    Reset
+                  </Button>
+                  <Button type="button" size="sm" onClick={() => setEditing(false)}>
+                    Done
+                  </Button>
+                </div>
+              }
+            />
+            <Suspense fallback={<HomeSectionPlaceholder label="Editor" />}>
+              <HomeEditor layout={layout} renderSection={renderSection} />
+            </Suspense>
+          </div>
         </HomeSectionProvider>
       ) : (
         <div className="space-y-8">

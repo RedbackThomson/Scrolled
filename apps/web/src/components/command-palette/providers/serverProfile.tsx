@@ -3,6 +3,7 @@ import { CommandGroup, CommandItem as CommandItemPrimitive } from '@scrolled/des
 import { useCommandPalette } from '@/stores/useCommandPalette';
 import { useServerProfile, useSetServerProfile } from '@/hooks/useServerProfile';
 import { BUILTIN_PROFILES } from '@scrolled/game-db/serverProfiles';
+import { PaletteIcon } from '@/components/command-palette/PaletteIcon';
 
 function fuzzy(q: string, hay: string): boolean {
   const t = q.trim().toLowerCase();
@@ -33,7 +34,7 @@ export function ServerProfileProvider() {
               setOpen(false);
             }}
           >
-            <Gamepad2 className="text-muted-foreground h-4 w-4" />
+            <PaletteIcon icon={Gamepad2} />
             <span className="min-w-0 flex-1 truncate">Server profile: {p.name}</span>
             {active && <span className="text-muted-foreground shrink-0 text-xs">Active</span>}
           </CommandItemPrimitive>

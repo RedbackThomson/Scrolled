@@ -1,6 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { Crown, Divide, Flame, Gauge, Hash, Heart, Skull, Sparkles, TrendingUp } from 'lucide-react';
-import { EntityIcon } from '@/components/entity-display/EntityIcon';
+import { Crown, Divide, Flame, Gauge, Hash, Heart, Sparkles, TrendingUp } from 'lucide-react';
 import { ExpValue } from '@/components/entity-display/ExpValue';
 import { MobLink } from '@/components/entity-links';
 import type { MobRecord } from '@/db';
@@ -11,7 +10,8 @@ import {
 } from '@/components/entity-display/mobElementsDisplay';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 import { Chip } from '@scrolled/design';
-import { MobileCardBody } from '@/components/data-table/MobileCardBody';
+import { ListCardBody } from '@/components/data-table/ListCardBody';
+import type { ListCardStat } from '@/components/data-table/listCardLayout';
 
 /** Statuses that get their own column in the listing. Maps each to the
  *  public column id used in URL state and filter keys. */
@@ -56,13 +56,7 @@ export const columns: ColumnDef<MobRecord>[] = [
     enableSorting: false,
     enableHiding: false,
     cell: ({ row }) => (
-      <EntityIcon
-        entity="mob"
-        id={row.original.id}
-        size={28}
-        placeholder={Skull}
-        alt={row.original.name}
-      />
+      <EntityAvatar entity="mob" id={row.original.id} size={36} alt={row.original.name} />
     ),
   },
   {
@@ -72,12 +66,11 @@ export const columns: ColumnDef<MobRecord>[] = [
     meta: { filter: 'string' },
     cell: ({ row }) => (
       <MobLink id={row.original.id} className="inline-flex items-center gap-2">
-        <span className="font-medium">{row.original.name}</span>
+        <span className="font-semibold">{row.original.name}</span>
         {row.original.isBoss && (
-          <span className="inline-flex items-center gap-0.5 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
-            <Crown className="h-3 w-3" />
+          <Chip tone="gold" icon={Crown}>
             Boss
-          </span>
+          </Chip>
         )}
       </MobLink>
     ),
@@ -168,12 +161,15 @@ export const defaultSort = { id: 'level', dir: 'asc' } as const satisfies {
 };
 
 export function mobileCard(row: MobRecord) {
-  const stats: string[] = [];
-  if (row.level !== null) stats.push(`Lvl ${row.level}`);
-  if (row.hp !== null) stats.push(`${row.hp.toLocaleString()} HP`);
+  const stats: ListCardStat[] = [];
+  if (row.level !== null) stats.push({ label: 'Lvl', value: row.level });
+  if (row.hp !== null) stats.push({ label: 'HP', value: row.hp.toLocaleString() });
+  if (row.exp !== null) stats.push({ label: 'EXP', value: <ExpValue exp={row.exp} /> });
+  if (row.mp) stats.push({ label: 'MP', value: row.mp.toLocaleString() });
   return (
-    <MobileCardBody
-      media={<EntityAvatar entity="mob" id={row.id} size={52} alt={row.name} />}
+    <ListCardBody
+      entity="mob"
+      id={row.id}
       name={row.name}
       badge={
         row.isBoss ? (

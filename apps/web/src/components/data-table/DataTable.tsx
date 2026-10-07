@@ -11,8 +11,8 @@ import {
   type SortingState,
   type VisibilityState,
 } from '@tanstack/react-table';
-import { LayoutGrid, Search, Table2, X } from 'lucide-react';
-import { Input, Pagination, Segmented, Skeleton } from '@scrolled/design';
+import { LayoutGrid, Search, SearchX, Table2, X } from 'lucide-react';
+import { EmptyState, Input, Pagination, Segmented, Skeleton } from '@scrolled/design';
 import {
   Table,
   TableBody,
@@ -94,11 +94,12 @@ export interface DataTableProps<TData> {
   selectedIds?: ReadonlySet<string>;
   onSelectionChange?: (next: Set<string>) => void;
   /**
-   * Render a row as a tappable card on viewports below `md`. When supplied,
-   * mobile viewports always render cards — the table layout (with its
-   * horizontal scroll and absolute-overlay row links) is desktop-only.
-   * Callers that don't supply a card fall through to the table layout as a
-   * last resort; all production entity tables provide one.
+   * Render a row as a card: a compact row on viewports below `md`, and a tall
+   * card in the desktop card view. When supplied, mobile viewports always
+   * render cards — the table layout (with its horizontal scroll and
+   * absolute-overlay row links) is desktop-only. Callers that don't supply a
+   * card fall through to the table layout; all production entity tables
+   * provide one.
    */
   mobileCard?: (row: TData) => ReactNode;
 }
@@ -416,8 +417,8 @@ export function DataTable<TData>({
             </TableRow>
           ) : data.length === 0 ? (
             <TableRow className="hover:bg-transparent">
-              <TableCell colSpan={columnCount} className="text-muted-foreground py-6 text-center">
-                {emptyMessage}
+              <TableCell colSpan={columnCount}>
+                <EmptyState icon={SearchX} title="No results" body={emptyMessage} />
               </TableCell>
             </TableRow>
           ) : (

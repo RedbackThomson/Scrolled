@@ -51,6 +51,7 @@ export const questChainConfig: TooltipEntityConfig<QuestChainDetail> = {
   queryKey: (id) => ['db', 'quest-chain', id],
   iconTile: { hue: ENTITY_HUES.quest },
   renderIcon: () => <GitBranch className="h-7 w-7" aria-hidden />,
+  nameOf: (record) => record.chain.name,
   renderName: (record) => <div className="truncate">{record.chain.name}</div>,
   getSampleId: () =>
     getDbClient().listQuestChains({ limit: 1 }).then((r) => r.rows[0]?.id ?? null),

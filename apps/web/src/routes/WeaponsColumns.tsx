@@ -10,7 +10,6 @@ import {
   Sword,
   Users,
 } from 'lucide-react';
-import { ItemIcon } from '@/components/entity-display/ItemIcon';
 import { EquipLink } from '@/components/entity-links';
 import type { EquipRecord } from '@/db';
 import { ABILITY_STAT_FIELDS } from '@scrolled/game-db/domain/abilityStats';
@@ -18,7 +17,8 @@ import { labelForEquipType } from '@scrolled/game-db/domain/equipTypes';
 import { isAnyClass, parseEquipReqJob } from '@scrolled/game-db/domain/equipJobs';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 import { Chip } from '@scrolled/design';
-import { MobileCardBody } from '@/components/data-table/MobileCardBody';
+import { ListCardBody } from '@/components/data-table/ListCardBody';
+import { equipCardStats, equipCardTags } from './equipCardParts';
 
 const num = (v: number | null) => (v === null ? '—' : v.toLocaleString());
 
@@ -34,6 +34,8 @@ const statColumn = (
   id: NumericEquipKey,
   header: string,
   icon?: LucideIcon,
+  /** The headline offensive stat, set in bold so it scans first. */
+  strong = false,
 ): ColumnDef<EquipRecord> => ({
   id,
   accessorFn: (e) => e[id],
@@ -43,7 +45,12 @@ const statColumn = (
     icon,
     card: { label: header, render: (row) => num(row[id]) },
   },
-  cell: ({ row }) => num(row.original[id]),
+  cell: ({ row }) =>
+    strong ? (
+      <span className="font-bold tabular-nums">{num(row.original[id])}</span>
+    ) : (
+      num(row.original[id])
+    ),
 });
 
 export const columns: ColumnDef<EquipRecord>[] = [
@@ -53,7 +60,7 @@ export const columns: ColumnDef<EquipRecord>[] = [
     enableSorting: false,
     enableHiding: false,
     cell: ({ row }) => (
-      <ItemIcon entity="equip" id={row.original.id} size={28} alt={row.original.name} />
+      <EntityAvatar entity="equip" id={row.original.id} size={36} alt={row.original.name} />
     ),
   },
   {
@@ -62,7 +69,7 @@ export const columns: ColumnDef<EquipRecord>[] = [
     header: 'Name',
     meta: { filter: 'string' },
     cell: ({ row }) => (
-      <EquipLink id={row.original.id} className="font-medium">
+      <EquipLink id={row.original.id} className="font-semibold">
         {row.original.name}
       </EquipLink>
     ),
@@ -85,9 +92,9 @@ export const columns: ColumnDef<EquipRecord>[] = [
     },
     cell: ({ row }) =>
       row.original.cash ? (
-        <span className="inline-flex items-center rounded bg-pink-500/15 px-1.5 py-0.5 text-[10px] font-medium text-pink-700 dark:text-pink-300">
+        <Chip tone="hue" hue={330}>
           Cash
-        </span>
+        </Chip>
       ) : (
         <span className="text-muted-foreground text-xs">Regular</span>
       ),
@@ -114,8 +121,8 @@ export const columns: ColumnDef<EquipRecord>[] = [
       return <span className="text-xs">{jobs.join(', ')}</span>;
     },
   },
-  statColumn('attack', 'Atk', Sword),
-  statColumn('magicAttack', 'M.Atk', Sword),
+  statColumn('attack', 'Atk', Sword, true),
+  statColumn('magicAttack', 'M.Atk', Sword, true),
   ...ABILITY_STAT_FIELDS.map((s) => statColumn(s.inc, s.label)),
   statColumn('incHp', 'HP', Heart),
   statColumn('incMp', 'MP', Sparkles),
@@ -130,7 +137,8 @@ export const columns: ColumnDef<EquipRecord>[] = [
     accessorFn: (e) => e.upgradeSlots,
     header: 'Slots',
     meta: { filter: 'number' },
-    cell: ({ row }) => row.original.upgradeSlots ?? '—',
+    cell: ({ row }) =>
+      row.original.upgradeSlots === null ? '—' : <Chip>{row.original.upgradeSlots}</Chip>,
   },
   {
     id: 'id',
@@ -197,16 +205,14 @@ export function defaultVisibleForType(type: string | null): readonly string[] {
 }
 
 export function mobileCard(row: EquipRecord) {
-  const stats: string[] = [];
-  if (row.requiredLevel !== null) stats.push(`Lvl ${row.requiredLevel}`);
   // Magic weapons advertise M.Atk; everything else uses Atk. Cash weapons
   // have neither — the badge is what identifies them.
   const isMagic = row.equipType !== null && MAGIC_WEAPON_TYPES.has(row.equipType);
   const atk = isMagic ? row.magicAttack : row.attack;
-  if (atk !== null) stats.push(`${isMagic ? 'M.Atk' : 'Atk'} ${atk.toLocaleString()}`);
   return (
-    <MobileCardBody
-      media={<EntityAvatar entity="equip" id={row.id} size={52} alt={row.name} />}
+    <ListCardBody
+      entity="equip"
+      id={row.id}
       name={row.name}
       badge={
         row.cash ? (
@@ -216,7 +222,11 @@ export function mobileCard(row: EquipRecord) {
         ) : undefined
       }
       subtitle={row.equipType ? labelForEquipType(row.equipType) : undefined}
-      stats={stats}
+      stats={equipCardStats(
+        row,
+        atk === null ? undefined : { label: isMagic ? 'M.Atk' : 'Atk', value: atk, tone: 'attack' },
+      )}
+      tags={equipCardTags(row)}
     />
   );
 }

@@ -1,12 +1,13 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { Briefcase, Flame, Gauge, Hash, Sparkles, Swords } from 'lucide-react';
-import { EntityIcon } from '@/components/entity-display/EntityIcon';
+import { Briefcase, Flame, Gauge, Hash, Swords } from 'lucide-react';
+import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
 import { SkillLink } from '@/components/entity-links';
 import type { SkillRecord } from '@/db';
 import { decodeRequiredWeapon, decodeSkillElement } from '@scrolled/game-db/domain/skillElements';
 import { useJobsMap } from '@/hooks/useJobs';
 import { useShowEntityIds } from '@/stores/showEntityIds';
-import { MobileCardBody } from '@/components/data-table/MobileCardBody';
+import { ListCardBody } from '@/components/data-table/ListCardBody';
+import type { ListCardStat } from '@/components/data-table/listCardLayout';
 
 export const columns: ColumnDef<SkillRecord>[] = [
   {
@@ -15,11 +16,10 @@ export const columns: ColumnDef<SkillRecord>[] = [
     enableSorting: false,
     enableHiding: false,
     cell: ({ row }) => (
-      <EntityIcon
+      <EntityAvatar
         entity="skill"
         id={row.original.id}
-        size={28}
-        placeholder={Sparkles}
+        size={36}
         alt={row.original.name ?? undefined}
       />
     ),
@@ -34,7 +34,7 @@ export const columns: ColumnDef<SkillRecord>[] = [
       const label = s.name ?? `Skill ${s.id}`;
       return (
         <SkillLink id={s.id} className="inline-flex items-center gap-2">
-          <span className={s.name ? 'font-medium' : 'text-muted-foreground italic'}>{label}</span>
+          <span className={s.name ? 'font-semibold' : 'text-muted-foreground italic'}>{label}</span>
         </SkillLink>
       );
     },
@@ -126,24 +126,18 @@ function SkillMobileCard({ row }: { row: SkillRecord }) {
   const jobs = useJobsMap();
   const showIds = useShowEntityIds((s) => s.enabled);
   const jobName = jobs.get(row.jobId);
-  const stats: string[] = [];
-  if (row.maxLevel !== null) stats.push(`Max ${row.maxLevel}`);
+  const stats: ListCardStat[] = [];
+  if (row.maxLevel !== null) stats.push({ label: 'Max', value: row.maxLevel });
   const element = decodeSkillElement(row.element);
-  if (element) stats.push(element);
+  if (element) stats.push({ label: 'Element', value: element });
   const weapon = decodeRequiredWeapon(row.requiredWeapon);
-  if (weapon) stats.push(weapon);
+  if (weapon) stats.push({ label: 'Weapon', value: weapon });
   const job = jobName ? (showIds ? `${jobName} (${row.jobId})` : jobName) : `Job ${row.jobId}`;
   return (
-    <MobileCardBody
-      media={
-        <EntityIcon
-          entity="skill"
-          id={row.id}
-          size={40}
-          placeholder={Sparkles}
-          alt={row.name ?? undefined}
-        />
-      }
+    <ListCardBody
+      entity="skill"
+      id={row.id}
+      alt={row.name ?? undefined}
       name={
         row.name ?? <span className="text-muted-foreground font-medium italic">Skill {row.id}</span>
       }

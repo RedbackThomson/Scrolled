@@ -6,6 +6,7 @@ import { DetailListSection } from '@/components/layout/DetailListSection';
 import { DetailHeader } from '@/components/layout/DetailHeader';
 import {
   DetailPageLayout,
+  DetailPageError,
   DetailPageLoading,
   DetailPageNotFound,
   DetailSection,
@@ -15,7 +16,10 @@ import {
 } from '@/components/layout/DetailPageLayout';
 import { EntityRow } from '@/components/entity-display/EntityRow';
 import { Chip } from '@scrolled/design';
-import { MetadataFlagBadges } from '@/components/entity-display/MetadataFlagBadges';
+import {
+  AvailabilityChips,
+  MetadataFlagBadges,
+} from '@/components/entity-display/MetadataFlagBadges';
 import { EQUIP_FLAG_ORDER } from '@/components/entity-display/metadataFlags';
 import { ListSortControl } from '@/components/common/ListSortControl';
 import { CollectionBadgeStrip } from '@/components/collections';
@@ -87,7 +91,9 @@ export default function EquipDetail() {
 
   if (equipQ.isLoading) return <DetailPageLoading entity="Equip" id={id} />;
   if (equipQ.error) {
-    return <p className="text-destructive text-sm">{(equipQ.error as Error).message}</p>;
+    return (
+      <DetailPageError entity="Equip" error={equipQ.error} onRetry={() => void equipQ.refetch()} />
+    );
   }
   if (!equipQ.data) return <DetailPageNotFound entity="Equip" id={id} />;
 
@@ -149,6 +155,7 @@ export default function EquipDetail() {
                   Cash Shop (cosmetic)
                 </Chip>
               )}
+              <AvailabilityChips flags={e} />
               <MetadataFlagBadges flags={e} order={EQUIP_FLAG_ORDER} />
             </>
           }
@@ -210,7 +217,9 @@ export default function EquipDetail() {
               />
               <StatRow label="Speed" value={e.incSpeed} />
               <StatRow label="Jump" value={e.incJump} />
-              <StatRow label="Upgrade slots" value={e.upgradeSlots} />
+              {!!e.upgradeSlots && (
+                <InfoRow label="Upgrade slots" value={<Chip>{e.upgradeSlots}</Chip>} />
+              )}
             </InfoSection>
           )}
           <SourceSection path={e.sourcePath} />

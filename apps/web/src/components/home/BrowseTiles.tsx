@@ -144,7 +144,7 @@ export function BrowseTiles({ features }: { features: Features }) {
           const Icon = iconForEntity(t.entity);
           return (
             <li key={t.entity} {...popIn(i)}>
-              <div className="border-border bg-card text-card-foreground shadow-rim overflow-hidden rounded-lg border-2">
+              <div className="border-border bg-card text-card-foreground shadow-rim ease-spring overflow-hidden rounded-lg border-2 transition-transform duration-300 hover:-translate-y-[3px] has-[:focus-visible]:-translate-y-[3px]">
                 <Link
                   to={listingRouteForEntity(t.entity)}
                   className="hover:bg-muted group flex items-center gap-3 p-3.5 transition-colors"
@@ -173,7 +173,9 @@ export function BrowseTiles({ features }: { features: Features }) {
                           className="text-muted-foreground hover:bg-muted hover:text-foreground flex items-center justify-between px-3.5 py-1.5 transition-colors"
                         >
                           <span className="truncate">{t.displayKey(row.key)}</span>
-                          <span className="tabular-nums">{row.count.toLocaleString()}</span>
+                          <span className="text-foreground font-semibold tabular-nums">
+                            {row.count.toLocaleString()}
+                          </span>
                         </Link>
                       </li>
                     ))}

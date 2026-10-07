@@ -1,9 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import { Clock, History } from 'lucide-react';
 import { CommandGroup, CommandItem as CommandItemPrimitive } from '@scrolled/design';
-import { iconForEntity, labelForEntityKind, routeForEntity } from '@/lib/entityRoutes';
+import { labelForEntityKind, routeForEntity } from '@/lib/entityRoutes';
 import { useRecentEntities, useRecentQueries } from '@/lib/recents';
 import { useCommandPalette } from '@/stores/useCommandPalette';
+import { PaletteEntityIcon, PaletteIcon } from '@/components/command-palette/PaletteIcon';
 
 function fuzzy(q: string, hay: string): boolean {
   const t = q.trim().toLowerCase();
@@ -33,7 +34,6 @@ export function RecentsProvider() {
       {visibleEntities.length > 0 && (
         <CommandGroup heading="Recently viewed">
           {visibleEntities.map((e) => {
-            const Icon = iconForEntity(e.entity);
             return (
               <CommandItemPrimitive
                 key={`recent-${e.entity}-${e.id}`}
@@ -44,7 +44,7 @@ export function RecentsProvider() {
                   setOpen(false);
                 }}
               >
-                <Icon className="text-muted-foreground h-4 w-4" />
+                <PaletteEntityIcon entity={e.entity} id={e.id} alt={e.name} />
                 <span className="min-w-0 flex-1 truncate">{e.name}</span>
                 <span className="text-muted-foreground shrink-0 text-xs">
                   {labelForEntityKind(e.entity)}
@@ -63,7 +63,7 @@ export function RecentsProvider() {
               keywords={[q.query]}
               onSelect={() => setQuery(q.query)}
             >
-              <History className="text-muted-foreground h-4 w-4" />
+              <PaletteIcon icon={History} />
               <span className="min-w-0 flex-1 truncate">{q.query}</span>
               <Clock className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
             </CommandItemPrimitive>

@@ -137,6 +137,7 @@ export const mapConfig: TooltipEntityConfig<MapRecord, MapExtra> = {
   },
   iconTile: { size: 40, hue: 185 },
   renderIcon: () => <MapIcon className="h-[18px] w-[18px]" aria-hidden />,
+  nameOf: (record, id) => record.name ?? `Map ${id}`,
   renderName: (record, id) => (
     <Link
       to={routeForEntity('map', id)}

@@ -43,7 +43,6 @@ export {
 } from './components/entity/EntityCard';
 export { EntityRow, type EntityRowProps } from './components/entity/EntityRow';
 export { SlotTile, type SlotTileProps } from './components/entity/SlotTile';
-export { StatRange, type StatRangeProps } from './components/entity/StatRange';
 export { RollingNumber, type RollingNumberProps } from './components/entity/RollingNumber';
 export { StatTile, type StatTileProps } from './components/entity/StatTile';
 
@@ -92,6 +91,7 @@ export { ConfettiBurst, type ConfettiBurstProps } from './components/feedback/Co
 export { EmptyState, type EmptyStateProps } from './components/feedback/EmptyState';
 export { Skeleton, type SkeletonProps } from './components/feedback/Skeleton';
 export { HopLoader, type HopLoaderProps } from './components/feedback/HopLoader';
+export { ErrorState, type ErrorStateProps } from './components/feedback/ErrorState';
 export { StatusDot, type StatusDotProps } from './components/feedback/StatusDot';
 
 export { Logo, type LogoProps } from './components/brand/Logo';

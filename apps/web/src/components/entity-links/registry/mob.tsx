@@ -103,6 +103,7 @@ export const mobConfig: TooltipEntityConfig<MobRecord> = {
   renderIcon: (record, id) => (
     <EntityIcon entity="mob" id={id} size={64} placeholder={Skull} alt={record.name} />
   ),
+  nameOf: (record) => record.name,
   renderName: (record, id) => (
     <Link
       to={routeForEntity('mob', id)}

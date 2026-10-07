@@ -60,6 +60,7 @@ export function Pagination({
             )}
             <button
               type="button"
+              className="sc-focus-ring"
               onClick={() => onPage?.(p)}
               aria-label={`Page ${p}`}
               aria-current={p === page ? 'page' : undefined}

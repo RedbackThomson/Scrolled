@@ -24,6 +24,7 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
           {it.onClick ? (
             <button
               type="button"
+              className="sc-focus-ring"
               onClick={it.onClick}
               style={{ font: 'inherit', color: 'var(--text-2)', cursor: 'pointer' }}
             >

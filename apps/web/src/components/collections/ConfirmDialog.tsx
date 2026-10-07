@@ -34,7 +34,7 @@ export function ConfirmDialog({
       footer={
         <>
           <Button type="button" variant="secondary" className="flex-1" onClick={onClose}>
-            Cancel
+            Keep it
           </Button>
           <Button
             type="button"

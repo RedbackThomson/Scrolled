@@ -7,6 +7,7 @@ import { Chip, StatTile } from '@scrolled/design';
 import { DetailListSection } from '@/components/layout/DetailListSection';
 import {
   DetailPageLayout,
+  DetailPageError,
   DetailPageLoading,
   DetailPageNotFound,
   InfoRow,
@@ -27,6 +28,7 @@ import { useListSort } from '@/hooks/useListSort';
 import { useShowEntityIds } from '@/stores/showEntityIds';
 import { MobElementsSection } from '@/components/entity-display/MobElementsSection';
 import { MobCalculatedSection } from '@/components/entity-display/MobCalculatedSection';
+import { inventoryCategoryOf } from '@scrolled/game-db/domain/itemCategory';
 
 export default function MobDetail() {
   const params = useParams<{ id: string }>();
@@ -98,7 +100,13 @@ export default function MobDetail() {
 
   if (mobQ.isLoading) return <DetailPageLoading entity="Mob" id={id} />;
   if (mobQ.error) {
-    return <p className="text-destructive text-sm">{(mobQ.error as Error).message}</p>;
+    return (
+      <DetailPageError
+        entity="Mob"
+        error={mobQ.error}
+        onRetry={() => void mobQ.refetch()}
+      />
+    );
   }
   if (!mobQ.data) return <DetailPageNotFound entity="Mob" id={id} />;
 
@@ -186,12 +194,21 @@ export default function MobDetail() {
               <span className="text-muted-foreground min-w-0 flex-1 truncate italic">
                 {d.itemName ?? `Item #${d.itemId}`}
               </span>
+              <span className="text-muted-foreground shrink-0 text-[11.5px]">
+                <DropCategory itemId={d.itemId} />
+              </span>
               {showIds && (
                 <span className="text-muted-foreground shrink-0 font-mono text-xs">{d.itemId}</span>
               )}
             </li>
           ) : (
-            <EntityRow key={d.itemId} entity={d.entity} id={d.itemId} name={d.itemName} />
+            <EntityRow
+              key={d.itemId}
+              entity={d.entity}
+              id={d.itemId}
+              name={d.itemName}
+              meta={<DropCategory itemId={d.itemId} />}
+            />
           ),
         )}
       </DetailListSection>
@@ -300,4 +317,10 @@ export default function MobDetail() {
       )}
     </DetailPageLayout>
   );
+}
+
+/** The inventory tab a drop lands in (Use, Etc, …), so a drop list scans by kind. */
+function DropCategory({ itemId }: { itemId: number }) {
+  const category = inventoryCategoryOf(itemId);
+  return category ? <span className="capitalize">{category}</span> : null;
 }

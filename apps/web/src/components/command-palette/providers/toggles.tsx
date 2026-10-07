@@ -17,6 +17,7 @@ import { ACCENTS } from '@/lib/accents';
 import { useSidebarLayout } from '@/stores/sidebarState';
 import { useMotionPrefs } from '@/hooks/useMotionPrefs';
 import { useMotion } from '@/stores/motion';
+import { PaletteIcon } from '@/components/command-palette/PaletteIcon';
 
 function fuzzy(q: string, hay: string): boolean {
   const t = q.trim().toLowerCase();
@@ -149,7 +150,7 @@ export function TogglesProvider() {
               setOpen(false);
             }}
           >
-            <Icon className="text-muted-foreground h-4 w-4" />
+            <PaletteIcon icon={Icon} />
             <span className="min-w-0 flex-1 truncate">{c.label}</span>
             {current === c.id && (
               <span className="text-muted-foreground shrink-0 text-xs">Active</span>
@@ -189,7 +190,7 @@ export function TogglesProvider() {
               setOpen(false);
             }}
           >
-            <Icon className="text-muted-foreground h-4 w-4" />
+            <PaletteIcon icon={Icon} />
             <span className="min-w-0 flex-1 truncate">{c.label}</span>
           </CommandItemPrimitive>
         );
@@ -206,7 +207,7 @@ export function TogglesProvider() {
               setOpen(false);
             }}
           >
-            <Icon className="text-muted-foreground h-4 w-4" />
+            <PaletteIcon icon={Icon} />
             <span className="min-w-0 flex-1 truncate">{c.label}</span>
           </CommandItemPrimitive>
         );

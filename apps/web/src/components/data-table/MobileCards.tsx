@@ -1,8 +1,9 @@
 import { Fragment, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, SearchX } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { cn, Input, Skeleton } from '@scrolled/design';
+import { cn, EmptyState, Input, Skeleton } from '@scrolled/design';
+import { ListCardLayoutContext } from './listCardLayout';
 
 interface Props<TData> {
   data: readonly TData[];
@@ -70,11 +71,7 @@ export function MobileCards<TData>({
     );
   }
   if (data.length === 0) {
-    return (
-      <div className="border-border bg-card text-muted-foreground shadow-rim rounded-lg border-2 px-3 py-6 text-center text-sm">
-        {emptyMessage}
-      </div>
-    );
+    return <EmptyState icon={SearchX} title="No results" body={emptyMessage} />;
   }
   return (
     <ul
@@ -107,7 +104,11 @@ export function MobileCards<TData>({
               className="focus-visible:ring-primary/30 active:bg-muted flex min-h-[44px] min-w-0 flex-1 items-center gap-3 px-3 py-2.5 focus-visible:outline-none focus-visible:ring-2"
             >
               <div className="min-w-0 flex-1">
-                {mobileCard(row)}
+                <ListCardLayoutContext.Provider
+                  value={{ variant: 'compact', selected: isSelected }}
+                >
+                  {mobileCard(row)}
+                </ListCardLayoutContext.Provider>
                 {extraCardCols.length > 0 && (
                   <dl className="text-muted-foreground mt-1 grid grid-cols-[auto_1fr] gap-x-2 text-xs">
                     {extraCardCols.map((col) => {

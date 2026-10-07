@@ -2,7 +2,7 @@ import { Bookmark, Cog, Home, LogIn, LogOut, User, Wrench } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCurrentUser, useIdentity } from '@scrolled/identity-core/react';
-import { CommandGroup, CommandItem as CommandItemPrimitive } from '@scrolled/design';
+import { CommandGroup, CommandItem as CommandItemPrimitive, ENTITY_HUES } from '@scrolled/design';
 import {
   ENTITY_KINDS,
   iconForEntity,
@@ -13,6 +13,7 @@ import { useCommandPalette } from '@/stores/useCommandPalette';
 import { useFeatures } from '@/hooks/useFeatures';
 import { appConfig } from '@/config';
 import { getSettingsGroups } from '@/components/settings/settingsGroups';
+import { PaletteIcon } from '@/components/command-palette/PaletteIcon';
 
 interface NavEntry {
   id: string;
@@ -23,6 +24,8 @@ interface NavEntry {
   /** Run instead of navigating (e.g. sign out). */
   action?: () => void;
   icon: LucideIcon;
+  /** Tints the row's tile, for entity pages. */
+  hue?: number;
 }
 
 function matches(query: string, entry: NavEntry): boolean {
@@ -59,6 +62,7 @@ export function NavigationProvider() {
       keywords: [k, labelForEntityKind(k).toLowerCase()],
       to: listingRouteForEntity(k),
       icon: iconForEntity(k),
+      hue: ENTITY_HUES[k as keyof typeof ENTITY_HUES],
     })),
     {
       id: 'nav-collections',
@@ -165,7 +169,7 @@ export function NavigationProvider() {
               setOpen(false);
             }}
           >
-            <Icon className="text-muted-foreground h-4 w-4" />
+            <PaletteIcon icon={Icon} hue={e.hue} />
             <span>{e.label}</span>
           </CommandItemPrimitive>
         );

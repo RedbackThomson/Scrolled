@@ -1,31 +1,13 @@
 import { InfoRow } from '@/components/layout/DetailPageLayout';
 import type { EquipStatRange } from '@scrolled/game-db/serverProfiles';
-import { StatRange } from '@scrolled/design';
 
 export function StatRow({ label, value }: { label: string; value: number | null }) {
   if (value === null || value === 0) return null;
   return <InfoRow label={label} value={String(value)} />;
 }
 
-// Colours group stats by what they feed: offence red, magic blue, primary
-// stats gold, accuracy and avoid green.
-const STAT_COLOR: Record<string, string> = {
-  Attack: 'var(--stat-hp)',
-  Defense: 'var(--stat-hp)',
-  HP: 'var(--stat-hp)',
-  'Magic atk': 'var(--stat-mp)',
-  'Magic def': 'var(--stat-mp)',
-  MP: 'var(--stat-mp)',
-  INT: 'var(--stat-mp)',
-  STR: 'var(--stat-exp)',
-  DEX: 'var(--stat-exp)',
-  LUK: 'var(--stat-exp)',
-  Accuracy: 'var(--stat-level)',
-  Avoidability: 'var(--stat-level)',
-};
-
-// Like StatRow, but draws the possible dropped-stat range from the active
-// server profile's calculator as a bar with the base value marked.
+// Like StatRow, plus the range a dropped copy can roll under the active server
+// profile, so players can judge whether theirs is a good one.
 export function StatRangeRow({
   label,
   value,
@@ -37,22 +19,19 @@ export function StatRangeRow({
 }) {
   if (value === null || value === 0) return null;
   if (!range) return <InfoRow label={label} value={String(value)} />;
-  // Sits inside an InfoSection <dl>, so it needs a dt/dd pair; the bar shows
-  // its own label, so the dt is for assistive tech only.
   return (
-    <div>
-      <dt className="sr-only">{label}</dt>
-      <dd>
-        <StatRange
-          label={label}
-          base={range.base}
-          min={range.min}
-          max={range.max}
-          maxNote={range.godlyMax !== undefined ? ` or ${range.godlyMax}` : undefined}
-          color={STAT_COLOR[label]}
-        />
-      </dd>
-    </div>
+    <InfoRow
+      label={label}
+      value={
+        <span className="tabular-nums">
+          {range.base}{' '}
+          <span className="text-muted-foreground text-[12.5px] font-normal">
+            ({range.min} ~ {range.max}
+            {range.godlyMax !== undefined && ` or ${range.godlyMax}`})
+          </span>
+        </span>
+      }
+    />
   );
 }
 

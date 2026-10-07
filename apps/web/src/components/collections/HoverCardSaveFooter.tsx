@@ -10,13 +10,19 @@ import { CollectionPicker } from './CollectionPicker';
 interface HoverCardSaveFooterProps {
   entityType: CollectionEntityType;
   entityId: number;
+  entityName?: string;
   className?: string;
 }
 
-export function HoverCardSaveFooter({ entityType, entityId, className }: HoverCardSaveFooterProps) {
+export function HoverCardSaveFooter({
+  entityType,
+  entityId,
+  entityName,
+  className,
+}: HoverCardSaveFooterProps) {
   return (
     <div className={cn('border-t border-[var(--tooltip-line)] p-1.5', className)}>
-      <CollectionPicker entityType={entityType} entityId={entityId}>
+      <CollectionPicker entityType={entityType} entityId={entityId} entityName={entityName}>
         {({ toggle, open, memberCount, saves }) => (
           <button
             type="button"

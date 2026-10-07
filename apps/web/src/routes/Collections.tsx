@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus } from 'lucide-react';
-import { Button, Skeleton } from '@scrolled/design';
+import { Bookmark, Pin, Plus, Upload } from 'lucide-react';
+import { Button, EmptyState, ErrorState, Skeleton } from '@scrolled/design';
 import {
   CollectionFormDialog,
+  CollectionsImportDialog,
   CollectionsOverflowMenu,
   resolveCollectionColor,
   resolveCollectionIcon,
@@ -18,6 +19,7 @@ export default function Collections() {
   usePageTitle('Collections');
   const collectionsQ = useCollectionsList();
   const [createOpen, setCreateOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const hasAny = (collectionsQ.data?.length ?? 0) > 0;
 
@@ -42,6 +44,7 @@ export default function Collections() {
       </header>
 
       <CollectionFormDialog open={createOpen} onClose={() => setCreateOpen(false)} />
+      <CollectionsImportDialog open={importOpen} onClose={() => setImportOpen(false)} />
 
       <section className="space-y-3">
         {collectionsQ.isPending ? (
@@ -50,16 +53,28 @@ export default function Collections() {
             <Skeleton rows={4} />
           </div>
         ) : collectionsQ.isError ? (
-          <p className="text-destructive text-sm">
-            Failed to load collections: {(collectionsQ.error as Error).message}
-          </p>
+          <ErrorState
+            title="Couldn't load your collections"
+            body="Your data is safe."
+            details={(collectionsQ.error as Error).message}
+            onRetry={() => void collectionsQ.refetch()}
+          />
         ) : collectionsQ.data!.length === 0 ? (
-          <div className="border-border bg-card shadow-rim rounded-lg border-2 p-6 text-center text-sm">
-            <p className="text-muted-foreground">
-              No collections yet. Click "New collection" to create one, "Import" to restore from a
-              previous export, or save items directly from any entity page.
-            </p>
-          </div>
+          <EmptyState
+            icon={Bookmark}
+            title="No collections yet"
+            body="Save items, mobs and maps from any page, or restore collections from a previous export."
+            actions={
+              <>
+                <Button icon={Plus} onClick={() => setCreateOpen(true)}>
+                  New collection
+                </Button>
+                <Button variant="secondary" icon={Upload} onClick={() => setImportOpen(true)}>
+                  Import
+                </Button>
+              </>
+            }
+          />
         ) : (
           <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {collectionsQ.data!.map((c, i) => (
@@ -92,8 +107,18 @@ function CollectionTile({ collection, index }: { collection: CollectionRecord; i
           <Icon className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1 space-y-1">
-          <div className="font-display truncate text-[17px] font-semibold">{collection.name}</div>
-          <div className="text-muted-foreground font-mono text-xs">
+          <div className="flex items-center gap-2">
+            <div className="font-display min-w-0 flex-1 truncate text-[17px] font-semibold">
+              {collection.name}
+            </div>
+            {collection.pinned && (
+              <span title="Pinned" className="text-muted-foreground shrink-0">
+                <Pin className="h-3.5 w-3.5" aria-hidden />
+                <span className="sr-only">Pinned</span>
+              </span>
+            )}
+          </div>
+          <div className="text-muted-foreground text-xs">
             {collection.memberCount.toLocaleString()}{' '}
             {collection.memberCount === 1 ? 'item' : 'items'}
           </div>

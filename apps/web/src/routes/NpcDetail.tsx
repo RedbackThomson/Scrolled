@@ -6,6 +6,7 @@ import { DetailListSection } from '@/components/layout/DetailListSection';
 import { DetailHeader } from '@/components/layout/DetailHeader';
 import {
   DetailPageLayout,
+  DetailPageError,
   DetailPageLoading,
   DetailPageNotFound,
   DetailSection,
@@ -73,6 +74,9 @@ export default function NpcDetail() {
   usePageTitle(npcQ.data?.name);
 
   if (npcQ.isLoading) return <DetailPageLoading entity="NPC" id={id} />;
+  if (npcQ.error) {
+    return <DetailPageError entity="NPC" error={npcQ.error} onRetry={() => void npcQ.refetch()} />;
+  }
   if (!npcQ.data) return <DetailPageNotFound entity="NPC" id={id} />;
 
   const n = npcQ.data;

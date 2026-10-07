@@ -3,6 +3,7 @@ import {
   type ComponentPropsWithoutRef,
   type ElementRef,
   type HTMLAttributes,
+  type ReactNode,
 } from 'react';
 import { Command as CommandPrimitive } from 'cmdk';
 import { Search } from 'lucide-react';
@@ -69,8 +70,11 @@ export function CommandDialog({
 
 export const CommandInput = forwardRef<
   ElementRef<typeof CommandPrimitive.Input>,
-  ComponentPropsWithoutRef<typeof CommandPrimitive.Input>
->(({ className, ...props }, ref) => (
+  ComponentPropsWithoutRef<typeof CommandPrimitive.Input> & {
+    /** Shown at the input's right edge, e.g. a shortcuts hint. */
+    trailing?: ReactNode;
+  }
+>(({ className, trailing, ...props }, ref) => (
   <div className="border-muted flex items-center gap-3 border-b-2 px-[18px]" cmdk-input-wrapper="">
     <Search className="text-muted-foreground h-5 w-5 shrink-0" />
     <CommandPrimitive.Input
@@ -81,6 +85,7 @@ export const CommandInput = forwardRef<
       )}
       {...props}
     />
+    {trailing}
   </div>
 ));
 CommandInput.displayName = CommandPrimitive.Input.displayName;

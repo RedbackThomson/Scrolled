@@ -18,6 +18,7 @@ import { DetailListSection } from '@/components/layout/DetailListSection';
 import { DetailHeader } from '@/components/layout/DetailHeader';
 import {
   DetailPageLayout,
+  DetailPageError,
   DetailPageLoading,
   DetailPageNotFound,
   InfoRow,
@@ -84,6 +85,15 @@ export default function QuestChainDetail() {
   usePageTitle(chainQ.data?.chain.name);
 
   if (chainQ.isLoading) return <DetailPageLoading entity="Quest Chain" id={id} />;
+  if (chainQ.error) {
+    return (
+      <DetailPageError
+        entity="Quest Chain"
+        error={chainQ.error}
+        onRetry={() => void chainQ.refetch()}
+      />
+    );
+  }
   if (!chainQ.data) return <DetailPageNotFound entity="Quest Chain" id={id} />;
 
   const { chain, members, edges, externalEdges } = chainQ.data;

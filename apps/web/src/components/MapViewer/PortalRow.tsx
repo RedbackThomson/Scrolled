@@ -1,11 +1,10 @@
 import type { ReactNode } from 'react';
-import { DoorOpen, Repeat, Sparkles, type LucideIcon } from 'lucide-react';
 import { MapHoverCard } from '@/components/entity-links';
 import { HoverPopover, SlotTile } from '@scrolled/design';
 import type { PortalLayer } from '@scrolled/game-db/domain/portal-types';
 import type { MapPortalRecord } from '@/db';
 import { cn } from '@scrolled/design';
-import { MARKER_HUE, NO_TARGET, PORTAL_LAYER_LABEL } from './portalDisplay';
+import { NO_TARGET, PORTAL_LAYER_LABEL, PORTAL_LAYER_TILE } from './portalDisplay';
 import { sidebarRowClass } from './rowStyles';
 
 interface PortalRowProps {
@@ -24,13 +23,6 @@ interface PortalRowProps {
   /** Display name for the portal's target map, or null if unknown/not applicable. */
   mapName: string | null;
 }
-
-const LAYER_TILE: Record<PortalLayer, { icon: LucideIcon; hue?: number }> = {
-  spawn: { icon: Sparkles, hue: MARKER_HUE.spawn },
-  portal: { icon: DoorOpen, hue: MARKER_HUE.portal },
-  internalTeleport: { icon: Repeat, hue: MARKER_HUE.teleport },
-  unknown: { icon: DoorOpen },
-};
 
 // Portal rows show the destination as their primary label rather than the WZ
 // portal name (`up0`, `west00`, …) which is meaningless to most users.
@@ -113,7 +105,7 @@ export function PortalRow({
         aria-pressed={selected}
         title={portal.portalName}
       >
-        <SlotTile {...LAYER_TILE[layer]} size={28} />
+        <SlotTile {...PORTAL_LAYER_TILE[layer]} size={28} />
         {wrappedLabel}
         <span className="text-muted-foreground shrink-0 text-[11.5px] font-medium">
           {PORTAL_LAYER_LABEL[layer]}

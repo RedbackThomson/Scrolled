@@ -6,12 +6,13 @@ import { CollectionPicker } from './CollectionPicker';
 interface SaveButtonProps {
   entityType: CollectionEntityType;
   entityId: number;
+  entityName?: string;
 }
 
 /** The detail-page header's primary action: opens the collection picker. */
-export function SaveButton({ entityType, entityId }: SaveButtonProps) {
+export function SaveButton({ entityType, entityId, entityName }: SaveButtonProps) {
   return (
-    <CollectionPicker entityType={entityType} entityId={entityId}>
+    <CollectionPicker entityType={entityType} entityId={entityId} entityName={entityName}>
       {({ toggle, open, memberCount, saves }) => (
         <>
           <Button

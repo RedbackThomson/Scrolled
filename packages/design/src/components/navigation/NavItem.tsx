@@ -16,11 +16,17 @@ export function NavItem({ icon, label, active, chevron, onClick, size = 'md' }: 
   const [hovered, setHovered] = useState(false);
   const sm = size === 'sm';
   return (
-    <div
+    <button
+      type="button"
+      className="sc-focus-ring"
+      aria-current={active ? 'page' : undefined}
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
+        width: '100%',
+        border: 'none',
+        textAlign: 'left',
         display: 'flex',
         alignItems: 'center',
         gap: 10,
@@ -39,6 +45,6 @@ export function NavItem({ icon, label, active, chevron, onClick, size = 'md' }: 
       {icon && <Icon icon={icon} size={sm ? 13 : 16} />}
       <span style={{ flex: 1 }}>{label}</span>
       {chevron && <Icon icon={ChevronRight} size={13} style={{ opacity: 0.55 }} />}
-    </div>
+    </button>
   );
 }

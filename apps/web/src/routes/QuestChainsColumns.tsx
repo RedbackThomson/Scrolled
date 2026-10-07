@@ -1,9 +1,10 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { AlertTriangle, Folder, GitBranch, GitMerge, Hash, Layers, Network } from 'lucide-react';
+import { AlertTriangle, Folder, GitMerge, Hash, Layers, Network } from 'lucide-react';
 import { QuestChainLink, QuestLink } from '@/components/entity-links';
 import type { QuestChainListRow } from '@/db';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
-import { MobileCardBody } from '@/components/data-table/MobileCardBody';
+import { ListCardBody } from '@/components/data-table/ListCardBody';
+import type { ListCardStat } from '@/components/data-table/listCardLayout';
 
 export const columns: ColumnDef<QuestChainListRow>[] = [
   {
@@ -11,7 +12,7 @@ export const columns: ColumnDef<QuestChainListRow>[] = [
     header: '',
     enableSorting: false,
     enableHiding: false,
-    cell: () => <GitBranch className="text-muted-foreground h-5 w-5" />,
+    cell: ({ row }) => <EntityAvatar entity="questChain" id={row.original.id} size={36} />,
   },
   {
     id: 'name',
@@ -19,7 +20,7 @@ export const columns: ColumnDef<QuestChainListRow>[] = [
     header: 'Name',
     meta: { filter: 'string' },
     cell: ({ row }) => (
-      <QuestChainLink id={row.original.id} className="font-medium">
+      <QuestChainLink id={row.original.id} className="font-semibold">
         {row.original.name}
       </QuestChainLink>
     ),
@@ -118,17 +119,17 @@ export const defaultSort = { id: 'size', dir: 'desc' } as const satisfies {
 };
 
 export function mobileCard(row: QuestChainListRow) {
-  const stats: string[] = [];
-  stats.push(`${row.size} quests`);
-  if (row.maxDepth > 0) stats.push(`${row.maxDepth} stages`);
-  if (row.rootCount > 1) stats.push(`${row.rootCount} starts`);
-  if (row.hasCycles) stats.push('loop');
+  const stats: ListCardStat[] = [{ label: 'Quests', value: row.size }];
+  if (row.maxDepth > 0) stats.push({ label: 'Stages', value: row.maxDepth });
+  if (row.rootCount > 1) stats.push({ label: 'Starts', value: row.rootCount });
   return (
-    <MobileCardBody
-      media={<EntityAvatar entity="questChain" id={row.id} size={52} />}
+    <ListCardBody
+      entity="questChain"
+      id={row.id}
       name={row.name}
       subtitle={row.parent ?? undefined}
       stats={stats}
+      tags={row.hasCycles ? ['Has a loop'] : undefined}
     />
   );
 }

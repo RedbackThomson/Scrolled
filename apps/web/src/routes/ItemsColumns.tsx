@@ -14,12 +14,12 @@ import {
   Wind,
 } from 'lucide-react';
 import { Chip } from '@scrolled/design';
-import { ItemIcon } from '@/components/entity-display/ItemIcon';
 import { ItemLink } from '@/components/entity-links';
 import { formatDurationSeconds } from '@/lib/duration';
 import type { ItemListRow } from '@/db';
 import { EntityAvatar } from '@/components/entity-display/EntityAvatar';
-import { MobileCardBody } from '@/components/data-table/MobileCardBody';
+import { ListCardBody } from '@/components/data-table/ListCardBody';
+import type { ListCardStat } from '@/components/data-table/listCardLayout';
 
 const num = (v: number | null) => (v == null ? '—' : String(v));
 const signedNum = (v: number | null) => (v == null ? '—' : v >= 0 ? `+${v}` : `−${Math.abs(v)}`);
@@ -32,7 +32,7 @@ export const columns: ColumnDef<ItemListRow>[] = [
     enableSorting: false,
     enableHiding: false,
     cell: ({ row }) => (
-      <ItemIcon entity="item" id={row.original.id} size={28} alt={row.original.name} />
+      <EntityAvatar entity="item" id={row.original.id} size={36} alt={row.original.name} />
     ),
   },
   {
@@ -41,7 +41,7 @@ export const columns: ColumnDef<ItemListRow>[] = [
     header: 'Name',
     meta: { filter: 'string' },
     cell: ({ row }) => (
-      <ItemLink id={row.original.id} className="font-medium">
+      <ItemLink id={row.original.id} className="font-semibold">
         {row.original.name}
       </ItemLink>
     ),
@@ -212,16 +212,22 @@ export const defaultSort = { id: 'name', dir: 'asc' } as const satisfies {
 };
 
 export function mobileCard(row: ItemListRow) {
+  const stats: ListCardStat[] = [];
+  if (row.recoveryHp !== null) stats.push({ label: 'HP', value: row.recoveryHp.toLocaleString() });
+  if (row.recoveryMp !== null) stats.push({ label: 'MP', value: row.recoveryMp.toLocaleString() });
+  if (row.requiredLevel !== null) stats.push({ label: 'Req Lv', value: row.requiredLevel });
+  if (row.price !== null) stats.push({ label: 'Price', value: row.price.toLocaleString() });
   return (
-    <MobileCardBody
-      media={<EntityAvatar entity="item" id={row.id} size={52} alt={row.name} />}
+    <ListCardBody
+      entity="item"
+      id={row.id}
       name={row.name}
       subtitle={
         (row.subcategory ?? row.category) && (
           <span className="capitalize">{row.subcategory ?? row.category}</span>
         )
       }
-      stats={row.requiredLevel !== null ? [`Lvl ${row.requiredLevel}`] : []}
+      stats={stats}
     />
   );
 }

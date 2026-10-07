@@ -26,6 +26,7 @@ interface GraphicViewerModalProps {
   open: boolean;
   onClose: () => void;
   title: string;
+  heading?: ReactNode;
   description?: string;
   /** Leading header tile, usually a 38px SlotTile. */
   icon?: ReactNode;
@@ -57,6 +58,7 @@ export function GraphicViewerModal({
   open,
   onClose,
   title,
+  heading,
   description,
   icon,
   isLoading,
@@ -102,6 +104,7 @@ export function GraphicViewerModal({
       open={open}
       onClose={onClose}
       title={title}
+      heading={heading}
       description={description}
       icon={icon}
       panelClassName="w-[95vw] h-[90vh] max-w-[1600px] max-md:h-[100dvh] max-md:w-screen max-md:max-w-none max-md:rounded-none"

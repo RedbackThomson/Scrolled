@@ -45,6 +45,7 @@ export function Chip({ tone = 'neutral', hue, icon, children, onRemove, size = '
       {onRemove && (
         <button
           type="button"
+          className="sc-focus-ring"
           onClick={onRemove}
           aria-label="Remove"
           style={{

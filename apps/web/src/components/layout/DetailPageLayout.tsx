@@ -1,7 +1,7 @@
 import { SearchX } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { cn, EmptyState, HopLoader, Skeleton } from '@scrolled/design';
+import { cn, EmptyState, ErrorState, HopLoader, Skeleton } from '@scrolled/design';
 import { appConfig } from '@/config';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { DetailTabs, type DetailTab } from './DetailTabs';
@@ -12,6 +12,27 @@ export function DetailPageLoading({ entity, id }: { entity: string; id: number |
     <div className="space-y-6 py-6">
       <HopLoader size={56} label={`Loading ${entity.toLowerCase()} ${id}`} />
       <Skeleton rows={5} />
+    </div>
+  );
+}
+
+export function DetailPageError({
+  entity,
+  error,
+  onRetry,
+}: {
+  entity: string;
+  error: unknown;
+  onRetry: () => void;
+}) {
+  return (
+    <div className="pt-10">
+      <ErrorState
+        title={`Couldn't load this ${entity.toLowerCase()}`}
+        body="The library returned an error. Your data is safe."
+        details={error instanceof Error ? error.message : String(error)}
+        onRetry={onRetry}
+      />
     </div>
   );
 }

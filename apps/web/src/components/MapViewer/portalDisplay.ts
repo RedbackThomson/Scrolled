@@ -1,3 +1,4 @@
+import { DoorOpen, Repeat, Sparkles, type LucideIcon } from 'lucide-react';
 import type { PortalLayer } from '@scrolled/game-db/domain/portal-types';
 
 /** WZ sentinel for "no target map" on return/forced-return/portal fields. */
@@ -29,3 +30,11 @@ export const MARKER_HUE = {
   npc: 75,
   mob: 15,
 } as const;
+
+/** Icon tile per portal layer, shared by the viewer sidebar and the map page. */
+export const PORTAL_LAYER_TILE: Record<PortalLayer, { icon: LucideIcon; hue?: number }> = {
+  spawn: { icon: Sparkles, hue: MARKER_HUE.spawn },
+  portal: { icon: DoorOpen, hue: MARKER_HUE.portal },
+  internalTeleport: { icon: Repeat, hue: MARKER_HUE.teleport },
+  unknown: { icon: DoorOpen },
+};

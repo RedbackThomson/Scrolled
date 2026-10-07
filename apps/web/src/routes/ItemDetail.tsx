@@ -6,6 +6,7 @@ import { DetailListSection } from '@/components/layout/DetailListSection';
 import { DetailHeader } from '@/components/layout/DetailHeader';
 import {
   DetailPageLayout,
+  DetailPageError,
   DetailPageLoading,
   DetailPageNotFound,
   DetailSection,
@@ -18,7 +19,10 @@ import { ConsumableEffects } from '@/components/entity-display/ConsumableEffects
 import { buildConsumableEffects } from '@/lib/consumableEffects';
 import { EntityRow } from '@/components/entity-display/EntityRow';
 import { Chip } from '@scrolled/design';
-import { MetadataFlagBadges } from '@/components/entity-display/MetadataFlagBadges';
+import {
+  AvailabilityChips,
+  MetadataFlagBadges,
+} from '@/components/entity-display/MetadataFlagBadges';
 import { ITEM_FLAG_ORDER } from '@/components/entity-display/metadataFlags';
 import { ListSortControl } from '@/components/common/ListSortControl';
 import { CollectionBadgeStrip } from '@/components/collections';
@@ -102,7 +106,13 @@ export default function ItemDetail() {
 
   if (itemQ.isLoading) return <DetailPageLoading entity="Item" id={id} />;
   if (itemQ.error) {
-    return <p className="text-destructive text-sm">{(itemQ.error as Error).message}</p>;
+    return (
+      <DetailPageError
+        entity="Item"
+        error={itemQ.error}
+        onRetry={() => void itemQ.refetch()}
+      />
+    );
   }
   if (!itemQ.data) return <DetailPageNotFound entity="Item" id={id} />;
 
@@ -120,6 +130,7 @@ export default function ItemDetail() {
           badges={
             <>
               {item.subcategory && <Chip>{item.subcategory}</Chip>}
+              <AvailabilityChips flags={item} />
               <MetadataFlagBadges flags={item} order={ITEM_FLAG_ORDER} />
             </>
           }

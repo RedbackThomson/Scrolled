@@ -2,11 +2,11 @@
 //
 // Hosts the dnd-kit context, renders visible sections as sortable rows,
 // and surfaces a strip of hidden sections at the bottom that the user
-// can click to restore. The "Done" button at the top right exits edit
-// mode; persistence happens on every drag/hide/show, so there's no
+// can click to restore. The page's editing banner exits edit mode;
+// persistence happens on every drag/move/hide/show, so there's no
 // "save" step.
 
-import { useCallback, type ReactNode } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import { Eye } from 'lucide-react';
 import {
   DndContext,
@@ -16,6 +16,7 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragOverEvent,
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -46,16 +47,11 @@ export function HomeEditor({ layout, renderSection }: Props) {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
-  const onDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      const { active, over } = event;
-      if (!over || active.id === over.id) return;
-      const oldIndex = visibleIds.indexOf(active.id as HomeSectionId);
-      const newIndex = visibleIds.indexOf(over.id as HomeSectionId);
-      if (oldIndex === -1 || newIndex === -1) return;
+  const moveVisible = useCallback(
+    (oldIndex: number, newIndex: number) => {
       const nextVisibleOrder = arrayMove(visibleIds, oldIndex, newIndex);
       // Stitch the hidden entries back in at their existing relative
-      // positions so they don't get knocked around by a drag.
+      // positions so they don't get knocked around by a move.
       const nextOrder: HomeSectionId[] = [];
       let vi = 0;
       for (const e of layout.entries) {
@@ -66,16 +62,54 @@ export function HomeEditor({ layout, renderSection }: Props) {
     [layout, visibleIds],
   );
 
+  // Where the dragged section will land, drawn as a line on the edge of the
+  // section it's over: below it when moving down, above it when moving up.
+  const [drop, setDrop] = useState<{ id: HomeSectionId; edge: 'top' | 'bottom' } | null>(null);
+
+  const onDragOver = useCallback(
+    ({ active, over }: DragOverEvent) => {
+      if (!over || active.id === over.id) return setDrop(null);
+      const from = visibleIds.indexOf(active.id as HomeSectionId);
+      const to = visibleIds.indexOf(over.id as HomeSectionId);
+      setDrop({ id: over.id as HomeSectionId, edge: from < to ? 'bottom' : 'top' });
+    },
+    [visibleIds],
+  );
+
+  const onDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      setDrop(null);
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      const oldIndex = visibleIds.indexOf(active.id as HomeSectionId);
+      const newIndex = visibleIds.indexOf(over.id as HomeSectionId);
+      if (oldIndex === -1 || newIndex === -1) return;
+      moveVisible(oldIndex, newIndex);
+    },
+    [visibleIds, moveVisible],
+  );
+
   return (
     <div className="space-y-6">
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragOver={onDragOver}
+        onDragEnd={onDragEnd}
+        onDragCancel={() => setDrop(null)}
+      >
         <SortableContext items={visibleIds} strategy={verticalListSortingStrategy}>
           <ul className="space-y-3">
-            {visibleEntries.map((entry) => (
+            {visibleEntries.map((entry, i) => (
               <li key={entry.id}>
                 <SortableSection
                   id={entry.id}
+                  dropEdge={drop?.id === entry.id ? drop.edge : null}
                   onHide={() => void layout.setVisibility(entry.id, false)}
+                  onMoveUp={i > 0 ? () => moveVisible(i, i - 1) : undefined}
+                  onMoveDown={
+                    i < visibleEntries.length - 1 ? () => moveVisible(i, i + 1) : undefined
+                  }
                 >
                   {renderSection(entry.id)}
                 </SortableSection>

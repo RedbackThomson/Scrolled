@@ -5,7 +5,7 @@
 // entity ids live inside the row component.
 
 import { useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
@@ -15,9 +15,10 @@ import {
   Pencil,
   Pin,
   PinOff,
+  SearchX,
   Trash2,
 } from 'lucide-react';
-import { Button, Skeleton } from '@scrolled/design';
+import { Button, EmptyState, Skeleton } from '@scrolled/design';
 import {
   CollectionFormDialog,
   downloadJson,
@@ -45,6 +46,7 @@ import {
 import type { CollectionEntityType, CollectionGroup, CollectionMember } from '@/db/user';
 import { COLLECTION_ENTITY_TYPES } from '@/db/user';
 import { cn } from '@scrolled/design';
+import { appConfig } from '@/config';
 
 const EMPTY_MEMBERS: readonly CollectionMember[] = [];
 const EMPTY_GROUPS: readonly CollectionGroup[] = [];
@@ -252,7 +254,11 @@ export default function CollectionDetail() {
       <ConfirmDialog
         open={deleteOpen}
         title={`Delete the collection "${collection.name}"?`}
-        message={`This removes ${collection.memberCount} member(s).`}
+        message={`This removes the collection and its ${collection.memberCount.toLocaleString()} ${
+          collection.memberCount === 1 ? 'member' : 'members'
+        } from this device.${
+          appConfig.features.sync ? ' Synced devices will remove it on their next sync.' : ''
+        }`}
         confirmLabel="Delete"
         pending={deleteM.isPending}
         onConfirm={onDelete}
@@ -300,18 +306,19 @@ export default function CollectionDetail() {
 }
 
 function NotFound() {
+  const navigate = useNavigate();
   return (
-    <div className="max-w-3xl">
-      <Link
-        to="/collections"
-        className="text-primary inline-flex items-center gap-1 text-sm hover:underline"
-      >
-        <ArrowLeft className="h-4 w-4" /> Back to collections
-      </Link>
-      <h1 className="font-display mt-4 text-4xl font-semibold">Collection not found</h1>
-      <p className="text-muted-foreground mt-2 text-sm">
-        This collection may have been deleted. Pick one from the sidebar to continue.
-      </p>
+    <div className="pt-10">
+      <EmptyState
+        icon={SearchX}
+        title="Collection not found"
+        body="This collection may have been deleted."
+        actions={
+          <Button variant="secondary" icon={ArrowLeft} onClick={() => navigate('/collections')}>
+            Back to collections
+          </Button>
+        }
+      />
     </div>
   );
 }

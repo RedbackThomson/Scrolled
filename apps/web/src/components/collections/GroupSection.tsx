@@ -132,7 +132,9 @@ export function GroupSection({ group, name, count, showHeader, draggable, childr
         <ConfirmDialog
           open={deleteOpen}
           title={`Delete group "${name}"?`}
-          message={`Its ${count} member(s) will move to the default group.`}
+          message={`Its ${count.toLocaleString()} ${
+            count === 1 ? 'member moves' : 'members move'
+          } to Ungrouped.`}
           confirmLabel="Delete"
           pending={deleteM.isPending}
           onConfirm={onDelete}

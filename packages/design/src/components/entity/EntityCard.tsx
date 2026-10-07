@@ -10,27 +10,36 @@ export interface EntityCardStat {
 }
 
 export interface EntityCardProps {
+  /** Custom slot, e.g. a lazily loaded sprite; replaces `src`/`icon`/`tint`/`hue` */
+  media?: ReactNode;
   src?: string;
   icon?: LucideIcon;
   tint?: SlotTint;
   hue?: number;
-  name: string;
-  subtitle?: string;
+  name: ReactNode;
+  /** Tag beside the name, e.g. a Boss or Cash chip */
+  badge?: ReactNode;
+  subtitle?: ReactNode;
   /** 2×2 stat grid; color the headline stat (ATK = var(--stat-hp)) */
   stats?: EntityCardStat[];
-  tags?: string[];
+  tags?: readonly string[];
+  /** Accent border, for a card picked in a multi-select */
+  selected?: boolean;
   onClick?: () => void;
 }
 
 export function EntityCard({
+  media,
   src,
   icon,
   tint = 'equip',
   hue,
   name,
+  badge,
   subtitle,
   stats = [],
   tags = [],
+  selected,
   onClick,
 }: EntityCardProps) {
   const [h, setH] = useState(false);
@@ -42,7 +51,7 @@ export function EntityCard({
       style={{
         borderRadius: 16,
         background: 'var(--surface-card)',
-        border: 'var(--border-rim)',
+        border: selected ? '2px solid var(--accent)' : 'var(--border-rim)',
         boxShadow: 'var(--shadow-rim)',
         padding: 12,
         display: 'flex',
@@ -54,9 +63,14 @@ export function EntityCard({
       }}
     >
       <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-        <SlotTile src={src} icon={icon} tint={tint} hue={hue} size={60} spotlight />
+        {media ?? <SlotTile src={src} icon={icon} tint={tint} hue={hue} size={60} spotlight />}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
-          <span style={{ font: '600 15px/1.2 var(--font-display)' }}>{name}</span>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
+            <span style={{ font: '600 15px/1.2 var(--font-display)', overflowWrap: 'anywhere' }}>
+              {name}
+            </span>
+            {badge}
+          </div>
           {subtitle && (
             <span style={{ font: 'var(--type-meta)', color: 'var(--text-2)' }}>{subtitle}</span>
           )}
@@ -79,7 +93,7 @@ export function EntityCard({
               }}
             >
               <span style={{ fontWeight: 700, color: s.color || 'var(--text-2)' }}>{s.label}</span>
-              <b>{s.value}</b>
+              <b style={{ fontVariantNumeric: 'tabular-nums' }}>{s.value}</b>
             </div>
           ))}
         </div>

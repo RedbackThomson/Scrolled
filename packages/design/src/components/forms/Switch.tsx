@@ -17,6 +17,7 @@ export function Switch({ checked, onChange, label, description, ariaLabel }: Swi
   const track = (
     <button
       type="button"
+      className="sc-focus-ring"
       role="switch"
       aria-checked={!!checked}
       aria-label={label ?? ariaLabel}

@@ -22,6 +22,7 @@ import { DetailListSection } from '@/components/layout/DetailListSection';
 import { DetailHeader } from '@/components/layout/DetailHeader';
 import {
   DetailPageLayout,
+  DetailPageError,
   DetailPageLoading,
   DetailPageNotFound,
   DetailSection,
@@ -37,7 +38,7 @@ import { RewardFilterControl } from '@/components/common/RewardFilterControl';
 import { getDbClient } from '@/db';
 import type { QuestRequirementWithName, QuestRewardWithName } from '@/db';
 import { NpcLink } from '@/components/entity-links';
-import { RollingNumber, SlotTile } from '@scrolled/design';
+import { Chip, cn, RollingNumber, SlotTile } from '@scrolled/design';
 import { CollectionBadgeStrip } from '@/components/collections';
 import { useDetailPalette } from '@/components/command-palette/useDetailPalette';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -126,6 +127,11 @@ export default function QuestDetail() {
   }, [rewards, characterJob, characterGender]);
 
   if (questQ.isLoading) return <DetailPageLoading entity="Quest" id={id} />;
+  if (questQ.error) {
+    return (
+      <DetailPageError entity="Quest" error={questQ.error} onRetry={() => void questQ.refetch()} />
+    );
+  }
   if (!questQ.data) return <DetailPageNotFound entity="Quest" id={id} />;
 
   const q = questQ.data;
@@ -373,13 +379,16 @@ function countRewardsInGroups(groups: GroupedItemReward[]): number {
   return n;
 }
 
+const NPC_ROW =
+  'ease-spring flex min-h-[46px] items-center gap-3 px-3 py-[5px] text-[13.5px] transition-[background-color,padding] duration-300';
+
 function NpcRow({
   label,
   id,
   name,
   linkable,
 }: {
-  label: string;
+  label: 'Start' | 'End';
   id: number;
   name: string | null;
   linkable: boolean;
@@ -389,8 +398,8 @@ function NpcRow({
   const rowContent = (
     <>
       <EntityAvatar entity="npc" id={id} alt={display} />
-      <span className="text-muted-foreground w-12 shrink-0 text-xs uppercase tracking-wide">
-        {label}
+      <span className="w-14 shrink-0">
+        <Chip tone={label === 'Start' ? 'ok' : 'accent'}>{label}</Chip>
       </span>
       <span className="min-w-0 flex-1 truncate">{display}</span>
       {showIds && <span className="text-muted-foreground shrink-0 font-mono text-xs">{id}</span>}
@@ -399,11 +408,11 @@ function NpcRow({
   return (
     <li>
       {linkable ? (
-        <NpcLink id={id} className="hover:bg-accent flex items-center gap-3 px-3 py-1.5 text-sm">
+        <NpcLink id={id} className={cn(NPC_ROW, 'hover:bg-muted hover:pl-4')}>
           {rowContent}
         </NpcLink>
       ) : (
-        <div className="flex items-center gap-3 px-3 py-1.5 text-sm">{rowContent}</div>
+        <div className={NPC_ROW}>{rowContent}</div>
       )}
     </li>
   );
@@ -427,9 +436,7 @@ function RequirementRow({
         <span className="text-muted-foreground min-w-0 flex-1 truncate italic">
           {r.targetName ?? `#${r.targetId}`}
         </span>
-        {r.amount !== null && r.amount > 1 && (
-          <span className="text-muted-foreground shrink-0 font-mono text-xs">×{r.amount}</span>
-        )}
+        <RequirementAmount amount={r.amount} hunt={entity === 'mob'} />
       </li>
     );
   }
@@ -439,12 +446,29 @@ function RequirementRow({
       id={r.targetId}
       name={r.targetName}
       meta={
-        r.amount !== null && r.amount > 1 ? (
-          <span className="font-mono">×{r.amount}</span>
+        entity === 'mob' || (r.amount !== null && r.amount > 1) ? (
+          <RequirementAmount amount={r.amount} hunt={entity === 'mob'} />
         ) : undefined
       }
       linkable={linkable}
     />
+  );
+}
+
+function RequirementAmount({ amount, hunt }: { amount: number | null; hunt: boolean }) {
+  return (
+    <span className="flex shrink-0 items-center gap-1.5">
+      {hunt && (
+        <Chip tone="hue" hue={20}>
+          Hunt
+        </Chip>
+      )}
+      {amount !== null && amount > 1 && (
+        <span className="font-display text-foreground text-[15px] font-semibold tabular-nums">
+          ×{amount}
+        </span>
+      )}
+    </span>
   );
 }
 
@@ -624,54 +648,49 @@ function RewardBadges({
     const classes = parseRewardJob(reward.job);
     if (!omitJobIfImpliedByAny || !isAnyClass(classes)) {
       badges.push(
-        <Badge key="job" tone="emerald" title={`Restricted to ${formatEquipJobs(classes)}`}>
+        <RestrictionChip key="job" kind="job" title={`Restricted to ${formatEquipJobs(classes)}`}>
           {formatEquipJobs(classes)}
-        </Badge>,
+        </RestrictionChip>,
       );
     }
   }
   if (reward.gender === 0 || reward.gender === 1) {
     badges.push(
-      <Badge key="gender" tone="rose" title="Gender-restricted">
+      <RestrictionChip key="gender" kind="gender" title="Gender-restricted">
         {reward.gender === 0 ? 'Male' : 'Female'}
-      </Badge>,
+      </RestrictionChip>,
     );
   }
   if (reward.period !== null && reward.period > 0) {
     // WZ stores `period` in minutes for quest rewards. Convert to seconds
     // so formatDurationSeconds can pick the largest tidy unit.
     badges.push(
-      <Badge key="period" tone="amber" title="Time-limited reward">
+      <RestrictionChip key="period" kind="period" title="Time-limited reward">
         {formatDurationSeconds(reward.period * 60)}
-      </Badge>,
+      </RestrictionChip>,
     );
   }
   if (badges.length === 0) return null;
   return <span className="flex flex-wrap items-center gap-1">{badges}</span>;
 }
 
-type BadgeTone = 'emerald' | 'rose' | 'amber';
+// Restriction hues: class green, gender rose, time limit amber.
+const RESTRICTION_HUE = { job: 150, gender: 10, period: 75 } as const;
 
-function Badge({
-  tone,
-  children,
+function RestrictionChip({
+  kind,
   title,
+  children,
 }: {
-  tone: BadgeTone;
+  kind: keyof typeof RESTRICTION_HUE;
+  title: string;
   children: React.ReactNode;
-  title?: string;
 }) {
-  const cls = {
-    emerald: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
-    rose: 'bg-rose-500/15 text-rose-700 dark:text-rose-300',
-    amber: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
-  }[tone];
   return (
-    <span
-      className={`inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-medium ${cls}`}
-      title={title}
-    >
-      {children}
+    <span title={title}>
+      <Chip tone="hue" hue={RESTRICTION_HUE[kind]}>
+        {children}
+      </Chip>
     </span>
   );
 }

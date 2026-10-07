@@ -22,3 +22,11 @@
     var(--surface-card) 10px 20px
   );
 }
+
+/* An outline rather than a box-shadow: inline-styled controls keep their own
+   shadows, and focus adds to them instead of replacing them. */
+.sc-focus-ring:focus-visible {
+  outline: 4px solid var(--accent-glow);
+  outline-offset: 0;
+  border-color: var(--accent) !important;
+}

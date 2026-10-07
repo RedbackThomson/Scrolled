@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, type KeyboardEvent, type ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { SlotTile } from './SlotTile';
 import type { SlotTint } from '../../lib/interaction';
@@ -36,6 +36,17 @@ export function EntityRow({
   return (
     <div
       onClick={onClick}
+      {...(onClick && {
+        role: 'button',
+        tabIndex: 0,
+        className: 'sc-focus-ring',
+        onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick();
+          }
+        },
+      })}
       onMouseEnter={() => setH(true)}
       onMouseLeave={() => setH(false)}
       style={{

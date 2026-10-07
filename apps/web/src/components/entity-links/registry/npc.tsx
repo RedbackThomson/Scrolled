@@ -75,6 +75,7 @@ export const npcConfig: TooltipEntityConfig<NpcRecord, NpcExtra> = {
   renderIcon: (record, id) => (
     <EntityIcon entity="npc" id={id} size={64} placeholder={Users} alt={record.name} />
   ),
+  nameOf: (record) => record.name,
   renderName: (record, id) => (
     <Link
       to={routeForEntity('npc', id)}

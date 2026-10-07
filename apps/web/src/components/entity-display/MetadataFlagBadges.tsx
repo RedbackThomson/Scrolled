@@ -28,3 +28,23 @@ export function MetadataFlagBadges({
     </>
   );
 }
+
+// Any of these means the item can't move freely between characters.
+const TRADE_RESTRICTIONS: readonly MetadataFlagKey[] = [
+  'tradeBlock',
+  'equipTradeBlock',
+  'accountSharable',
+];
+
+/**
+ * The affirmative counterparts to the restriction chips: "In-game" when it
+ * isn't a cash item, "Tradeable" when nothing restricts trading.
+ */
+export function AvailabilityChips({ flags }: { flags: Partial<Record<MetadataFlagKey, boolean>> }) {
+  return (
+    <>
+      {!flags.cash && <Chip>In-game</Chip>}
+      {!TRADE_RESTRICTIONS.some((key) => flags[key]) && <Chip tone="ok">Tradeable</Chip>}
+    </>
+  );
+}

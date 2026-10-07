@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronUp, Link2, MapPin } from 'lucide-react';
-import { ENTITY_HUES } from '@scrolled/design';
+import { ChevronRight, ChevronUp, Globe, Link2, MapPin } from 'lucide-react';
+import { ENTITY_HUES, SlotTile } from '@scrolled/design';
 import { GraphicViewerModal, type LayerDescriptor } from '@/components/GraphicViewer';
 import { MapHoverCard } from '@/components/entity-links';
 import { useEntitySummaryNames } from '@/hooks/useEntitySummaries';
@@ -113,14 +113,23 @@ export function WorldMapViewerModal({
     <GraphicViewerModal
       open={open}
       onClose={onClose}
-      title={regionLabel ?? 'World Map'}
-      description={regionLabel ? 'World Map' : undefined}
+      title={regionLabel ? `World map: ${regionLabel}` : 'World map'}
+      heading={
+        regionLabel ? (
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className="text-muted-foreground shrink-0">World map</span>
+            <ChevronRight className="text-muted-foreground h-4 w-4 shrink-0" aria-hidden />
+            <span className="truncate">{regionLabel}</span>
+          </span>
+        ) : undefined
+      }
+      icon={<SlotTile icon={Globe} hue={ENTITY_HUES.map} size={38} />}
       isLoading={isLoading || !worldMap}
       loadingMessage="Loading world map…"
       image={worldMap?.baseImageData ?? null}
       imageUnavailableMessage="This world map has no image."
       imageLoadingMessage="Loading world map…"
-      ariaLabel="World Map"
+      ariaLabel="World map"
       scrollKey={drilledMarkerId ?? focusMarkerId}
       layers={layers}
       mobileSheetTitle="Browse world map"

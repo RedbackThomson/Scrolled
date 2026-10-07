@@ -1,18 +1,20 @@
 import type { ReactNode } from 'react';
+import { SearchX } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
-import { cn, Input, Skeleton } from '@scrolled/design';
+import { cn, EmptyState, Input, Skeleton } from '@scrolled/design';
 import { popIn } from '@/lib/popIn';
+import { ListCardLayoutContext } from './listCardLayout';
 
 interface Props<TData> {
   data: readonly TData[];
   rowLinkTo: (row: TData) => string;
   getRowId: (row: TData) => string;
-  /** The entity table's card body (sprite, name, meta line). */
+  /** The entity table's card body; renders its tall layout here. */
   card: (row: TData) => ReactNode;
   columns: ColumnDef<TData>[];
   visibleColumns: string[];
-  /** Columns the card body already covers; the stat grid skips them. */
+  /** Columns the card body already covers; extra stats skip them. */
   defaultVisible: readonly string[];
   emptyMessage: string;
   loading?: boolean;
@@ -21,8 +23,6 @@ interface Props<TData> {
   selectedIds?: ReadonlySet<string>;
   toggleRow: (id: string) => void;
 }
-
-const PANEL = 'border-border bg-card shadow-rim rounded-lg border-2';
 
 /** Desktop card view: the same rows as the table, as a 4-up grid of entity cards. */
 export function CardGrid<TData>({
@@ -57,11 +57,7 @@ export function CardGrid<TData>({
     );
   }
   if (data.length === 0) {
-    return (
-      <div className={cn(PANEL, 'text-muted-foreground px-3 py-6 text-center text-sm')}>
-        {emptyMessage}
-      </div>
-    );
+    return <EmptyState icon={SearchX} title="No results" body={emptyMessage} />;
   }
 
   return (
@@ -81,12 +77,22 @@ export function CardGrid<TData>({
             key={rowId}
             style={pop.style}
             className={cn(
-              PANEL,
               pop.className,
-              'ease-spring relative flex flex-col gap-2.5 p-3 transition-transform duration-300 hover:-translate-y-1 hover:-rotate-[.4deg]',
-              isSelected && 'border-primary',
+              'ease-spring relative transition-transform duration-300 hover:-translate-y-1 hover:-rotate-[.4deg]',
             )}
           >
+            <ListCardLayoutContext.Provider
+              value={{
+                variant: 'tall',
+                selected: isSelected,
+                extraStats: statCols.map((col) => ({
+                  label: col.meta!.card!.label,
+                  value: col.meta!.card!.render(row),
+                })),
+              }}
+            >
+              <div className="pointer-events-none h-full [&>*]:h-full">{card(row)}</div>
+            </ListCardLayoutContext.Provider>
             <Link
               to={href}
               aria-label={`Open ${href}`}
@@ -102,23 +108,6 @@ export function CardGrid<TData>({
                   className="accent-primary h-4 w-4 cursor-pointer rounded-sm"
                 />
               </label>
-            )}
-            <div className="pointer-events-none">{card(row)}</div>
-            {statCols.length > 0 && (
-              <dl className="pointer-events-none grid grid-cols-2 gap-1.5 text-xs">
-                {statCols.map((col) => {
-                  const meta = col.meta!.card!;
-                  return (
-                    <div
-                      key={col.id}
-                      className="bg-muted flex min-w-0 justify-between gap-1.5 rounded-sm px-2 py-1"
-                    >
-                      <dt className="text-muted-foreground truncate font-bold">{meta.label}</dt>
-                      <dd className="truncate font-bold">{meta.render(row)}</dd>
-                    </div>
-                  );
-                })}
-              </dl>
             )}
           </li>
         );

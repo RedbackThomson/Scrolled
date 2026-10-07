@@ -83,6 +83,7 @@ export function Toast({
       {action && (
         <button
           type="button"
+          className="sc-focus-ring"
           onClick={onAction}
           style={{
             border: 'none',

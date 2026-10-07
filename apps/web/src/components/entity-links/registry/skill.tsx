@@ -111,6 +111,7 @@ export const skillConfig: TooltipEntityConfig<SkillRecord, SkillExtra> = {
       alt={record.name ?? `Skill ${id}`}
     />
   ),
+  nameOf: (record, id) => record.name ?? `Skill ${id}`,
   renderName: (record, id) => (
     <Link
       to={routeForEntity('skill', id)}
