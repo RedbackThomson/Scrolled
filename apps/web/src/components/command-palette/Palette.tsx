@@ -38,8 +38,9 @@ export function Palette() {
         value={query}
         onValueChange={setQuery}
         placeholder="Search or jump to…"
+        onBack={() => setOpen(false)}
         trailing={
-          <span className="bg-muted text-muted-foreground shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-[11.5px] font-bold">
+          <span className="bg-muted text-muted-foreground hidden shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-[11.5px] font-bold md:inline">
             Type ? for shortcuts
           </span>
         }

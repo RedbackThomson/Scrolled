@@ -1,12 +1,16 @@
 import {
   forwardRef,
+  useEffect,
+  useState,
   type ComponentPropsWithoutRef,
+  type CSSProperties,
   type ElementRef,
   type HTMLAttributes,
   type ReactNode,
 } from 'react';
 import { Command as CommandPrimitive } from 'cmdk';
-import { Search } from 'lucide-react';
+import { ArrowLeft, Search } from 'lucide-react';
+import { IconButton } from '../core/IconButton';
 import { Dialog, DialogContent } from './Dialog';
 import { cn } from '../../lib/cn';
 
@@ -31,6 +35,28 @@ interface CommandDialogProps extends ComponentPropsWithoutRef<typeof Dialog> {
   footer?: React.ReactNode;
 }
 
+/**
+ * The part of the screen the on-screen keyboard leaves visible. A full-screen
+ * dialog sized to the layout viewport runs behind the keyboard, and the browser
+ * then pans the page underneath when the list is dragged.
+ */
+function useVisibleViewport() {
+  const [box, setBox] = useState<{ top: number; height: number } | null>(null);
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => setBox({ top: vv.offsetTop, height: vv.height });
+    update();
+    vv.addEventListener('resize', update);
+    vv.addEventListener('scroll', update);
+    return () => {
+      vv.removeEventListener('resize', update);
+      vv.removeEventListener('scroll', update);
+    };
+  }, []);
+  return box;
+}
+
 export function CommandDialog({
   children,
   label,
@@ -38,6 +64,7 @@ export function CommandDialog({
   footer,
   ...props
 }: CommandDialogProps) {
+  const visible = useVisibleViewport();
   return (
     <Dialog {...props}>
       <DialogContent
@@ -46,8 +73,16 @@ export function CommandDialog({
         // are awkward on narrow phones where the on-screen keyboard already
         // claims half the height. Override translate/positioning so the
         // dialog fills the screen instead of staying centered.
-        className="flex flex-col gap-0 overflow-hidden p-0 max-md:inset-0 max-md:h-[100dvh] max-md:max-w-none max-md:translate-x-0 max-md:translate-y-0 max-md:rounded-none max-md:border-0 sm:max-w-[600px]"
+        className="flex flex-col gap-0 overflow-hidden p-0 max-md:inset-x-0 max-md:top-[var(--palette-top,0px)] max-md:h-[var(--palette-height,100dvh)] max-md:max-w-none max-md:translate-x-0 max-md:translate-y-0 max-md:rounded-none max-md:border-0 sm:max-w-[600px]"
         aria-label={label ?? 'Command palette'}
+        style={
+          visible
+            ? ({
+                '--palette-top': `${visible.top}px`,
+                '--palette-height': `${visible.height}px`,
+              } as CSSProperties)
+            : undefined
+        }
       >
         <Command
           label={label ?? 'Command palette'}
@@ -73,10 +108,23 @@ export const CommandInput = forwardRef<
   ComponentPropsWithoutRef<typeof CommandPrimitive.Input> & {
     /** Shown at the input's right edge, e.g. a shortcuts hint. */
     trailing?: ReactNode;
+    /** Shows a back button in place of the search icon on phones, where there is no Escape key. */
+    onBack?: () => void;
   }
->(({ className, trailing, ...props }, ref) => (
-  <div className="border-muted flex items-center gap-3 border-b-2 px-[18px]" cmdk-input-wrapper="">
-    <Search className="text-muted-foreground h-5 w-5 shrink-0" />
+>(({ className, trailing, onBack, ...props }, ref) => (
+  <div
+    // A drag starting on the focused field slips past the dialog's scroll lock and scrolls the page.
+    className="border-muted flex items-center gap-3 border-b-2 px-[18px] max-md:touch-none max-md:pl-2"
+    cmdk-input-wrapper=""
+  >
+    {onBack && (
+      <span className="md:hidden">
+        <IconButton icon={ArrowLeft} variant="ghost" size={44} label="Close" onClick={onBack} />
+      </span>
+    )}
+    <Search
+      className={cn('text-muted-foreground h-5 w-5 shrink-0', onBack && 'max-md:hidden')}
+    />
     <CommandPrimitive.Input
       ref={ref}
       className={cn(
@@ -99,7 +147,7 @@ export const CommandList = forwardRef<
     className={cn(
       // Cap height on desktop so the dialog stays a tidy box; let the list
       // claim the available height when the dialog fills the viewport.
-      'max-h-[420px] flex-1 overflow-y-auto overflow-x-hidden p-2 max-md:max-h-none',
+      'max-h-[420px] min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain p-2 max-md:max-h-none',
       className,
     )}
     {...props}

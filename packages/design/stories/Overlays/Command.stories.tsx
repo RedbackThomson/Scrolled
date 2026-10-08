@@ -61,3 +61,25 @@ export const Default: Story = {
     </Command>
   ),
 };
+
+/** On phones the search icon becomes a back button, since there is no Escape key. */
+export const WithBack: Story = {
+  parameters: { viewport: { defaultViewport: 'mobile2' } },
+  render: () => (
+    <Command>
+      <CommandInput placeholder="Search or jump to…" onBack={() => {}} />
+      <CommandList>
+        <CommandGroup heading="Browse">
+          <CommandItem>
+            <Package />
+            Items
+          </CommandItem>
+          <CommandItem>
+            <Skull />
+            Mobs
+          </CommandItem>
+        </CommandGroup>
+      </CommandList>
+    </Command>
+  ),
+};
