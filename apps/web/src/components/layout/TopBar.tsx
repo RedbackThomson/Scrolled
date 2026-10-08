@@ -11,7 +11,7 @@ import { useListChrome } from '@/stores/listChrome';
 
 const BAR_HEIGHT = 68;
 /** The blur runs a little past the bar so content fades in instead of meeting a hard edge. */
-const BLUR_HEIGHT = BAR_HEIGHT + 24;
+const BLUR_HEIGHT = BAR_HEIGHT + 20;
 
 function MobileBarBlur() {
   return <EdgeBlur height={BLUR_HEIGHT} className="md:hidden" style={{ zIndex: -1 }} />;
