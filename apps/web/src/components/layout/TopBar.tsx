@@ -3,11 +3,19 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { AccountMenu } from '@/components/account/AccountMenu';
 import { PaletteTrigger } from '@/components/command-palette/PaletteTrigger';
-import { IconButton } from '@scrolled/design';
+import { EdgeBlur, IconButton } from '@scrolled/design';
 import { useSidebarLayout } from '@/stores/sidebarState';
 import { appConfig } from '@/config';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useListChrome } from '@/stores/listChrome';
+
+const BAR_HEIGHT = 68;
+/** The blur runs a little past the bar so content fades in instead of meeting a hard edge. */
+const BLUR_HEIGHT = BAR_HEIGHT + 24;
+
+function MobileBarBlur() {
+  return <EdgeBlur height={BLUR_HEIGHT} className="md:hidden" style={{ zIndex: -1 }} />;
+}
 
 export function TopBar() {
   const setMobileOpen = useSidebarLayout((s) => s.setMobileOpen);
@@ -25,6 +33,7 @@ export function TopBar() {
     const { count, total, allMatching, selectAll, exit } = listSelection;
     return (
       <header className="sticky top-0 z-10 flex h-[68px] items-center gap-3 px-2">
+        <MobileBarBlur />
         <IconButton icon={X} variant="float" size={44} label="Stop selecting" onClick={exit} />
         <div className="flex min-w-0 flex-col leading-tight">
           <span className="font-display text-[19px] font-semibold" aria-live="polite">
@@ -48,6 +57,7 @@ export function TopBar() {
     // The bar has no fill, so let clicks fall through the gaps between its
     // floating controls to the page scrolling beneath.
     <header className="pointer-events-none sticky top-0 z-10 flex h-[68px] items-center gap-3 pl-3 pr-6 max-md:gap-2 max-md:px-2 [&>*]:pointer-events-auto">
+      <MobileBarBlur />
       {canGoBack && (
         <span className="md:hidden">
           <IconButton

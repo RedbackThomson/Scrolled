@@ -62,6 +62,7 @@ export { RollingNumber, type RollingNumberProps } from './components/entity/Roll
 export { StatTile, type StatTileProps } from './components/entity/StatTile';
 
 export { CloudBackdrop, type CloudBackdropProps } from './components/surfaces/CloudBackdrop';
+export { EdgeBlur, type EdgeBlurProps } from './components/surfaces/EdgeBlur';
 export {
   InfoList,
   InfoRow,
