@@ -237,7 +237,14 @@ export const BottomSheet = forwardRef<HTMLDivElement, BottomSheetProps>(function
         }}
         {...props}
       >
-        <div {...grab} className="relative flex shrink-0 touch-none justify-center pb-1 pt-2">
+        {/* The whole row is the drag target, so it stays a comfortable thumb height. */}
+        <div
+          {...grab}
+          className={cn(
+            'relative flex shrink-0 touch-none items-start justify-center pt-2',
+            onBack ? 'h-[52px]' : 'h-10',
+          )}
+        >
           <SheetHandle />
           {onBack && (
             <button
@@ -245,7 +252,7 @@ export const BottomSheet = forwardRef<HTMLDivElement, BottomSheetProps>(function
               onClick={onBack}
               onPointerDown={(e) => e.stopPropagation()}
               aria-label="Back"
-              className="sc-focus-ring text-muted-foreground absolute left-3 top-2 grid h-11 w-11 place-items-center rounded-full"
+              className="sc-focus-ring text-muted-foreground absolute left-3 top-1 grid h-11 w-11 place-items-center rounded-full"
             >
               <ArrowLeft className="h-5 w-5" />
             </button>

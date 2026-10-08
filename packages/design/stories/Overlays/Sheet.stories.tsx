@@ -97,6 +97,7 @@ export const Bottom: Story = {
 export const BottomWithBack: Story = {
   render: () => (
     <BottomSheet label="Class" onDismiss={() => {}} onBack={() => {}}>
+      <h3 className="font-display px-4 pb-2 pt-3.5 text-xl font-semibold">Class</h3>
       <p className="px-4 pb-6">A panel pushed inside the sheet.</p>
     </BottomSheet>
   ),
