@@ -135,10 +135,10 @@ function MobileDetailLayout({
   const { intro, sections } = partitionDetailChildren(children);
   const [active, setActive] = useState<string | null>(null);
   const tabs: DetailTab[] = [
-    ...sections.map((s) => ({ key: s.key, label: s.label, count: s.count, panel: s.node })),
     ...(aside !== undefined
       ? [{ key: INFO_TAB, label: 'Info', panel: <AsidePanel>{aside}</AsidePanel> }]
       : []),
+    ...sections.map((s) => ({ key: s.key, label: s.label, count: s.count, panel: s.node })),
   ];
   // A single panel needs no tab bar; fall back to the stacked layout.
   const tabbed = sections.length > 0 && tabs.length > 1;
