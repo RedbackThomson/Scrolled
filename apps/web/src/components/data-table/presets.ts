@@ -27,6 +27,6 @@ export interface FacetDef {
   hue: number;
   /** Number columns: preset ranges shown as chips under the slider. */
   quickRanges?: readonly { label: string; value: [number, number] }[];
-  /** Number columns: offer "Around my level" from the character level in settings. */
-  aroundMyLevel?: boolean;
+  /** A character-level column: offers the job brackets and takes bare ranges like "30-50". */
+  level?: boolean;
 }

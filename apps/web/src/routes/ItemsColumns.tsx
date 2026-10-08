@@ -236,6 +236,6 @@ export function mobileCard(row: ItemListRow) {
 export const facets: readonly FacetDef[] = [
   { columnId: 'category', label: 'Category', hue: 235 },
   { columnId: 'subcategory', label: 'Subcategory', hue: 185 },
-  { columnId: 'requiredLevel', label: 'Req Lvl', hue: 148, aroundMyLevel: true },
+  { columnId: 'requiredLevel', label: 'Req Lvl', hue: 148, level: true },
   { columnId: 'price', label: 'Price', hue: 75 },
 ];

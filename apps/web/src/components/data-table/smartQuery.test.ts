@@ -31,7 +31,7 @@ const COLS: FilterableCol[] = [
 const FACETS: FacetDef[] = [
   { columnId: 'equipType', label: 'Type', hue: 235 },
   { columnId: 'requiredJob', label: 'Class', hue: 300 },
-  { columnId: 'requiredLevel', label: 'Req Lvl', hue: 148, aroundMyLevel: true },
+  { columnId: 'requiredLevel', label: 'Req Lvl', hue: 148, level: true },
 ];
 const parsers = buildParsers(COLS, FACETS);
 const top = (text: string) => suggest(text, parsers)[0]!;

@@ -172,7 +172,7 @@ function booleanParser(col: FilterableCol, label: string, hue: number): Parser {
 }
 
 const isLevelColumn = (col: FilterableCol, facet: FacetDef | undefined) =>
-  !!facet?.aroundMyLevel || /level/i.test(col.id);
+  !!facet?.level || /level/i.test(col.id);
 
 /** Parsers for every filterable column, pinned facets first so their suggestions rank higher. */
 export function buildParsers(

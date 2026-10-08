@@ -63,3 +63,12 @@ export const JOB_NAMES_FALLBACK: Readonly<Record<number, string>> = {
   521: 'Outlaw',
   522: 'Corsair',
 };
+
+/** Character level bands between job advancements. `max: null` is open-ended. */
+export const JOB_LEVEL_BRACKETS: readonly { name: string; min: number; max: number | null }[] = [
+  { name: 'Beginner', min: 0, max: 10 },
+  { name: 'First Job', min: 10, max: 30 },
+  { name: 'Second Job', min: 30, max: 70 },
+  { name: 'Third Job', min: 70, max: 120 },
+  { name: 'End Game', min: 120, max: null },
+];

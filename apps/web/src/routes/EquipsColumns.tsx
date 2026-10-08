@@ -201,8 +201,7 @@ export const facets: readonly FacetDef[] = [
     columnId: 'requiredLevel',
     label: 'Req Lvl',
     hue: 148,
-    aroundMyLevel: true,
-    quickRanges: [{ label: 'Starter (0–10)', value: [0, 10] }],
+    level: true,
   },
   { columnId: 'upgradeSlots', label: 'Slots', hue: 185 },
 ];

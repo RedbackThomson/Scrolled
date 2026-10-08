@@ -9,15 +9,10 @@ import {
   TextField,
   type RangeSliderQuickRange,
 } from '@scrolled/design';
+import { JOB_LEVEL_BRACKETS } from '@scrolled/game-db/domain/jobs';
 import type { ColumnFilter, FacetSource } from '@/db';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { useUserSetting } from '@/hooks/useUserSetting';
-import {
-  DEFAULT_MAGIC_STATS,
-  MAGIC_STATS_KEY,
-  magicStatsSchema,
-} from '@/components/settings/magicStats';
 import type { FilterableCol } from './Filterable';
 import type { FacetDef } from './presets';
 import { countLabel, isFilterActive } from './filterSummary';
@@ -29,7 +24,10 @@ import {
 } from './useFacetQueries';
 
 const SEARCHABLE_OPTIONS = 8;
-const AROUND_LEVEL = 5;
+const LEVEL_QUICK_RANGES = JOB_LEVEL_BRACKETS.map((b) => ({
+  label: b.max == null ? `${b.name} (${b.min}+)` : `${b.name} (${b.min}–${b.max})`,
+  value: [b.min, b.max ?? Infinity] as [number, number],
+}));
 
 export interface FilterValuePanelProps {
   col: FilterableCol;
@@ -272,33 +270,7 @@ type RangeBodyProps = BodyProps & {
   touch?: boolean;
 };
 
-function RangeBody(props: RangeBodyProps) {
-  return props.facet?.aroundMyLevel ? (
-    <LevelAwareRangeBody {...props} />
-  ) : (
-    <RangeBodyInner {...props} level={null} />
-  );
-}
-
-function LevelAwareRangeBody(props: RangeBodyProps) {
-  const magic = useUserSetting(MAGIC_STATS_KEY, magicStatsSchema, DEFAULT_MAGIC_STATS);
-  const level = magic.value.characterLevel;
-  // The default level means the user never set one.
-  return (
-    <RangeBodyInner {...props} level={level > DEFAULT_MAGIC_STATS.characterLevel ? level : null} />
-  );
-}
-
-function RangeBodyInner({
-  col,
-  source,
-  filters,
-  draft,
-  setDraft,
-  facet,
-  level,
-  touch,
-}: RangeBodyProps & { level: number | null }) {
+function RangeBody({ col, source, filters, draft, setDraft, facet, touch }: RangeBodyProps) {
   const histogram = useColumnHistogram(source, col.id, filters);
   const h = histogram.data;
   const cur = draft?.kind === 'range' ? draft : undefined;
@@ -322,16 +294,15 @@ function RangeBodyInner({
     );
 
   const quickRanges: RangeSliderQuickRange[] = [
-    ...(level != null
-      ? [
-          {
-            label: `Around my level (${level})`,
-            value: [Math.max(0, level - AROUND_LEVEL), level + AROUND_LEVEL] as [number, number],
-          },
-        ]
-      : []),
-    ...(facet?.quickRanges ?? []).map((q) => ({ label: q.label, value: q.value })),
-  ];
+    ...(facet?.level ? LEVEL_QUICK_RANGES : []),
+    ...(facet?.quickRanges ?? []),
+  ]
+    .filter((q) => q.value[0] <= h.max && q.value[1] >= h.min)
+    // Clamped so a picked range matches the slider's value and shows as pressed.
+    .map((q) => ({
+      label: q.label,
+      value: [Math.max(q.value[0], h.min), Math.min(q.value[1], h.max)],
+    }));
 
   return (
     <div className="flex flex-col gap-1">

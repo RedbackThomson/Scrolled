@@ -132,7 +132,7 @@ export function mobileCard(row: QuestRecord) {
 
 export const facets: readonly FacetDef[] = [
   { columnId: 'parent', label: 'Area', hue: 235 },
-  { columnId: 'requiredLevel', label: 'Level', hue: 148, aroundMyLevel: true },
+  { columnId: 'requiredLevel', label: 'Level', hue: 148, level: true },
   { columnId: 'repeatable', label: 'Repeatable', hue: 185 },
   { columnId: 'rewardExp', label: 'Reward EXP', hue: 260 },
 ];

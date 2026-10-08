@@ -185,7 +185,7 @@ export function mobileCard(row: MobRecord) {
 }
 
 export const facets: readonly FacetDef[] = [
-  { columnId: 'level', label: 'Level', hue: 148, aroundMyLevel: true },
+  { columnId: 'level', label: 'Level', hue: 148, level: true },
   { columnId: 'boss', label: 'Boss', hue: 185 },
   { columnId: 'weakAgainst', label: 'Weak against', hue: 35 },
   { columnId: 'exp', label: 'EXP', hue: 260 },

@@ -25,9 +25,11 @@ export const ReqLevel: Story = {};
 export const WideRange: Story = { args: { value: [10, 160] } };
 
 const QUICK = [
-  { label: 'Around my level (42)', value: [37, 47] as [number, number] },
-  { label: '30 – 50', value: [30, 50] as [number, number] },
-  { label: 'Starter (0–10)', value: [0, 10] as [number, number] },
+  { label: 'Beginner (0–10)', value: [0, 10] as [number, number] },
+  { label: 'First Job (10–30)', value: [10, 30] as [number, number] },
+  { label: 'Second Job (30–70)', value: [30, 70] as [number, number] },
+  { label: 'Third Job (70–120)', value: [70, 120] as [number, number] },
+  { label: 'End Game (120+)', value: [120, 140] as [number, number] },
 ];
 
 /** Drag a thumb, use the arrow keys, type a bound, or pick a quick range. */

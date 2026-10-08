@@ -160,8 +160,9 @@ function Demo({
                   setValues((x) => ({ ...x, level: `${v[0]} – ${v[1]}` }));
                 }}
                 quickRanges={[
-                  { label: 'Around my level (42)', value: [37, 47] },
-                  { label: 'Starter (0–10)', value: [0, 10] },
+                  { label: 'Beginner (0–10)', value: [0, 10] },
+                  { label: 'First Job (10–30)', value: [10, 30] },
+                  { label: 'Second Job (30–70)', value: [30, 70] },
                 ]}
               />
             </div>
