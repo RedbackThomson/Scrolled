@@ -12,7 +12,7 @@
     "./tailwind-preset": "./src/tailwind-preset.ts"
   },
   "scripts": {
-    "storybook": "storybook dev -p 6006",
+    "storybook": "storybook dev -p 6006 --no-open",
     "build-storybook": "storybook build",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit",
