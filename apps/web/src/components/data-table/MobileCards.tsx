@@ -8,11 +8,16 @@ import {
 } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, SearchX } from 'lucide-react';
+import { LongPressEventType, useLongPress } from 'use-long-press';
 import type { ColumnDef } from '@tanstack/react-table';
 import { cn, EmptyState, Skeleton } from '@scrolled/design';
 import { ListCardLayoutContext } from './listCardLayout';
 
-const LONG_PRESS_MS = 450;
+const LONG_PRESS_MS = 300;
+/** A finger drifts a few pixels while held still; more than this is a scroll. */
+const LONG_PRESS_SLOP_PX = 10;
+/** How long after a long press is released its stray click may still arrive. */
+const RELEASE_CLICK_MS = 150;
 const HINT_KEY = 'scrolled.seenSelectHint';
 
 interface Props<TData> {
@@ -50,8 +55,8 @@ function readSeenHint(): boolean {
 
 /**
  * Mobile-only replacement for the desktop `<Table>` body: one compact card per
- * row. A full-cover link opens the row; the picture sits above it as the
- * row's checkbox, and a long press anywhere starts selecting.
+ * row. A tap opens the row and a long press starts selecting; while selecting,
+ * a tap anywhere on a card toggles it.
  */
 export function MobileCards<TData>({
   data,
@@ -69,7 +74,25 @@ export function MobileCards<TData>({
   toggleRow,
   selecting,
 }: Props<TData>) {
-  const press = useRef<{ timer: number; fired: boolean } | null>(null);
+  // Clicks before this time are the release of a long press, not a tap.
+  const ignoreClicksUntil = useRef(0);
+  const longPress = useLongPress<HTMLAnchorElement, string>(
+    (_e, { context: rowId }) => {
+      if (!rowId) return;
+      ignoreClicksUntil.current = Infinity;
+      navigator.vibrate?.(10);
+      toggleRow(rowId);
+    },
+    {
+      threshold: LONG_PRESS_MS,
+      cancelOnMovement: LONG_PRESS_SLOP_PX,
+      detect: LongPressEventType.Pointer,
+      onFinish: () => {
+        ignoreClicksUntil.current = performance.now() + RELEASE_CLICK_MS;
+      },
+    },
+  );
+  const isReleaseClick = () => performance.now() < ignoreClicksUntil.current;
   const [showHint, setShowHint] = useState(() => selectable && !readSeenHint());
 
   const dismissHint = () => {
@@ -111,30 +134,29 @@ export function MobileCards<TData>({
     return <EmptyState icon={SearchX} title="No results" body={emptyMessage} />;
   }
 
-  const longPress = (rowId: string) =>
-    selectable
-      ? {
-          onPointerDown: () => {
-            const timer = window.setTimeout(() => {
-              if (press.current) press.current.fired = true;
-              navigator.vibrate?.(10);
-              toggleRow(rowId);
-            }, LONG_PRESS_MS);
-            press.current = { timer, fired: false };
-          },
-          onPointerUp: () => press.current && window.clearTimeout(press.current.timer),
-          onPointerMove: () => press.current && window.clearTimeout(press.current.timer),
-          onPointerCancel: () => press.current && window.clearTimeout(press.current.timer),
-          // The browser's own long-press menu would cover the selection.
-          onContextMenu: (e: MouseEvent) => e.preventDefault(),
-          onClickCapture: (e: MouseEvent) => {
-            if (!press.current?.fired) return;
-            press.current = null;
-            e.preventDefault();
-            e.stopPropagation();
-          },
-        }
-      : {};
+  // Some browsers deliver a long press's release as a click on whatever mounted
+  // under the finger mid-press, which would undo the selection it just made.
+  const tapToggle = (rowId: string) => {
+    if (!isReleaseClick()) toggleRow(rowId);
+  };
+
+  const pressHandlers = (rowId: string) => {
+    if (!selectable) return {};
+    const handlers = longPress(rowId);
+    return {
+      ...handlers,
+      // Once a press becomes a scroll the browser sends pointercancel and no
+      // more moves, so release it here or the timer would still select.
+      onPointerCancel: handlers.onPointerUp,
+      // The browser's own long-press menu would cover the selection.
+      onContextMenu: (e: MouseEvent) => e.preventDefault(),
+      onClickCapture: (e: MouseEvent) => {
+        if (!isReleaseClick()) return;
+        e.preventDefault();
+        e.stopPropagation();
+      },
+    };
+  };
 
   return (
     <div className="relative">
@@ -156,6 +178,8 @@ export function MobileCards<TData>({
         className={cn(
           'border-border bg-card shadow-rim divide-muted divide-y-[1.5px] overflow-hidden rounded-lg border-2 transition-opacity',
           fetching && 'opacity-60',
+          // Holding a card would otherwise raise the OS text-selection or link menu.
+          selectable && 'select-none [-webkit-touch-callout:none]',
         )}
       >
         {data.map((row) => {
@@ -175,14 +199,15 @@ export function MobileCards<TData>({
                   type="button"
                   aria-pressed={selected}
                   aria-label={`${selected ? 'Deselect' : 'Select'} ${href}`}
-                  onClick={() => toggleRow(rowId)}
+                  onClick={() => tapToggle(rowId)}
                   className="focus-visible:ring-primary/30 absolute inset-0 focus-visible:outline-none focus-visible:ring-2"
                 />
               ) : (
                 <Link
                   to={href}
                   aria-label={`Open ${href}`}
-                  {...longPress(rowId)}
+                  draggable={false}
+                  {...pressHandlers(rowId)}
                   className="focus-visible:ring-primary/30 active:bg-muted absolute inset-0 focus-visible:outline-none focus-visible:ring-2"
                 />
               )}
@@ -192,7 +217,8 @@ export function MobileCards<TData>({
                     variant: 'compact',
                     selected,
                     selecting,
-                    onToggleSelect: selectable ? () => toggleRow(rowId) : undefined,
+                    // Outside selection the picture stays inert so a long press on it reaches the link.
+                    onToggleSelect: selectable && selecting ? () => tapToggle(rowId) : undefined,
                   }}
                 >
                   {mobileCard(row)}

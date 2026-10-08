@@ -84,6 +84,7 @@ Schema and join-table inventory follow §8.4 of the MVP doc.
 ### 2.8 Drag and drop
 
 - **`@dnd-kit`** (`core`, `sortable`, `utilities`) for the home-page edit mode that lets users reorder dashboard sections. Picked over `react-beautiful-dnd` (unmaintained) and HTML5 native DnD (poor touch + a11y). Keyboard-accessible and touch-friendly out of the box. Restricted to `components/home/`; any other reorder UI in the app should re-evaluate before pulling it in.
+- **`use-long-press`** for press-and-hold gestures, such as starting a selection on phone card lists. Tiny with no dependencies; it handles the hold timer and the movement tolerance that separates a hold from a scroll.
 
 ### 2.9 Component library
 
