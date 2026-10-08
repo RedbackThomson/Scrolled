@@ -49,7 +49,7 @@ export function SyncControls() {
 
   return (
     <div className="border-muted space-y-4 border-t-2 pt-4">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-2">
           <Icon
             className={cn(
@@ -63,7 +63,7 @@ export function SyncControls() {
             <p className="text-muted-foreground mt-0.5 text-xs">{presentation.detail}</p>
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex flex-wrap items-center gap-1 sm:shrink-0">
           {/* Never gated on `syncing`: a device that cannot finish a cycle is
               exactly the one that needs to rebuild from the account. */}
           <SyncResyncButton />
@@ -79,7 +79,7 @@ export function SyncControls() {
       </div>
 
       {status.errorKind === 'auth' && (
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
           <p className="text-muted-foreground text-xs">
             Your session expired. Sign in again to resume syncing.
           </p>
