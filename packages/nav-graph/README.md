@@ -35,8 +35,7 @@ Node and in the browser.
 ## Releasing to npm
 
 This package is published to npm as `@scrolled/nav-graph` so external
-deployment repos (e.g. `scrolled-mapleroyals`) can consume it without cloning
-the monorepo.
+deployment repos can consume it without cloning the monorepo.
 
 Authentication uses **npm Trusted Publishers (OIDC)** — no `NPM_TOKEN` secret
 lives in this repo. The GitHub Actions OIDC token authenticates directly
