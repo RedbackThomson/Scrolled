@@ -12,8 +12,16 @@ name: Apply Supabase migrations
 #
 # Required repo config (Settings → Secrets and variables → Actions):
 #   Variables: SUPABASE_PROJECT_REF  (the project ref, e.g. abcd1234… — not secret)
+#              DOWNSTREAM_APP_CLIENT_ID (client ID of the GitHub App below)
 #   Secrets:   SUPABASE_ACCESS_TOKEN (a personal access token from the Supabase dashboard)
 #              SUPABASE_DB_PASSWORD  (the project's database password)
+#              DOWNSTREAM_APP_PRIVATE_KEY (private key of a GitHub App with
+#                                     Contents read/write, installed on each
+#                                     downstream deployment repo)
+#
+# Every repo the App is installed on is told when migrations change, so private
+# deployment repos are never named here. GITHUB_TOKEN can't trigger workflows in
+# another repo, hence the App.
 
 on:
   push:
@@ -54,3 +62,28 @@ jobs:
 
       - name: Push migrations
         run: supabase db push
+
+      # Runs after our own push so a migration that fails here never reaches
+      # a downstream database.
+      - name: Get downstream App token
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.DOWNSTREAM_APP_CLIENT_ID }}
+          private-key: ${{ secrets.DOWNSTREAM_APP_PRIVATE_KEY }}
+          # Without `repositories`, the token covers every repo the App is
+          # installed on under this owner.
+          owner: ${{ github.repository_owner }}
+          permission-contents: write
+
+      - name: Notify downstream deployments
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          repos=$(gh api --paginate installation/repositories --jq '.repositories[].full_name')
+          # Public logs: hide the private repo names before anything can print them.
+          for repo in $repos; do echo "::add-mask::$repo"; done
+          for repo in $repos; do
+            gh api "repos/$repo/dispatches" \
+              -f event_type=migrations-updated -f "client_payload[ref]=$GITHUB_SHA"
+          done
