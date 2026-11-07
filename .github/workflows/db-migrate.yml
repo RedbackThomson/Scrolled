@@ -34,7 +34,7 @@ permissions:
 jobs:
   push:
     name: supabase db push
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # Forks don't hold the secrets and must not push to our database. The check
     # also means a fork's own run simply no-ops instead of failing.
     if: ${{ github.repository == 'RedbackThomson/Scrolled' }}
@@ -42,12 +42,12 @@ jobs:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
+        uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
         with:
-          version: latest
+          version: 3.0.0
 
       - name: Link project
         run: supabase link --project-ref "${{ vars.SUPABASE_PROJECT_REF }}"

@@ -41,15 +41,15 @@ permissions:
 jobs:
   publish:
     name: Build, verify, publish
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
           cache: pnpm
@@ -62,7 +62,7 @@ jobs:
         # exchange. npm 11.5.1+ is required for `--provenance` to authenticate
         # via the GitHub OIDC token instead of an NPM_TOKEN. Without this,
         # `npm publish` falls back to no-auth and the registry returns 404.
-        run: npm install --global npm@latest
+        run: npm install --global npm@12.2.2
 
       - name: Decide release vs dev publish
         id: target
@@ -128,7 +128,7 @@ jobs:
         run: pnpm pack --pack-destination .
 
       - name: Upload tarball artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: scrolled-nav-graph-${{ steps.target.outputs.publish_version }}-tarball
           path: packages/nav-graph/scrolled-nav-graph-*.tgz
