@@ -264,18 +264,19 @@ change takes two devices and a real backend — see [TESTING.md](TESTING.md).
 ## Releasing
 
 Pull requests and `main` are checked and built but never deployed. Production
-moves only on an annotated `vX.Y.Z` tag on `main`:
+moves only on a `vX.Y.Z` tag on `main`. Publish a GitHub Release that creates
+the tag from `main`, or push the tag yourself:
 
 ```bash
-jj git fetch
-git tag -a v1.2.0 -m "v1.2.0" <commit-on-main>
-git push origin v1.2.0
+jj tag set v1.2.0 -r <commit-on-main>
+git push origin v1.2.0   # jj git push doesn't push tags
 ```
 
 The tag runs `.github/workflows/pipeline.yml`: CI, a migration dry run and the
 build, then the Supabase migration, the Pages deploy, a GitHub Release with
-generated notes, and a `scrolled-released` dispatch to downstream deployments.
-To redeploy an existing tag, run the workflow by hand with that tag.
+generated notes if there isn't one already, and a `scrolled-released` dispatch
+to downstream deployments. To redeploy an existing tag, run the workflow by
+hand with that tag.
 
 **A migration must stay compatible with the previous release.** It is applied
 just before the new app goes live, and redeploying an older tag rolls back the

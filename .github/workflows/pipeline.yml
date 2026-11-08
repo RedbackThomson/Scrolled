@@ -1,7 +1,7 @@
 name: Pipeline
 
 # Pull requests and main are checked and built but never deployed. Production
-# moves only when an annotated `vX.Y.Z` tag is pushed (or redeployed by hand),
+# moves only when a `vX.Y.Z` tag on main is pushed (or redeployed by hand),
 # and the schema is applied only after that tag's build succeeds, so a failed
 # build never leaves the database ahead of the live app. Setup and the release
 # procedure are in DEVELOPMENT.md → "Releasing".
@@ -49,9 +49,6 @@ jobs:
           set -euo pipefail
           if ! [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
             echo "::error::'$RELEASE_TAG' is not a vX.Y.Z tag."; exit 1
-          fi
-          if [ "$(git cat-file -t "refs/tags/$RELEASE_TAG")" != tag ]; then
-            echo "::error::$RELEASE_TAG is a lightweight tag. Push an annotated tag (git tag -a)."; exit 1
           fi
           if ! git merge-base --is-ancestor "$RELEASE_TAG^{commit}" origin/main; then
             echo "::error::$RELEASE_TAG is not on main."; exit 1
@@ -258,7 +255,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       TAG: ${{ needs.tag.outputs.tag }}
     steps:
-      # A redeploy of an existing tag keeps its original notes.
+      # A release published from the GitHub UI, or a redeploy, keeps its notes.
       - name: Create release
         run: |
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 ||
