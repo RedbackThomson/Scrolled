@@ -193,7 +193,7 @@ jobs:
         run: supabase link --project-ref "${{ vars.SUPABASE_PROJECT_REF }}"
 
       - name: Dry-run migrations
-        run: supabase db push --dry-run
+        run: supabase db push --remote --dry-run
 
   migrate:
     name: Apply Supabase migrations
@@ -220,7 +220,7 @@ jobs:
         run: supabase link --project-ref "${{ vars.SUPABASE_PROJECT_REF }}"
 
       - name: Push migrations
-        run: supabase db push --yes
+        run: supabase db push --remote --yes
 
   deploy:
     name: Deploy
