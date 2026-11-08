@@ -21,7 +21,11 @@ import {
   Settings as SettingsIcon,
   type LucideIcon,
 } from 'lucide-react';
-import { WEAPON_TYPE_ORDER, labelForEquipSlot, labelForEquipType } from '@scrolled/game-db/domain/equipTypes';
+import {
+  WEAPON_TYPE_ORDER,
+  labelForEquipSlot,
+  labelForEquipType,
+} from '@scrolled/game-db/domain/equipTypes';
 import { useFeatures } from '@/hooks/useFeatures';
 import { useDataState } from '@/hooks/useDataState';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
@@ -313,7 +317,12 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
                 collapsed={collapsed}
               />
             )}
-            <RouteNavItem to="/settings" icon={SettingsIcon} label="Settings" collapsed={collapsed} />
+            <RouteNavItem
+              to="/settings"
+              icon={SettingsIcon}
+              label="Settings"
+              collapsed={collapsed}
+            />
             {!collapsed && location.pathname.startsWith('/settings') && (
               <li>
                 <ul className="border-border my-0.5 ml-[26px] space-y-px border-l-2 pl-3">
@@ -326,7 +335,9 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
           </ul>
         </div>
       </nav>
-      <div className={cn('bg-card shadow-float py-1', collapsed ? 'rounded-full' : 'rounded-[18px]')}>
+      <div
+        className={cn('bg-card shadow-float py-1', collapsed ? 'rounded-full' : 'rounded-[18px]')}
+      >
         <OfflineIndicator collapsed={collapsed} />
         <SyncSignInNotice collapsed={collapsed} />
         <SidebarSyncStatus collapsed={collapsed} />
@@ -337,10 +348,8 @@ export function Sidebar({ variant = 'desktop' }: SidebarProps = {}) {
   );
 }
 
-// `VITE_APP_VERSION` is injected by the GitHub Pages deploy workflow on tag
-// pushes (`v1.2.3`). Untagged builds fall back to the pre-release marker, with
-// the short commit hash (`VITE_APP_COMMIT`) appended when the deploy workflow
-// stamps it. Local dev has neither and shows the bare marker.
+// CI stamps the release tag, or `git describe` output for untagged builds.
+// Local dev has neither and shows the bare marker.
 const APP_VERSION_TAG = import.meta.env.VITE_APP_VERSION as string | undefined;
 const APP_VERSION_COMMIT = import.meta.env.VITE_APP_COMMIT as string | undefined;
 const APP_VERSION_LABEL =
@@ -514,7 +523,10 @@ function DbStatusIndicator({
         <StatusDot status={cfg.dot} label={label} />
       ) : (
         <span className="inline-flex items-center gap-2 text-[12.5px] font-semibold">
-          <Loader2 className="text-muted-foreground h-3.5 w-3.5 shrink-0 animate-spin" aria-hidden />
+          <Loader2
+            className="text-muted-foreground h-3.5 w-3.5 shrink-0 animate-spin"
+            aria-hidden
+          />
           {label}
         </span>
       )}
@@ -537,7 +549,10 @@ function DbStatusIndicator({
       <button
         type="button"
         onClick={onAction}
-        className={cn(containerClass, 'hover:bg-muted block w-full rounded-[14px] text-left transition-colors')}
+        className={cn(
+          containerClass,
+          'hover:bg-muted block w-full rounded-[14px] text-left transition-colors',
+        )}
         title={title}
       >
         {body}
