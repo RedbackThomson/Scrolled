@@ -240,7 +240,7 @@ Constraints this satisfies:
   README.md
   LICENSE
   .github/
-    workflows/ci.yml
+    workflows/pipeline.yml
     ISSUE_TEMPLATE/
 ```
 
@@ -257,7 +257,7 @@ The single-package-now / workspace-ready layout means adding a CLI importer or a
 
 ## 7. Phased implementation plan
 
-Each phase maps to a milestone in the MVP doc where applicable. Phases ship in order; each closes with a tagged commit and an updated CHANGELOG entry.
+Each phase maps to a milestone in the MVP doc where applicable. Phases ship in order; each closes with a release tag and its GitHub Release notes.
 
 ### Phase 0 — Scaffold _(new)_
 

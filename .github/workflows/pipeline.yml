@@ -1,0 +1,297 @@
+name: Pipeline
+
+# Pull requests and main are checked and built but never deployed. Production
+# moves only when an annotated `vX.Y.Z` tag is pushed (or redeployed by hand),
+# and the schema is applied only after that tag's build succeeds, so a failed
+# build never leaves the database ahead of the live app. Setup and the release
+# procedure are in DEVELOPMENT.md → "Releasing".
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to redeploy (e.g. v1.2.0)'
+        required: true
+
+# Releases queue rather than cancel: Pages rejects partial uploads, and a
+# half-finished migrate must not be interrupted.
+concurrency:
+  group: pipeline-${{ (github.ref_type == 'tag' || github.event_name == 'workflow_dispatch') && 'release' || github.ref }}
+  cancel-in-progress: ${{ github.ref_type != 'tag' && github.event_name != 'workflow_dispatch' }}
+
+permissions:
+  contents: read
+
+env:
+  RELEASE_TAG: ${{ inputs.tag || (github.ref_type == 'tag' && github.ref_name) || '' }}
+  CHECKOUT_REF: ${{ inputs.tag && format('refs/tags/{0}', inputs.tag) || '' }}
+
+jobs:
+  tag:
+    name: Verify release tag
+    if: ${{ github.ref_type == 'tag' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-24.04
+    outputs:
+      tag: ${{ env.RELEASE_TAG }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.CHECKOUT_REF }}
+          fetch-depth: 0
+
+      # A tag that isn't on main could ship code that never passed review.
+      - name: Check tag
+        run: |
+          set -euo pipefail
+          if ! [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::'$RELEASE_TAG' is not a vX.Y.Z tag."; exit 1
+          fi
+          if [ "$(git cat-file -t "refs/tags/$RELEASE_TAG")" != tag ]; then
+            echo "::error::$RELEASE_TAG is a lightweight tag. Push an annotated tag (git tag -a)."; exit 1
+          fi
+          if ! git merge-base --is-ancestor "$RELEASE_TAG^{commit}" origin/main; then
+            echo "::error::$RELEASE_TAG is not on main."; exit 1
+          fi
+
+  ci:
+    name: Format / typecheck / lint / test
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.CHECKOUT_REF }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test
+        run: pnpm test
+
+  # A remote dry run only lists pending files; this actually executes every
+  # migration, so broken SQL fails the PR instead of the release.
+  migrations-test:
+    name: Apply migrations to a local Supabase
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.CHECKOUT_REF }}
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
+        with:
+          version: 3.0.0
+
+      - name: Start Supabase and apply migrations
+        run: supabase start
+
+  build:
+    name: Build
+    needs: ci
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.CHECKOUT_REF }}
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Untagged builds describe themselves relative to the last release
+      # (v1.2.0-3-gabc1234), the same label downstream deployments compute.
+      - name: Compute version
+        run: |
+          set -euo pipefail
+          version="${RELEASE_TAG:-$(git describe --tags --match 'v*' 2>/dev/null || true)}"
+          echo "VITE_APP_VERSION=$version" >> "$GITHUB_ENV"
+          echo "VITE_APP_COMMIT=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+
+      - name: Build
+        env:
+          # Canonical origin for absolute SEO/social URLs. Unset on forks, which
+          # then ship root-relative URLs (no rich embeds).
+          VITE_SITE_URL: ${{ vars.SITE_URL }}
+          # Analytics only activate when all three are set AND the deployed
+          # hostname is allowlisted at runtime, so forks ship no beacon.
+          VITE_ANALYTICS_PROVIDER: ${{ vars.ANALYTICS_PROVIDER }}
+          VITE_ANALYTICS_TOKEN: ${{ vars.ANALYTICS_TOKEN }}
+          VITE_ANALYTICS_ALLOWED_HOSTS: ${{ vars.ANALYTICS_ALLOWED_HOSTS }}
+          # Public by design (guarded by RLS, not secrecy), hence vars. Unset,
+          # the build stays anonymous and sync-off with the SDK eliminated.
+          # SYNC_MODE=supabase without IDENTITY_MODE=cloud fails the build:
+          # sync has no account to scope data to.
+          VITE_IDENTITY_MODE: ${{ vars.IDENTITY_MODE }}
+          VITE_SYNC_MODE: ${{ vars.SYNC_MODE }}
+          VITE_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_OAUTH_PROVIDERS: ${{ vars.SUPABASE_OAUTH_PROVIDERS }}
+        run: pnpm build
+
+      # Pages serves 404.html for unmatched paths; reusing index.html lets deep
+      # links boot the SPA with the URL preserved.
+      - name: SPA fallback
+        if: ${{ env.RELEASE_TAG != '' }}
+        run: cp apps/web/dist/index.html apps/web/dist/404.html
+
+      - name: Upload Pages artifact
+        if: ${{ env.RELEASE_TAG != '' }}
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: apps/web/dist
+
+  # Fails fast on a bad link, credentials or migration history before the
+  # release waits on the build.
+  migrate-check:
+    name: Dry-run Supabase migrations
+    needs: [tag, ci]
+    if: ${{ vars.SUPABASE_PROJECT_REF != '' }}
+    runs-on: ubuntu-24.04
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.CHECKOUT_REF }}
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
+        with:
+          version: 3.0.0
+
+      - name: Link project
+        run: supabase link --project-ref "${{ vars.SUPABASE_PROJECT_REF }}"
+
+      - name: Dry-run migrations
+        run: supabase db push --dry-run
+
+  migrate:
+    name: Apply Supabase migrations
+    needs: [tag, build, migrations-test, migrate-check]
+    if: ${{ vars.SUPABASE_PROJECT_REF != '' }}
+    runs-on: ubuntu-24.04
+    concurrency:
+      group: supabase-db-push
+      cancel-in-progress: false
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.CHECKOUT_REF }}
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
+        with:
+          version: 3.0.0
+
+      - name: Link project
+        run: supabase link --project-ref "${{ vars.SUPABASE_PROJECT_REF }}"
+
+      - name: Push migrations
+        run: supabase db push --yes
+
+  deploy:
+    name: Deploy
+    needs: [tag, build, migrations-test, migrate-check, migrate]
+    # migrate-check and migrate are skipped, not failed, when no Supabase
+    # project is configured; a self-hosted fork still deploys.
+    if: >-
+      ${{ !cancelled()
+        && needs.tag.result == 'success'
+        && needs.build.result == 'success'
+        && needs.migrations-test.result == 'success'
+        && !contains(needs.*.result, 'failure') }}
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+  release:
+    name: Publish GitHub Release
+    needs: [tag, deploy]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ needs.tag.outputs.tag }}
+    steps:
+      # A redeploy of an existing tag keeps its original notes.
+      - name: Create release
+        run: |
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 ||
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes
+
+  # GITHUB_TOKEN can't start workflows in another repo, hence the App. Every
+  # repo the App is installed on is notified, so private deployment repos are
+  # never named here.
+  notify-downstream:
+    name: Notify downstream deployments
+    needs: [tag, deploy]
+    if: ${{ vars.DOWNSTREAM_APP_CLIENT_ID != '' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Get downstream App token
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.DOWNSTREAM_APP_CLIENT_ID }}
+          private-key: ${{ secrets.DOWNSTREAM_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          permission-contents: write
+
+      - name: Dispatch scrolled-released
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TAG: ${{ needs.tag.outputs.tag }}
+        run: |
+          set -euo pipefail
+          repos=$(gh api --paginate installation/repositories --jq '.repositories[].full_name')
+          # Public logs: mask the private repo names before anything prints them.
+          for repo in $repos; do echo "::add-mask::$repo"; done
+          for repo in $repos; do
+            gh api "repos/$repo/dispatches" \
+              -f event_type=scrolled-released -f "client_payload[app_ref]=$TAG"
+          done

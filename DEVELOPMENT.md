@@ -261,6 +261,40 @@ step-by-step for a new synced entity is
 [`docs/adding_a_synced_entity.md`](docs/adding_a_synced_entity.md). Verifying a
 change takes two devices and a real backend — see [TESTING.md](TESTING.md).
 
+## Releasing
+
+Pull requests and `main` are checked and built but never deployed. Production
+moves only on an annotated `vX.Y.Z` tag on `main`:
+
+```bash
+jj git fetch
+git tag -a v1.2.0 -m "v1.2.0" <commit-on-main>
+git push origin v1.2.0
+```
+
+The tag runs `.github/workflows/pipeline.yml`: CI, a migration dry run and the
+build, then the Supabase migration, the Pages deploy, a GitHub Release with
+generated notes, and a `scrolled-released` dispatch to downstream deployments.
+To redeploy an existing tag, run the workflow by hand with that tag.
+
+**A migration must stay compatible with the previous release.** It is applied
+just before the new app goes live, and redeploying an older tag rolls back the
+app but not the schema.
+
+Repository configuration (Settings → Secrets and variables → Actions):
+
+| Name                                                                  | Kind     | Enables                                                                |
+| --------------------------------------------------------------------- | -------- | ---------------------------------------------------------------------- |
+| `SUPABASE_PROJECT_REF`                                                | Variable | Migration dry run and apply; skipped when unset                        |
+| `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`                       | Secret   | Supabase CLI access for the above                                      |
+| `DOWNSTREAM_APP_CLIENT_ID`                                            | Variable | Downstream dispatch; skipped when unset                                |
+| `DOWNSTREAM_APP_PRIVATE_KEY`                                          | Secret   | GitHub App with Contents read/write, installed on each downstream repo |
+| `SITE_URL`, `ANALYTICS_*`, `IDENTITY_MODE`, `SYNC_MODE`, `SUPABASE_*` | Variable | Build-time app config; see the build step                              |
+
+The `github-pages` environment must allow deployments from `v*` tags, and a tag
+ruleset should restrict who can create `v*` tags and block moving or deleting
+them.
+
 ## Reporting parser issues
 
 If something goes wrong loading WZ files, open the **Parser debug** page in the sidebar and click **Copy log**. That captures the parser's log buffer (main thread + worker), the AES smoke-test result, and minimal environment info. Paste that into your GitHub issue along with what you tried.
