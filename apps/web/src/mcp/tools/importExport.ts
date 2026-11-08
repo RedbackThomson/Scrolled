@@ -19,10 +19,7 @@ export const collectionsExportOne: ToolDefinition<typeof collectionsExportOneSch
 };
 
 const collectionsExportAllSchema = z.object({}).optional();
-export const collectionsExportAll: ToolDefinition<
-  typeof collectionsExportAllSchema,
-  unknown
-> = {
+export const collectionsExportAll: ToolDefinition<typeof collectionsExportAllSchema, unknown> = {
   name: 'collections.exportAll',
   category: 'ImportExport',
   description: 'Export every collection as a single JSON bundle.',

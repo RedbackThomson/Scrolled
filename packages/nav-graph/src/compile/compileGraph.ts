@@ -9,14 +9,7 @@
 //   3. Expand bidirectional edges into a directed adjacency list.
 //   4. Freeze nodes/groups/adjacency into immutable maps.
 
-import type {
-  AreaNode,
-  GroupDef,
-  GroupId,
-  NavGraphSource,
-  NodeId,
-  TravelEdge,
-} from '../ir/types';
+import type { AreaNode, GroupDef, GroupId, NavGraphSource, NodeId, TravelEdge } from '../ir/types';
 import { navGraphSourceSchema } from '../ir/schema';
 
 export interface NavGraph {
@@ -41,9 +34,7 @@ export function compileGraph(source: NavGraphSource): NavGraph {
   validateNearestTowns(parsed);
 
   const nodes = new Map<NodeId, AreaNode>(parsed.nodes.map((n) => [n.id, n]));
-  const groups = new Map<GroupId, GroupDef>(
-    (parsed.groups ?? []).map((g) => [g.id, g]),
-  );
+  const groups = new Map<GroupId, GroupDef>((parsed.groups ?? []).map((g) => [g.id, g]));
   const adjacency = buildAdjacency(parsed.nodes, parsed.edges);
 
   return Object.freeze({ source: parsed, nodes, groups, adjacency });
@@ -78,9 +69,7 @@ function validateGroups(source: NavGraphSource): void {
   }
   for (const node of source.nodes) {
     if (node.group && !declared.has(node.group)) {
-      throw new Error(
-        `Node "${node.id}" references unknown group "${node.group}".`,
-      );
+      throw new Error(`Node "${node.id}" references unknown group "${node.group}".`);
     }
   }
 }
@@ -99,9 +88,7 @@ function validateEdgeEndpoints(source: NavGraphSource): void {
     }
   }
   if (missing.size > 0) {
-    throw new Error(
-      `Edge endpoint(s) reference undeclared nodes: ${[...missing].join(', ')}.`,
-    );
+    throw new Error(`Edge endpoint(s) reference undeclared nodes: ${[...missing].join(', ')}.`);
   }
 }
 

@@ -89,7 +89,12 @@ export class ImgDataSource implements GameDataSource {
       case 'root':
         return null;
       case 'file':
-        return { name: loc.logical, fullPath: loc.logical, kind: 'file', hasChildren: loc.node.children.size > 0 };
+        return {
+          name: loc.logical,
+          fullPath: loc.logical,
+          kind: 'file',
+          hasChildren: loc.node.children.size > 0,
+        };
       case 'dir':
         return {
           name: loc.node.name,

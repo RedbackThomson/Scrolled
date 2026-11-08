@@ -8,7 +8,12 @@ import {
   resolveOrder,
 } from './shared/order';
 import { IS_CHAIR, ITEM_FILTER, applyFilters } from './shared/filters';
-import { rowToItem, rowToItemListRow, type ItemListRowSql, type ItemRow } from './shared/rowMappers';
+import {
+  rowToItem,
+  rowToItemListRow,
+  type ItemListRowSql,
+  type ItemRow,
+} from './shared/rowMappers';
 
 export function upsertItemRow(sql: Sqlite, item: ItemRecord): void {
   sql.exec(
@@ -132,8 +137,10 @@ export function listItems(
   const from = `FROM items LEFT JOIN consumable_specs cs ON cs.item_id = items.id`;
   return sql.transaction(() => {
     const total = Number(
-      sql.selectValue(`SELECT COUNT(*) ${from} ${clause}`, params.length > 0 ? params : undefined) ??
-        0,
+      sql.selectValue(
+        `SELECT COUNT(*) ${from} ${clause}`,
+        params.length > 0 ? params : undefined,
+      ) ?? 0,
     );
     const rows = sql
       .selectObjects<ItemListRowSql>(

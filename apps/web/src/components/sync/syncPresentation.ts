@@ -4,13 +4,7 @@
 // docs/writing_conventions.md: plain, terse, sentence case, second person, and
 // nothing trademarked (sync is a generic feature, so this is easy to honour).
 
-import {
-  AlertTriangle,
-  CheckCircle2,
-  CloudOff,
-  RefreshCw,
-  type LucideIcon,
-} from 'lucide-react';
+import { AlertTriangle, CheckCircle2, CloudOff, RefreshCw, type LucideIcon } from 'lucide-react';
 import type { SyncStatus } from '@scrolled/sync-core';
 
 export type SyncTone = 'blue' | 'emerald' | 'amber' | 'slate' | 'red';
@@ -47,7 +41,8 @@ export function presentSyncStatus(status: SyncStatus): SyncPresentation {
     case 'offline':
       return {
         label: 'Offline',
-        detail: "Can't reach the server. Your changes are saved here and will sync when you're back online.",
+        detail:
+          "Can't reach the server. Your changes are saved here and will sync when you're back online.",
         icon: CloudOff,
         tone: 'amber',
         spin: false,

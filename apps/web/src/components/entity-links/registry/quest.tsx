@@ -119,6 +119,9 @@ export const questConfig: TooltipEntityConfig<QuestRecord, QuestExtra> = {
   renderIcon: () => <ScrollText className="h-7 w-7" aria-hidden />,
   nameOf: (record) => record.name,
   renderName: (record) => <div className="truncate">{record.name}</div>,
-  getSampleId: () => getDbClient().listQuests({ limit: 1 }).then((r) => r.rows[0]?.id ?? null),
+  getSampleId: () =>
+    getDbClient()
+      .listQuests({ limit: 1 })
+      .then((r) => r.rows[0]?.id ?? null),
   fields,
 };

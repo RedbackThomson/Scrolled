@@ -35,9 +35,7 @@ export function DisplayOptionsMenu<TData>({
     HTMLDivElement
   >();
 
-  const sortableColumns = table
-    .getAllLeafColumns()
-    .filter((c) => c.getCanSort());
+  const sortableColumns = table.getAllLeafColumns().filter((c) => c.getCanSort());
   const hideableColumns = table.getAllLeafColumns().filter((c) => c.getCanHide());
 
   const setOrdering = (sort: string, dir: TableSortDir) => {
@@ -101,10 +99,7 @@ export function DisplayOptionsMenu<TData>({
                   </option>
                 ))}
               </select>
-              <DirectionToggle
-                dir={state.dir}
-                onChange={(d) => setOrdering(state.sort, d)}
-              />
+              <DirectionToggle dir={state.dir} onChange={(d) => setOrdering(state.sort, d)} />
             </div>
           </Row>
 

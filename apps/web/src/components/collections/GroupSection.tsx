@@ -30,7 +30,14 @@ interface GroupSectionProps {
   children: ReactNode;
 }
 
-export function GroupSection({ group, name, count, showHeader, draggable, children }: GroupSectionProps) {
+export function GroupSection({
+  group,
+  name,
+  count,
+  showHeader,
+  draggable,
+  children,
+}: GroupSectionProps) {
   const groupId = group?.id ?? null;
   const id = groupDndId(groupId);
 

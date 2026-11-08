@@ -12,7 +12,9 @@ const ICON_BGRA = new Uint8Array([10, 20, 30, 255]); // 1x1 pixel, BGRA
 const FILES: { relPath: string; props: SynProp[] }[] = [
   {
     relPath: 'String/Mob.img',
-    props: [{ type: 'sub', name: '100100', children: [{ type: 'string', name: 'name', value: 'Snail' }] }],
+    props: [
+      { type: 'sub', name: '100100', children: [{ type: 'string', name: 'name', value: 'Snail' }] },
+    ],
   },
   {
     relPath: 'Item/Consume/0200/02000000.img',
@@ -34,7 +36,10 @@ const FILES: { relPath: string; props: SynProp[] }[] = [
 ];
 
 function loadSpecs(): LoadFileSpec[] {
-  return FILES.map((f) => ({ name: f.relPath, source: syntheticImgFile(f.relPath, f.props, ZERO_KEYSTREAM) }));
+  return FILES.map((f) => ({
+    name: f.relPath,
+    source: syntheticImgFile(f.relPath, f.props, ZERO_KEYSTREAM),
+  }));
 }
 
 async function makeSource(): Promise<ImgDataSource> {

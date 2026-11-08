@@ -114,8 +114,7 @@ export function recordUpsert(
   const bind = [...params];
   const before = db.selectObject<Row>(`SELECT * FROM ${table} WHERE ${where}`, bind);
   if (!before) return;
-  const uuid =
-    typeof before.uuid === 'string' && before.uuid.length > 0 ? before.uuid : mintId(db);
+  const uuid = typeof before.uuid === 'string' && before.uuid.length > 0 ? before.uuid : mintId(db);
   const now = Date.now();
   db.exec(
     `UPDATE ${table}
@@ -346,12 +345,7 @@ export function replaceAllFromSnapshot(db: Sqlite, rows: TaggedRow[]): ApplyResu
  * re-pointing its children. Resolves a duplicate created by two devices naming
  * the same thing while offline.
  */
-export function rekeyLocal(
-  db: Sqlite,
-  entity: SyncEntity,
-  fromKey: string,
-  toKey: string,
-): void {
+export function rekeyLocal(db: Sqlite, entity: SyncEntity, fromKey: string, toKey: string): void {
   if (!fromKey || !toKey || fromKey === toKey) return;
   const table = ENTITY_TABLE[entity];
   db.transaction(() => {
@@ -376,12 +370,7 @@ export function rekeyLocal(
   });
 }
 
-function repointQueuedChildren(
-  db: Sqlite,
-  column: string,
-  fromKey: string,
-  toKey: string,
-): void {
+function repointQueuedChildren(db: Sqlite, column: string, fromKey: string, toKey: string): void {
   const rows = db.selectObjects<Row>('SELECT seq, payload FROM sync_outbox');
   for (const row of rows) {
     const payload = JSON.parse(String(row.payload)) as Row;
@@ -474,7 +463,10 @@ function applyOne(db: Sqlite, tagged: TaggedRow, opts?: { force: boolean }): boo
   }
 
   if (row.deleted_at != null) {
-    const exists = db.selectValue(`SELECT 1 FROM ${match.table} WHERE ${match.where}`, match.params);
+    const exists = db.selectValue(
+      `SELECT 1 FROM ${match.table} WHERE ${match.where}`,
+      match.params,
+    );
     if (exists == null) return false;
     db.exec(`DELETE FROM ${match.table} WHERE ${match.where}`, match.params);
     return true;
@@ -504,10 +496,9 @@ function applyOne(db: Sqlite, tagged: TaggedRow, opts?: { force: boolean }): boo
 }
 
 function hasPendingEdit(db: Sqlite, entity: SyncEntity, row: RemoteRow): boolean {
-  const rows = db.selectObjects<Row>(
-    'SELECT uuid, payload FROM sync_outbox WHERE entity = ?',
-    [entity],
-  );
+  const rows = db.selectObjects<Row>('SELECT uuid, payload FROM sync_outbox WHERE entity = ?', [
+    entity,
+  ]);
   const target = recordKey(entity, row);
   for (const r of rows) {
     const stored = JSON.parse(String(r.payload)) as Row;
@@ -708,12 +699,7 @@ function localColumns(
 
 /** Local row → backend row: drop local-only columns and replace integer foreign
  *  keys with the parent's key. Null when the parent has vanished. */
-function toRemoteRow(
-  db: Sqlite,
-  entity: SyncEntity,
-  stored: Row,
-  uuid: string,
-): RemoteRow | null {
+function toRemoteRow(db: Sqlite, entity: SyncEntity, stored: Row, uuid: string): RemoteRow | null {
   const base: RemoteRow = {
     updated_at: num(stored.updated_at),
     origin_device: str(stored.origin_device),
@@ -751,7 +737,13 @@ function toRemoteRow(
         created_at: num(stored.created_at),
       };
     case 'collection_group': {
-      const collectionKey = parentKey(db, stored, 'collection_uuid', 'collections', 'collection_id');
+      const collectionKey = parentKey(
+        db,
+        stored,
+        'collection_uuid',
+        'collections',
+        'collection_id',
+      );
       if (collectionKey == null) return null;
       return {
         ...base,
@@ -764,7 +756,13 @@ function toRemoteRow(
       };
     }
     case 'collection_member': {
-      const collectionKey = parentKey(db, stored, 'collection_uuid', 'collections', 'collection_id');
+      const collectionKey = parentKey(
+        db,
+        stored,
+        'collection_uuid',
+        'collections',
+        'collection_id',
+      );
       if (collectionKey == null) return null;
       return {
         ...base,

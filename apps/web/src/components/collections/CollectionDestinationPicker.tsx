@@ -136,7 +136,10 @@ function DestinationRow({
           className="sc-focus-ring text-muted-foreground hover:bg-muted hover:text-foreground grid h-8 w-8 shrink-0 place-items-center rounded-lg"
         >
           <ChevronRight
-            className={cn('ease-spring h-4 w-4 transition-transform duration-300', expanded && 'rotate-90')}
+            className={cn(
+              'ease-spring h-4 w-4 transition-transform duration-300',
+              expanded && 'rotate-90',
+            )}
           />
         </button>
       </div>

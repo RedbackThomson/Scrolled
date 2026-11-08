@@ -11,7 +11,12 @@ const area = (id: string, parentId?: string): DisplayNode => ({
 });
 
 const container = (id: string): DisplayNode => ({ id, kind: 'region-container', label: id });
-const collapsed = (id: string): DisplayNode => ({ id, kind: 'region-collapsed', label: id, areaCount: 3 });
+const collapsed = (id: string): DisplayNode => ({
+  id,
+  kind: 'region-collapsed',
+  label: id,
+  areaCount: 3,
+});
 
 const edge = (source: string, target: string): DisplayEdge => ({
   id: `${source}~${target}`,
@@ -45,7 +50,12 @@ describe('nestedLayout', () => {
   });
 
   it('lays out top-level nodes with absolute positions', () => {
-    const nodes = [container('region:west'), area('a1', 'region:west'), collapsed('region:east'), area('hub')];
+    const nodes = [
+      container('region:west'),
+      area('a1', 'region:west'),
+      collapsed('region:east'),
+      area('hub'),
+    ];
     const edges = [edge('a1', 'region:east'), edge('region:east', 'hub')];
     const { positions } = nestedLayout(nodes, edges);
 

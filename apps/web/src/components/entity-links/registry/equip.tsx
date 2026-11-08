@@ -68,7 +68,10 @@ const fields: EquipField[] = [
       record.requiredJob !== null && !isAnyClass(parseEquipReqJob(record.requiredJob)),
     render: ({ record }) => (
       <div className="text-muted-foreground text-[11px]">
-        Class: <span className="text-foreground">{formatEquipJobs(parseEquipReqJob(record.requiredJob))}</span>
+        Class:{' '}
+        <span className="text-foreground">
+          {formatEquipJobs(parseEquipReqJob(record.requiredJob))}
+        </span>
       </div>
     ),
   },

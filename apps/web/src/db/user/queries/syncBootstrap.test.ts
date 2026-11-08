@@ -76,9 +76,7 @@ async function device(tag: string, server: MockSyncServer, account = ACCOUNT_A) 
 }
 
 const names = (db: Sqlite, table: string): string[] =>
-  db
-    .selectObjects<Row>(`SELECT name FROM ${table} ORDER BY name`)
-    .map((r) => String(r.name));
+  db.selectObjects<Row>(`SELECT name FROM ${table} ORDER BY name`).map((r) => String(r.name));
 
 describe('bootstrapSyncAccount', () => {
   let db: Sqlite;
@@ -192,9 +190,9 @@ describe('two devices', () => {
 
     expect(server.rows('user_setting')).toHaveLength(1);
     await a.engine.syncNow();
-    expect(a.db.selectValue<string>("SELECT value FROM user_settings WHERE key = 'home.layout'")).toBe(
-      '{"b":2}',
-    );
+    expect(
+      a.db.selectValue<string>("SELECT value FROM user_settings WHERE key = 'home.layout'"),
+    ).toBe('{"b":2}');
   });
 
   it('does not resurrect a recent one device pruned', async () => {
@@ -244,11 +242,12 @@ describe('two devices', () => {
 
     // Coalescing is by key, so sharing one would have sent a single collection
     // and dropped the rest.
-    expect(server.rows('collection').map((r) => r.name).sort()).toEqual([
-      'Bosses',
-      'Favourites',
-      'Scrolls',
-    ]);
+    expect(
+      server
+        .rows('collection')
+        .map((r) => r.name)
+        .sort(),
+    ).toEqual(['Bosses', 'Favourites', 'Scrolls']);
     expect(server.rows('collection').every((r) => String(r.key).length > 0)).toBe(true);
     expect(server.rows('collection_member')).toHaveLength(1);
     expect(pendingCount(bDb)).toBe(0);

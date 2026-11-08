@@ -44,9 +44,7 @@ export const itemsGet: ToolDefinition<typeof itemsGetSchema, unknown> = {
 function project<T extends { id: number }>(row: T, fields?: string[]): Partial<T> {
   if (!fields) return row;
   const keep = new Set(['id', ...fields]);
-  return Object.fromEntries(
-    Object.entries(row).filter(([k]) => keep.has(k)),
-  ) as Partial<T>;
+  return Object.fromEntries(Object.entries(row).filter(([k]) => keep.has(k))) as Partial<T>;
 }
 
 const itemsCategoriesSchema = z.object({}).optional();

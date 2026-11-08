@@ -65,10 +65,16 @@ export function buildConsumableEffects(spec: ConsumableSpecRecord): EffectRow[] 
 
   // Drop / meso bonuses (prob is the magnitude)
   if (spec.itemupbyitem !== null) {
-    rows.push({ label: 'Item drop rate', value: spec.prob !== null ? `+${spec.prob}%` : 'Increased' });
+    rows.push({
+      label: 'Item drop rate',
+      value: spec.prob !== null ? `+${spec.prob}%` : 'Increased',
+    });
   }
   if (spec.mesoupbyitem !== null) {
-    rows.push({ label: 'Meso drop rate', value: spec.prob !== null ? `+${spec.prob}%` : 'Increased' });
+    rows.push({
+      label: 'Meso drop rate',
+      value: spec.prob !== null ? `+${spec.prob}%` : 'Increased',
+    });
   }
 
   // Monster-card resistances
@@ -144,7 +150,8 @@ export function buildConsumableEffects(spec: ConsumableSpecRecord): EffectRow[] 
 
   // Pet & mount
   if (spec.inc !== null) rows.push({ label: 'Pet fullness', value: `+${spec.inc}` });
-  if (spec.incFatigue !== null) rows.push({ label: 'Mount fatigue', value: signed(spec.incFatigue) });
+  if (spec.incFatigue !== null)
+    rows.push({ label: 'Mount fatigue', value: signed(spec.incFatigue) });
 
   // Experience & events
   if (spec.exp !== null) rows.push({ label: 'EXP', value: `+${spec.exp.toLocaleString()}` });

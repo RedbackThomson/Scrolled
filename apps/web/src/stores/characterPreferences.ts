@@ -28,9 +28,7 @@ const GENDER_KEY = 'scrolled.character-preferences.gender';
 function readJob(): EquipClass | null {
   if (typeof window === 'undefined') return null;
   const raw = window.localStorage.getItem(JOB_KEY);
-  return (ALL_EQUIP_CLASSES as readonly string[]).includes(raw ?? '')
-    ? (raw as EquipClass)
-    : null;
+  return (ALL_EQUIP_CLASSES as readonly string[]).includes(raw ?? '') ? (raw as EquipClass) : null;
 }
 
 function readGender(): Gender | null {

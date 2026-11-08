@@ -79,8 +79,7 @@ function collectEntries(node: WzNodeTree, into: (entry: StringEntry) => void): v
 function resolveCandidates(candidates: Map<number, StringEntry[]>): StringIndex {
   const out: StringIndex = new Map();
   for (const [id, list] of candidates) {
-    const selected =
-      list.find((e) => e.name && e.desc) ?? list.find((e) => e.name) ?? list[0]!;
+    const selected = list.find((e) => e.name && e.desc) ?? list.find((e) => e.name) ?? list[0]!;
     if (list.length > 1) {
       log.warn('duplicate string entries', {
         id,

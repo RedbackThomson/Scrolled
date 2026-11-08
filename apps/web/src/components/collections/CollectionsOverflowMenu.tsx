@@ -65,7 +65,7 @@ export function CollectionsOverflowMenu({ hasAny }: Props) {
             onClick={onExportAll}
             disabled={!hasAny || exportAllM.isPending}
             title={hasAny ? 'Export all collections as JSON' : 'No collections to export yet'}
-            className="hover:bg-muted disabled:hover:bg-transparent flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm font-semibold disabled:opacity-50 max-md:min-h-12"
+            className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm font-semibold disabled:opacity-50 disabled:hover:bg-transparent max-md:min-h-12"
           >
             {exportAllM.isPending ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -78,10 +78,7 @@ export function CollectionsOverflowMenu({ hasAny }: Props) {
       )}
       <CollectionsImportDialog open={importOpen} onClose={() => setImportOpen(false)} />
       {exportAllM.isError && (
-        <p
-          role="alert"
-          className="text-destructive basis-full text-xs"
-        >
+        <p role="alert" className="text-destructive basis-full text-xs">
           Export failed: {(exportAllM.error as Error).message}
         </p>
       )}

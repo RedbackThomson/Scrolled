@@ -26,7 +26,11 @@ export function SkillLink({
   );
   if (noPreview) return link;
   return (
-    <HoverPopover bare content={<GenericHoverCard entity="skill" id={id} />} triggerClassName={triggerClassName}>
+    <HoverPopover
+      bare
+      content={<GenericHoverCard entity="skill" id={id} />}
+      triggerClassName={triggerClassName}
+    >
       {link}
     </HoverPopover>
   );

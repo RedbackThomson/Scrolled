@@ -1,10 +1,5 @@
 import type { Sqlite } from '../sqlite';
-import type {
-  CategoryCount,
-  EquipRecord,
-  ListOptsBase,
-  PageResult,
-} from '../types';
+import type { CategoryCount, EquipRecord, ListOptsBase, PageResult } from '../types';
 import {
   EQUIP_ORDER,
   EQUIP_ORDER_DEFAULT,

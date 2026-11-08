@@ -16,16 +16,47 @@ function sub(name: string, full: string, children: WzNodeTree[]): WzNodeTree {
   };
 }
 function canvas(name: string, full: string, children: WzNodeTree[]): WzNodeTree {
-  return { name, fullPath: full, kind: 'property', propertyKind: 'canvas', hasChildren: true, children };
+  return {
+    name,
+    fullPath: full,
+    kind: 'property',
+    propertyKind: 'canvas',
+    hasChildren: true,
+    children,
+  };
 }
 function int(name: string, full: string, value: number): WzNodeTree {
-  return { name, fullPath: full, kind: 'property', propertyKind: 'int', hasChildren: false, scalar: value, children: [] };
+  return {
+    name,
+    fullPath: full,
+    kind: 'property',
+    propertyKind: 'int',
+    hasChildren: false,
+    scalar: value,
+    children: [],
+  };
 }
 function str(name: string, full: string, value: string): WzNodeTree {
-  return { name, fullPath: full, kind: 'property', propertyKind: 'string', hasChildren: false, scalar: value, children: [] };
+  return {
+    name,
+    fullPath: full,
+    kind: 'property',
+    propertyKind: 'string',
+    hasChildren: false,
+    scalar: value,
+    children: [],
+  };
 }
 function vec(name: string, full: string, x: number, y: number): WzNodeTree {
-  return { name, fullPath: full, kind: 'property', propertyKind: 'vector', hasChildren: false, scalar: `${x},${y}`, children: [] };
+  return {
+    name,
+    fullPath: full,
+    kind: 'property',
+    propertyKind: 'vector',
+    hasChildren: false,
+    scalar: `${x},${y}`,
+    children: [],
+  };
 }
 function image(name: string, full: string, children: WzNodeTree[]): WzNodeTree {
   return { name, fullPath: full, kind: 'image', hasChildren: true, children };
@@ -117,7 +148,12 @@ describe('extractWorldMaps', () => {
           { name: 'WorldMap.img', fullPath: top, kind: 'image', hasChildren: true },
           { name: 'WorldMap000.img', fullPath: child, kind: 'image', hasChildren: true },
           // Non-matching sibling must be ignored.
-          { name: 'WorldMap.img.bak', fullPath: `${root}/WorldMap.img.bak`, kind: 'image', hasChildren: true },
+          {
+            name: 'WorldMap.img.bak',
+            fullPath: `${root}/WorldMap.img.bak`,
+            kind: 'image',
+            hasChildren: true,
+          },
         ],
       },
       { [top]: topTree, [child]: childTree },
@@ -141,14 +177,17 @@ describe('extractWorldMaps', () => {
     expect([henesys.wzX, henesys.wzY]).toEqual([-180, -76]);
     expect(henesys.type).toBe(0);
 
-    expect(result.markerMaps.filter((r) => r.markerId === 'WorldMap:0').map((r) => r.mapId)).toEqual([
-      100000000, 100000001,
-    ]);
-    expect(result.markerMaps.filter((r) => r.markerId === 'WorldMap000:0').map((r) => r.mapId)).toEqual([
-      200000000,
-    ]);
+    expect(
+      result.markerMaps.filter((r) => r.markerId === 'WorldMap:0').map((r) => r.mapId),
+    ).toEqual([100000000, 100000001]);
+    expect(
+      result.markerMaps.filter((r) => r.markerId === 'WorldMap000:0').map((r) => r.mapId),
+    ).toEqual([200000000]);
 
-    expect(result.skipped).toContainEqual({ reason: 'marker has no mapNo', path: `${top}/MapList/1` });
+    expect(result.skipped).toContainEqual({
+      reason: 'marker has no mapNo',
+      path: `${top}/MapList/1`,
+    });
     expect(result.skipped).toContainEqual({ reason: 'missing BaseImg/0', path: child });
 
     expect(result.links).toHaveLength(1);

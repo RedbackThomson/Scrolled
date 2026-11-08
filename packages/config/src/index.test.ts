@@ -95,7 +95,9 @@ describe('resolveIdentity', () => {
   });
 
   it('treats an unknown identity mode as anonymous', () => {
-    expect(resolveIdentity({ VITE_IDENTITY_MODE: 'something-else' })).toEqual({ mode: 'anonymous' });
+    expect(resolveIdentity({ VITE_IDENTITY_MODE: 'something-else' })).toEqual({
+      mode: 'anonymous',
+    });
   });
 
   it('resolves the cloud mode with the publishable key', () => {
@@ -146,13 +148,19 @@ describe('resolveIdentity', () => {
 
   it('throws when a cloud build omits the Supabase URL', () => {
     expect(() =>
-      resolveIdentity({ VITE_IDENTITY_MODE: 'cloud', VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_key' }),
+      resolveIdentity({
+        VITE_IDENTITY_MODE: 'cloud',
+        VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_key',
+      }),
     ).toThrow(/VITE_SUPABASE_URL/);
   });
 
   it('throws when a cloud build omits any Supabase key', () => {
     expect(() =>
-      resolveIdentity({ VITE_IDENTITY_MODE: 'cloud', VITE_SUPABASE_URL: 'https://proj.supabase.co' }),
+      resolveIdentity({
+        VITE_IDENTITY_MODE: 'cloud',
+        VITE_SUPABASE_URL: 'https://proj.supabase.co',
+      }),
     ).toThrow(/VITE_SUPABASE_PUBLISHABLE_KEY/);
   });
 });
@@ -165,11 +173,15 @@ describe('resolveSync', () => {
   });
 
   it('treats an unknown sync mode as off', () => {
-    expect(resolveSync({ VITE_SYNC_MODE: 'something-else' }, cloudIdentity)).toEqual({ mode: 'off' });
+    expect(resolveSync({ VITE_SYNC_MODE: 'something-else' }, cloudIdentity)).toEqual({
+      mode: 'off',
+    });
   });
 
   it('resolves supabase sync when identity is cloud', () => {
-    expect(resolveSync({ VITE_SYNC_MODE: 'supabase' }, cloudIdentity)).toEqual({ mode: 'supabase' });
+    expect(resolveSync({ VITE_SYNC_MODE: 'supabase' }, cloudIdentity)).toEqual({
+      mode: 'supabase',
+    });
   });
 
   it('throws when supabase sync is requested without cloud identity', () => {
@@ -193,6 +205,8 @@ describe('resolveAppConfig — sync', () => {
   });
 
   it('throws when supabase sync is configured without cloud identity', () => {
-    expect(() => resolveAppConfig({ VITE_SYNC_MODE: 'supabase' })).toThrow(/VITE_IDENTITY_MODE=cloud/);
+    expect(() => resolveAppConfig({ VITE_SYNC_MODE: 'supabase' })).toThrow(
+      /VITE_IDENTITY_MODE=cloud/,
+    );
   });
 });

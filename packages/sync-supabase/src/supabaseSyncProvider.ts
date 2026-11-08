@@ -247,7 +247,9 @@ export function createSupabaseSyncProvider(config: SupabaseSyncConfig): SyncProv
         await realtime.setAuth(token);
         if (cancelled) return;
         const ch = realtime.channel(channelTopic(accountId), { config: { private: true } });
-        ch.on('broadcast', { event: POKE_EVENT }, (message) => onPoke(message.payload?.device ?? ''));
+        ch.on('broadcast', { event: POKE_EVENT }, (message) =>
+          onPoke(message.payload?.device ?? ''),
+        );
         ch.subscribe();
         if (cancelled) {
           void realtime.removeChannel(ch);

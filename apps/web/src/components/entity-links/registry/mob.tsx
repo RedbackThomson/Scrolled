@@ -90,7 +90,9 @@ const fields: MobField[] = [
     zone: 'body',
     defaultMode: 'whenPresent',
     isPresent: ({ record }) =>
-      ELEMENT_AFFINITY_STATUSES.some((status) => elementsByStatus(record.elementAttack, status).length > 0),
+      ELEMENT_AFFINITY_STATUSES.some(
+        (status) => elementsByStatus(record.elementAttack, status).length > 0,
+      ),
     render: ({ record }) => <ElementAffinities element={record.elementAttack} />,
   },
 ];

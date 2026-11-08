@@ -9,7 +9,11 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
-import { GraphicViewerModal, GraphicViewerIcon, type LayerDescriptor } from '@/components/GraphicViewer';
+import {
+  GraphicViewerModal,
+  GraphicViewerIcon,
+  type LayerDescriptor,
+} from '@/components/GraphicViewer';
 import { MapHoverCard, MobHoverCard, NpcHoverCard } from '@/components/entity-links';
 import { ENTITY_HUES, SlotTile } from '@scrolled/design';
 import type { WorldMapForMap } from '@/db';
@@ -81,9 +85,7 @@ export function MapViewerModal({
   // Clicking a canvas icon toggles its sticky selection — re-clicking the
   // selected entity clears it, mirroring the sidebar rows.
   const toggleSelect = (sel: MapViewerHighlight) =>
-    onSelectionChange(
-      selection?.kind === sel.kind && selection.key === sel.key ? null : sel,
-    );
+    onSelectionChange(selection?.kind === sel.kind && selection.key === sel.key ? null : sel);
 
   // Same-map teleport graph (`tn` -> `pn` resolution within this map), shared
   // with the sidebar (for "Same map -> foo" labels) and the overlays (to
@@ -220,8 +222,10 @@ export function MapViewerModal({
           effective?.kind === 'portal'
             ? (portalGraph.componentOf.get(Number(effective.key)) ?? null)
             : null;
-        const npcMatches = (id: number) => effective?.kind === 'npc' && effective.key === String(id);
-        const mobMatches = (id: number) => effective?.kind === 'mob' && effective.key === String(id);
+        const npcMatches = (id: number) =>
+          effective?.kind === 'npc' && effective.key === String(id);
+        const mobMatches = (id: number) =>
+          effective?.kind === 'mob' && effective.key === String(id);
 
         return (
           <>

@@ -45,7 +45,7 @@ above) is three steps:
 
 ## Authoring rules
 
-- **Node ids are kebab-case slugs**, author-chosen — they are *not* game map
+- **Node ids are kebab-case slugs**, author-chosen — they are _not_ game map
   ids. Pick whatever reads well in code.
 - **Node/region/`via` text is user-visible copy.** In this repo it must follow
   [`docs/writing_conventions.md`](../../../../docs/writing_conventions.md) —

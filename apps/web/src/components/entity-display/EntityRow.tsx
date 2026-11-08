@@ -58,7 +58,9 @@ export function EntityRow({
           <EntityAvatar entity={entity} id={id} alt={typeof name === 'string' ? name : undefined} />
         )
       }
-      name={name ? displayName : <span className="text-muted-foreground italic">{displayName}</span>}
+      name={
+        name ? displayName : <span className="text-muted-foreground italic">{displayName}</span>
+      }
       subtitle={subtitle ?? undefined}
       meta={
         meta != null || idVisible ? (
@@ -72,7 +74,12 @@ export function EntityRow({
       renderMain={
         linkable
           ? ({ className: mainClass, children }) => (
-              <EntityLink entity={entity} id={id} className={mainClass} triggerClassName={mainClass}>
+              <EntityLink
+                entity={entity}
+                id={id}
+                className={mainClass}
+                triggerClassName={mainClass}
+              >
                 {children}
               </EntityLink>
             )

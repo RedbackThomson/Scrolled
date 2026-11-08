@@ -94,14 +94,18 @@ describe('buildConsumableEffects', () => {
   });
 
   it('pairs prob as the value of the drop-bonus row', () => {
-    expect(buildConsumableEffects(emptySpec({ itemupbyitem: 2, prob: 30, time: 3600000 }))).toEqual([
-      { label: 'Item drop rate', value: '+30%' },
-      { label: 'Duration', value: '1 hour' },
-    ]);
+    expect(buildConsumableEffects(emptySpec({ itemupbyitem: 2, prob: 30, time: 3600000 }))).toEqual(
+      [
+        { label: 'Item drop rate', value: '+30%' },
+        { label: 'Duration', value: '1 hour' },
+      ],
+    );
   });
 
   it('decodes a monster-card resistance with prob as the magnitude', () => {
-    expect(buildConsumableEffects(emptySpec({ defenseState: 'C', prob: 5, time: 1800000 }))).toEqual([
+    expect(
+      buildConsumableEffects(emptySpec({ defenseState: 'C', prob: 5, time: 1800000 })),
+    ).toEqual([
       { label: 'Curse resist', value: '+5%' },
       { label: 'Duration', value: '30 minutes' },
     ]);

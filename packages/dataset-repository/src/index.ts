@@ -94,7 +94,11 @@ export class StaticHttpDatasetRepository implements DatasetRepository {
     try {
       return await res.json();
     } catch (cause) {
-      throw new DatasetRepositoryError('malformed', `Dataset metadata at ${url} is not valid JSON.`, cause);
+      throw new DatasetRepositoryError(
+        'malformed',
+        `Dataset metadata at ${url} is not valid JSON.`,
+        cause,
+      );
     }
   }
 

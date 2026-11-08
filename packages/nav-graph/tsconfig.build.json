@@ -10,8 +10,5 @@
     "allowImportingTsExtensions": false
   },
   "include": ["src/**/*.ts"],
-  "exclude": [
-    "src/**/*.test.ts",
-    "src/cli/**"
-  ]
+  "exclude": ["src/**/*.test.ts", "src/cli/**"]
 }

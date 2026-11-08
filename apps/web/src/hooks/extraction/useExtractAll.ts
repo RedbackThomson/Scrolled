@@ -107,7 +107,10 @@ export function useExtractAll(opts: UseExtractAllOptions = {}) {
           // Consumable specs FK into items.id too — a sidecar of items, stored
           // after them (no separate tracker key, like mob drops / map life).
           setProgress({ phase: 'Saving consumable effects to database', current: 0 });
-          const specs = await storeConsumableSpecs(db, await parser.extractConsumableSpecs(onProgress));
+          const specs = await storeConsumableSpecs(
+            db,
+            await parser.extractConsumableSpecs(onProgress),
+          );
           skippedTotal += specs.skipped;
 
           setProgress({ phase: 'Saving equips to database', current: 0 });

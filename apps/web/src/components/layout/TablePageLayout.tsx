@@ -26,7 +26,9 @@ export function TablePageLayout({
     <div className="max-w-6xl space-y-3">
       <header>
         <h1 className="font-display text-[28px] font-semibold leading-none md:text-4xl">{title}</h1>
-        {description && <p className="text-muted-foreground mt-2 text-sm max-md:hidden">{description}</p>}
+        {description && (
+          <p className="text-muted-foreground mt-2 text-sm max-md:hidden">{description}</p>
+        )}
       </header>
 
       <section className="space-y-3 md:space-y-3">

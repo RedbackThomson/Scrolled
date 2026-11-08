@@ -239,10 +239,7 @@ export class DbApi implements GameDatabase {
     return facets.matchingNames(this.sql, source, filters, limit);
   }
 
-  async matchingIds(
-    source: FacetSource,
-    filters: Record<string, ColumnFilter>,
-  ): Promise<number[]> {
+  async matchingIds(source: FacetSource, filters: Record<string, ColumnFilter>): Promise<number[]> {
     return facets.matchingIds(this.sql, source, filters);
   }
 

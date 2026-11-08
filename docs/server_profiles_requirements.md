@@ -261,7 +261,7 @@ A profile reaches the app one of two ways:
 - **Per-deployment (fixed-dataset sites)** — the deployment owns a
   `server-profile.json` and the headless build (`dataset:build --profile-file`)
   **bakes the full profile config into the dataset's own game DB**. It travels
-  *as* the dataset; nothing is applied as local install state, and the app does
+  _as_ the dataset; nothing is applied as local install state, and the app does
   not need to ship that profile. The only hard app dependency is the
   `equipStatCalculation` **calculator** the profile names — that's code, keyed by
   id, so the pinned app must register it. A profile id the app has never seen is

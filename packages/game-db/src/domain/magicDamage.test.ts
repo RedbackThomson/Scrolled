@@ -53,10 +53,13 @@ describe('minMagicToOneShot', () => {
 
   it('splits HP across hits — a 3-hit spell needs less magic per hit', () => {
     const single = minMagicToOneShot({ hp: 90_000, elementAttack: null }, baseLoadout);
-    const triple = minMagicToOneShot({ hp: 90_000, elementAttack: null }, {
-      ...baseLoadout,
-      hits: 3,
-    });
+    const triple = minMagicToOneShot(
+      { hp: 90_000, elementAttack: null },
+      {
+        ...baseLoadout,
+        hits: 3,
+      },
+    );
     expect(triple as number).toBeLessThan(single as number);
   });
 

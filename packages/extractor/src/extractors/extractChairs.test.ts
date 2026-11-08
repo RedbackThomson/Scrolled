@@ -63,7 +63,11 @@ function makeCapturingOps(): { ops: ChairImageOps; frames: () => AnimFrame[] } {
     ops: {
       encodeAnimation(frames) {
         captured = frames;
-        return { data: new Uint8Array(0), width: frames[0]?.width ?? 0, height: frames[0]?.height ?? 0 };
+        return {
+          data: new Uint8Array(0),
+          width: frames[0]?.width ?? 0,
+          height: frames[0]?.height ?? 0,
+        };
       },
     },
     frames: () => captured,

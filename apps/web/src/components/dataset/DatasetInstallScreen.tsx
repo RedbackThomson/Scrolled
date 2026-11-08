@@ -46,7 +46,7 @@ export function DatasetInstallScreen() {
 
   return (
     <div
-      className="text-foreground fixed inset-0 z-50 flex flex-col items-center justify-center bg-[image:var(--gradient-page)] bg-[var(--surface-page)] px-6"
+      className="text-foreground fixed inset-0 z-50 flex flex-col items-center justify-center bg-[var(--surface-page)] bg-[image:var(--gradient-page)] px-6"
       aria-busy={status === 'running'}
       role="status"
     >
@@ -97,7 +97,9 @@ export function DatasetInstallScreen() {
                   )}
                 </>
               )}
-              <p className="text-muted-foreground text-xs">This downloads once and then works offline.</p>
+              <p className="text-muted-foreground text-xs">
+                This downloads once and then works offline.
+              </p>
             </div>
           </>
         )}

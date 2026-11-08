@@ -67,7 +67,10 @@ export function matchingIds(
   return sql
     .selectObjects<{
       id: number;
-    }>(`SELECT ${idCol} AS id FROM ${src.from} ${clause} ORDER BY ${idCol}`, params.length > 0 ? params : undefined)
+    }>(
+      `SELECT ${idCol} AS id FROM ${src.from} ${clause} ORDER BY ${idCol}`,
+      params.length > 0 ? params : undefined,
+    )
     .map((r) => Number(r.id));
 }
 

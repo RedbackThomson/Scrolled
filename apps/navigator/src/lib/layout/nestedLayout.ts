@@ -72,7 +72,8 @@ export function nestedLayout(
   const containerSize = new Map<string, NodeSize>();
   for (const [containerId, children] of childrenByContainer) {
     const internal = edges.filter(
-      (e) => childToParent.get(e.source) === containerId && childToParent.get(e.target) === containerId,
+      (e) =>
+        childToParent.get(e.source) === containerId && childToParent.get(e.target) === containerId,
     );
     const laid = layoutChildren(children, internal, opts.areaWidth, opts.areaHeight);
     for (const [id, pos] of laid.positions) {

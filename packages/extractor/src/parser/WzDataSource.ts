@@ -1,4 +1,10 @@
-import { decodeCanvas, openFile, type CanvasPixels, type WzFile, type WzVersion } from '@scrolled/wz';
+import {
+  decodeCanvas,
+  openFile,
+  type CanvasPixels,
+  type WzFile,
+  type WzVersion,
+} from '@scrolled/wz';
 import type {
   Diagnostics,
   GameDataSource,

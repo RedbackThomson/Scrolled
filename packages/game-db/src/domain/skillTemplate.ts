@@ -48,9 +48,7 @@ export const SKILL_FIELD_TO_PLACEHOLDER: Readonly<Record<string, string>> = {
  * their WZ placeholder; any extra keys preserved in `raw_json` come
  * through untouched so they remain available to the renderer.
  */
-export function buildSkillTemplateValues(
-  level: SkillLevelRecord,
-): Record<string, string | number> {
+export function buildSkillTemplateValues(level: SkillLevelRecord): Record<string, string | number> {
   const out: Record<string, string | number> = {};
   for (const [field, placeholder] of Object.entries(SKILL_FIELD_TO_PLACEHOLDER)) {
     const value = (level as unknown as Record<string, unknown>)[field];

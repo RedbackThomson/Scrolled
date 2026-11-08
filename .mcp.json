@@ -3,14 +3,7 @@
     "scrolled": {
       "type": "stdio",
       "command": "nix",
-      "args": [
-        "develop",
-        "-c",
-        "pnpm",
-        "--filter",
-        "@scrolled/mcp-server",
-        "start"
-      ],
+      "args": ["develop", "-c", "pnpm", "--filter", "@scrolled/mcp-server", "start"],
       "env": {}
     }
   }

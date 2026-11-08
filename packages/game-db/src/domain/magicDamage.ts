@@ -81,9 +81,7 @@ export interface MagicLoadout {
 export function magicMinDamage(magic: number, loadout: MagicLoadout, mobModifier: number): number {
   const core =
     ((magic * magic) / 1000 + magic * loadout.masteryFraction * 0.9) / 30 + loadout.totalInt / 200;
-  return (
-    core * loadout.basePower * loadout.amplificationFraction * loadout.wandBonus * mobModifier
-  );
+  return core * loadout.basePower * loadout.amplificationFraction * loadout.wandBonus * mobModifier;
 }
 
 type OneShotMob = Pick<MobRecord, 'hp' | 'elementAttack'>;

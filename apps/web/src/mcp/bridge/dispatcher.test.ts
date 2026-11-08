@@ -194,13 +194,15 @@ describe('stripBinary', () => {
     }) as Record<string, unknown>;
     expect(out).toEqual({ a: 1, nested: { c: 'hi' } });
     expect(out).not.toHaveProperty('b');
-    expect((out.nested as Record<string, unknown>)).not.toHaveProperty('d');
+    expect(out.nested as Record<string, unknown>).not.toHaveProperty('d');
   });
 
   it('preserves array indices by replacing binary elements with null', () => {
-    expect(
-      stripBinary([1, new Uint8Array([7]), { e: new Uint8Array([8]), f: 'keep' }]),
-    ).toEqual([1, null, { f: 'keep' }]);
+    expect(stripBinary([1, new Uint8Array([7]), { e: new Uint8Array([8]), f: 'keep' }])).toEqual([
+      1,
+      null,
+      { f: 'keep' },
+    ]);
   });
 
   it('leaves primitives, dates and strings intact', () => {

@@ -1,8 +1,4 @@
-import {
-  createClient,
-  type Session,
-  type SupabaseClient,
-} from '@supabase/supabase-js';
+import { createClient, type Session, type SupabaseClient } from '@supabase/supabase-js';
 import {
   ANONYMOUS_SESSION,
   IdentityLoginError,
@@ -36,7 +32,8 @@ function toUserSession(session: Session | null): UserSession {
   const str = (key: string): string | null =>
     typeof meta[key] === 'string' ? (meta[key] as string) : null;
   // `app_metadata.provider` is the service used for the current sign-in.
-  const provider = typeof user.app_metadata?.provider === 'string' ? user.app_metadata.provider : null;
+  const provider =
+    typeof user.app_metadata?.provider === 'string' ? user.app_metadata.provider : null;
   return {
     userId: user.id,
     email: user.email ?? null,

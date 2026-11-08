@@ -86,9 +86,7 @@ export function GameDataSection() {
             variant="secondary"
             size="sm"
             onClick={onClear}
-            disabled={
-              clearM.isPending || !statusQ.data || statusQ.data.counts.datasets === 0
-            }
+            disabled={clearM.isPending || !statusQ.data || statusQ.data.counts.datasets === 0}
           >
             {clearM.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />

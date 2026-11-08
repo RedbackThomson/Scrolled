@@ -42,12 +42,13 @@ lives in this repo. The GitHub Actions OIDC token authenticates directly
 against the trust relationship npm has on file for this package + workflow.
 
 **One-time setup:**
+
 1. Register the `@scrolled` scope on [npmjs.com](https://www.npmjs.com/) (or
    rename the package to a scope you own).
 2. Reserve the package name. The easiest way is to publish an initial `0.0.0`
    placeholder locally with a classic token, then immediately delete the
    token. (Alternatively: pre-claim the name from npmjs's package settings.)
-3. On the package's npmjs page, open *Settings → Trusted Publishers* and add
+3. On the package's npmjs page, open _Settings → Trusted Publishers_ and add
    a GitHub Actions entry:
    - **Repository:** `RedbackThomson/scrolled`
    - **Workflow filename:** `nav-graph-publish.yml`
@@ -61,10 +62,10 @@ against the trust relationship npm has on file for this package + workflow.
 every push to `main` that touches `packages/nav-graph/**` and picks a mode
 based on whether `package.json`'s version is already on npm:
 
-| `package.json` version | What ships | npm dist-tag | Pull with |
-|---|---|---|---|
-| Not yet on npm (you bumped) | The version as-is | `latest` | `npm i @scrolled/nav-graph` |
-| Already on npm (unchanged) | `<version>-dev.<sha7>` | `dev` | `npm i @scrolled/nav-graph@dev` |
+| `package.json` version      | What ships             | npm dist-tag | Pull with                       |
+| --------------------------- | ---------------------- | ------------ | ------------------------------- |
+| Not yet on npm (you bumped) | The version as-is      | `latest`     | `npm i @scrolled/nav-graph`     |
+| Already on npm (unchanged)  | `<version>-dev.<sha7>` | `dev`        | `npm i @scrolled/nav-graph@dev` |
 
 So the day-to-day loop is just: edit code, commit, push. Each push gets a
 unique `0.1.0-dev.<sha7>` build under the `dev` tag — pullable immediately,

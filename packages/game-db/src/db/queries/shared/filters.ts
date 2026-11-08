@@ -3,7 +3,11 @@ import {
   EQUIP_REQ_JOB_BIT,
   type EquipClass,
 } from '../../../domain/equipJobs';
-import { ELEMENT_CODE_BY_NAME, LEVEL_BY_STATUS, type ElementStatus } from '../../../domain/mobElements';
+import {
+  ELEMENT_CODE_BY_NAME,
+  LEVEL_BY_STATUS,
+  type ElementStatus,
+} from '../../../domain/mobElements';
 import type { ColumnFilter } from '../../types';
 
 /**
@@ -225,9 +229,7 @@ export function applyFilters(
         patterns.push(`%${escapeLikeLiteral(`${code}${level}`)}%`);
       }
       if (patterns.length === 0) continue;
-      where.push(
-        '(' + patterns.map(() => `${spec.col} LIKE ? ESCAPE '\\'`).join(' OR ') + ')',
-      );
+      where.push('(' + patterns.map(() => `${spec.col} LIKE ? ESCAPE '\\'`).join(' OR ') + ')');
       params.push(...patterns);
     } else if (
       spec.type === 'elementStatus' &&

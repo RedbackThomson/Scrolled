@@ -3,8 +3,8 @@
 How we build the navigation app described in
 [`navigator_requirements.md`](navigator_requirements.md), in code, inside the
 Scrolled monorepo. This is the technical companion to that product spec; where
-the two disagree, the requirements doc wins for *what* and this doc wins for
-*how*. Stack and boundary rules defer to
+the two disagree, the requirements doc wins for _what_ and this doc wins for
+_how_. Stack and boundary rules defer to
 [`technical_requirements.md`](technical_requirements.md) and
 [`data_boundaries.md`](data_boundaries.md).
 
@@ -16,7 +16,7 @@ them:
 - **Entirely handwritten graph** authored as a TypeScript intermediate
   representation (IR). **No data is extracted or derived from Scrolled.**
 - **Nodes are author-assigned names/slugs** — the author's own area/hub concepts,
-  with **no `mapId`**. Edge *requirements* reference real `itemId` / `questId`
+  with **no `mapId`**. Edge _requirements_ reference real `itemId` / `questId`
   (plus numeric level and meso amounts).
 - **Separate app, shared packages, one monorepo.** Goal: eventually embeddable
   into Scrolled, so it must share Scrolled's design language.
@@ -33,7 +33,7 @@ A read of the current codebase established the conventions and reuse surface:
   `tsconfig` with `@/*` → `./src/*`, strict TS `noEmit`, Vitest, ESLint with
   enforced layer boundaries. No Turbo/Nx — root scripts are `pnpm --filter` /
   `pnpm -r`. Three build modes via `.env.<mode>` (generic / `fixed` / `identity`).
-- **The SQLite-in-a-worker + multi-tab broker machinery is heavy *for a reason*:**
+- **The SQLite-in-a-worker + multi-tab broker machinery is heavy _for a reason_:**
   OPFS exclusive file handles and a ~40k-row dataset. It is the wrong template
   for a few-hundred-node graph (see §3).
 - **A reusable pan/zoom surface already exists:** `GraphicViewerCanvas`
@@ -42,14 +42,14 @@ A read of the current codebase established the conventions and reuse surface:
   positioned in content space. It is a strong basis for a generic pan/zoom canvas
   (see §7), independent of whatever graph library we pick.
 - **Deep-link targets:** Scrolled exposes `/items/:id`, `/quests/:id`,
-  `/npcs/:id`, `/maps/:id` (see `lib/entityRoutes.ts`). Navigator links *out* to
+  `/npcs/:id`, `/maps/:id` (see `lib/entityRoutes.ts`). Navigator links _out_ to
   these by `itemId` / `questId`. Entity IDs are plain `number`s.
 - **`@dagrejs` is already a dependency** (referenced in `apps/web` Vite
   `manualChunks`), so a hierarchical layout is available without a new dep; a
   force-directed layout needs one small addition (see §6).
 
 > We deliberately do **not** use `@scrolled/game-db` map/portal data to build the
-> graph. The only role game data plays in Navigator is *optional* display
+> graph. The only role game data plays in Navigator is _optional_ display
 > enrichment: resolving the names of the `itemId`/`questId` a requirement
 > references, and linking to Scrolled. Navigator is fully usable with no game data
 > loaded at all.
@@ -89,7 +89,7 @@ Dependency direction (must stay acyclic; ESLint enforces it):
                             apps/web (also consumes @scrolled/design)
 ```
 
-`@scrolled/nav-graph` is a **leaf-ish core**: it may import *types* from
+`@scrolled/nav-graph` is a **leaf-ish core**: it may import _types_ from
 `@scrolled/game-db` to brand `itemId`/`questId`, but nothing that pulls in SQLite
 or React. It must be runnable in Node (for the JSON-export script and tests).
 
@@ -104,7 +104,7 @@ at startup; fewest-hops pathfinding is breadth-first search — microseconds at 
 scale, in-process, no query language, no storage engine, no WASM asset to ship.
 A graph DB (or SQLite-as-graph) would add bundle weight, async boundaries, and an
 extraction/load step to buy nothing. It would also fight the offline tenet (the
-SQLite path needs OPFS plumbing). The handwritten IR *is* the database; we compile
+SQLite path needs OPFS plumbing). The handwritten IR _is_ the database; we compile
 it to memory.
 
 **Why no worker (for MVP).** Scrolled's worker exists to keep WZ parsing and big
@@ -114,7 +114,7 @@ frame. Building adjacency at startup is trivial.
 
 **Escalation path (documented, not built):** if a future cost model makes
 pathfinding expensive — large weighted graph, multi-criteria optimization, all-pairs
-precompute — move *only the solver* into a plain comlink worker, mirroring
+precompute — move _only the solver_ into a plain comlink worker, mirroring
 `apps/web/src/workers/parseWorker.ts` (a single `expose(new Engine())`, `wrap` on
 the client). **No SharedWorker broker, no Web Locks, no OPFS** — the graph is
 ephemeral and per-tab. This is a localized change behind the `findPath` interface,
@@ -136,12 +136,12 @@ export type NodeId = string & { readonly __brand: 'NodeId' };
 export type GroupId = string & { readonly __brand: 'GroupId' };
 
 export interface AreaNode {
-  id: NodeId;            // 'kerning-hub'  (author-chosen)
-  name: string;          // display label (authored — see writing_conventions)
-  group?: GroupId;       // optional region cluster ('victoria') — author concept
-  nearestTown?: NodeId;  // where a return-to-town scroll drops you (defaults to
-                         // self). Enables an optional `scroll` edge, gated by the
-                         // traveller's nearestTownScroll option in findPath.
+  id: NodeId; // 'kerning-hub'  (author-chosen)
+  name: string; // display label (authored — see writing_conventions)
+  group?: GroupId; // optional region cluster ('victoria') — author concept
+  nearestTown?: NodeId; // where a return-to-town scroll drops you (defaults to
+  // self). Enables an optional `scroll` edge, gated by the
+  // traveller's nearestTownScroll option in findPath.
   // No coordinates in MVP: layout is automatic (see §6).
   // No mapId: nodes are authored concepts, not game maps.
 }
@@ -151,13 +151,13 @@ export type TravelMethod = 'walk' | 'portal' | 'npc' | 'item' | 'skill' | 'other
 export type Requirement =
   | { kind: 'meso'; amount: number }
   | { kind: 'item'; itemId: number; consumed: boolean; quantity?: number }
-  | { kind: 'quest'; questId: number }   // must be completed
+  | { kind: 'quest'; questId: number } // must be completed
   | { kind: 'level'; min: number };
 
 export interface TravelEdge {
   from: NodeId;
   to: NodeId;
-  bidirectional?: boolean;     // default false (directed from→to)
+  bidirectional?: boolean; // default false (directed from→to)
   method: TravelMethod;
   /** Author-facing description shown verbatim in directions, e.g.
    *  "Talk to the sailor at the dock". Free text; no entity id required. */
@@ -172,7 +172,7 @@ export interface TravelEdge {
 }
 
 export interface NavGraphSource {
-  profileId: string;           // which server profile this data set targets
+  profileId: string; // which server profile this data set targets
   nodes: AreaNode[];
   edges: TravelEdge[];
   groups?: { id: GroupId; name: string }[];
@@ -188,7 +188,7 @@ Key properties of this model:
   as the author's own area concepts rather than verbatim game locations.
 - **Requirements and `refs` carry numeric `itemId`/`questId`/`npcId`** — the only
   game-entity coupling, used for eligibility checks and outbound Scrolled links.
-  No item/quest *names* are shipped; those resolve at runtime when available.
+  No item/quest _names_ are shipped; those resolve at runtime when available.
 - **Per-profile data set.** Each `NavGraphSource` declares its `profileId`. MVP
   targets one profile; multi-profile is just multiple source files selected by the
   active profile (resolved the same way Scrolled does, via
@@ -199,7 +199,7 @@ Key properties of this model:
 
 ### 4.1 Authoring DX — defining the graph nicely
 
-The IR above is the *compile target and serialization format*, not what a human
+The IR above is the _compile target and serialization format_, not what a human
 should type by hand. Raw `TravelEdge[]` with `from: 'henesys'` / `to: 'ellinia'`
 string fields has three DX problems: (1) endpoints are stringly-typed — typos
 slip through, no autocomplete, no go-to-definition, rename-refactor doesn't work;
@@ -209,11 +209,11 @@ DSL** on top whose only job is to emit `NavGraphSource`.
 
 **Prior art we're borrowing from** (pattern-level, not copying any one API):
 
-- **AWS CDK** — *construct identity*: hold an object handle, wire relationships
+- **AWS CDK** — _construct identity_: hold an object handle, wire relationships
   through methods on it. No re-typed string IDs. This is the big one.
-- **Drizzle `relations()`** — references between *declared* entities are
+- **Drizzle `relations()`** — references between _declared_ entities are
   type-checked; a bad target won't compile.
-- **XState transition maps** — edges declared *next to the node they leave*, which
+- **XState transition maps** — edges declared _next to the node they leave_, which
   reads like "from here you can go to…".
 - **`satisfies` + literal keys** — compile-time ID safety from plain literals with
   no runtime builder.
@@ -222,11 +222,11 @@ DSL** on top whose only job is to emit `NavGraphSource`.
 
 **Three candidate styles** (all compile to the same IR):
 
-| Style | Gist | Pros | Cons |
-|---|---|---|---|
-| **A. Declarative + `satisfies`** | `nodes` object literal + `edges` array, with `from`/`to` typed as `keyof typeof nodes` | Compile-time ID safety, zero runtime, trivially serializable | Edges verbose; bidirectional + requirements noisy; grouping repeated |
-| **B. Imperative builder** | `g.addNode(...)`, `g.addEdge(a, b, {...})` | Familiar (Graphology-like), simple | Stringly-typed unless you capture handles; no nesting; order-sensitive |
-| **C. Scoped fluent builder w/ handles** *(recommended)* | `region(scope, v => { const a = v.node(...); a.walk(b) })` | Object identity (autocomplete/refactor/go-to-def), edges co-located with source, region scoping removes repetition, terse verbs | A small builder layer to build & test |
+| Style                                                   | Gist                                                                                   | Pros                                                                                                                            | Cons                                                                   |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| **A. Declarative + `satisfies`**                        | `nodes` object literal + `edges` array, with `from`/`to` typed as `keyof typeof nodes` | Compile-time ID safety, zero runtime, trivially serializable                                                                    | Edges verbose; bidirectional + requirements noisy; grouping repeated   |
+| **B. Imperative builder**                               | `g.addNode(...)`, `g.addEdge(a, b, {...})`                                             | Familiar (Graphology-like), simple                                                                                              | Stringly-typed unless you capture handles; no nesting; order-sensitive |
+| **C. Scoped fluent builder w/ handles** _(recommended)_ | `region(scope, v => { const a = v.node(...); a.walk(b) })`                             | Object identity (autocomplete/refactor/go-to-def), edges co-located with source, region scoping removes repetition, terse verbs | A small builder layer to build & test                                  |
 
 **Committed design — a hybrid of A and C.** Author nodes as `satisfies` literals so
 `type NodeId = keyof typeof nodes` is known to the compiler (A), and express edges
@@ -245,13 +245,14 @@ export default defineGraph({ profileId: 'mapleroyals-compatible' }, (g) => {
     const ellinia = v.node('ellinia', 'Ellinia');
     const kerning = v.node('kerning', 'Kerning City');
 
-    henesys.walk(ellinia);          // bidirectional by default — "on foot, both ways"
+    henesys.walk(ellinia); // bidirectional by default — "on foot, both ways"
     ellinia.walk(kerning);
 
-    henesys.npcTo(kerning, {        // directed by default — a one-way taxi
+    henesys.npcTo(kerning, {
+      // directed by default — a one-way taxi
       via: 'Take the taxi at the station',
-      cost: meso(1000),             // `cost` = single requirement sugar
-      ref: { npcId: 1012000 },      // optional Scrolled deep-link
+      cost: meso(1000), // `cost` = single requirement sugar
+      ref: { npcId: 1012000 }, // optional Scrolled deep-link
     });
   });
 
@@ -294,9 +295,9 @@ constrained to it, so a non-existent node is a compile error with autocomplete,
 regardless of declaration order or which file a node lives in. **No codegen
 required** for existence checking — the derived union does it. The one accepted
 footgun: spread-merging region literals lets a later duplicate ID silently
-override an earlier one (TS only errors on duplicate keys *within a single*
+override an earlier one (TS only errors on duplicate keys _within a single_
 literal). **We accept that risk** and catch it mechanically instead — a
-compilation pass (§8) collects node declarations *before* the merge collapses
+compilation pass (§8) collects node declarations _before_ the merge collapses
 them and fails on any duplicate ID. Binding handles to `const`s
 (`const henesys = g.ref('henesys')`) additionally restores rename-refactor and
 go-to-definition.
@@ -320,7 +321,7 @@ export function findPath(
 
 export interface PathResult {
   status: 'found' | 'unreachable' | 'unreachable-when-filtered';
-  steps: TravelEdge[];                 // ordered edges from→…→to
+  steps: TravelEdge[]; // ordered edges from→…→to
   // When filtering disconnects the destination, we also return the best
   // UNFILTERED path with the blocking steps flagged (requirements §FR7).
   fallback?: { steps: TravelEdge[]; blocked: number[] /* step indices */ };
@@ -346,7 +347,7 @@ Design notes:
   is imported as ordinary TS, `compileGraph` runs once (memoized), adjacency lives
   in a `Map<NodeId, TravelEdge[]>`. Hundreds of nodes ⇒ negligible.
 - **Eligibility as a pure predicate** keeps pathfinding generic. Hard-filter mode
-  passes the predicate to `findPath`, which prunes ineligible edges *before*
+  passes the predicate to `findPath`, which prunes ineligible edges _before_
   traversal. `meso` is treated as "can you afford a single use" (not cumulative
   budget) for MVP; cumulative-cost routing is a future weighted-cost concern.
 - **Unreachable handling (FR7) lives here**, not in the UI: Dijkstra once with the
@@ -376,29 +377,29 @@ Design notes:
 ## 6. `apps/navigator` — the app
 
 A **brand-new standalone Vite SPA** — its own `index.html`, its own entry, its
-own dependency set. It lives in the monorepo as a sibling of `apps/web` *only* so
+own dependency set. It lives in the monorepo as a sibling of `apps/web` _only_ so
 it can consume shared `workspace:*` packages; it is **not** bound to Scrolled's
 stack, and we pick libraries on this app's merits. The single hard inheritance is
 what `@scrolled/design` peer-requires — **React 18 + Tailwind** — because that is how
 the shared design language is delivered. Everything else is re-evaluated for a
-graph-centric, mostly-single-view, fully-offline tool, which mostly means *fewer*
+graph-centric, mostly-single-view, fully-offline tool, which mostly means _fewer_
 dependencies than Scrolled.
 
 **Stack — chosen for this app (not inherited):**
 
-| Concern | Choice | Rationale / vs. Scrolled |
-|---|---|---|
-| Build / lang | **Vite + TypeScript (strict)** | As requested; aligns tooling across the monorepo. |
-| UI runtime | **React 18** | Required to consume `@scrolled/design`. The one non-negotiable. |
-| Styling | **Tailwind v3 + `@scrolled/design` preset and tokens** | Delivers the shared design language. |
-| Graph view | **React Flow (`@xyflow/react` v12) + `d3-force`** | The heart of the app; new to the monorepo, justified below. |
-| UI state | **Zustand** | Tiny, ergonomic; happens to match Scrolled — kept on merit, not convention. |
-| URL state | **`nuqs`** (or native `URLSearchParams`) | Makes start/end/eligibility a **shareable link** — a core use case. |
-| Routing | **Minimal / none for MVP** | Navigator is essentially one screen. Add a light router (React Router or TanStack Router) only if a detail/about route appears — *we drop Scrolled's heavy routing.* |
-| Async cache | **None for MVP** | The graph is bundled and synchronous; there's nothing to fetch. *We deliberately drop TanStack Query* unless/until optional async game-db name resolution is added. |
-| Validation | **Zod** (inside `@scrolled/nav-graph`) | Validates the compiled graph; not needed in app code. |
-| Icons | **`lucide-react`** | Visual consistency with the shared design language. |
-| Tests | **Vitest** | Monorepo standard; keeps CI uniform. |
+| Concern      | Choice                                                 | Rationale / vs. Scrolled                                                                                                                                             |
+| ------------ | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Build / lang | **Vite + TypeScript (strict)**                         | As requested; aligns tooling across the monorepo.                                                                                                                    |
+| UI runtime   | **React 18**                                           | Required to consume `@scrolled/design`. The one non-negotiable.                                                                                                      |
+| Styling      | **Tailwind v3 + `@scrolled/design` preset and tokens** | Delivers the shared design language.                                                                                                                                 |
+| Graph view   | **React Flow (`@xyflow/react` v12) + `d3-force`**      | The heart of the app; new to the monorepo, justified below.                                                                                                          |
+| UI state     | **Zustand**                                            | Tiny, ergonomic; happens to match Scrolled — kept on merit, not convention.                                                                                          |
+| URL state    | **`nuqs`** (or native `URLSearchParams`)               | Makes start/end/eligibility a **shareable link** — a core use case.                                                                                                  |
+| Routing      | **Minimal / none for MVP**                             | Navigator is essentially one screen. Add a light router (React Router or TanStack Router) only if a detail/about route appears — _we drop Scrolled's heavy routing._ |
+| Async cache  | **None for MVP**                                       | The graph is bundled and synchronous; there's nothing to fetch. _We deliberately drop TanStack Query_ unless/until optional async game-db name resolution is added.  |
+| Validation   | **Zod** (inside `@scrolled/nav-graph`)                 | Validates the compiled graph; not needed in app code.                                                                                                                |
+| Icons        | **`lucide-react`**                                     | Visual consistency with the shared design language.                                                                                                                  |
+| Tests        | **Vitest**                                             | Monorepo standard; keeps CI uniform.                                                                                                                                 |
 
 Net effect of the re-evaluation: **add** React Flow + d3-force (the graph
 surface), **drop** TanStack Query and heavy routing, **keep** the small stuff that
@@ -411,10 +412,10 @@ Scrolled. It directly supports the deferred features: **sub-flows / parent nodes
 for region grouping & semantic zoom, and **custom edge/node types** for the
 PCB-style off-page connectors. Layout is decoupled — we feed it positions.
 
-- *Alternative considered — Cytoscape.js:* superior built-in graph layouts
+- _Alternative considered — Cytoscape.js:_ superior built-in graph layouts
   (fcose/cose), but renders to its own canvas, making shadcn-styled custom nodes
-  and hover cards awkward. *sigma.js/WebGL:* built for 10k+ nodes — overkill here.
-  *Reuse `PanZoomCanvas` + render edges/nodes ourselves:* maximum control, but we'd
+  and hover cards awkward. _sigma.js/WebGL:_ built for 10k+ nodes — overkill here.
+  _Reuse `PanZoomCanvas` + render edges/nodes ourselves:_ maximum control, but we'd
   reimplement edge routing, selection, and grouping that React Flow gives free.
   React Flow is the boring, well-supported fit for hundreds of design-consistent
   nodes.
@@ -447,7 +448,7 @@ convention):**
 chips render as plain labels. **Name resolution is optional enrichment:** if a
 `@scrolled/game-db` read client is available in context (e.g. when embedded in
 Scrolled, or a fixed-dataset build), resolve names; otherwise show the id or the
-authored `via` text. Navigator never *requires* game data.
+authored `via` text. Navigator never _requires_ game data.
 
 **Command palette (optional, not inherited).** Scrolled's "palette wiring ships
 with features" rule is a Scrolled rule, not a constraint on this app. If Navigator
@@ -462,14 +463,14 @@ uses (via `@scrolled/config`). Optional and off for self-hosters/forks.
 ## 7. `@scrolled/design` — the shared design system
 
 This is the "pull things from Scrolled into a common component library" step. It
-lands as milestone **M2** — *after* the headless graph core (M1) but *before* any
+lands as milestone **M2** — _after_ the headless graph core (M1) but _before_ any
 Navigator UI — so both apps look identical from the first rendered screen.
 
 **Extract (high value, low coupling first):**
 
 1. **Theme tokens + Tailwind preset.** Move the CSS-variable token block from
    `apps/web/src/styles/index.css` and the `tailwind.config.ts` shape into the
-   package as a Tailwind *preset* + a `tokens.css`. Both apps' `tailwind.config`
+   package as a Tailwind _preset_ + a `tokens.css`. Both apps' `tailwind.config`
    extend the preset; both import `tokens.css`. Includes the accent system.
 2. **`cn()`** (`lib/utils.ts`) and the **shadcn primitives** in use: `button`,
    `dialog`, `command`, `sheet`, `badge`, `table`, `input`.
@@ -486,13 +487,13 @@ Navigator UI — so both apps look identical from the first rendered screen.
 tangled with Scrolled's feature gates, nav items, and stores, so Navigator should
 start with a thin local shell that consumes the shared theme + primitives, and we
 generalize the shell only once both apps' needs are clear. Entity-display/link,
-MapViewer/WorldMapViewer, and the command-palette *providers* stay app-specific.
+MapViewer/WorldMapViewer, and the command-palette _providers_ stay app-specific.
 
 **Migration mechanics.** Add `@scrolled/design` as a `workspace:*` dep of `apps/web`,
 replace local imports with package imports (mechanical, mostly find/replace),
 update `eslint.config.js` boundaries to allow the new package and keep the
 extractor/cloud-SDK prohibitions intact. **Risk:** this touches many files in
-`apps/web`; do it as its own reviewed change *before* Navigator features, run
+`apps/web`; do it as its own reviewed change _before_ Navigator features, run
 `pnpm -r typecheck` + the web app's tests to confirm parity, and keep each
 extraction a separate commit so regressions bisect cleanly.
 
@@ -506,14 +507,14 @@ The handwritten IR needs guardrails since there's no extraction to keep it hones
   source — every edge endpoint resolves to a declared node, no self-loops unless
   intended, `group` references exist. **Duplicate node IDs are caught by a
   dedicated pre-merge collection pass**: the DSL gathers every node declaration as
-  a list *before* the spread-merge collapses same-key entries (a post-merge object
+  a list _before_ the spread-merge collapses same-key entries (a post-merge object
   can't reveal an override — this is the accepted §4.1 footgun, handled here). A
   Vitest test runs the whole validation over the real data set so CI fails on a
   duplicate or otherwise broken graph.
 - **Entity-ref reconciliation (optional, CI + dev):** a script cross-checks each
   `itemId`/`questId`/`npcId` against a reference dataset for the target profile
   (the fixed hosted dataset, which exists at CI time) and reports unknown ids.
-  This is a *warning-grade authoring aid*, never a runtime requirement — Navigator
+  This is a _warning-grade authoring aid_, never a runtime requirement — Navigator
   must still run with no dataset present.
 - **No schema/data-revision coupling.** Navigator does not use `@scrolled/game-db`
   migrations or `dataVersion`; the graph is app-bundled data, versioned by git.
@@ -527,8 +528,8 @@ The handwritten IR needs guardrails since there's no extraction to keep it hones
   `lint`, `test` already fan out via `pnpm -r`.
 - **Each new package/app:** own `tsconfig` (reuse the repo's strict shape: ES2022,
   `bundler` resolution, strict, `noEmit`, `@/*` alias), own `package.json` with
-  `workspace:*` deps, Vitest, ESLint. These are *conventions worth keeping for
-  consistency*, not stack constraints.
+  `workspace:*` deps, Vitest, ESLint. These are _conventions worth keeping for
+  consistency_, not stack constraints.
 - **`apps/navigator/vite.config.ts`:** its own **minimal** config — React plugin,
   `@` alias, Tailwind via PostCSS. It does **not** copy `apps/web`'s specifics:
   no `@sqlite.org/sqlite-wasm` exclude, no PWA unless we want offline-install, no
@@ -547,7 +548,7 @@ The handwritten IR needs guardrails since there's no extraction to keep it hones
 
 - **Offline (tenet 4):** the graph is bundled JS; pathfinding and rendering are
   fully client-side. Navigator works with no network and no data import — a
-  *stronger* offline story than Scrolled. Outbound Scrolled links and optional name
+  _stronger_ offline story than Scrolled. Outbound Scrolled links and optional name
   resolution are the only network/data touchpoints and degrade gracefully.
 - **Self-hostable (tenet 2):** static build, no backend, no account. `scrolledBaseUrl`
   is configurable so a self-hoster points at their own Scrolled instance (or none).
@@ -581,9 +582,9 @@ pathfinding/search test suite is green.
    graph compiles to JSON, and the full pathfinding / eligibility / search test
    suite passes — entirely headless, zero UI code.**
 2. **M2 — Shared UI foundation.** Create `@scrolled/design` with theme preset + tokens
-   + `cn()` + core primitives + `HoverPopover` + `useTheme` (injected persistence)
-   + `PanZoomCanvas`. Migrate `apps/web` to it; confirm parity. *(De-risks the
-   design language before any Navigator UI.)*
+   - `cn()` + core primitives + `HoverPopover` + `useTheme` (injected persistence)
+   - `PanZoomCanvas`. Migrate `apps/web` to it; confirm parity. _(De-risks the
+     design language before any Navigator UI.)_
 3. **M3 — App skeleton + graph view.** Scaffold `apps/navigator`; React Flow canvas
    with force-directed auto-layout; render the compiled graph; pan/zoom.
 4. **M4 — Directions.** Start/end pickers, "Get Directions", path highlight,

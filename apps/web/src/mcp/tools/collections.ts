@@ -150,17 +150,15 @@ export const collectionsRemoveEntity: ToolDefinition<
 };
 
 const collectionsListMembersSchema = z.object({ id: idSchema });
-export const collectionsListMembers: ToolDefinition<
-  typeof collectionsListMembersSchema,
-  unknown
-> = {
-  name: 'collections.listMembers',
-  category: 'Collections',
-  description: 'List members of a collection.',
-  inputSchema: collectionsListMembersSchema,
-  annotations: READ,
-  execute: (input, ctx) => ctx.userDb.listMembers(input.id),
-};
+export const collectionsListMembers: ToolDefinition<typeof collectionsListMembersSchema, unknown> =
+  {
+    name: 'collections.listMembers',
+    category: 'Collections',
+    description: 'List members of a collection.',
+    inputSchema: collectionsListMembersSchema,
+    annotations: READ,
+    execute: (input, ctx) => ctx.userDb.listMembers(input.id),
+  };
 
 const collectionsListMembershipsSchema = z.object({
   entityType: collectionEntityTypeSchema,

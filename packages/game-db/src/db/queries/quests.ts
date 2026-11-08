@@ -129,10 +129,7 @@ export function listQuestParents(sql: Sqlite): string[] {
  * Quests with `required_level <= 0` or NULL are dropped; the home-page
  * histogram is about the level-gated portion of the quest log.
  */
-export function listQuestLevelBandCounts(
-  sql: Sqlite,
-  bandSize = 10,
-): LevelBandCount[] {
+export function listQuestLevelBandCounts(sql: Sqlite, bandSize = 10): LevelBandCount[] {
   const size = Math.max(1, Math.floor(bandSize));
   const rows = sql.selectObjects<{ band: number; count: number }>(
     `SELECT (required_level / ?) * ? AS band, COUNT(*) AS count
@@ -384,17 +381,7 @@ export function replaceQuestRelations(
         `INSERT OR REPLACE INTO quest_rewards
            (quest_id, kind, idx, target_id, amount, prop, job, gender, period)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          r.questId,
-          r.kind,
-          r.idx,
-          r.targetId,
-          r.amount,
-          r.prop,
-          r.job,
-          r.gender,
-          r.period,
-        ],
+        [r.questId, r.kind, r.idx, r.targetId, r.amount, r.prop, r.job, r.gender, r.period],
       );
     }
   });

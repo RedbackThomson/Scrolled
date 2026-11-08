@@ -46,7 +46,13 @@ describe.skipIf(!hasEnough)('headless build — real WZ fixtures', () => {
       label: 'test build',
       wzVersion: wzVersionFromEnv(),
       sourceKind: 'wz',
-      files: wzFiles.map((f) => ({ name: f.name, size: null, hash: null, loadStatus: null, loadError: null })),
+      files: wzFiles.map((f) => ({
+        name: f.name,
+        size: null,
+        hash: null,
+        loadStatus: null,
+        loadError: null,
+      })),
     });
     bytes = await db.exportBytes();
   }, 60_000);

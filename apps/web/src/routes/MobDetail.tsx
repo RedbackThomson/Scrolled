@@ -99,13 +99,7 @@ export default function MobDetail() {
 
   if (mobQ.isLoading) return <DetailPageLoading entity="Mob" id={id} />;
   if (mobQ.error) {
-    return (
-      <DetailPageError
-        entity="Mob"
-        error={mobQ.error}
-        onRetry={() => void mobQ.refetch()}
-      />
-    );
+    return <DetailPageError entity="Mob" error={mobQ.error} onRetry={() => void mobQ.refetch()} />;
   }
   if (!mobQ.data) return <DetailPageNotFound entity="Mob" id={id} />;
 
@@ -188,7 +182,10 @@ export default function MobDetail() {
       >
         {dropSort.sorted.map((d) =>
           d.entity === null ? (
-            <li key={d.itemId} className="flex min-h-[46px] items-center gap-3 px-3 py-[5px] text-[13.5px]">
+            <li
+              key={d.itemId}
+              className="flex min-h-[46px] items-center gap-3 px-3 py-[5px] text-[13.5px]"
+            >
               <EntityAvatar entity="item" id={d.itemId} alt={d.itemName ?? undefined} />
               <span className="text-muted-foreground min-w-0 flex-1 truncate italic">
                 {d.itemName ?? `Item #${d.itemId}`}

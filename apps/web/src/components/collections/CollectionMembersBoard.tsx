@@ -46,11 +46,7 @@ import {
   type CollectionSortDir,
   type CollectionSortKey,
 } from '@/db/user';
-import {
-  useCreateGroup,
-  useMoveMember,
-  useReorderGroups,
-} from '@/hooks/useCollections';
+import { useCreateGroup, useMoveMember, useReorderGroups } from '@/hooks/useCollections';
 import { useCollectionDisplay } from '@/stores/useCollectionDisplay';
 import { GroupSection } from './GroupSection';
 import { SortableMemberRow } from './SortableMemberRow';
@@ -361,8 +357,7 @@ function buildTree({
   const groupNameById = new Map<number, string>();
   for (const g of groups) groupNameById.set(g.id, g.name);
 
-  const sortLeaf = (list: CollectionMember[]) =>
-    applySort(list, sortKey, sortDir, summaries);
+  const sortLeaf = (list: CollectionMember[]) => applySort(list, sortKey, sortDir, summaries);
 
   const buildInner = (slice: CollectionMember[]): InnerBucket[] => {
     if (subgrouping === 'none') {
@@ -479,8 +474,7 @@ function applySort(
   summaries: Record<CollectionEntityType, Map<number, string>> | undefined,
 ): CollectionMember[] {
   const sorted = members.slice();
-  const nameOf = (m: CollectionMember) =>
-    summaries?.[m.entityType]?.get(m.entityId) ?? '';
+  const nameOf = (m: CollectionMember) => summaries?.[m.entityType]?.get(m.entityId) ?? '';
   switch (key) {
     case 'manual':
       sorted.sort((a, b) => a.position - b.position);

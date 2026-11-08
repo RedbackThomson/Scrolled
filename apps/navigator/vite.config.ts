@@ -24,9 +24,7 @@ const RESOLVED_ID = `\0${VIRTUAL_ID}`;
 function externalNavGraph(externalPath: string | undefined): Plugin {
   let abs: string | null = null;
   if (externalPath) {
-    abs = path.isAbsolute(externalPath)
-      ? externalPath
-      : path.resolve(process.cwd(), externalPath);
+    abs = path.isAbsolute(externalPath) ? externalPath : path.resolve(process.cwd(), externalPath);
     if (!existsSync(abs)) {
       throw new Error(
         `[navigator] VITE_NAV_GRAPH_PATH=${externalPath} does not exist (${abs}). ` +

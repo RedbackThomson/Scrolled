@@ -37,7 +37,9 @@ export function TopBar() {
         <IconButton icon={X} variant="float" size={44} label="Stop selecting" onClick={exit} />
         <div className="flex min-w-0 flex-col leading-tight">
           <span className="font-display text-[19px] font-semibold" aria-live="polite">
-            {allMatching ? `All ${total.toLocaleString()} selected` : `${count.toLocaleString()} selected`}
+            {allMatching
+              ? `All ${total.toLocaleString()} selected`
+              : `${count.toLocaleString()} selected`}
           </span>
           {!allMatching && count < total && (
             <button

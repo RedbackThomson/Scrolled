@@ -3,12 +3,14 @@
 ## Core Open Source Projects
 
 ### MapleLib
+
 A .NET library for parsing and modifying MapleStory `.wz` files.  
 Used by HaRepacker and widely referenced by the private server community.
 
 - https://github.com/lastbattle/MapleLib
 
 Relevant areas:
+
 - WZ parsing
 - encryption/version handling
 - image decoding
@@ -19,11 +21,13 @@ Relevant areas:
 ---
 
 ### HaRepacker / HaSuite
+
 One of the most widely used GUI editors for MapleStory WZ files.
 
 - https://github.com/lastbattle/Harepacker-resurrected
 
 Relevant areas:
+
 - real-world editing workflows
 - item/map/NPC structures
 - WZ navigation conventions
@@ -32,11 +36,13 @@ Relevant areas:
 ---
 
 ### WzComparerR2
+
 Longstanding WZ inspection and comparison tool.
 
 - https://github.com/Kagamia/WzComparerR2
 
 Relevant areas:
+
 - WZ diffing
 - client version compatibility
 - rendering/game asset interpretation
@@ -45,11 +51,13 @@ Relevant areas:
 ---
 
 ### MapleStoryUnity Awesome List
+
 Community-curated collection of MapleStory reverse-engineering tools and libraries.
 
 - https://github.com/MapleStoryUnity/awesome-maplestory
 
 Useful for discovering:
+
 - parsers
 - emulators
 - packet tooling
@@ -61,11 +69,13 @@ Useful for discovering:
 ## Community Reverse Engineering Resources
 
 ### RageZone
+
 Historically one of the largest MapleStory reverse-engineering communities.
 
 - https://forum.ragezone.com/
 
 Useful for:
+
 - undocumented WZ behaviors
 - encryption details
 - PNG/image decoding quirks
@@ -73,20 +83,24 @@ Useful for:
 - packet structures
 
 Example:
+
 - https://forum.ragezone.com/threads/new-wz-png-format-decode-code.1114978/
 
 ---
 
 ### OdinMS-era Emulator Sources
+
 Many MapleStory private server projects contain practical knowledge of data structures.
 
 Examples:
+
 - OdinMS
 - HeavenMS
 - ZZMS
 - TitanMS forks
 
 Useful for:
+
 - item metadata interpretation
 - NPC/shop relationships
 - skill formulas
@@ -117,6 +131,7 @@ These projects collectively document or imply the following WZ concepts:
 ## Output formats (what we encode, not what we parse)
 
 ### APNG (Animated PNG)
+
 Chair previews are encoded as animated PNG in pure JS
 (`packages/extractor/src/lib/apng.ts`) so extraction runs identically in the
 browser worker and the headless CLI — no Canvas, no native/WASM dependency.
@@ -132,6 +147,7 @@ browser worker and the headless CLI — no Canvas, no native/WASM dependency.
 There is no official public specification from Nexon for the WZ format.
 
 Almost all available knowledge comes from:
+
 - reverse engineering
 - source code inspection
 - experimentation

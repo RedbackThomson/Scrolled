@@ -75,8 +75,28 @@ describe('plural reads', () => {
         { questId: 1001, kind: 'mob', targetId: 100100, amount: 20 },
       ],
       rewards: [
-        { questId: 1000, kind: 'exp', idx: 0, targetId: null, amount: 100, prop: null, job: null, gender: null, period: null },
-        { questId: 1001, kind: 'item', idx: 0, targetId: 4000002, amount: 1, prop: null, job: null, gender: null, period: null },
+        {
+          questId: 1000,
+          kind: 'exp',
+          idx: 0,
+          targetId: null,
+          amount: 100,
+          prop: null,
+          job: null,
+          gender: null,
+          period: null,
+        },
+        {
+          questId: 1001,
+          kind: 'item',
+          idx: 0,
+          targetId: 4000002,
+          amount: 1,
+          prop: null,
+          job: null,
+          gender: null,
+          period: null,
+        },
       ],
     });
   });
@@ -109,9 +129,7 @@ describe('plural reads', () => {
   });
 
   it('the singular queries still return the same shape (delegation)', async () => {
-    expect(await db.getQuestRequirements(1001)).toEqual(
-      await db.getQuestRequirementsMany([1001]),
-    );
+    expect(await db.getQuestRequirements(1001)).toEqual(await db.getQuestRequirementsMany([1001]));
     expect(await db.getQuestRewards(1001)).toEqual(await db.getQuestRewardsMany([1001]));
   });
 });

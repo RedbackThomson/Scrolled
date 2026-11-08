@@ -258,9 +258,7 @@ describe('findPath — eligibility', () => {
     expect(result.fallback).toBeDefined();
     // best unfiltered: a -> c (item-restricted shortcut), c -> d (item-restricted gate)
     // — only the gate at the end is what the user can't satisfy.
-    const blockedMethods = result.fallback!.blocked.map(
-      (i) => result.fallback!.steps[i].method,
-    );
+    const blockedMethods = result.fallback!.blocked.map((i) => result.fallback!.steps[i].method);
     expect(blockedMethods).toContain('item');
   });
 
@@ -272,21 +270,11 @@ describe('findPath — eligibility', () => {
       itemsHeld: new Map([[42, 3]]),
     });
 
-    expect(
-      filter({ from: a, to: b, method: 'walk', requirements: [meso(400)] }),
-    ).toBe(true);
-    expect(
-      filter({ from: a, to: b, method: 'walk', requirements: [meso(1000)] }),
-    ).toBe(false);
-    expect(
-      filter({ from: a, to: b, method: 'walk', requirements: [level(25)] }),
-    ).toBe(false);
-    expect(
-      filter({ from: a, to: b, method: 'walk', requirements: [quest(7)] }),
-    ).toBe(true);
-    expect(
-      filter({ from: a, to: b, method: 'walk', requirements: [quest(99)] }),
-    ).toBe(false);
+    expect(filter({ from: a, to: b, method: 'walk', requirements: [meso(400)] })).toBe(true);
+    expect(filter({ from: a, to: b, method: 'walk', requirements: [meso(1000)] })).toBe(false);
+    expect(filter({ from: a, to: b, method: 'walk', requirements: [level(25)] })).toBe(false);
+    expect(filter({ from: a, to: b, method: 'walk', requirements: [quest(7)] })).toBe(true);
+    expect(filter({ from: a, to: b, method: 'walk', requirements: [quest(99)] })).toBe(false);
     expect(
       filter({
         from: a,

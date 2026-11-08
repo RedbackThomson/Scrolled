@@ -34,9 +34,9 @@ export function ExtractAllPanel() {
           <div className="text-muted-foreground flex items-center gap-2 text-sm">
             <Database className="h-4 w-4" />
             <span>
-              {EXTRACTOR_CARD_KEYS.map((k) => `${stats.counts[k]} ${EXTRACTOR_CARD_META[k].label}`).join(
-                ', ',
-              )}
+              {EXTRACTOR_CARD_KEYS.map(
+                (k) => `${stats.counts[k]} ${EXTRACTOR_CARD_META[k].label}`,
+              ).join(', ')}
               {stats.skipped > 0 ? `, ${stats.skipped} skipped` : ''} in {stats.ms} ms
             </span>
             <Link to="/items" className="text-primary text-xs hover:underline">

@@ -110,17 +110,13 @@ export function getCollection(db: Sqlite, id: number): CollectionRecord | null {
  * see the same snapshot — otherwise two concurrent pin operations could
  * end up with the same position.
  */
-export function setCollectionPinned(
-  db: Sqlite,
-  id: number,
-  pinned: boolean,
-): CollectionRecord {
+export function setCollectionPinned(db: Sqlite, id: number, pinned: boolean): CollectionRecord {
   db.transaction(() => {
     if (pinned) {
       const nextPos =
-        (db.selectValue<number>(
+        db.selectValue<number>(
           'SELECT COALESCE(MAX(pinned_position), -1) + 1 FROM collections WHERE pinned = 1',
-        ) ?? 0);
+        ) ?? 0;
       db.exec(
         `UPDATE collections
             SET pinned = 1, pinned_position = ?, updated_at = ?
@@ -250,11 +246,7 @@ export function listMembers(db: Sqlite, collectionId: number): CollectionMember[
  * each start at 0. Used by every insert path; `moveMember` re-densifies
  * positions on its own.
  */
-function nextMemberPosition(
-  db: Sqlite,
-  collectionId: number,
-  groupId: number | null,
-): number {
+function nextMemberPosition(db: Sqlite, collectionId: number, groupId: number | null): number {
   const value =
     groupId == null
       ? db.selectValue<number>(
@@ -397,10 +389,10 @@ export function updateMember(
   if (sets.length === 0) return;
   const identity = memberIdentity(collectionId, groupId, entityType, entityId);
   db.transaction(() => {
-    db.exec(
-      `UPDATE collection_members SET ${sets.join(', ')} WHERE ${identity.where}`,
-      [...params, ...identity.params],
-    );
+    db.exec(`UPDATE collection_members SET ${sets.join(', ')} WHERE ${identity.where}`, [
+      ...params,
+      ...identity.params,
+    ]);
     recordUpsert(db, 'collection_member', identity.where, identity.params);
   });
 }
@@ -716,7 +708,11 @@ function pickEnum<T extends string>(raw: unknown, allowed: readonly T[], fallbac
   return (allowed as readonly string[]).includes(s) ? (s as T) : fallback;
 }
 
-function assertEnum<T extends string>(value: unknown, allowed: readonly T[], field: string): asserts value is T {
+function assertEnum<T extends string>(
+  value: unknown,
+  allowed: readonly T[],
+  field: string,
+): asserts value is T {
   if (typeof value !== 'string' || !(allowed as readonly string[]).includes(value)) {
     throw new Error(`Invalid ${field}: ${String(value)}`);
   }
@@ -876,8 +872,7 @@ function insertBundleMembers(
   });
 
   for (const m of sortedMembers) {
-    const groupId =
-      m.groupName == null ? null : (groupIdByName.get(m.groupName) ?? null);
+    const groupId = m.groupName == null ? null : (groupIdByName.get(m.groupName) ?? null);
     const identity = memberIdentity(collectionId, groupId, m.entityType, m.entityId);
     const exists =
       db.selectValue<number>(

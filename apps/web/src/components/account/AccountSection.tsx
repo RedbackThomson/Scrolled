@@ -26,7 +26,11 @@ function AccountSectionInner() {
   const sync = appConfig.features.sync;
 
   return (
-    <SettingsSection {...sectionProps} icon={UserCircle} title={sync ? 'Account & sync' : 'Account'}>
+    <SettingsSection
+      {...sectionProps}
+      icon={UserCircle}
+      title={sync ? 'Account & sync' : 'Account'}
+    >
       <SettingsCard>
         {user.isAuthenticated ? (
           <>
@@ -44,7 +48,12 @@ function AccountSectionInner() {
                   </p>
                 )}
               </div>
-              <Button variant="secondary" size="sm" className="shrink-0" onClick={() => void logout()}>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="shrink-0"
+                onClick={() => void logout()}
+              >
                 Sign out
               </Button>
             </div>

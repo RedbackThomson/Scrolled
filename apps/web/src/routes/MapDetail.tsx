@@ -43,7 +43,11 @@ import { useDetailPalette } from '@/components/command-palette/useDetailPalette'
 import { usePageTitle } from '@/hooks/usePageTitle';
 import type { CommandItem } from '@/components/command-palette/types';
 import { getDbClient, type WorldMapForMap } from '@/db';
-import { classifyPortal, isUsefulPortal, type PortalLayer } from '@scrolled/game-db/domain/portal-types';
+import {
+  classifyPortal,
+  isUsefulPortal,
+  type PortalLayer,
+} from '@scrolled/game-db/domain/portal-types';
 import { useFeatures } from '@/hooks/useFeatures';
 import { useListSort } from '@/hooks/useListSort';
 import { useEntitySummaryNames } from '@/hooks/useEntitySummaries';
@@ -331,13 +335,7 @@ export default function MapDetail() {
 
   if (mapQ.isLoading) return <DetailPageLoading entity="Map" id={id} />;
   if (mapQ.error) {
-    return (
-      <DetailPageError
-        entity="Map"
-        error={mapQ.error}
-        onRetry={() => void mapQ.refetch()}
-      />
-    );
+    return <DetailPageError entity="Map" error={mapQ.error} onRetry={() => void mapQ.refetch()} />;
   }
   if (!mapQ.data) return <DetailPageNotFound entity="Map" id={id} />;
 

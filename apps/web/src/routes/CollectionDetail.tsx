@@ -281,8 +281,8 @@ export default function CollectionDetail() {
           {!hasMembers && (
             <Panel as="div" className="text-sm">
               <p className="text-muted-foreground">
-                No members yet. Open any item, mob, map, or quest page and click "Save" to add
-                one — or set up groups below to organize them as you go.
+                No members yet. Open any item, mob, map, or quest page and click "Save" to add one —
+                or set up groups below to organize them as you go.
               </p>
             </Panel>
           )}

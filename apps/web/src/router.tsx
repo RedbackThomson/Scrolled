@@ -23,8 +23,7 @@ export const router = createBrowserRouter(
       lazy: () => import('@/routes/AuthCallback').then((m) => ({ Component: m.default })),
     },
     {
-      lazy: () =>
-        import('@/components/layout/AppShell').then((m) => ({ Component: m.AppShell })),
+      lazy: () => import('@/components/layout/AppShell').then((m) => ({ Component: m.AppShell })),
       children: [
         {
           index: true,
@@ -88,8 +87,7 @@ export const router = createBrowserRouter(
         },
         {
           path: 'quest-chains/:id',
-          lazy: () =>
-            import('@/routes/QuestChainDetail').then((m) => ({ Component: m.default })),
+          lazy: () => import('@/routes/QuestChainDetail').then((m) => ({ Component: m.default })),
         },
         {
           path: 'skills',

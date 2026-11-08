@@ -12,7 +12,12 @@ function chunks(bytes: Uint8Array): { type: string; dataOff: number; length: num
   let off = 8; // skip signature
   while (off + 8 <= bytes.length) {
     const length = dv.getUint32(off);
-    const type = String.fromCharCode(bytes[off + 4]!, bytes[off + 5]!, bytes[off + 6]!, bytes[off + 7]!);
+    const type = String.fromCharCode(
+      bytes[off + 4]!,
+      bytes[off + 5]!,
+      bytes[off + 6]!,
+      bytes[off + 7]!,
+    );
     out.push({ type, dataOff: off + 8, length });
     off += 12 + length; // length + type + data + crc
   }

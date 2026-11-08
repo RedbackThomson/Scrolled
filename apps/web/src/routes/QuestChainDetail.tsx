@@ -141,9 +141,7 @@ export default function QuestChainDetail() {
   // critical-only on, drop any whose internal endpoint is being hidden so
   // the ghost nodes don't dangle.
   const visibleExternalEdges = criticalOnly
-    ? externalEdges.filter(
-        (e) => members.find((m) => m.questId === e.internalQuestId)?.isCritical,
-      )
+    ? externalEdges.filter((e) => members.find((m) => m.questId === e.internalQuestId)?.isCritical)
     : externalEdges;
 
   // Group visible members by depth. Within a depth, critical first, then
@@ -193,7 +191,12 @@ export default function QuestChainDetail() {
                   {criticalOnly ? 'Show all' : 'Critical path'}
                 </Button>
               )}
-              <Button variant="secondary" size="sm" icon={Network} onClick={() => setGraphOpen(true)}>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={Network}
+                onClick={() => setGraphOpen(true)}
+              >
                 View graph
               </Button>
             </>
@@ -291,11 +294,7 @@ export default function QuestChainDetail() {
       })}
 
       {outgoingExternal.length > 0 && (
-        <DetailListSection
-          icon={ArrowRightToLine}
-          title="Unlocks"
-          count={outgoingExternal.length}
-        >
+        <DetailListSection icon={ArrowRightToLine} title="Unlocks" count={outgoingExternal.length}>
           {outgoingExternal.map((e) => (
             <ExternalEdgeRow
               key={`out-${e.internalQuestId}-${e.externalQuestId}`}
@@ -428,10 +427,7 @@ function ExternalEdgeRow({
       </div>
       <p className="text-muted-foreground ml-7 text-xs">
         {verb}{' '}
-        <QuestLink
-          id={edge.internalQuestId}
-          className="text-foreground italic hover:underline"
-        >
+        <QuestLink id={edge.internalQuestId} className="text-foreground italic hover:underline">
           {localQuestName}
         </QuestLink>{' '}
         in this chain

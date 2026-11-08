@@ -10,7 +10,12 @@ import {
   Users,
 } from 'lucide-react';
 import { cn } from '@scrolled/design';
-import { edgeSeconds, type NavGraph, type TravelEdge, type TravelMethod } from '@scrolled/nav-graph';
+import {
+  edgeSeconds,
+  type NavGraph,
+  type TravelEdge,
+  type TravelMethod,
+} from '@scrolled/nav-graph';
 
 import { formatDuration } from '@/lib/formatDuration';
 import { npcUrl } from '@/lib/scrolledLinks';

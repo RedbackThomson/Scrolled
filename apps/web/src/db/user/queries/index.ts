@@ -118,10 +118,7 @@ export class UserDbApi implements UserDatabase {
     return collectionGroups.createGroup(this.db, collectionId, name, description);
   }
 
-  async createGroups(
-    collectionId: number,
-    names: readonly string[],
-  ): Promise<CollectionGroup[]> {
+  async createGroups(collectionId: number, names: readonly string[]): Promise<CollectionGroup[]> {
     return collectionGroups.createGroups(this.db, collectionId, names);
   }
 
@@ -141,10 +138,7 @@ export class UserDbApi implements UserDatabase {
     collectionGroups.deleteGroup(this.db, groupId);
   }
 
-  async reorderGroups(
-    collectionId: number,
-    orderedGroupIds: readonly number[],
-  ): Promise<void> {
+  async reorderGroups(collectionId: number, orderedGroupIds: readonly number[]): Promise<void> {
     collectionGroups.reorderGroups(this.db, collectionId, orderedGroupIds);
   }
 

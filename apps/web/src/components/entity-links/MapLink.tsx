@@ -20,7 +20,11 @@ export function MapLink({ id, children, className, noPreview, triggerClassName }
   );
   if (noPreview) return link;
   return (
-    <HoverPopover bare content={<GenericHoverCard entity="map" id={id} />} triggerClassName={triggerClassName}>
+    <HoverPopover
+      bare
+      content={<GenericHoverCard entity="map" id={id} />}
+      triggerClassName={triggerClassName}
+    >
       {link}
     </HoverPopover>
   );

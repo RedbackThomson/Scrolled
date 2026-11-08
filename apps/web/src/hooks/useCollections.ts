@@ -223,7 +223,12 @@ export function useUpdateMember(): UseMutationResult<
 export function useRemoveMember(): UseMutationResult<
   void,
   Error,
-  { collectionId: number; entityType: CollectionEntityType; entityId: number; groupId: number | null }
+  {
+    collectionId: number;
+    entityType: CollectionEntityType;
+    entityId: number;
+    groupId: number | null;
+  }
 > {
   const db = useUserDb();
   const invalidate = useInvalidateAll();
@@ -391,7 +396,14 @@ export function useMoveMember(): UseMutationResult<void, Error, MoveMemberArgs> 
   const db = useUserDb();
   const invalidate = useInvalidateAll();
   return useMutation({
-    mutationFn: ({ collectionId, entityType, entityId, sourceGroupId, targetGroupId, targetIndex }) =>
+    mutationFn: ({
+      collectionId,
+      entityType,
+      entityId,
+      sourceGroupId,
+      targetGroupId,
+      targetIndex,
+    }) =>
       db.moveMember(collectionId, entityType, entityId, sourceGroupId, targetGroupId, targetIndex),
     onSuccess: () => invalidate(),
   });

@@ -36,7 +36,10 @@ export function SidebarSyncStatus({ collapsed }: { collapsed: boolean }) {
     <div className="flex items-center gap-2">
       {spin ? (
         <span className="inline-flex items-center gap-2 text-[12.5px] font-semibold">
-          <Loader2 className="text-muted-foreground h-3.5 w-3.5 shrink-0 animate-spin" aria-hidden />
+          <Loader2
+            className="text-muted-foreground h-3.5 w-3.5 shrink-0 animate-spin"
+            aria-hidden
+          />
           {shown}
         </span>
       ) : (

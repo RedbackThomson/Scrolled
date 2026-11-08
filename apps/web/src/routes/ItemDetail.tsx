@@ -106,11 +106,7 @@ export default function ItemDetail() {
   if (itemQ.isLoading) return <DetailPageLoading entity="Item" id={id} />;
   if (itemQ.error) {
     return (
-      <DetailPageError
-        entity="Item"
-        error={itemQ.error}
-        onRetry={() => void itemQ.refetch()}
-      />
+      <DetailPageError entity="Item" error={itemQ.error} onRetry={() => void itemQ.refetch()} />
     );
   }
   if (!itemQ.data) return <DetailPageNotFound entity="Item" id={id} />;
@@ -153,12 +149,8 @@ export default function ItemDetail() {
           )}
           {chair && (chair.recoveryHp !== null || chair.recoveryMp !== null) && (
             <InfoSection title="Recovery">
-              {chair.recoveryHp !== null && (
-                <InfoRow label="HP" value={String(chair.recoveryHp)} />
-              )}
-              {chair.recoveryMp !== null && (
-                <InfoRow label="MP" value={String(chair.recoveryMp)} />
-              )}
+              {chair.recoveryHp !== null && <InfoRow label="HP" value={String(chair.recoveryHp)} />}
+              {chair.recoveryMp !== null && <InfoRow label="MP" value={String(chair.recoveryMp)} />}
             </InfoSection>
           )}
           {spec && hasEffects && <ConsumableEffects spec={spec} />}

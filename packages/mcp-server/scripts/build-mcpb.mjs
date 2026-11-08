@@ -52,10 +52,7 @@ async function copyManifest() {
   // Keep the manifest version in sync with the package version.
   const pkg = JSON.parse(await readFile(path.join(pkgRoot, 'package.json'), 'utf8'));
   if (pkg.version && pkg.version !== '0.0.0') manifest.version = pkg.version;
-  await writeFile(
-    path.join(stageRoot, 'manifest.json'),
-    JSON.stringify(manifest, null, 2) + '\n',
-  );
+  await writeFile(path.join(stageRoot, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
   // Carry forward optional icon if it exists.
   const iconSrc = path.join(pkgRoot, 'mcpb', 'icon.png');
   if (existsSync(iconSrc)) await cp(iconSrc, path.join(stageRoot, 'icon.png'));

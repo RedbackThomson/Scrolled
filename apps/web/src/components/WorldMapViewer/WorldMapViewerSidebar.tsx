@@ -45,7 +45,8 @@ export function WorldMapViewerSidebar({
   const isRegion = (m: WorldMapMarkerWithMaps) => m.mapIds.length > 1;
   const labelFor = (m: WorldMapMarkerWithMaps) =>
     m.title ?? (isRegion(m) ? `Region (${m.mapIds.length})` : nameFor(m.mapIds[0]!));
-  const matchesMap = (id: number) => nameFor(id).toLowerCase().includes(q) || String(id).includes(q);
+  const matchesMap = (id: number) =>
+    nameFor(id).toLowerCase().includes(q) || String(id).includes(q);
 
   const selected = useMemo(
     () => markers.find((m) => m.id === selectedMarkerId) ?? null,
@@ -75,7 +76,8 @@ export function WorldMapViewerSidebar({
     for (const m of markers) {
       if (!isRegion(m)) continue; // single maps are already shown in `places`
       for (const id of m.mapIds) {
-        if (matchesMap(id)) out.push({ id, name: nameFor(id), region: labelFor(m), markerId: m.id });
+        if (matchesMap(id))
+          out.push({ id, name: nameFor(id), region: labelFor(m), markerId: m.id });
         if (out.length >= MAP_ROW_CAP) return out;
       }
     }
@@ -223,7 +225,9 @@ function Row({
         onBlur={onHoverLeave}
         className={cn(
           'ease-spring focus-visible:ring-primary/30 flex min-h-[46px] w-full items-center gap-2.5 rounded-xl px-3 text-left text-[13px] font-semibold transition-[padding,background-color] duration-300 focus-visible:outline-none focus-visible:ring-4',
-          selected ? 'bg-muted text-foreground ring-primary/40 ring-2 ring-inset' : 'hover:bg-muted hover:pl-4',
+          selected
+            ? 'bg-muted text-foreground ring-primary/40 ring-2 ring-inset'
+            : 'hover:bg-muted hover:pl-4',
         )}
         aria-pressed={selected}
       >

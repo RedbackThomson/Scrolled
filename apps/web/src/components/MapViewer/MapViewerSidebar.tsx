@@ -251,9 +251,7 @@ export function MapViewerSidebar({
                 onClick={() => handleSelectMob(r.id)}
                 onHoverEnter={() => onHover({ kind: 'mob', key: String(r.id) })}
                 onHoverLeave={() => onHover(null)}
-                meta={
-                  r.level !== null ? `Lvl ${r.level}` : showIds ? `#${r.id}` : undefined
-                }
+                meta={r.level !== null ? `Lvl ${r.level}` : showIds ? `#${r.id}` : undefined}
                 hoverCard={<MobHoverCard id={r.id} />}
               />
             ))

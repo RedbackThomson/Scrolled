@@ -7,10 +7,7 @@
 // reorder always re-densifies the bucket(s) it touches.
 
 import type { Sqlite, Row } from '@scrolled/game-db/db/sqlite';
-import type {
-  CollectionEntityType,
-  CollectionGroup,
-} from '../types';
+import type { CollectionEntityType, CollectionGroup } from '../types';
 import { rowToGroup } from './rowMappers';
 import { memberIdentity } from './memberKey';
 import { recordDelete, recordUpsert } from './sync';
@@ -68,11 +65,7 @@ export function createGroup(
 /** Get the group named `rawName` in a collection, creating it if absent.
  *  Names are unique per collection, so this is the safe "resolve a name to an
  *  id" primitive callers reach for before a bulk add. */
-export function ensureGroup(
-  db: Sqlite,
-  collectionId: number,
-  rawName: string,
-): CollectionGroup {
+export function ensureGroup(db: Sqlite, collectionId: number, rawName: string): CollectionGroup {
   const name = rawName.trim();
   if (!name) throw new Error('Group name is required');
   const existing = db.selectObject<Row>(
@@ -96,11 +89,7 @@ export function createGroups(
   return names.map((name) => ensureGroup(db, collectionId, name));
 }
 
-export function renameGroup(
-  db: Sqlite,
-  groupId: number,
-  rawName: string,
-): CollectionGroup {
+export function renameGroup(db: Sqlite, groupId: number, rawName: string): CollectionGroup {
   const name = rawName.trim();
   if (!name) throw new Error('Group name is required');
   const now = Date.now();
@@ -320,15 +309,16 @@ export function moveMember(
     // Move the parked row into the target bucket at the requested index. The
     // WHERE still filters on the source group, which the row carries until now.
     if (targetGroupId == null) {
-      db.exec(
-        `UPDATE collection_members SET group_id = NULL, position = ? WHERE ${source.where}`,
-        [targetIndex, ...source.params],
-      );
+      db.exec(`UPDATE collection_members SET group_id = NULL, position = ? WHERE ${source.where}`, [
+        targetIndex,
+        ...source.params,
+      ]);
     } else {
-      db.exec(
-        `UPDATE collection_members SET group_id = ?, position = ? WHERE ${source.where}`,
-        [targetGroupId, targetIndex, ...source.params],
-      );
+      db.exec(`UPDATE collection_members SET group_id = ?, position = ? WHERE ${source.where}`, [
+        targetGroupId,
+        targetIndex,
+        ...source.params,
+      ]);
     }
 
     // Re-densify shifted sibling positions in both buckets, so every member
@@ -357,7 +347,12 @@ function recordBucketMembers(db: Sqlite, collectionId: number, groupId: number |
           [collectionId, groupId],
         );
   for (const r of rows) {
-    const identity = memberIdentity(collectionId, groupId, String(r.entity_type), Number(r.entity_id));
+    const identity = memberIdentity(
+      collectionId,
+      groupId,
+      String(r.entity_type),
+      Number(r.entity_id),
+    );
     recordUpsert(db, 'collection_member', identity.where, identity.params);
   }
 }
@@ -371,11 +366,7 @@ function sameGroup(a: number | null, b: number | null): boolean {
  * Excludes any row currently parked at -1 (the moving row in
  * `moveMember`).
  */
-function redensify(
-  db: Sqlite,
-  collectionId: number,
-  groupId: number | null,
-): void {
+function redensify(db: Sqlite, collectionId: number, groupId: number | null): void {
   const rows =
     groupId == null
       ? db.selectObjects<Row>(

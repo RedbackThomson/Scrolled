@@ -9,11 +9,7 @@ import { buildToolContext } from '../context';
 import { getToolRegistry, type ToolRegistry } from '../registry';
 import type { ToolContext } from '../types';
 import { BridgeDispatcher } from './dispatcher';
-import {
-  DEFAULT_BRIDGE_SETTINGS,
-  type BridgeSettings,
-  readBridgeSettings,
-} from './settings';
+import { DEFAULT_BRIDGE_SETTINGS, type BridgeSettings, readBridgeSettings } from './settings';
 import { setBridgeStatus } from './status';
 import type { BridgeTransport } from './transport';
 import { WebSocketTransport } from './webSocketTransport';
@@ -38,8 +34,7 @@ export interface StartOptions {
 
 export async function startMcpBridge(opts: StartOptions): Promise<void> {
   if (active) await stopMcpBridge();
-  const transport =
-    opts.transport ?? new WebSocketTransport({ url: opts.settings.url });
+  const transport = opts.transport ?? new WebSocketTransport({ url: opts.settings.url });
   transport.onStatusChange((status, reason) => setBridgeStatus(status, reason));
   const dispatcher = new BridgeDispatcher({
     registry: opts.registry,

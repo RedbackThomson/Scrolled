@@ -173,11 +173,7 @@ function dijkstra(
   return null;
 }
 
-function reconstruct(
-  cameFrom: Map<NodeId, TravelEdge>,
-  from: NodeId,
-  to: NodeId,
-): TravelEdge[] {
+function reconstruct(cameFrom: Map<NodeId, TravelEdge>, from: NodeId, to: NodeId): TravelEdge[] {
   const steps: TravelEdge[] = [];
   let cursor: NodeId = to;
   while (cursor !== from) {

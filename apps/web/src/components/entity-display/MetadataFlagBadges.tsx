@@ -1,8 +1,5 @@
 import { Chip } from '@scrolled/design';
-import {
-  METADATA_FLAGS,
-  type MetadataFlagKey,
-} from '@/components/entity-display/metadataFlags';
+import { METADATA_FLAGS, type MetadataFlagKey } from '@/components/entity-display/metadataFlags';
 
 /**
  * Renders the chips for whichever flags in `order` are true on `flags`.

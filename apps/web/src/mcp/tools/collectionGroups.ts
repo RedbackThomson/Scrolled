@@ -95,7 +95,7 @@ const groupsReorderSchema = z.object({
 export const groupsReorder: ToolDefinition<typeof groupsReorderSchema, unknown> = {
   name: 'collectionGroups.reorder',
   category: 'Groups',
-  description: 'Persist a new top-to-bottom ordering of a collection\'s groups.',
+  description: "Persist a new top-to-bottom ordering of a collection's groups.",
   inputSchema: groupsReorderSchema,
   annotations: WRITE_IDEMPOTENT,
   execute: async (input, ctx) => {

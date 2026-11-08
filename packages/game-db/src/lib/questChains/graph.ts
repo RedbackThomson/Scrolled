@@ -381,8 +381,7 @@ export function computeQuestChains(input: QuestChainGraphInput): ComputedQuestCh
     for (const e of dedupedEdges) {
       if (!memberSet.has(e.from) || !memberSet.has(e.to)) continue;
       const a = sccIndexOf.get(e.from)!;
-      const inCycle =
-        a === sccIndexOf.get(e.to) && (sccs[a].length > 1 || e.from === e.to);
+      const inCycle = a === sccIndexOf.get(e.to) && (sccs[a].length > 1 || e.from === e.to);
       chainEdges.push({ fromQuestId: e.from, toQuestId: e.to, inCycle });
     }
 

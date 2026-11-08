@@ -74,9 +74,9 @@ describe('useIsMobile', () => {
     delete mql.removeEventListener;
     window.matchMedia = vi.fn().mockReturnValue(mql);
     const { unmount } = renderHook(() => useIsMobile());
-    expect((mql.addListener as ReturnType<typeof vi.fn>)).toHaveBeenCalledTimes(1);
+    expect(mql.addListener as ReturnType<typeof vi.fn>).toHaveBeenCalledTimes(1);
     unmount();
-    expect((mql.removeListener as ReturnType<typeof vi.fn>)).toHaveBeenCalledTimes(1);
+    expect(mql.removeListener as ReturnType<typeof vi.fn>).toHaveBeenCalledTimes(1);
   });
 
   it('returns false when matchMedia is not available', () => {

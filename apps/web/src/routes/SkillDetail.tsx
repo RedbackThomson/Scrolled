@@ -48,8 +48,16 @@ const LEVEL_COLUMNS: readonly {
   { key: 'damagePercent', label: 'Damage %', format: (n) => `${n}%` },
   { key: 'hits', label: 'Hits' },
   { key: 'targets', label: 'Targets' },
-  { key: 'durationSeconds', label: 'Duration', format: (n) => formatDurationSeconds(n, { short: true }) },
-  { key: 'cooldownSeconds', label: 'Cooldown', format: (n) => formatDurationSeconds(n, { short: true }) },
+  {
+    key: 'durationSeconds',
+    label: 'Duration',
+    format: (n) => formatDurationSeconds(n, { short: true }),
+  },
+  {
+    key: 'cooldownSeconds',
+    label: 'Cooldown',
+    format: (n) => formatDurationSeconds(n, { short: true }),
+  },
   { key: 'chancePercent', label: 'Chance', format: (n) => `${n}%` },
   { key: 'pad', label: 'W. Att' },
   { key: 'mad', label: 'M. Att' },
@@ -123,11 +131,7 @@ export default function SkillDetail() {
   if (skillQ.isLoading) return <DetailPageLoading entity="Skill" id={id} />;
   if (skillQ.error) {
     return (
-      <DetailPageError
-        entity="Skill"
-        error={skillQ.error}
-        onRetry={() => void skillQ.refetch()}
-      />
+      <DetailPageError entity="Skill" error={skillQ.error} onRetry={() => void skillQ.refetch()} />
     );
   }
   if (!skillQ.data) return <DetailPageNotFound entity="Skill" id={id} />;
@@ -168,13 +172,8 @@ export default function SkillDetail() {
               }
               mono={!jobsMap.get(s.jobId)}
             />
-            <InfoRow
-              label="Max level"
-              value={s.maxLevel !== null ? String(s.maxLevel) : '—'}
-            />
-            {s.masterLevel !== null && (
-              <InfoRow label="Master" value={String(s.masterLevel)} />
-            )}
+            <InfoRow label="Max level" value={s.maxLevel !== null ? String(s.maxLevel) : '—'} />
+            {s.masterLevel !== null && <InfoRow label="Master" value={String(s.masterLevel)} />}
             {(elementLabel ?? s.element) && (
               <InfoRow label="Element" value={elementLabel ?? s.element ?? ''} />
             )}
@@ -320,7 +319,7 @@ function LevelsTable({
         <table className="w-full min-w-max text-sm">
           <thead className="bg-muted/50">
             <tr>
-              <th className="text-muted-foreground sticky left-0 z-10 bg-muted/50 px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
+              <th className="text-muted-foreground bg-muted/50 sticky left-0 z-10 px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
                 Lvl
               </th>
               {visibleColumns.map((col) => (
@@ -341,7 +340,7 @@ function LevelsTable({
           <tbody>
             {levels.map((row) => (
               <tr key={row.level} className="border-border border-t">
-                <td className="text-foreground sticky left-0 z-10 bg-background px-3 py-1.5 font-mono">
+                <td className="text-foreground bg-background sticky left-0 z-10 px-3 py-1.5 font-mono">
                   {row.level}
                 </td>
                 {visibleColumns.map((col) => {

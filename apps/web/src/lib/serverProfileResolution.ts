@@ -62,10 +62,7 @@ export async function resolveActiveServerProfile(
  * Persist the generic-mode profile selection. A no-op in fixed mode, where the
  * dataset's inline profile is authoritative and the setting is ignored.
  */
-export async function setActiveServerProfileId(
-  user: UserSettingWriter,
-  id: string,
-): Promise<void> {
+export async function setActiveServerProfileId(user: UserSettingWriter, id: string): Promise<void> {
   if (appConfig.deploymentProfile === 'fixed-hosted-dataset') return;
   await user.setUserSetting(ACTIVE_PROFILE_KEY, JSON.stringify(id));
 }

@@ -74,8 +74,7 @@ function GraphCanvasInner({ graph }: GraphCanvasProps) {
   }, [graph, result]);
 
   const view = useMemo(
-    () =>
-      collapseView({ graph, manualExpanded, pathNodeIds: pathNodes, pathEdgeKeys: pathEdges }),
+    () => collapseView({ graph, manualExpanded, pathNodeIds: pathNodes, pathEdgeKeys: pathEdges }),
     [graph, manualExpanded, pathNodes, pathEdges],
   );
 

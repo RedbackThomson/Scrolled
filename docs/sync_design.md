@@ -17,14 +17,14 @@ database (`/user.sqlite3`) participates.
 
 ### What syncs
 
-| Data | Table |
-| --- | --- |
-| Collections | `collections` |
-| Collection members (notes, qty, done, position) | `collection_members` |
-| Collection groups | `collection_groups` |
-| Pinned searches | `pinned_searches` |
-| Home layout, accent colour, theme override, active server profile | `user_settings` |
-| Recents (entities + queries) | `recents` (capped, coalesced) |
+| Data                                                              | Table                         |
+| ----------------------------------------------------------------- | ----------------------------- |
+| Collections                                                       | `collections`                 |
+| Collection members (notes, qty, done, position)                   | `collection_members`          |
+| Collection groups                                                 | `collection_groups`           |
+| Pinned searches                                                   | `pinned_searches`             |
+| Home layout, accent colour, theme override, active server profile | `user_settings`               |
+| Recents (entities + queries)                                      | `recents` (capped, coalesced) |
 
 The active server profile syncs in generic mode only (§5.3).
 
@@ -39,8 +39,8 @@ The active server profile syncs in generic mode only (§5.3).
   no column in the backend.
 - **Caches, derived indexes, transient UI state.**
 
-The litmus test: *sync anything the user would be annoyed to reconfigure on
-another device; keep device-local anything driven by the physical device.*
+The litmus test: _sync anything the user would be annoyed to reconfigure on
+another device; keep device-local anything driven by the physical device._
 
 ---
 
@@ -134,14 +134,14 @@ This is the central decision, and everything else follows from it.
 
 A record's identity is the same set of columns locally and remotely:
 
-| Entity | Key |
-| --- | --- |
-| `collection` | `key` (client-minted) |
-| `collection_group` | `key` (client-minted) |
+| Entity              | Key                                                   |
+| ------------------- | ----------------------------------------------------- |
+| `collection`        | `key` (client-minted)                                 |
+| `collection_group`  | `key` (client-minted)                                 |
 | `collection_member` | `(collection_key, group_key, entity_type, entity_id)` |
-| `pinned_search` | `key` (client-minted) |
-| `user_setting` | `key` (the setting's own name) |
-| `recent` | `(kind, ref)` |
+| `pinned_search`     | `key` (client-minted)                                 |
+| `user_setting`      | `key` (the setting's own name)                        |
+| `recent`            | `(kind, ref)`                                         |
 
 `ENTITY_KEY_COLUMNS` in `sync-core` is the single definition; the outbox
 coalescer, the apply path, and the upsert conflict target all derive from it.
@@ -237,9 +237,9 @@ never blocked.
 
 ```ts
 interface SyncProvider {
-  upsert(entity, rows): Promise<UpsertResult>;      // conflict target = key columns
+  upsert(entity, rows): Promise<UpsertResult>; // conflict target = key columns
   fetchSince(cursor): Promise<FetchPage>;
-  fetchAll(): Promise<TaggedRow[]>;                 // snapshot reconcile
+  fetchAll(): Promise<TaggedRow[]>; // snapshot reconcile
   findByUnique(entity, where): Promise<RemoteRow | null>;
   gcTombstones(before): Promise<void>;
   subscribe(onPoke): Unsubscribe;
@@ -304,14 +304,14 @@ Six per-account tables mirroring the local schema, in
 constraints and the client's constraints are the same set, applying a pulled row
 can never violate a local constraint.
 
-| Table | Primary key | Unique | Foreign key |
-| --- | --- | --- | --- |
-| `sync_collections` | `(account_id, key)` | `(account_id, name)` where live | — |
-| `sync_collection_groups` | `(account_id, key)` | `(account_id, collection_key, name)` where live | → collections |
-| `sync_collection_members` | `(account_id, collection_key, group_key, entity_type, entity_id)` | — | → collections |
-| `sync_pinned_searches` | `(account_id, key)` | `(account_id, name)` where live | — |
-| `sync_user_settings` | `(account_id, key)` | — | — |
-| `sync_recents` | `(account_id, kind, ref)` | — | — |
+| Table                     | Primary key                                                       | Unique                                          | Foreign key   |
+| ------------------------- | ----------------------------------------------------------------- | ----------------------------------------------- | ------------- |
+| `sync_collections`        | `(account_id, key)`                                               | `(account_id, name)` where live                 | —             |
+| `sync_collection_groups`  | `(account_id, key)`                                               | `(account_id, collection_key, name)` where live | → collections |
+| `sync_collection_members` | `(account_id, collection_key, group_key, entity_type, entity_id)` | —                                               | → collections |
+| `sync_pinned_searches`    | `(account_id, key)`                                               | `(account_id, name)` where live                 | —             |
+| `sync_user_settings`      | `(account_id, key)`                                               | —                                               | —             |
+| `sync_recents`            | `(account_id, kind, ref)`                                         | —                                               | —             |
 
 The unique name indexes are partial on `deleted_at is null`, so a tombstone never
 reserves a name. `group_key` on members deliberately has no foreign key: deleting
@@ -365,12 +365,12 @@ channel name authorizes nothing.
 
 Extends the `data_boundaries.md` ownership table:
 
-| Concern | Owner | May import |
-| --- | --- | --- |
-| sync protocol, engine, merge resolver, status hooks | `sync-core` | (leaf) |
-| concrete Supabase sync transport | `sync-supabase` | sync-core, supabase-js |
-| **choosing the sync provider** | `apps/web` (`sync/` only) | sync-core, sync-supabase (dynamic) |
-| local sync metadata (outbox, cursor) | `apps/web/db/user` | game-db/db (sqlite only) |
+| Concern                                             | Owner                     | May import                         |
+| --------------------------------------------------- | ------------------------- | ---------------------------------- |
+| sync protocol, engine, merge resolver, status hooks | `sync-core`               | (leaf)                             |
+| concrete Supabase sync transport                    | `sync-supabase`           | sync-core, supabase-js             |
+| **choosing the sync provider**                      | `apps/web` (`sync/` only) | sync-core, sync-supabase (dynamic) |
+| local sync metadata (outbox, cursor)                | `apps/web/db/user`        | game-db/db (sqlite only)           |
 
 Lint enforces that display dirs (`components/` except `wizard/`, `routes/`,
 `lib/`, `search/`) and `sync-core` cannot import `@scrolled/sync-supabase` or

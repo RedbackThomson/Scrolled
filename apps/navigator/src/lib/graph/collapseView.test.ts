@@ -145,8 +145,7 @@ describe('collapseView', () => {
     });
 
     const minorEdge = view.edges.find(
-      (e) =>
-        (e.source === 'a1' && e.target === 'hub') || (e.source === 'hub' && e.target === 'a1'),
+      (e) => (e.source === 'a1' && e.target === 'hub') || (e.source === 'hub' && e.target === 'a1'),
     );
     expect(minorEdge).toBeDefined();
     expect(minorEdge?.minor).toBe(true);

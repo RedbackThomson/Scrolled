@@ -70,10 +70,7 @@ export function GraphicViewerCanvas({
 
   // Crisp pixel-art upscale cap. PanZoomCanvas defaults to 1 (no upscale),
   // which is wrong for tiny minimap PNGs.
-  const maxBaseScale = useMemo(
-    () => (imgSize ? pickScale(imgSize.w, imgSize.h) : 1),
-    [imgSize],
-  );
+  const maxBaseScale = useMemo(() => (imgSize ? pickScale(imgSize.w, imgSize.h) : 1), [imgSize]);
 
   return (
     <PanZoomCanvas

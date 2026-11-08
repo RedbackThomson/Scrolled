@@ -168,10 +168,7 @@ export function TogglesProvider() {
             setOpen(false);
           }}
         >
-          <span
-            className="h-4 w-4 shrink-0 rounded-full"
-            style={{ backgroundColor: a.swatch }}
-          />
+          <span className="h-4 w-4 shrink-0 rounded-full" style={{ backgroundColor: a.swatch }} />
           <span className="min-w-0 flex-1 truncate">Accent: {a.label}</span>
           {currentAccent === a.name && (
             <span className="text-muted-foreground shrink-0 text-xs">Active</span>

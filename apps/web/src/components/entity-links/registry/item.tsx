@@ -99,6 +99,9 @@ export const itemConfig: TooltipEntityConfig<ItemRecord> = {
   renderIcon: (record, id) => <ItemIcon entity="item" id={id} size={64} alt={record.name} />,
   nameOf: (record) => record.name,
   renderName: (record) => <div className="truncate">{record.name}</div>,
-  getSampleId: () => getDbClient().listItems({ limit: 1 }).then((r) => r.rows[0]?.id ?? null),
+  getSampleId: () =>
+    getDbClient()
+      .listItems({ limit: 1 })
+      .then((r) => r.rows[0]?.id ?? null),
   fields,
 };

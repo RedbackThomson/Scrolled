@@ -39,7 +39,10 @@ class FakeBackend implements SyncBackend {
     return this.outbox.slice(0, limit).map((c) => ({ ...c, row: { ...c.row } }));
   }
 
-  async markOutboxSynced(seqs: number[], _applied: { key: string; seq: number }[]): Promise<number> {
+  async markOutboxSynced(
+    seqs: number[],
+    _applied: { key: string; seq: number }[],
+  ): Promise<number> {
     const done = new Set(seqs);
     const before = this.outbox.length;
     this.outbox = this.outbox.filter((c) => !done.has(c.seq));

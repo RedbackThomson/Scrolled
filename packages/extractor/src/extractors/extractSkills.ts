@@ -2,11 +2,7 @@ import type { GameDataSource } from '../parser';
 import { pathToNumber, scalarToNumber, scalarToString } from './wzCoerce';
 import { unescapeWzString } from './wzText';
 import { buildSkillStringIndex } from './stringIndex';
-import type {
-  SkillLevelRecord,
-  SkillPrerequisiteRecord,
-  SkillRecord,
-} from '@scrolled/game-db/db';
+import type { SkillLevelRecord, SkillPrerequisiteRecord, SkillRecord } from '@scrolled/game-db/db';
 import { createLogger } from '@scrolled/game-db/lib/logger';
 import type { ProgressFn } from '@scrolled/game-db/lib/progress';
 import { pickSprite } from './sprites';
@@ -161,9 +157,7 @@ export async function extractSkills(
     let requiredWeapon: string | null = null;
     if (weaponNode?.scalar !== undefined && weaponNode?.scalar !== null) {
       requiredWeapon =
-        typeof weaponNode.scalar === 'number'
-          ? String(weaponNode.scalar)
-          : weaponNode.scalar;
+        typeof weaponNode.scalar === 'number' ? String(weaponNode.scalar) : weaponNode.scalar;
     }
 
     // Prerequisites: each child of `req` is a sibling skill id (the child
@@ -197,8 +191,7 @@ export async function extractSkills(
           // Preserve unknown keys verbatim; the UI ignores them until we
           // promote them to columns, but a future build can read them
           // from `raw_json` without re-extraction.
-          unknown[f.name] =
-            f.scalar === undefined ? null : f.scalar;
+          unknown[f.name] = f.scalar === undefined ? null : f.scalar;
         }
       }
       const rawJson = Object.keys(unknown).length > 0 ? JSON.stringify(unknown) : null;

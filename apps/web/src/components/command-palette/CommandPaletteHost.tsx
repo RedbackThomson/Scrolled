@@ -21,8 +21,7 @@ export function CommandPaletteHost() {
 
   useEffect(() => {
     const idle = globalThis.requestIdleCallback?.(() => setArmed(true), { timeout: 5_000 });
-    const timeout =
-      idle == null ? globalThis.setTimeout(() => setArmed(true), 5_000) : undefined;
+    const timeout = idle == null ? globalThis.setTimeout(() => setArmed(true), 5_000) : undefined;
     return () => {
       if (idle != null) globalThis.cancelIdleCallback?.(idle);
       if (timeout != null) globalThis.clearTimeout(timeout);

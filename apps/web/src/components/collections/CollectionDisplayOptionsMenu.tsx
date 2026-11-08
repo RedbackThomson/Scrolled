@@ -91,7 +91,7 @@ export function CollectionDisplayOptionsMenu({ collection }: CollectionDisplayOp
         type="button"
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          'border-border bg-card ease-spring relative inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border-2 max-md:h-11 max-md:w-11 shadow-[var(--shadow-btn-secondary)] transition-transform duration-300 hover:-translate-y-0.5',
+          'border-border bg-card ease-spring relative inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border-2 shadow-[var(--shadow-btn-secondary)] transition-transform duration-300 hover:-translate-y-0.5 max-md:h-11 max-md:w-11',
           hasOverride && 'border-primary/50',
           open && 'border-primary ring-primary/30 ring-4',
         )}
@@ -162,10 +162,7 @@ export function CollectionDisplayOptionsMenu({ collection }: CollectionDisplayOp
                   </option>
                 ))}
               </select>
-              <DirectionToggle
-                dir={display.sortDir}
-                onChange={(d) => setLocal({ sortDir: d })}
-              />
+              <DirectionToggle dir={display.sortDir} onChange={(d) => setLocal({ sortDir: d })} />
             </div>
           </Row>
 

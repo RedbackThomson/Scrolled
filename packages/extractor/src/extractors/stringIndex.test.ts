@@ -105,9 +105,9 @@ describe('buildEquipStringIndex', () => {
   it('warns about an empty index when String.wz/Eqp.img is missing', async () => {
     const index = await buildEquipStringIndex(makeSource({}));
     expect(index.size).toBe(0);
-    expect(getLogEntries().some((e) => e.level === 'warn' && /Eqp\.img not found/.test(e.msg))).toBe(
-      true,
-    );
+    expect(
+      getLogEntries().some((e) => e.level === 'warn' && /Eqp\.img not found/.test(e.msg)),
+    ).toBe(true);
   });
 });
 
@@ -166,7 +166,7 @@ describe('buildItemStringIndex', () => {
           'String.wz/Etc.img',
           [
             bucket('Etc', 'String.wz/Etc.img/Etc', [
-              entity('4000000', 'String.wz/Etc.img/Etc', { name: "Snail Shell" }),
+              entity('4000000', 'String.wz/Etc.img/Etc', { name: 'Snail Shell' }),
             ]),
           ],
           'image',
@@ -230,7 +230,10 @@ describe('buildQuestStringIndex', () => {
           'Quest.wz/QuestInfo.img',
           [
             entity('1000', 'Quest.wz/QuestInfo.img', { name: 'Stale Name', summary: 'Old blurb.' }),
-            entity('2000', 'Quest.wz/QuestInfo.img', { name: 'Fallback Quest', summary: 'Only here.' }),
+            entity('2000', 'Quest.wz/QuestInfo.img', {
+              name: 'Fallback Quest',
+              summary: 'Only here.',
+            }),
           ],
           'image',
         ),

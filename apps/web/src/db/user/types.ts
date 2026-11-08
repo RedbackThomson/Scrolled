@@ -54,8 +54,18 @@ export type CollectionGrouping = 'none' | 'group' | 'type';
 export type CollectionSortKey = 'manual' | 'name' | 'added' | 'done' | 'quantity';
 export type CollectionSortDir = 'asc' | 'desc';
 
-export const COLLECTION_GROUPINGS = ['none', 'group', 'type'] as const satisfies readonly CollectionGrouping[];
-export const COLLECTION_SORT_KEYS = ['manual', 'name', 'added', 'done', 'quantity'] as const satisfies readonly CollectionSortKey[];
+export const COLLECTION_GROUPINGS = [
+  'none',
+  'group',
+  'type',
+] as const satisfies readonly CollectionGrouping[];
+export const COLLECTION_SORT_KEYS = [
+  'manual',
+  'name',
+  'added',
+  'done',
+  'quantity',
+] as const satisfies readonly CollectionSortKey[];
 export const COLLECTION_SORT_DIRS = ['asc', 'desc'] as const satisfies readonly CollectionSortDir[];
 
 export interface CollectionRecord {
@@ -414,12 +424,7 @@ export interface UserDatabase {
   listRecentQueries(): Promise<RecentQueryRecord[]>;
   /** Record (or coalesce) a viewed entity. `viewedAt` defaults to now;
    *  pass an explicit timestamp when migrating historical data. */
-  trackRecentEntity(
-    entity: EntityKind,
-    id: number,
-    name: string,
-    viewedAt?: number,
-  ): Promise<void>;
+  trackRecentEntity(entity: EntityKind, id: number, name: string, viewedAt?: number): Promise<void>;
   /** Record (or coalesce) a search query. */
   trackRecentQuery(query: string, ranAt?: number): Promise<void>;
   /** Clear all recents of one kind. */

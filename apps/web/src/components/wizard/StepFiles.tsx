@@ -115,7 +115,13 @@ interface Props {
  *  (`'any'` is update mode, where either format is welcome). */
 const DROP_COPY: Record<
   'wz' | 'img' | 'any',
-  { heading: string; body: React.ReactNode; dropTitle: string; dropHint: React.ReactNode; accept: string }
+  {
+    heading: string;
+    body: React.ReactNode;
+    dropTitle: string;
+    dropHint: React.ReactNode;
+    accept: string;
+  }
 > = {
   wz: {
     heading: 'Add your .wz files',
@@ -146,8 +152,8 @@ const DROP_COPY: Record<
     dropTitle: 'Drag and drop your Data folder here',
     dropHint: (
       <>
-        the <code className="font-mono">Data</code> folder of <code className="font-mono">.img</code>{' '}
-        files
+        the <code className="font-mono">Data</code> folder of{' '}
+        <code className="font-mono">.img</code> files
       </>
     ),
     accept: '.img',

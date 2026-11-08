@@ -102,9 +102,7 @@ async function main(): Promise<void> {
     source = getGraph(args.graph);
     label = args.graph;
     if (!source) {
-      console.error(
-        `Unknown graph "${args.graph}". Registered: ${listGraphIds().join(', ')}`,
-      );
+      console.error(`Unknown graph "${args.graph}". Registered: ${listGraphIds().join(', ')}`);
       process.exit(1);
     }
   }

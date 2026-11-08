@@ -125,7 +125,12 @@ describe('mock sync server', () => {
 
     server.gcTombstones('2025-01-01T00:00:00.000Z');
 
-    expect(server.rows('collection').map((r) => r.key).sort()).toEqual(['c2', 'c3']);
+    expect(
+      server
+        .rows('collection')
+        .map((r) => r.key)
+        .sort(),
+    ).toEqual(['c2', 'c3']);
   });
 
   it('names the writing device in the poke so a client can skip its own echo', () => {

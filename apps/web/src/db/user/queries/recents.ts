@@ -113,11 +113,7 @@ export function trackRecentEntity(
   track(db, 'entity', entityRef(entity, id), name, viewedAt, MAX_ENTITIES);
 }
 
-export function trackRecentQuery(
-  db: Sqlite,
-  query: string,
-  ranAt: number = Date.now(),
-): void {
+export function trackRecentQuery(db: Sqlite, query: string, ranAt: number = Date.now()): void {
   const trimmed = query.trim();
   if (!trimmed) return;
   track(db, 'query', trimmed, null, ranAt, MAX_QUERIES);
@@ -126,10 +122,9 @@ export function trackRecentQuery(
 export function clearRecents(db: Sqlite, kind: 'entity' | 'query'): void {
   db.transaction(() => {
     const refs = db
-      .selectObjects<{ ref: string }>(
-        'SELECT ref FROM recents WHERE kind = ? AND deleted_at IS NULL',
-        [kind],
-      )
+      .selectObjects<{
+        ref: string;
+      }>('SELECT ref FROM recents WHERE kind = ? AND deleted_at IS NULL', [kind])
       .map((r) => String(r.ref));
     for (const ref of refs) {
       recordDelete(db, 'recent', RECENT_WHERE, [kind, ref]);

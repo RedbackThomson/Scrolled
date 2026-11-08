@@ -25,7 +25,12 @@ function makeMap(id: number, name: string | null): MapRecord {
   };
 }
 
-function portal(mapId: number, idx: number, portalName: string, targetMapId: number | null): MapPortalRecord {
+function portal(
+  mapId: number,
+  idx: number,
+  portalName: string,
+  targetMapId: number | null,
+): MapPortalRecord {
   return {
     mapId,
     idx,

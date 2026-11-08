@@ -59,9 +59,7 @@ export function PinnedCollectionsPanel() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="font-display truncate text-base font-semibold">{c.name}</div>
-                    <div className="text-muted-foreground mt-0.5 text-xs">
-                      {progress.label}
-                    </div>
+                    <div className="text-muted-foreground mt-0.5 text-xs">{progress.label}</div>
                   </div>
                 </Link>
               </li>

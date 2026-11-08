@@ -82,11 +82,30 @@ describe('items.get', () => {
 
 describe('quests.listRequirements / quests.bundle', () => {
   const requirements = [
-    { questId: 10, kind: 'item', targetId: 4000000, amount: 5, targetName: 'Slime Bubble', targetLevel: null },
+    {
+      questId: 10,
+      kind: 'item',
+      targetId: 4000000,
+      amount: 5,
+      targetName: 'Slime Bubble',
+      targetLevel: null,
+    },
     { questId: 11, kind: 'mob', targetId: 100, amount: 2, targetName: 'Snail', targetLevel: null },
   ];
   const rewards = [
-    { questId: 10, kind: 'exp', idx: 0, targetId: null, amount: 100, prop: null, job: null, gender: null, period: null, targetName: null, targetEntity: null },
+    {
+      questId: 10,
+      kind: 'exp',
+      idx: 0,
+      targetId: null,
+      amount: 100,
+      prop: null,
+      job: null,
+      gender: null,
+      period: null,
+      targetName: null,
+      targetEntity: null,
+    },
   ];
   const db = {
     getQuestRequirementsMany: async (ids: readonly number[]) =>

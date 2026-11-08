@@ -63,11 +63,9 @@ function handle(from: MessagePort, msg: BrokerMessage, transferred: MessagePort 
       const follower = state.awaiting.get(msg.requestId);
       state.awaiting.delete(msg.requestId);
       if (follower && transferred) {
-        post(
-          follower,
-          { kind: 'deliver-port', channel: msg.channel, requestId: msg.requestId },
-          [transferred],
-        );
+        post(follower, { kind: 'deliver-port', channel: msg.channel, requestId: msg.requestId }, [
+          transferred,
+        ]);
       }
       break;
     }

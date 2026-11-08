@@ -106,7 +106,10 @@ export async function runExtraction(
     // items.id — store after items. Tracked like the other item-relation
     // sidecars (mob drops, map life): folded into its parent, no separate key.
     stage('Extracting consumable specs');
-    const specs = await storeConsumableSpecs(db, await extractConsumableSpecs(source, { onProgress }));
+    const specs = await storeConsumableSpecs(
+      db,
+      await extractConsumableSpecs(source, { onProgress }),
+    );
     skippedTotal += specs.skipped;
 
     stage('Extracting equips');

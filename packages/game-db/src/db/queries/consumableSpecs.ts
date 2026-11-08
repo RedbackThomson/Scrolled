@@ -157,9 +157,7 @@ function rowToConsumableSpec(row: ConsumableSpecRow): ConsumableSpecRecord {
       ? (JSON.parse(row.morph_random_json) as MorphRandomEntry[])
       : null,
     skillbook: parseNumberArray(row.skillbook_json),
-    summonMobs: row.summon_mob_json
-      ? (JSON.parse(row.summon_mob_json) as SummonMobEntry[])
-      : null,
+    summonMobs: row.summon_mob_json ? (JSON.parse(row.summon_mob_json) as SummonMobEntry[]) : null,
   };
 }
 

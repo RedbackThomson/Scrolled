@@ -46,9 +46,9 @@ describe('renderSkillTemplate', () => {
   });
 
   it('substitutes multiple placeholders', () => {
-    expect(
-      renderSkillTemplate('HP and MP +#x% for #time sec.', { x: 60, time: 600 }),
-    ).toBe('HP and MP +60% for 600 sec.');
+    expect(renderSkillTemplate('HP and MP +#x% for #time sec.', { x: 60, time: 600 })).toBe(
+      'HP and MP +60% for 600 sec.',
+    );
   });
 
   it('leaves unresolved placeholders as #name', () => {

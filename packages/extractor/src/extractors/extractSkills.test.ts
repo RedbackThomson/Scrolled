@@ -87,13 +87,33 @@ describe('extractSkills', () => {
           { name: '200.img', fullPath: 'Skill.wz/200.img', kind: 'image', hasChildren: true },
         ],
         'Skill.wz/200.img/skill': [
-          { name: '2001005', fullPath: 'Skill.wz/200.img/skill/2001005', kind: 'property', hasChildren: true },
+          {
+            name: '2001005',
+            fullPath: 'Skill.wz/200.img/skill/2001005',
+            kind: 'property',
+            hasChildren: true,
+          },
         ],
         'Skill.wz/200.img/skill/2001005/req': [],
         'Skill.wz/200.img/skill/2001005/level': [
-          { name: '1', fullPath: 'Skill.wz/200.img/skill/2001005/level/1', kind: 'property', hasChildren: true },
-          { name: '2', fullPath: 'Skill.wz/200.img/skill/2001005/level/2', kind: 'property', hasChildren: true },
-          { name: '3', fullPath: 'Skill.wz/200.img/skill/2001005/level/3', kind: 'property', hasChildren: true },
+          {
+            name: '1',
+            fullPath: 'Skill.wz/200.img/skill/2001005/level/1',
+            kind: 'property',
+            hasChildren: true,
+          },
+          {
+            name: '2',
+            fullPath: 'Skill.wz/200.img/skill/2001005/level/2',
+            kind: 'property',
+            hasChildren: true,
+          },
+          {
+            name: '3',
+            fullPath: 'Skill.wz/200.img/skill/2001005/level/3',
+            kind: 'property',
+            hasChildren: true,
+          },
         ],
         'Skill.wz/200.img/skill/2001005/level/1': [
           leaf('mpCon', '', 12),
@@ -101,19 +121,18 @@ describe('extractSkills', () => {
           leaf('time', '', 0),
           leaf('mysteryField', '', 7),
         ],
-        'Skill.wz/200.img/skill/2001005/level/2': [
-          leaf('mpCon', '', 14),
-          leaf('damage', '', 110),
-        ],
-        'Skill.wz/200.img/skill/2001005/level/3': [
-          leaf('mpCon', '', 16),
-          leaf('damage', '', 120),
-        ],
+        'Skill.wz/200.img/skill/2001005/level/2': [leaf('mpCon', '', 14), leaf('damage', '', 110)],
+        'Skill.wz/200.img/skill/2001005/level/3': [leaf('mpCon', '', 16), leaf('damage', '', 120)],
       },
       {
         'String.wz/Skill.img/2001005/name': leaf('name', '', 'Magic Claw', 'string'),
         'String.wz/Skill.img/2001005/desc': leaf('desc', '', 'Hurls magical bolts.', 'string'),
-        'String.wz/Skill.img/2001005/h': leaf('h', '', 'MP -#mpCon. Hits #attackCount times.', 'string'),
+        'String.wz/Skill.img/2001005/h': leaf(
+          'h',
+          '',
+          'MP -#mpCon. Hits #attackCount times.',
+          'string',
+        ),
         'Skill.wz/200.img/skill/2001005/common/maxLevel': leaf('maxLevel', '', 20),
         'Skill.wz/200.img/skill/2001005/common/invisible': leaf('invisible', '', 0),
         'Skill.wz/200.img/skill/2001005/elemAttr': leaf('elemAttr', '', 'F', 'string'),
@@ -151,7 +170,12 @@ describe('extractSkills', () => {
           { name: '220.img', fullPath: 'Skill.wz/220.img', kind: 'image', hasChildren: true },
         ],
         'Skill.wz/220.img/skill': [
-          { name: '2200000', fullPath: 'Skill.wz/220.img/skill/2200000', kind: 'property', hasChildren: true },
+          {
+            name: '2200000',
+            fullPath: 'Skill.wz/220.img/skill/2200000',
+            kind: 'property',
+            hasChildren: true,
+          },
         ],
         'Skill.wz/220.img/skill/2200000/req': [],
         'Skill.wz/220.img/skill/2200000/level': [],
@@ -179,13 +203,33 @@ describe('extractSkills', () => {
           { name: '210.img', fullPath: 'Skill.wz/210.img', kind: 'image', hasChildren: true },
         ],
         'Skill.wz/210.img/skill': [
-          { name: '2100000', fullPath: 'Skill.wz/210.img/skill/2100000', kind: 'property', hasChildren: true },
+          {
+            name: '2100000',
+            fullPath: 'Skill.wz/210.img/skill/2100000',
+            kind: 'property',
+            hasChildren: true,
+          },
         ],
         'Skill.wz/210.img/skill/2100000/req': [],
         'Skill.wz/210.img/skill/2100000/level': [
-          { name: '1', fullPath: 'Skill.wz/210.img/skill/2100000/level/1', kind: 'property', hasChildren: true },
-          { name: '2', fullPath: 'Skill.wz/210.img/skill/2100000/level/2', kind: 'property', hasChildren: true },
-          { name: '3', fullPath: 'Skill.wz/210.img/skill/2100000/level/3', kind: 'property', hasChildren: true },
+          {
+            name: '1',
+            fullPath: 'Skill.wz/210.img/skill/2100000/level/1',
+            kind: 'property',
+            hasChildren: true,
+          },
+          {
+            name: '2',
+            fullPath: 'Skill.wz/210.img/skill/2100000/level/2',
+            kind: 'property',
+            hasChildren: true,
+          },
+          {
+            name: '3',
+            fullPath: 'Skill.wz/210.img/skill/2100000/level/3',
+            kind: 'property',
+            hasChildren: true,
+          },
         ],
         'Skill.wz/210.img/skill/2100000/level/1': [],
         'Skill.wz/210.img/skill/2100000/level/2': [],
@@ -220,11 +264,21 @@ describe('extractSkills', () => {
           { name: '230.img', fullPath: 'Skill.wz/230.img', kind: 'image', hasChildren: true },
         ],
         'Skill.wz/230.img/skill': [
-          { name: '2301003', fullPath: 'Skill.wz/230.img/skill/2301003', kind: 'property', hasChildren: true },
+          {
+            name: '2301003',
+            fullPath: 'Skill.wz/230.img/skill/2301003',
+            kind: 'property',
+            hasChildren: true,
+          },
         ],
         'Skill.wz/230.img/skill/2301003/req': [],
         'Skill.wz/230.img/skill/2301003/level': [
-          { name: '1', fullPath: 'Skill.wz/230.img/skill/2301003/level/1', kind: 'property', hasChildren: true },
+          {
+            name: '1',
+            fullPath: 'Skill.wz/230.img/skill/2301003/level/1',
+            kind: 'property',
+            hasChildren: true,
+          },
         ],
         'Skill.wz/230.img/skill/2301003/level/1': [],
         'String.wz/Skill.img/2301003': [
@@ -248,7 +302,12 @@ describe('extractSkills', () => {
           { name: '300.img', fullPath: 'Skill.wz/300.img', kind: 'image', hasChildren: true },
         ],
         'Skill.wz/300.img/skill': [
-          { name: '3000000', fullPath: 'Skill.wz/300.img/skill/3000000', kind: 'property', hasChildren: true },
+          {
+            name: '3000000',
+            fullPath: 'Skill.wz/300.img/skill/3000000',
+            kind: 'property',
+            hasChildren: true,
+          },
         ],
         'Skill.wz/300.img/skill/3000000/req': [
           leaf('2901001', 'Skill.wz/300.img/skill/3000000/req/2901001', 5),
@@ -272,17 +331,27 @@ describe('extractSkills', () => {
     const source = makeSource(
       {
         'Skill.wz': [
-          { name: 'BookSkill.img', fullPath: 'Skill.wz/BookSkill.img', kind: 'image', hasChildren: true },
+          {
+            name: 'BookSkill.img',
+            fullPath: 'Skill.wz/BookSkill.img',
+            kind: 'image',
+            hasChildren: true,
+          },
           { name: '400.img', fullPath: 'Skill.wz/400.img', kind: 'image', hasChildren: true },
         ],
         'Skill.wz/400.img/skill': [
-          { name: '4001001', fullPath: 'Skill.wz/400.img/skill/4001001', kind: 'property', hasChildren: true },
+          {
+            name: '4001001',
+            fullPath: 'Skill.wz/400.img/skill/4001001',
+            kind: 'property',
+            hasChildren: true,
+          },
         ],
         'Skill.wz/400.img/skill/4001001/req': [],
         'Skill.wz/400.img/skill/4001001/level': [],
       },
       {
-        'String.wz/Skill.img/4001001/name': leaf('name', '', "Lucky Seven", 'string'),
+        'String.wz/Skill.img/4001001/name': leaf('name', '', 'Lucky Seven', 'string'),
       },
     );
 
@@ -306,13 +375,33 @@ describe('extractSkills', () => {
           { name: '700.img', fullPath: 'Skill.wz/700.img', kind: 'image', hasChildren: true },
         ],
         'Skill.wz/700.img/skill': [
-          { name: '7000000', fullPath: 'Skill.wz/700.img/skill/7000000', kind: 'property', hasChildren: true },
+          {
+            name: '7000000',
+            fullPath: 'Skill.wz/700.img/skill/7000000',
+            kind: 'property',
+            hasChildren: true,
+          },
         ],
         'Skill.wz/700.img/skill/7000000/req': [],
         'Skill.wz/700.img/skill/7000000/level': [
-          { name: '1', fullPath: 'Skill.wz/700.img/skill/7000000/level/1', kind: 'property', hasChildren: true },
-          { name: '15', fullPath: 'Skill.wz/700.img/skill/7000000/level/15', kind: 'property', hasChildren: true },
-          { name: '20', fullPath: 'Skill.wz/700.img/skill/7000000/level/20', kind: 'property', hasChildren: true },
+          {
+            name: '1',
+            fullPath: 'Skill.wz/700.img/skill/7000000/level/1',
+            kind: 'property',
+            hasChildren: true,
+          },
+          {
+            name: '15',
+            fullPath: 'Skill.wz/700.img/skill/7000000/level/15',
+            kind: 'property',
+            hasChildren: true,
+          },
+          {
+            name: '20',
+            fullPath: 'Skill.wz/700.img/skill/7000000/level/20',
+            kind: 'property',
+            hasChildren: true,
+          },
         ],
         'Skill.wz/700.img/skill/7000000/level/1': [leaf('mpCon', '', 10)],
         'Skill.wz/700.img/skill/7000000/level/15': [leaf('mpCon', '', 24)],
@@ -334,12 +423,27 @@ describe('extractSkills', () => {
           { name: '710.img', fullPath: 'Skill.wz/710.img', kind: 'image', hasChildren: true },
         ],
         'Skill.wz/710.img/skill': [
-          { name: '7100000', fullPath: 'Skill.wz/710.img/skill/7100000', kind: 'property', hasChildren: true },
+          {
+            name: '7100000',
+            fullPath: 'Skill.wz/710.img/skill/7100000',
+            kind: 'property',
+            hasChildren: true,
+          },
         ],
         'Skill.wz/710.img/skill/7100000/req': [],
         'Skill.wz/710.img/skill/7100000/level': [
-          { name: '1', fullPath: 'Skill.wz/710.img/skill/7100000/level/1', kind: 'property', hasChildren: true },
-          { name: '2', fullPath: 'Skill.wz/710.img/skill/7100000/level/2', kind: 'property', hasChildren: true },
+          {
+            name: '1',
+            fullPath: 'Skill.wz/710.img/skill/7100000/level/1',
+            kind: 'property',
+            hasChildren: true,
+          },
+          {
+            name: '2',
+            fullPath: 'Skill.wz/710.img/skill/7100000/level/2',
+            kind: 'property',
+            hasChildren: true,
+          },
         ],
         'Skill.wz/710.img/skill/7100000/level/1': [leaf('mpCon', '', 10)],
         'Skill.wz/710.img/skill/7100000/level/2': [leaf('mpCon', '', 12)],
@@ -361,7 +465,12 @@ describe('extractSkills', () => {
           { name: '720.img', fullPath: 'Skill.wz/720.img', kind: 'image', hasChildren: true },
         ],
         'Skill.wz/720.img/skill': [
-          { name: '7200000', fullPath: 'Skill.wz/720.img/skill/7200000', kind: 'property', hasChildren: true },
+          {
+            name: '7200000',
+            fullPath: 'Skill.wz/720.img/skill/7200000',
+            kind: 'property',
+            hasChildren: true,
+          },
         ],
         'Skill.wz/720.img/skill/7200000/req': [],
         'Skill.wz/720.img/skill/7200000/level': [],
@@ -382,13 +491,33 @@ describe('extractSkills', () => {
           { name: '600.img', fullPath: 'Skill.wz/600.img', kind: 'image', hasChildren: true },
         ],
         'Skill.wz/600.img/skill': [
-          { name: '6000000', fullPath: 'Skill.wz/600.img/skill/6000000', kind: 'property', hasChildren: true },
+          {
+            name: '6000000',
+            fullPath: 'Skill.wz/600.img/skill/6000000',
+            kind: 'property',
+            hasChildren: true,
+          },
         ],
         'Skill.wz/600.img/skill/6000000/req': [],
         'Skill.wz/600.img/skill/6000000/level': [
-          { name: '3', fullPath: 'Skill.wz/600.img/skill/6000000/level/3', kind: 'property', hasChildren: true },
-          { name: '1', fullPath: 'Skill.wz/600.img/skill/6000000/level/1', kind: 'property', hasChildren: true },
-          { name: '2', fullPath: 'Skill.wz/600.img/skill/6000000/level/2', kind: 'property', hasChildren: true },
+          {
+            name: '3',
+            fullPath: 'Skill.wz/600.img/skill/6000000/level/3',
+            kind: 'property',
+            hasChildren: true,
+          },
+          {
+            name: '1',
+            fullPath: 'Skill.wz/600.img/skill/6000000/level/1',
+            kind: 'property',
+            hasChildren: true,
+          },
+          {
+            name: '2',
+            fullPath: 'Skill.wz/600.img/skill/6000000/level/2',
+            kind: 'property',
+            hasChildren: true,
+          },
         ],
         'Skill.wz/600.img/skill/6000000/level/1': [leaf('mpCon', '', 10)],
         'Skill.wz/600.img/skill/6000000/level/2': [leaf('mpCon', '', 12)],

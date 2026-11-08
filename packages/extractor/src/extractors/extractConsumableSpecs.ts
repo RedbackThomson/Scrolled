@@ -13,11 +13,7 @@
 // either, or the upsert hits a foreign-key violation.
 
 import type { GameDataSource, WzNodeTree } from '../parser';
-import type {
-  ConsumableSpecRecord,
-  MorphRandomEntry,
-  SummonMobEntry,
-} from '@scrolled/game-db/db';
+import type { ConsumableSpecRecord, MorphRandomEntry, SummonMobEntry } from '@scrolled/game-db/db';
 import { createLogger, describeError } from '@scrolled/game-db/lib/logger';
 import type { ProgressFn } from '@scrolled/game-db/lib/progress';
 import { childToNumber, childToString, indexChildrenByName, scalarToNumber } from './wzCoerce';
@@ -50,7 +46,11 @@ export async function extractConsumableSpecs(
   let processed = 0;
   for (const group of groups) {
     if (group.kind !== 'image') continue;
-    opts.onProgress?.({ phase: 'Extracting consumable specs', current: processed, detail: group.name });
+    opts.onProgress?.({
+      phase: 'Extracting consumable specs',
+      current: processed,
+      detail: group.name,
+    });
 
     // Depth 5 from the image reaches morphRandom's leaf children:
     // image(0) → item(1) → spec(2) → morphRandom(3) → entry(4) → morph/prop(5).

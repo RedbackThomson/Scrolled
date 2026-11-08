@@ -55,9 +55,4 @@ export const profilesSetActive: ToolDefinition<typeof profilesSetActiveSchema, u
   },
 };
 
-export const serverProfileTools = [
-  profilesList,
-  profilesGet,
-  profilesGetActive,
-  profilesSetActive,
-];
+export const serverProfileTools = [profilesList, profilesGet, profilesGetActive, profilesSetActive];

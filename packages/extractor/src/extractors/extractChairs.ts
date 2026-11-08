@@ -135,9 +135,7 @@ export async function extractChairs(
       });
     }
   };
-  await Promise.all(
-    Array.from({ length: Math.min(concurrency, work.length || 1) }, workerLoop),
-  );
+  await Promise.all(Array.from({ length: Math.min(concurrency, work.length || 1) }, workerLoop));
   opts.onProgress?.({ phase: 'Extracting chairs', current: processed, total: work.length });
 
   log.info('chair extraction complete', { chairs: chairs.length, skipped: skipped.length });
@@ -197,7 +195,15 @@ async function readChair(
   const anchorY = top;
 
   const animFrames: AnimFrame[] = live.map(({ meta, frame }) => ({
-    rgba: padFrameToCanvas(frame, meta.originX, meta.originY, anchorX, anchorY, canvasWidth, canvasHeight),
+    rgba: padFrameToCanvas(
+      frame,
+      meta.originX,
+      meta.originY,
+      anchorX,
+      anchorY,
+      canvasWidth,
+      canvasHeight,
+    ),
     width: canvasWidth,
     height: canvasHeight,
     delayMs: meta.delayMs,

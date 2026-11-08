@@ -55,7 +55,10 @@ export function MobileListSearch({
   const resultFilters = useMemo(
     () =>
       settled
-        ? { ...filters, [NAME_COLUMN]: { kind: 'string', mode: 'contains', value: settled } as ColumnFilter }
+        ? {
+            ...filters,
+            [NAME_COLUMN]: { kind: 'string', mode: 'contains', value: settled } as ColumnFilter,
+          }
         : null,
     [filters, settled],
   );
@@ -122,7 +125,9 @@ export function MobileListSearch({
                   className="sc-focus-ring flex min-h-[52px] items-center gap-3 rounded-xl px-1"
                 >
                   {entity && <EntityAvatar entity={entity} id={r.id} size={34} alt={r.name} />}
-                  <span className="min-w-0 flex-1 truncate text-[15px] font-semibold">{r.name}</span>
+                  <span className="min-w-0 flex-1 truncate text-[15px] font-semibold">
+                    {r.name}
+                  </span>
                 </Link>
               </li>
             ))}

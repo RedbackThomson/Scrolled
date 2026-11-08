@@ -18,7 +18,14 @@ export function EdgeBlur({ height, className, style }: EdgeBlurProps) {
     <div
       aria-hidden
       className={className}
-      style={{ position: 'absolute', insetInline: 0, top: 0, height, pointerEvents: 'none', ...style }}
+      style={{
+        position: 'absolute',
+        insetInline: 0,
+        top: 0,
+        height,
+        pointerEvents: 'none',
+        ...style,
+      }}
     >
       {/* One backdrop-filter can't vary its radius, so each layer blurs harder over a shorter band. */}
       {LAYERS.map((px, i) => {

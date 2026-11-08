@@ -54,6 +54,8 @@ export const questChainConfig: TooltipEntityConfig<QuestChainDetail> = {
   nameOf: (record) => record.chain.name,
   renderName: (record) => <div className="truncate">{record.chain.name}</div>,
   getSampleId: () =>
-    getDbClient().listQuestChains({ limit: 1 }).then((r) => r.rows[0]?.id ?? null),
+    getDbClient()
+      .listQuestChains({ limit: 1 })
+      .then((r) => r.rows[0]?.id ?? null),
   fields,
 };

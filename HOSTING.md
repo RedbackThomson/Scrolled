@@ -106,11 +106,12 @@ datasets/your-server/2026-06-01/your-server-2026-06-01.scrolled-dataset   # gzip
 
   Either way the profile names the rules (EXP rate, equip stat-range calculator)
   the data renders under, and `dataset:build` **bakes the full profile config
-  into the dataset's own game DB**. It travels *as* the dataset — so a server can
+  into the dataset's own game DB**. It travels _as_ the dataset — so a server can
   change its rates by rebuilding, no app release needed, and nothing is applied
   as local install state. The app only needs to ship the **calculator** the
   profile names (code keyed by id); a brand-new calculator still needs an app
   release.
+
 - `--family` defaults to the profile id; pass it to host several datasets under
   one name. The WZ encryption version is auto-detected (override with
   `--wz-version` if detection is inconclusive).
@@ -296,7 +297,7 @@ The manifest carries all four (`dataRevision`, `schemaVersion`, `serverProfileId
 the backstop on the data inside the bundle at install/update. A dataset newer than
 the app, older than the app can read, or naming a **calculator** the build doesn't
 ship is **refused with an "update the app" message** instead of loading wrong or
-corrupt data. (The `serverProfileId` is *not* gated — the profile config travels
+corrupt data. (The `serverProfileId` is _not_ gated — the profile config travels
 in the bundle, so a build can install a dataset whose profile id it's never seen.)
 So the worst case is a clear prompt, not a broken wiki.
 

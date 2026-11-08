@@ -21,8 +21,8 @@ export function LibraryStatusSection() {
       <SettingsCard gap={0}>
         {statusQ.isLoading ? (
           <p className="text-muted-foreground text-sm">
-            <Loader2 className="text-muted-foreground inline h-4 w-4 animate-spin" /> Connecting
-            to local library…
+            <Loader2 className="text-muted-foreground inline h-4 w-4 animate-spin" /> Connecting to
+            local library…
           </p>
         ) : statusQ.error ? (
           <p className="text-destructive text-sm">{(statusQ.error as Error).message}</p>

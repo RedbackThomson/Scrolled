@@ -107,7 +107,9 @@ describe('outbox accumulation (sync phase 1)', () => {
     deleteCollection(db, c.id);
     const rows = outbox(db);
     // two member deletes + the collection delete
-    expect(rows.filter((r) => r.entity === 'collection_member' && r.op === 'delete')).toHaveLength(2);
+    expect(rows.filter((r) => r.entity === 'collection_member' && r.op === 'delete')).toHaveLength(
+      2,
+    );
     expect(rows.filter((r) => r.entity === 'collection' && r.op === 'delete')).toHaveLength(1);
     // live row is gone
     expect(db.selectValue('SELECT COUNT(*) FROM collections WHERE id = ?', [c.id])).toBe(0);

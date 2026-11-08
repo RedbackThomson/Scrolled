@@ -122,9 +122,7 @@ export const CommandInput = forwardRef<
         <IconButton icon={ArrowLeft} variant="ghost" size={44} label="Close" onClick={onBack} />
       </span>
     )}
-    <Search
-      className={cn('text-muted-foreground h-5 w-5 shrink-0', onBack && 'max-md:hidden')}
-    />
+    <Search className={cn('text-muted-foreground h-5 w-5 shrink-0', onBack && 'max-md:hidden')} />
     <CommandPrimitive.Input
       ref={ref}
       className={cn(

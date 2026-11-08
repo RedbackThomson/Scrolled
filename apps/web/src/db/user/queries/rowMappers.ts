@@ -85,11 +85,7 @@ export function rowToCollection(row: Row): CollectionRecord {
   };
 }
 
-function parseEnum<T extends string>(
-  raw: unknown,
-  allowed: readonly T[],
-  fallback: T,
-): T {
+function parseEnum<T extends string>(raw: unknown, allowed: readonly T[], fallback: T): T {
   if (raw == null) return fallback;
   const s = String(raw);
   return (allowed as readonly string[]).includes(s) ? (s as T) : fallback;

@@ -173,7 +173,9 @@ async function main() {
   const profile = loadProfile(args);
   const calculatorId = profile.systems.equipStatCalculation;
   if (!calculatorId) {
-    fail(`Profile '${profile.id}' declares no equip-stat calculator (systems.equipStatCalculation).`);
+    fail(
+      `Profile '${profile.id}' declares no equip-stat calculator (systems.equipStatCalculation).`,
+    );
   }
   const displayName = args.displayName ?? profile.name;
   const family = args.family ?? profile.id;

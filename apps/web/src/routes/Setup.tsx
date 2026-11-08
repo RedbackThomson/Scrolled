@@ -208,9 +208,7 @@ function SetupWizard() {
         const bytes = await candidate.readBytes();
         // IMG has no PKG1 header / patch version; detect the region key only.
         const result =
-          kind === 'img'
-            ? await detectImageVersion(bytes)
-            : await detectVersion(bytes);
+          kind === 'img' ? await detectImageVersion(bytes) : await detectVersion(bytes);
         detectionInflightRef.current = false;
         if (!result) {
           setDetection({

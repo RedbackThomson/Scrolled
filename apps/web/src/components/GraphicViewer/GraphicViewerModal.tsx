@@ -150,7 +150,9 @@ export function GraphicViewerModal({
                     className="bg-card flex h-[70dvh] flex-col p-0"
                   >
                     <SheetHeader className="border-muted border-b-2 px-4 py-3">
-                      <SheetTitle className="font-display text-[17px]">{mobileSheetTitle}</SheetTitle>
+                      <SheetTitle className="font-display text-[17px]">
+                        {mobileSheetTitle}
+                      </SheetTitle>
                     </SheetHeader>
                     <div className="flex min-h-0 flex-1 flex-col">
                       {sidebar({ visible, enableLayer, closeMobile: () => setBrowserOpen(false) })}

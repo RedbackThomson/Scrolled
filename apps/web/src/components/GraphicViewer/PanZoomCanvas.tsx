@@ -257,9 +257,7 @@ export function PanZoomCanvas({
       if (drag.current) {
         const d = drag.current;
         const scale = baseScaleRef.current * zoomRef.current;
-        setPan(
-          clampPan(d.panX + (e.clientX - d.startX), d.panY + (e.clientY - d.startY), scale),
-        );
+        setPan(clampPan(d.panX + (e.clientX - d.startX), d.panY + (e.clientY - d.startY), scale));
       }
     },
     [clampPan],
@@ -289,9 +287,7 @@ export function PanZoomCanvas({
     const scale = baseScaleRef.current * zoomRef.current;
     // Clamped, so a fully-visible content stays centred rather than panning
     // the highlight to the middle and exposing empty space.
-    setPan((p) =>
-      clampPan(p.x + (cRect.width / 2 - ecx), p.y + (cRect.height / 2 - ecy), scale),
-    );
+    setPan((p) => clampPan(p.x + (cRect.width / 2 - ecx), p.y + (cRect.height / 2 - ecy), scale));
     // `baseScale` is included so a highlight present on first open re-centres
     // once the initial fit has run (it only changes on (re)fit, not on zoom).
   }, [scrollKey, baseScale, clampPan]);

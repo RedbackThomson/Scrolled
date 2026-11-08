@@ -12,7 +12,10 @@ import {
   type EquipStatRange,
   type ServerProfile,
 } from '@scrolled/game-db/serverProfiles';
-import { resolveActiveServerProfile, setActiveServerProfileId } from '@/lib/serverProfileResolution';
+import {
+  resolveActiveServerProfile,
+  setActiveServerProfileId,
+} from '@/lib/serverProfileResolution';
 
 const QUERY_KEY = ['db', 'server-profile'] as const;
 

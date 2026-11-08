@@ -54,10 +54,22 @@ export function WorldMapViewerModal({
 
   const layers = useMemo<LayerDescriptor[]>(() => {
     const out: LayerDescriptor[] = [
-      { key: 'markers', label: 'Markers', Icon: MapPin, swatch: 'text-sky-500', count: markers.length },
+      {
+        key: 'markers',
+        label: 'Markers',
+        Icon: MapPin,
+        swatch: 'text-sky-500',
+        count: markers.length,
+      },
     ];
     if (links.length > 0) {
-      out.push({ key: 'links', label: 'Links', Icon: Link2, swatch: 'text-violet-500', count: links.length });
+      out.push({
+        key: 'links',
+        label: 'Links',
+        Icon: Link2,
+        swatch: 'text-violet-500',
+        count: links.length,
+      });
     }
     return out;
   }, [markers.length, links.length]);
@@ -105,7 +117,8 @@ export function WorldMapViewerModal({
   // region we can name: the drilled region, else the region the focus map sits
   // in. Falls back to the generic label with no region context.
   const regionLabel = useMemo(() => {
-    const byId = (id: string | null) => (id ? (markers.find((m) => m.id === id)?.title ?? null) : null);
+    const byId = (id: string | null) =>
+      id ? (markers.find((m) => m.id === id)?.title ?? null) : null;
     return byId(drilledMarkerId) ?? byId(focusMarkerId);
   }, [markers, drilledMarkerId, focusMarkerId]);
 
@@ -181,50 +194,50 @@ export function WorldMapViewerModal({
 
         const markerOverlays = visible.markers
           ? markers.map((m) => {
-          const single = m.mapIds.length === 1;
-          const firstId = m.mapIds[0];
-          const label =
-            firstId !== undefined
-              ? (mapNameById.get(firstId) ?? `Map ${firstId}`)
-              : (m.title ?? 'Marker');
-          const isActive = activeMarkerId !== null && m.id === activeMarkerId;
-          const isFocus = m.id === focusMarkerId;
-          return (
-            <WorldMapPin
-              key={m.id}
-              pixelX={worldMap.originX + m.wzX}
-              pixelY={worldMap.originY + m.wzY}
-              parentScale={view.scale}
-              hue={isFocus ? FOCUS_HUE : single ? ENTITY_HUES.map : REGION_HUE}
-              region={!single}
-              label={label}
-              labelled={isActive || isFocus}
-              tooltip={
-                firstId !== undefined ? (
-                  <div className="space-y-2">
-                    <MapHoverCard id={firstId} />
-                    <div className="border-border text-muted-foreground border-t-2 pt-2 text-xs font-semibold">
-                      {single ? 'Click to open' : `${m.mapIds.length} maps · click to browse`}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-muted-foreground text-xs font-semibold">
-                    {m.title ?? 'Marker'}
-                  </div>
-                )
-              }
-              highlighted={isActive || (activeMarkerId === null && isFocus)}
-              dimmed={activeMarkerId !== null && !isActive}
-              onClick={
-                single
-                  ? () => onOpenMap(m.mapIds[0]!)
-                  : () => {
-                      onDrillRegion(markerIndexOf(m.id));
-                      openSidebar();
-                    }
-              }
-            />
-          );
+              const single = m.mapIds.length === 1;
+              const firstId = m.mapIds[0];
+              const label =
+                firstId !== undefined
+                  ? (mapNameById.get(firstId) ?? `Map ${firstId}`)
+                  : (m.title ?? 'Marker');
+              const isActive = activeMarkerId !== null && m.id === activeMarkerId;
+              const isFocus = m.id === focusMarkerId;
+              return (
+                <WorldMapPin
+                  key={m.id}
+                  pixelX={worldMap.originX + m.wzX}
+                  pixelY={worldMap.originY + m.wzY}
+                  parentScale={view.scale}
+                  hue={isFocus ? FOCUS_HUE : single ? ENTITY_HUES.map : REGION_HUE}
+                  region={!single}
+                  label={label}
+                  labelled={isActive || isFocus}
+                  tooltip={
+                    firstId !== undefined ? (
+                      <div className="space-y-2">
+                        <MapHoverCard id={firstId} />
+                        <div className="border-border text-muted-foreground border-t-2 pt-2 text-xs font-semibold">
+                          {single ? 'Click to open' : `${m.mapIds.length} maps · click to browse`}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-muted-foreground text-xs font-semibold">
+                        {m.title ?? 'Marker'}
+                      </div>
+                    )
+                  }
+                  highlighted={isActive || (activeMarkerId === null && isFocus)}
+                  dimmed={activeMarkerId !== null && !isActive}
+                  onClick={
+                    single
+                      ? () => onOpenMap(m.mapIds[0]!)
+                      : () => {
+                          onDrillRegion(markerIndexOf(m.id));
+                          openSidebar();
+                        }
+                  }
+                />
+              );
             })
           : null;
 

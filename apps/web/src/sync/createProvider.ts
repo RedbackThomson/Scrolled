@@ -15,9 +15,7 @@ import type { SyncProvider } from '@scrolled/sync-core';
  * `getAccessToken` thunk, and reuses the cloud identity's Supabase project
  * (resolveSync guarantees `identity.mode === 'cloud'` whenever sync is on).
  */
-export async function createSyncProvider(
-  identity: IdentityProvider,
-): Promise<SyncProvider | null> {
+export async function createSyncProvider(identity: IdentityProvider): Promise<SyncProvider | null> {
   const { sync, identity: identityConfig } = appConfig;
   if (
     __SYNC_SUPABASE__ &&

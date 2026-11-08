@@ -61,8 +61,7 @@ const equipmentRangesSchema = z.object({ id: idSchema });
 export const equipmentRanges: ToolDefinition<typeof equipmentRangesSchema, unknown> = {
   name: 'equipment.ranges',
   category: 'Equipment',
-  description:
-    'Possible stat ranges for an equip under the currently active server profile.',
+  description: 'Possible stat ranges for an equip under the currently active server profile.',
   inputSchema: equipmentRangesSchema,
   annotations: READ,
   execute: async (input, ctx) => {

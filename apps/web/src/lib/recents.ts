@@ -28,9 +28,7 @@ const QUERIES_QK = ['recents', 'queries'] as const;
  * to `#<id>` for anything not in this library. Locally-tracked names are left
  * untouched (no extra lookup, no flash).
  */
-async function resolveRecentNames(
-  pending: Promise<RecentEntity[]>,
-): Promise<RecentEntity[]> {
+async function resolveRecentNames(pending: Promise<RecentEntity[]>): Promise<RecentEntity[]> {
   const rows = await pending;
   const missing = rows.filter((r) => !r.name);
   if (missing.length === 0) return rows;

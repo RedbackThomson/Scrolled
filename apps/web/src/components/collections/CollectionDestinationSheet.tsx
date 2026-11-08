@@ -204,7 +204,9 @@ function SheetRow({
                 >
                   {on && <span className="bg-primary h-2.5 w-2.5 rounded-full" />}
                 </span>
-                <span className={cn('h-2 w-2 shrink-0 rounded-full', g ? color.swatch : 'bg-border')} />
+                <span
+                  className={cn('h-2 w-2 shrink-0 rounded-full', g ? color.swatch : 'bg-border')}
+                />
                 <span className="min-w-0 flex-1 truncate">{g?.name ?? 'Not in a group'}</span>
               </button>
             );

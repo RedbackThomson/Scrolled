@@ -1,10 +1,4 @@
-import {
-  AlertTriangle,
-  CheckCircle2,
-  ChevronRight,
-  FileText,
-  XCircle,
-} from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ChevronRight, FileText, XCircle } from 'lucide-react';
 import type { DatasetRecord } from '@/db';
 import { extractorLabel } from '@/components/common/extractorCatalog';
 import { shortHash } from '@/lib/hashFile';
@@ -169,8 +163,7 @@ export function RunCard({ dataset: d }: { dataset: DatasetRecord }) {
                 ))}
                 {skippedExtractors.length > 0 && (
                   <li className="text-muted-foreground">
-                    Skipped:{' '}
-                    {skippedExtractors.map((e) => extractorLabel(e.extractor)).join(', ')}
+                    Skipped: {skippedExtractors.map((e) => extractorLabel(e.extractor)).join(', ')}
                   </li>
                 )}
               </ul>

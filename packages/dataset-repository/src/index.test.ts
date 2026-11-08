@@ -108,9 +108,9 @@ describe('StaticHttpDatasetRepository.downloadArtifact', () => {
     vi.stubGlobal('fetch', async () => new Response(bytes));
 
     const repo = new StaticHttpDatasetRepository(BASE);
-    await expect(
-      repo.downloadArtifact(manifest('0'.repeat(64))),
-    ).rejects.toMatchObject({ kind: 'checksum' });
+    await expect(repo.downloadArtifact(manifest('0'.repeat(64)))).rejects.toMatchObject({
+      kind: 'checksum',
+    });
   });
 
   it('passes an absolute artifact URL through unchanged', async () => {

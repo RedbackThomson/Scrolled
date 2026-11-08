@@ -274,7 +274,10 @@ export function DataTable<TData>({
 
   const selectable = entity != null;
   const resolveAll = useCallback(
-    () => getDbClient().matchingIds(source, filters).then((ids) => ids.map(String)),
+    () =>
+      getDbClient()
+        .matchingIds(source, filters)
+        .then((ids) => ids.map(String)),
     [source, filters],
   );
   const selection = useRowSelection(JSON.stringify(filters), resolveAll);

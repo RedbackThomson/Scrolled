@@ -40,11 +40,7 @@ export function TooltipCustomizerPanel() {
     return <p className="text-muted-foreground text-sm">Loading…</p>;
   }
   if (!entity) {
-    return (
-      <p className="text-muted-foreground text-sm">
-        Load a library to customize tooltips.
-      </p>
-    );
+    return <p className="text-muted-foreground text-sm">Load a library to customize tooltips.</p>;
   }
 
   return (
@@ -128,9 +124,7 @@ function TooltipEditor({ entity }: { entity: EntityKind }) {
             <li key={field.key} className="flex items-center justify-between gap-3 py-2">
               <div className="min-w-0">
                 <div className="text-sm">{field.label}</div>
-                {field.hint && (
-                  <p className="text-muted-foreground mt-0.5 text-xs">{field.hint}</p>
-                )}
+                {field.hint && <p className="text-muted-foreground mt-0.5 text-xs">{field.hint}</p>}
               </div>
               <FieldModeControl value={modes[field.key]} onChange={(m) => setMode(field.key, m)} />
             </li>

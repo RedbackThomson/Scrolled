@@ -120,10 +120,7 @@ export function getSkillLevels(sql: Sqlite, skillId: number): SkillLevelRecord[]
     .map(rowToSkillLevel);
 }
 
-export function getSkillPrerequisites(
-  sql: Sqlite,
-  skillId: number,
-): SkillPrerequisiteWithName[] {
+export function getSkillPrerequisites(sql: Sqlite, skillId: number): SkillPrerequisiteWithName[] {
   return sql
     .selectObjects<{
       skill_id: number;

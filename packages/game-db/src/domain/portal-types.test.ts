@@ -26,14 +26,17 @@ describe('isUsefulPortal', () => {
   });
 
   it('keeps working in-map teleports', () => {
-    expect(
-      isUsefulPortal(portal({ targetMapId: THIS_MAP, targetPortal: 'tp01' }), THIS_MAP),
-    ).toBe(true);
+    expect(isUsefulPortal(portal({ targetMapId: THIS_MAP, targetPortal: 'tp01' }), THIS_MAP)).toBe(
+      true,
+    );
   });
 
   it('keeps scripted portals', () => {
     expect(
-      isUsefulPortal(portal({ targetMapId: null, targetPortal: null, script: 'onEnter' }), THIS_MAP),
+      isUsefulPortal(
+        portal({ targetMapId: null, targetPortal: null, script: 'onEnter' }),
+        THIS_MAP,
+      ),
     ).toBe(true);
   });
 
@@ -49,9 +52,9 @@ describe('isUsefulPortal', () => {
   });
 
   it('hides dead-end teleports with no destination', () => {
-    expect(
-      isUsefulPortal(portal({ portalName: 'tp', targetMapId: NO_TARGET }), THIS_MAP),
-    ).toBe(false);
+    expect(isUsefulPortal(portal({ portalName: 'tp', targetMapId: NO_TARGET }), THIS_MAP)).toBe(
+      false,
+    );
     expect(
       isUsefulPortal(portal({ portalName: 'tp', targetMapId: null, targetPortal: null }), THIS_MAP),
     ).toBe(false);

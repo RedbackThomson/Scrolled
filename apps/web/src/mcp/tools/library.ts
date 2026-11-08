@@ -31,8 +31,4 @@ export const libraryListLoadedFileNames: ToolDefinition<typeof emptySchema, unkn
   execute: (_input, ctx) => ctx.db.listLoadedFileNames(),
 };
 
-export const libraryTools = [
-  libraryStatus,
-  libraryListDatasets,
-  libraryListLoadedFileNames,
-];
+export const libraryTools = [libraryStatus, libraryListDatasets, libraryListLoadedFileNames];

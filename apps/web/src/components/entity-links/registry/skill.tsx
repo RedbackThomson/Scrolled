@@ -120,6 +120,9 @@ export const skillConfig: TooltipEntityConfig<SkillRecord, SkillExtra> = {
       {record.name ?? `Skill ${id}`}
     </Link>
   ),
-  getSampleId: () => getDbClient().listSkills({ limit: 1 }).then((r) => r.rows[0]?.id ?? null),
+  getSampleId: () =>
+    getDbClient()
+      .listSkills({ limit: 1 })
+      .then((r) => r.rows[0]?.id ?? null),
   fields,
 };

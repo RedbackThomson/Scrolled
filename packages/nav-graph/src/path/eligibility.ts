@@ -22,9 +22,7 @@ export interface UserCapability {
   itemsHeld?: ReadonlyMap<number, number>;
 }
 
-export function eligibilityFilter(
-  state: UserCapability,
-): (edge: TravelEdge) => boolean {
+export function eligibilityFilter(state: UserCapability): (edge: TravelEdge) => boolean {
   return (edge) => {
     if (!edge.requirements || edge.requirements.length === 0) return true;
     return edge.requirements.every((req) => satisfies(req, state));
@@ -38,10 +36,7 @@ function satisfies(req: Requirement, state: UserCapability): boolean {
     case 'level':
       return state.level === undefined || state.level >= req.min;
     case 'quest':
-      return (
-        state.questsCompleted === undefined ||
-        state.questsCompleted.has(req.questId)
-      );
+      return state.questsCompleted === undefined || state.questsCompleted.has(req.questId);
     case 'item': {
       if (state.itemsHeld === undefined) return true;
       const held = state.itemsHeld.get(req.itemId) ?? 0;

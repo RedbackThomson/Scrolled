@@ -35,8 +35,7 @@ const listeners = new Set<() => void>();
 function load(): OverrideMap {
   if (cache) return cache;
   try {
-    const raw =
-      typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null;
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null;
     const parsed = raw ? JSON.parse(raw) : {};
     cache = parsed && typeof parsed === 'object' ? (parsed as OverrideMap) : {};
   } catch {

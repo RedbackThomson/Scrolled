@@ -42,7 +42,12 @@ describe('packDataset / readDataset', () => {
 
   it('rejects a tampered blob via the checksum', async () => {
     const game = gameBytes();
-    const packed = await packDataset({ game, schemaVersion: 1, dataRevision: 1, createdAt: CREATED_AT });
+    const packed = await packDataset({
+      game,
+      schemaVersion: 1,
+      dataRevision: 1,
+      createdAt: CREATED_AT,
+    });
     const tar = await gunzipAsync(packed);
     // Flip a byte of the game blob so its content no longer matches the manifest hash.
     const at = indexOfSeq(tar, game);

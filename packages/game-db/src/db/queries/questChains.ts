@@ -127,10 +127,7 @@ export function computeAndStoreQuestChains(sql: Sqlite): number {
 }
 
 export function getQuestChain(sql: Sqlite, id: number): QuestChainDetail | null {
-  const row = sql.selectObject<QuestChainRow>(
-    `SELECT * FROM quest_chains WHERE id = ?`,
-    [id],
-  );
+  const row = sql.selectObject<QuestChainRow>(`SELECT * FROM quest_chains WHERE id = ?`, [id]);
   if (!row) return null;
   const chain = rowToChain(row);
   const members = sql
@@ -221,10 +218,7 @@ export function getQuestChain(sql: Sqlite, id: number): QuestChainDetail | null 
   return { chain, members, edges, externalEdges };
 }
 
-export function getQuestChainsMany(
-  sql: Sqlite,
-  ids: readonly number[],
-): QuestChainDetail[] {
+export function getQuestChainsMany(sql: Sqlite, ids: readonly number[]): QuestChainDetail[] {
   const seen = new Set<number>();
   const out: QuestChainDetail[] = [];
   for (const id of ids) {
@@ -242,12 +236,7 @@ export function listQuestChains(
 ): PageResult<QuestChainListRow> {
   const limit = clampLimit(opts.limit);
   const offset = clampOffset(opts.offset);
-  const order = resolveOrder(
-    QUEST_CHAIN_ORDER,
-    QUEST_CHAIN_ORDER_DEFAULT,
-    opts.orderBy,
-    opts.dir,
-  );
+  const order = resolveOrder(QUEST_CHAIN_ORDER, QUEST_CHAIN_ORDER_DEFAULT, opts.orderBy, opts.dir);
   const where: string[] = [];
   const params: (string | number)[] = [];
   if (opts.search?.trim()) {

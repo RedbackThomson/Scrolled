@@ -12,14 +12,7 @@
 //   game.sqlite3    — raw game database bytes
 
 import { z } from 'zod';
-import {
-  gzipAsync,
-  gunzipAsync,
-  looksLikeGzip,
-  packTar,
-  sha256Hex,
-  unpackTar,
-} from './container';
+import { gzipAsync, gunzipAsync, looksLikeGzip, packTar, sha256Hex, unpackTar } from './container';
 
 export const DATASET_FORMAT = 'scrolled-dataset';
 export const DATASET_FORMAT_VERSION = 1;

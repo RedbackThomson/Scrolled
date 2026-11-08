@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { QuestRewardWithName } from '@/db';
-import {
-  filterGroupedRewards,
-  groupItemRewards,
-  rewardMatchesCharacter,
-} from './questRewards';
+import { filterGroupedRewards, groupItemRewards, rewardMatchesCharacter } from './questRewards';
 
 function item(
   idx: number,
@@ -35,10 +31,7 @@ describe('groupItemRewards', () => {
   });
 
   it('coalesces contiguous prop rows into one pool with the correct total', () => {
-    const groups = groupItemRewards([
-      item(0, 100, { prop: 20 }),
-      item(1, 101, { prop: 80 }),
-    ]);
+    const groups = groupItemRewards([item(0, 100, { prop: 20 }), item(1, 101, { prop: 80 })]);
     expect(groups).toHaveLength(1);
     expect(groups[0]).toMatchObject({ kind: 'random-pool', id: 0, totalWeight: 100 });
   });

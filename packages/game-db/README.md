@@ -2,15 +2,16 @@
 
 The **read + storage contract** for extracted game data. The web app reads
 through this package to display data; the extractor writes into it. It is the
-single home for everything about *interpreting and storing* a library, as
-opposed to *producing* one.
+single home for everything about _interpreting and storing_ a library, as
+opposed to _producing_ one.
 
 **Owns:** the SQLite engine and schema/migrations, the typed query API
 (`DbApi`, `GameDatabase`), domain record types, domain decoders (`domain/` —
 equip types/jobs, elements, skills, portals…), the data/schema version contract,
 server profiles (incl. the equip-stat calculator), the `.scrolled-backup` format
-+ import-compatibility gating, and the extraction key/stats vocabulary, plus
-worker-safe `lib/` utilities (logger, progress, math).
+
+- import-compatibility gating, and the extraction key/stats vocabulary, plus
+  worker-safe `lib/` utilities (logger, progress, math).
 
 **May import:** `@scrolled/dataset-core` (the shared tar/gzip codec; the dataset
 container manifest type). Nothing else `@scrolled/*` — in particular **not**

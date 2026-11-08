@@ -33,7 +33,13 @@ describe('computeQuestChains', () => {
 
   it('linear chain marks every member critical (one root, one final)', () => {
     const r = computeQuestChains(
-      build({ ids: [1, 2, 3], edges: [[1, 2], [2, 3]] }),
+      build({
+        ids: [1, 2, 3],
+        edges: [
+          [1, 2],
+          [2, 3],
+        ],
+      }),
     );
     expect(r[0].members.every((m) => m.isCritical)).toBe(true);
   });
@@ -524,9 +530,12 @@ describe('computeQuestChains', () => {
             [6, 1], // C → A
           ],
           parents: {
-            1: 'A', 2: 'A',
-            3: 'B', 4: 'B',
-            5: 'C', 6: 'C',
+            1: 'A',
+            2: 'A',
+            3: 'B',
+            4: 'B',
+            5: 'C',
+            6: 'C',
           },
         }),
       );

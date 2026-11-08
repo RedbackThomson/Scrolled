@@ -136,11 +136,7 @@ export function buildSyntheticImg(props: SynProp[], keystream: Uint8Array): Uint
 }
 
 /** A `File` whose bytes are a synthetic `.img`, for feeding `LoadFileSpec`. */
-export function syntheticImgFile(
-  relName: string,
-  props: SynProp[],
-  keystream: Uint8Array,
-): File {
+export function syntheticImgFile(relName: string, props: SynProp[], keystream: Uint8Array): File {
   const bytes = buildSyntheticImg(props, keystream);
   return new NodeFile([bytes], relName) as unknown as File;
 }

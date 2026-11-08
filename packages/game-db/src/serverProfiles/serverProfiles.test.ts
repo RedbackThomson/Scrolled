@@ -289,7 +289,10 @@ describe('detectServerProfile', () => {
       file === 'String.wz' && path === EULA ? value : null;
 
   it('matches a profile fingerprint in the EULA text', async () => {
-    const p = await detectServerProfile(readerReturning('…as governed by the Acme Server team…'), profiles);
+    const p = await detectServerProfile(
+      readerReturning('…as governed by the Acme Server team…'),
+      profiles,
+    );
     expect(p?.id).toBe('acme');
   });
 
@@ -299,7 +302,9 @@ describe('detectServerProfile', () => {
   });
 
   it('returns null when no fingerprint string matches', async () => {
-    expect(await detectServerProfile(readerReturning('Some other server EULA'), profiles)).toBeNull();
+    expect(
+      await detectServerProfile(readerReturning('Some other server EULA'), profiles),
+    ).toBeNull();
   });
 
   it('returns null when the value is absent', async () => {

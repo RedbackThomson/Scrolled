@@ -36,9 +36,7 @@ export function DirectionsPanel({ graph }: DirectionsPanelProps) {
   // is approximate whenever one appears. Transport only counts when fast travel
   // is off (with it on, transports are instant, not estimated).
   const approximate = steps.some(
-    (s) =>
-      s.seconds == null &&
-      (s.method === 'walk' || (s.method === 'transport' && !fastTravel)),
+    (s) => s.seconds == null && (s.method === 'walk' || (s.method === 'transport' && !fastTravel)),
   );
   // "on foot" is only right for a pure-walk route; label anything with a ride,
   // teleport, or scroll neutrally.
@@ -61,7 +59,7 @@ export function DirectionsPanel({ graph }: DirectionsPanelProps) {
         type="button"
         aria-label="Resize directions panel"
         onPointerDown={onHandlePointerDown}
-        className="flex min-h-11 flex-none touch-none cursor-row-resize items-center justify-center md:hidden"
+        className="flex min-h-11 flex-none cursor-row-resize touch-none items-center justify-center md:hidden"
       >
         <span className="bg-border h-[5px] w-11 rounded-full" />
       </button>
@@ -143,7 +141,7 @@ function framesFromResult(result: PathResult): Frames {
     return {
       steps: result.fallback?.steps ?? [],
       totalSeconds: result.fallback?.totalSeconds ?? 0,
-      header: 'Some steps need things you don\'t have yet — showing the closest route.',
+      header: "Some steps need things you don't have yet — showing the closest route.",
     };
   }
   return { steps: [], totalSeconds: 0, header: null };

@@ -34,7 +34,9 @@ const collection = (key: string, name: string): RemoteRow => ({ key, name });
 
 describe('upsert', () => {
   it('conflicts on account_id plus the entity key columns', async () => {
-    const upsert = vi.fn(async (_t: string, rows: RemoteRow[]) => rows.map((r) => ({ ...r, seq: 7 })));
+    const upsert = vi.fn(async (_t: string, rows: RemoteRow[]) =>
+      rows.map((r) => ({ ...r, seq: 7 })),
+    );
     const provider = makeProvider(makeRest({ upsert }));
 
     await provider.upsert('collection_member', [
@@ -110,7 +112,9 @@ describe('fetchSince', () => {
             return [{ key: 'c1', seq: 1, server_time: '2026-01-01T00:00:02.000Z' }];
           }
           if (table === 'sync_recents') {
-            return [{ kind: 'entity', ref: 'mob/1', seq: 2, server_time: '2026-01-01T00:00:01.000Z' }];
+            return [
+              { kind: 'entity', ref: 'mob/1', seq: 2, server_time: '2026-01-01T00:00:01.000Z' },
+            ];
           }
           return [];
         },
